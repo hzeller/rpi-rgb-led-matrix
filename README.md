@@ -35,8 +35,8 @@ pins, we don't need to worry about level conversion back.
 
 We need 13 IO pins. It doesn't really matter to which GPIO pins these are
 connected (but the code assumes right now that the row address are adjacent
-bits) - if you use a different layout, change in the IoBits union in
-led-matrix.cc if necessary (This was done with a Model B,
+bits) - if you use a different layout, change in the `IoBits` union in
+led-matrix.h if necessary (This was done with a Model B,
 older versions have some different IOs on the header; check
 <http://elinux.org/RPi_Low-level_peripherals> )
 
