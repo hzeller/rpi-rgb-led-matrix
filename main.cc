@@ -153,16 +153,18 @@ public:
   }
 
   void Run() {
+    const int columns = matrix_->columns();
     while (running_) {
       if (image_ == NULL) {
         usleep(100 * 1000);
         continue;
       }
       usleep(30 * 1000);
-      for (int x = 0; x < 32; ++x) {
+      for (int x = 0; x < columns; ++x) {
         for (int y = 0; y < 32; ++y) {
           const Pixel &p = getPixel((horizontal_position_ + x) % width_, y);
-          int disp_x = 31 - x;  // Display upside down on my desk. Lets flip :)
+          // Display upside down on my desk. Lets flip :)
+          int disp_x = columns - x;
           int disp_y = 31 - y;
           matrix_->SetPixel(disp_x, disp_y, p.red, p.green, p.blue);
         }

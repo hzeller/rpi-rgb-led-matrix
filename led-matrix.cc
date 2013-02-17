@@ -74,7 +74,7 @@ void RGBMatrix::ClearScreen() {
 
 void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
                          uint8_t red, uint8_t green, uint8_t blue) {
-  if (x > 31 || y > 31) return;
+  if (x >= kColumns || y > 31) return;
   // TODO: re-map values to be luminance corrected (sometimes called 'gamma').
   // Ideally, we had like 10PWM bits for this, but we're too slow for that :/
   

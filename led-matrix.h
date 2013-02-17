@@ -1,3 +1,4 @@
+// -*- c++ -*-
 // Controlling a 32x32 RGB matrix via GPIO.
 
 #ifndef RPI_RGBMATRIX_H
@@ -18,13 +19,16 @@ class RGBMatrix {
   // thread.
   void UpdateScreen();
 
+  int columns() { return kColumns; }
+
 private:
   GPIO *const io_;
 
   enum {
+    kChainedBoards = 1,   // Number of boards that are daisy-chained.
     kRows = 16,
-    kColumns = 32,
-    kPWMBits = 7  // maximum PWM resolution.
+    kColumns = kChainedBoards * 32,
+    kPWMBits = 7     // maximum PWM resolution.
   };
 
   union IoBits {
