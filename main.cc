@@ -45,14 +45,16 @@ public:
     while (running_) {
       usleep(5000);
       ++count;
-      int color = (count >> 9) % 4;
+      int color = (count >> 9) % 6;
       int value = count & 0xFF;
       if (count & 0x100) value = 255 - value;
       int r, g, b;
       switch (color) {
       case 0: r = value; g = b = 0; break;
-      case 1: g = value; r = b = 0; break;
-      case 2: b = value; r = g = 0; break;
+      case 1: r = g = value; b = 0; break;
+      case 2: g = value; r = b = 0; break;
+      case 3: g = b = value; r = 0; break;
+      case 4: b = value; r = g = 0; break;
       default: r = g = b = value; break;
       }
       for (int x = 0; x < columns; ++x)
