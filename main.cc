@@ -40,6 +40,7 @@ class ColorPulseGenerator : public RGBMatrixManipulator {
 public:
   ColorPulseGenerator(RGBMatrix *m) : RGBMatrixManipulator(m) {}
   void Run() {
+    const int columns = matrix_->columns();
     uint32_t count = 0;
     while (running_) {
       usleep(5000);
@@ -54,7 +55,7 @@ public:
       case 2: b = value; r = g = 0; break;
       default: r = g = b = value; break;
       }
-      for (int x = 0; x < 32; ++x)
+      for (int x = 0; x < columns; ++x)
         for (int y = 0; y < 32; ++y)
           matrix_->SetPixel(x, y, r, g, b);
     }
@@ -244,7 +245,7 @@ int main(int argc, char *argv[]) {
   image_gen->Start();
 
   // Things are set up. Just wait for <RETURN> to be pressed.
-  printf("Press <RETURN> to exit\n");
+  printf("Press <RETURN> to exit and reset LEDs\n");
   getchar();
 
   // Stopping threads and wait for them to join.
