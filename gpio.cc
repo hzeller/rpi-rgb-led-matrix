@@ -46,6 +46,7 @@ uint32_t GPIO::InitOutputs(uint32_t outputs) {
   return output_bits_;
 }
 
+// Based on code example found in http://elinux.org/RPi_Low-level_peripherals
 bool GPIO::Init() {
   int mem_fd;
   if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
@@ -64,7 +65,7 @@ bool GPIO::Init() {
 
   close(mem_fd); //No need to keep mem_fd open after mmap
 
-  if ((long)gpio_map <= 0) {
+  if (gpio_map == MAP_FAILED) {
     fprintf(stderr, "mmap error %ld\n", (long)gpio_map);
     return false;
   }
