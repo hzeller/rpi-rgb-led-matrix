@@ -83,7 +83,18 @@ void RGBMatrix::FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
 
 void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
                          uint8_t red, uint8_t green, uint8_t blue) {
-  if (x >= kColumns || y > 31) return;
+  if (x >= width() || y >= height()) return;
+
+  // My setup: having four panels connected  [>] [>]
+  //                                                 v
+  //                                         [<] [<]
+  // So we have up to column 64 one direction, then folding around. Lets map
+  // that backward
+  if (y > 31) {
+    x = 127 - x;
+    y = 63 - y;
+  }
+  
   // TODO: re-map values to be luminance corrected (sometimes called 'gamma').
   // Ideally, we had like 10PWM bits for this, but we're too slow for that :/
   
@@ -135,12 +146,18 @@ void RGBMatrix::UpdateScreen() {
       // So this is the critical path; I'd love to know if we can employ some
       // DMA techniques to speed this up.
       // (With this code, one row roughly takes 3.0 - 3.4usec to clock in).
-      // (TODO: this is per panel, so this needs to be adapted for chaining)
+      //
+      // However, in particular for longer chaining, it seems we need some more
+      // wait time to settle.
+      const long kIOStabilizeWaitNanos = 256;
       for (uint8_t col = 0; col < kColumns; ++col) {
         const IoBits &out = rowdata.column[col];
         io_->ClearBits(~out.raw & serial_mask.raw);  // also: resets clock.
+        sleep_nanos(kIOStabilizeWaitNanos);
         io_->SetBits(out.raw & serial_mask.raw);
+        sleep_nanos(kIOStabilizeWaitNanos);
         io_->SetBits(clock.raw);
+        sleep_nanos(kIOStabilizeWaitNanos);
       }
 
       io_->SetBits(output_enable.raw);  // switch off while strobe.
