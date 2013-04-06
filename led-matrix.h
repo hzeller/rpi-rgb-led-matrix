@@ -11,6 +11,7 @@ class RGBMatrix {
  public:
   RGBMatrix(GPIO *io);
   void ClearScreen();
+  void FillScreen(uint8_t red, uint8_t green, uint8_t blue);
 
   void SetPixel(uint8_t x, uint8_t y,
                 uint8_t red, uint8_t green, uint8_t blue);
@@ -19,16 +20,16 @@ class RGBMatrix {
   // thread.
   void UpdateScreen();
 
-  int columns() { return kColumns; }
+  int columns() const { return kColumns; }
 
 private:
   GPIO *const io_;
 
   enum {
+    kDoubleRows = 16,     // Physical constant of the used board.
     kChainedBoards = 1,   // Number of boards that are daisy-chained.
-    kRows = 16,
     kColumns = kChainedBoards * 32,
-    kPWMBits = 7     // maximum PWM resolution.
+    kPWMBits = 4          // maximum PWM resolution.
   };
 
   union IoBits {
@@ -58,7 +59,7 @@ private:
     IoBits column[kColumns];  // only color bits are set
   };
   struct Screen {
-    DoubleRow row[kRows];
+    DoubleRow row[kDoubleRows];
   };
 
   Screen bitplane_[kPWMBits];

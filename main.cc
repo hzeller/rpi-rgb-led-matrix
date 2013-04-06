@@ -222,6 +222,7 @@ int main(int argc, char *argv[]) {
   case 0:
     image_gen = new RotatingBlockGenerator(&m);
     break;
+
   case 1:
     if (argc > 2) {
       ImageScroller *scroller = new ImageScroller(&m);
@@ -233,6 +234,7 @@ int main(int argc, char *argv[]) {
       return 1;
     }
     break;
+
   default:
     image_gen = new ColorPulseGenerator(&m);
     break;

@@ -15,9 +15,9 @@
 
 #include "gpio.h"
 
-// Clocking in a row takes about 3.4usec. Because clocking the data in is
-// part of the 'wait time', we need to substract that from
-// the row sleep time.
+// Clocking in a row takes about 3.4usec (TODO: this is actually per board)
+// Because clocking the data in is part of the 'wait time', we need to
+// substract that from the row sleep time.
 static const int kRowClockTime = 3400;
 static const int kBaseTime = kRowClockTime;  // smallest possible value.
 
@@ -65,11 +65,20 @@ RGBMatrix::RGBMatrix(GPIO *io) : io_(io) {
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io_->InitOutputs(b.raw);
   assert(result == b.raw);
+  assert(kPWMBits < 8);    // only up to 7 makes sense.
   ClearScreen();
 }
 
 void RGBMatrix::ClearScreen() {
   memset(&bitplane_, 0, sizeof(bitplane_));
+}
+
+void RGBMatrix::FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
+  for (int x = 0; x < kColumns; ++x) {
+    for (int y = 0; y < 32; ++y) {
+      SetPixel(x, y, red, green, blue);
+    }
+  }
 }
 
 void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
@@ -114,7 +123,7 @@ void RGBMatrix::UpdateScreen() {
   strobe.bits.strobe = 1;
 
   IoBits row_bits;
-  for (uint8_t row = 0; row < kRows; ++row) {
+  for (uint8_t row = 0; row < kDoubleRows; ++row) {
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
     for (int b = 0; b < kPWMBits; ++b) {
@@ -126,6 +135,7 @@ void RGBMatrix::UpdateScreen() {
       // So this is the critical path; I'd love to know if we can employ some
       // DMA techniques to speed this up.
       // (With this code, one row roughly takes 3.0 - 3.4usec to clock in).
+      // (TODO: this is per panel, so this needs to be adapted for chaining)
       for (uint8_t col = 0; col < kColumns; ++col) {
         const IoBits &out = rowdata.column[col];
         io_->ClearBits(~out.raw & serial_mask.raw);  // also: resets clock.
@@ -144,7 +154,9 @@ void RGBMatrix::UpdateScreen() {
 
       // Now switch on for the given sleep time.
       io_->ClearBits(output_enable.raw);
-      sleep_nanos(row_sleep_nanos[b]);
+      // If we use less bits, then use the upper areas which leaves us more
+      // CPU time to do other stuff.
+      sleep_nanos(row_sleep_nanos[b + (7 - kPWMBits)]);
     }
   }
 }
