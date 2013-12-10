@@ -3,8 +3,9 @@ Controlling RGB LED display with Raspberry Pi GPIO
 
 This is mostly experimental code.
 
-Code is (c) Henner Zeller <h.zeller@acm.org>, and I grant you the permission
+Code is originally (c) Henner Zeller <h.zeller@acm.org>, and I grant you the permission
 to do whatever you want with it :)
+ 2013-12 - changed to drive a 16x32 matrix (half the original intended) 
 
 Overview
 --------
