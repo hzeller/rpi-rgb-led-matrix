@@ -1,7 +1,8 @@
 // Some experimental code.
 // (c) H. Zeller <h.zeller@acm.org>. License: do whatever you want with it :)
+// 2013-12-10 - Modified for a 16x32 matrix (half-of-original)
 //
-// Using GPIO to control a 32x32 rgb LED panel (typically you find them with the
+// Using GPIO to control a 16x32 rgb LED panel (typically you find them with the
 // suffix such as P4 or P5: that is the pitch in mm.
 // So "32x32 rgb led p5" should find you something on 'the internets'.
 
@@ -75,7 +76,7 @@ void RGBMatrix::ClearScreen() {
 
 void RGBMatrix::FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
   for (int x = 0; x < kColumns; ++x) {
-    for (int y = 0; y < 32; ++y) {
+    for (int y = 0; y < width(); ++y) {
       SetPixel(x, y, red, green, blue);
     }
   }
@@ -85,15 +86,7 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
                          uint8_t red, uint8_t green, uint8_t blue) {
   if (x >= width() || y >= height()) return;
 
-  // My setup: having four panels connected  [>] [>]
-  //                                                 v
-  //                                         [<] [<]
-  // So we have up to column 64 one direction, then folding around. Lets map
-  // that backward
-  if (y > 31) {
-    x = 127 - x;
-    y = 63 - y;
-  }
+  // My setup: A single panel connected  [>] 16 rows & 32 columns.
   
   // TODO: re-map values to be luminance corrected (sometimes called 'gamma').
   // Ideally, we had like 10PWM bits for this, but we're too slow for that :/
@@ -106,8 +99,8 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
 
   for (int b = 0; b < kPWMBits; ++b) {
     uint8_t mask = 1 << b;
-    IoBits *bits = &bitplane_[b].row[y & 0xf].column[x];
-    if (y < 16) {   // Upper sub-panel.
+    IoBits *bits = &bitplane_[b].row[y & 0x7].column[x]; // Half the mask here
+    if (y < 8) {    // Upper sub-panel. Half the height check here
       bits->bits.r1 = (red & mask) == mask;
       bits->bits.g1 = (green & mask) == mask;
       bits->bits.b1 = (blue & mask) == mask;
@@ -126,7 +119,7 @@ void RGBMatrix::UpdateScreen() {
   serial_mask.bits.clock = 1;
 
   IoBits row_mask;
-  row_mask.bits.row = 0xf;
+  row_mask.bits.row = 0xf; // Half the mask here?
 
   IoBits clock, output_enable, strobe;    
   clock.bits.clock = 1;
