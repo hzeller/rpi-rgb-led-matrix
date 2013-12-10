@@ -1,6 +1,6 @@
 // Some experimental code.
 // (c) H. Zeller <h.zeller@acm.org>. License: do whatever you want with it :)
-// 2013-12-10 - Modified for a 16x32 matrix (half-of-original)
+// 2013-12 - Modified for a 16x32 matrix (half the original panel)
 //
 // Using GPIO to control a 16x32 rgb LED panel (typically you find them with the
 // suffix such as P4 or P5: that is the pitch in mm.
