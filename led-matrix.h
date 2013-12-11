@@ -11,7 +11,6 @@ class RGBMatrix {
  public:
   RGBMatrix(GPIO *io);
   void ClearScreen();
-  void FillScreen(uint8_t red, uint8_t green, uint8_t blue);
 
   // Here the set-up  [>] - Only one 16x32 panel
   int width() const { return 32; }
