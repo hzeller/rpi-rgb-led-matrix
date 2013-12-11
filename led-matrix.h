@@ -41,8 +41,8 @@ private:
       unsigned int clock  : 1;   // 3
       unsigned int strobe : 1;   // 4
       unsigned int unused2 : 2;  // 5..6
-      unsigned int row : 4;  // 7..10
-      unsigned int unused3 : 6;  // 11..16
+      unsigned int row : 3;  // 7..9
+      unsigned int unused3 : 7;  // 10..16
       unsigned int r1 : 1;   // 17
       unsigned int g1 : 1;   // 18
       unsigned int unused4 : 3;
