@@ -6,8 +6,7 @@ LDFLAGS=-lrt -lm -lpthread
 
 all : $(BINARIES)
 
-led-matrix.o: led-matrix.cc led-matrix.h
-main.o: led-matrix.h
+led-matrix.o : led-matrix.cc led-matrix.h
 
 led-matrix : $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)

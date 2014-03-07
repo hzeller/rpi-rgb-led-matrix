@@ -6,10 +6,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <algorithm>
-
-using std::min;
-using std::max;
 
 // Base-class for a Thread that does something with a matrix.
 class RGBMatrixManipulator : public Thread {
@@ -39,115 +35,63 @@ public:
 
 // -- The following are demo image generators.
 
-// Simple generator that pulses through RGB and White.
+// Simple generator that goes through RGB for all pixel.
 class ColorPulseGenerator : public RGBMatrixManipulator {
 public:
   ColorPulseGenerator(RGBMatrix *m) : RGBMatrixManipulator(m) {}
   void Run() {
-    const int width = matrix_->width();
-    const int height = matrix_->height();
-    uint32_t count = 0;
+    const int columns = matrix_->columns();
     while (running_) {
-      usleep(5000);
-      ++count;
-      int color = (count >> 9) % 6;
-      int value = count & 0xFF;
-      if (count & 0x100) value = 255 - value;
-      int r, g, b;
-      switch (color) {
-      case 0: r = value; g = b = 0; break;
-      case 1: r = g = value; b = 0; break;
-      case 2: g = value; r = b = 0; break;
-      case 3: g = b = value; r = 0; break;
-      case 4: b = value; r = g = 0; break;
-      default: r = g = b = value; break;
-      }
-      for (int x = 0; x < width; ++x)
-        for (int y = 0; y < height; ++y)
-          matrix_->SetPixel(x, y, r, g, b);
+      for (int x = 0; x < columns; ++x)
+        for (int y = 0; y < 32; ++y)
+          matrix_->SetPixel(x, y, 255, 0, 0);
+      usleep(500000);
+      for (int x = 0; x < columns; ++x)
+        for (int y = 0; y < 32; ++y)
+          matrix_->SetPixel(x, y, 0, 255, 0);
+      usleep(500000);
+      for (int x = 0; x < columns; ++x)
+        for (int y = 0; y < columns; ++y)
+          matrix_->SetPixel(x, y, 0, 0, 255);
+      usleep(500000);
     }
   }
 };
 
-class SimpleSquare : public RGBMatrixManipulator {
-public:
-  SimpleSquare(RGBMatrix *m) : RGBMatrixManipulator(m) {}
-  void Run() {
-    const int width = matrix_->width();
-    const int height = matrix_->height();
-    // Diagonaly
-    for (int x = 0; x < width; ++x) {
-        matrix_->SetPixel(x, x, 255, 255, 255);
-        matrix_->SetPixel(height -1 - x, x, 255, 0, 255);
-    }
-    for (int x = 0; x < width; ++x) {
-      matrix_->SetPixel(x, 0, 255, 0, 0);
-      matrix_->SetPixel(x, height - 1, 255, 255, 0);
-    }
-    for (int y = 0; y < height; ++y) {
-      matrix_->SetPixel(0, y, 0, 0, 255);
-      matrix_->SetPixel(width - 1, y, 0, 255, 0);
-    }
-  }
-};
-
-// Simple class that generates a rotating block on the screen.
+// Simple class that simulates rain on the screen.
 class RotatingBlockGenerator : public RGBMatrixManipulator {
 public:
   RotatingBlockGenerator(RGBMatrix *m) : RGBMatrixManipulator(m) {}
-
-  uint8_t scale_col(int val, int lo, int hi) {
-    if (val < lo) return 0;
-    if (val > hi) return 255;
-    return 255 * (val - lo) / (hi - lo);
-  }
-
   void Run() {
-    const int cent_x = matrix_->width() / 2;
-    const int cent_y = matrix_->height() / 2;
-
-    // The square to rotate (inner square + black frame) needs to cover the
-    // whole area, even if diagnoal.
-    const int rotate_square = min(matrix_->width(), matrix_->height()) * 1.41;
-    const int min_rotate = cent_x - rotate_square / 2;
-    const int max_rotate = cent_x + rotate_square / 2;
-
-    // The square to display is within the visible area.
-    const int display_square = min(matrix_->width(), matrix_->height()) * 0.7;
-    const int min_display = cent_x - display_square / 2;
-    const int max_display = cent_x + display_square / 2;
-
-    const float deg_to_rad = 2 * 3.14159265 / 360;
-    int rotation = 0;
-    while (running_) {
-      ++rotation;
-      usleep(15 * 1000);
-      rotation %= 360;
-      for (int x = min_rotate; x < max_rotate; ++x) {
-        for (int y = min_rotate; y < max_rotate; ++y) {
-          float disp_x, disp_y;
-          Rotate(x - cent_x, y - cent_y,
-                 deg_to_rad * rotation, &disp_x, &disp_y);
-          if (x >= min_display && x < max_display &&
-              y >= min_display && y < max_display) { // within display square
-            matrix_->SetPixel(disp_x + cent_x, disp_y + cent_y,
-                              scale_col(x, min_display, max_display),
-                              255 - scale_col(y, min_display, max_display),
-                              scale_col(y, min_display, max_display));
-          } else {
-            // black frame.
-            matrix_->SetPixel(disp_x + cent_x, disp_y + cent_y, 0, 0, 0);
-          }
-        }
-      }
-    }
-  }
-
-private:
-  void Rotate(int x, int y, float angle,
-              float *new_x, float *new_y) {
-    *new_x = x * cosf(angle) - y * sinf(angle);
-    *new_y = x * sinf(angle) + y * cosf(angle);
+	int start[65][2], weiter[65][2], geschw[65];
+	srand(time(NULL));
+	matrix_->FillScreen(0, 0, 0);
+	for (int i = 0; i < 65; i++) {
+      start[i][0] = rand() % 32;
+	  start[i][1] = rand() % 32;
+	  weiter[i][0] = start[i][0];
+	  weiter[i][1] = start[i][1];
+	  matrix_->SetPixel(start[i][0], start[i][1], 0, 0, 255);
+	  geschw[i] = 1;
+	}
+	while (running_) {
+	  matrix_->FillScreen(0, 0, 0);
+	  for (int i = 0; i < 65; i++) {
+	    if ((start[i][1] - 1) >= 31) {
+		  start[i][0] = rand() % 32;
+		  start[i][1] = 0;
+		  weiter[i][0] = start[i][0];
+		  weiter[i][1] = start[i][1];
+		  matrix_->SetPixel(start[i][0], start[i][1], 0, 0, 255);
+		}
+		start[i][1] = weiter[i][1];
+		weiter[i][1] = start[i][1] + geschw[i];
+		matrix_->SetPixel(start[i][0], start[i][1] - 1, 0, 0, 25);
+		matrix_->SetPixel(start[i][0], start[i][1], 0, 0, 80);
+		matrix_->SetPixel(weiter[i][0], weiter[i][1], 0, 0, 255);
+	  }
+	  usleep(50000);
+	}
   }
 };
 
@@ -194,20 +138,19 @@ public:
   }
 
   void Run() {
-    const int screen_height = matrix_->height();
-    const int screen_width = matrix_->width();
+    const int columns = matrix_->columns();
     while (running_) {
       if (image_ == NULL) {
         usleep(100 * 1000);
         continue;
       }
       usleep(30 * 1000);
-      for (int x = 0; x < screen_width; ++x) {
-        for (int y = 0; y < screen_height; ++y) {
+      for (int x = 0; x < columns; ++x) {
+        for (int y = 0; y < 32; ++y) {
           const Pixel &p = getPixel((horizontal_position_ + x) % width_, y);
           // Display upside down on my desk. Lets flip :)
-          int disp_x = screen_width - x;
-          int disp_y = screen_height - y;
+          int disp_x = columns - x;
+          int disp_y = 31 - y;
           matrix_->SetPixel(disp_x, disp_y, p.red, p.green, p.blue);
         }
       }
@@ -272,10 +215,6 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Demo %d Requires PPM image as parameter", demo);
       return 1;
     }
-    break;
-
-  case 2:
-    image_gen = new SimpleSquare(&m);
     break;
 
   default:

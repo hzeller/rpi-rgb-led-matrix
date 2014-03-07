@@ -13,11 +13,6 @@ class RGBMatrix {
   void ClearScreen();
   void FillScreen(uint8_t red, uint8_t green, uint8_t blue);
 
-  // Here the set-up  [>] [>]
-  //                         v
-  //                  [<] [<]   ... so column 65..127 are backwards.
-  int width() const { return 64; }
-  int height() const { return 64; }
   void SetPixel(uint8_t x, uint8_t y,
                 uint8_t red, uint8_t green, uint8_t blue);
 
@@ -25,15 +20,16 @@ class RGBMatrix {
   // thread.
   void UpdateScreen();
 
+  int columns() const { return kColumns; }
 
 private:
   GPIO *const io_;
 
   enum {
     kDoubleRows = 16,     // Physical constant of the used board.
-    kChainedBoards = 4,   // Number of boards that are daisy-chained.
+    kChainedBoards = 1,   // Number of boards that are daisy-chained.
     kColumns = kChainedBoards * 32,
-    kPWMBits = 4          // maximum PWM resolution.
+    kPWMBits = 7          // maximum PWM resolution.
   };
 
   union IoBits {
