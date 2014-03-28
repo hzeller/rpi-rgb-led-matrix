@@ -12,8 +12,10 @@
 #include <dirent.h>
 
 int file_count = 0;
+int folder_count = 0;
 char path[100];
 int frame_delay;
+char folders[1000][100];
 
 // Base-class for a Thread that does something with a matrix.
 class RGBMatrixManipulator : public Thread {
@@ -1574,6 +1576,7 @@ public:
 		const int columns = matrix_->columns();
 		int pic_frame = 1;
 		int frames = file_count;
+		int current_folder = 1;
 		while (running_) {
 			LoadPPM(path);
 			if (image_ == NULL) {
@@ -1589,6 +1592,28 @@ public:
 			pic_frame++;
 			if (pic_frame > frames) {
 				pic_frame = 1;
+				if (folder_count > 0) {
+					strcpy(path, folders[current_folder]);
+					file_count = 0;
+					DIR * dirp;
+					struct dirent * entry;
+
+					dirp = opendir(path); /* There should be error handling after this */
+					while ((entry = readdir(dirp)) != NULL) {
+						if (entry->d_type == DT_REG) { /* If the entry is a regular file */
+							file_count++;
+						}
+					}
+					closedir(dirp);
+					frames = file_count;
+					strcat(path, "/");
+					strcat(path, folders[current_folder]);
+					strcat(path, "_frame_0001.ppm");
+					current_folder++;
+					if (current_folder == folder_count) {
+						current_folder = 0;
+					}
+				}
 			}
 			path[strlen(path) - 8] = ((pic_frame / 1000) % 10) + 48;
 			path[strlen(path) - 7] = ((pic_frame / 100) % 10) + 48;
@@ -1682,6 +1707,7 @@ int main(int argc, char *argv[]) {
 	  break;
 
   case 6:
+	  folder_count = 0;
 	  if (argc > 2) {
 		  ImageScroller3 *scroller = new ImageScroller3(&m);
 		  strcpy(path, argv[2]);
@@ -1702,18 +1728,61 @@ int main(int argc, char *argv[]) {
 			  }
 		  }
 		  closedir(dirp);
-		  fprintf(stderr, "Number %d\n", file_count);
 		  strcat(path, "/");
 		  strcat(path, argv[2]);
 		  strcat(path, "_frame_0001.ppm");
-		  fprintf(stderr, "parameter %s\n", path);
 		  if (!scroller->LoadPPM(path))
 			  return 1;
 		  image_gen = scroller;
 	  }
 	  else {
-		  fprintf(stderr, "Demo %d Requires PPM image name as parameter", demo);
-		  return 1;
+		  ImageScroller3 *scroller = new ImageScroller3(&m);
+		  frame_delay = 100000;
+		  DIR * dirp;
+		  struct dirent * entry;
+		  char cwd[1024];
+		  if (getcwd(cwd, sizeof(cwd)) != NULL) {
+			  dirp = opendir(cwd);
+			  while ((entry = readdir(dirp)) != NULL) {
+				  if (entry->d_type == DT_DIR && strstr(entry->d_name, ".") == NULL) { /* If the entry is a regular folder & does not contain a "." */
+					  strcpy(folders[folder_count], entry->d_name);
+					  folder_count++;
+				  }
+			  }
+			  closedir(dirp);
+			  if (folder_count > 0) {
+				  strcpy(path, folders[0]);
+				  file_count = 0;
+				  DIR * dirp;
+				  struct dirent * entry;
+
+				  dirp = opendir(path); /* There should be error handling after this */
+				  while ((entry = readdir(dirp)) != NULL) {
+					  if (entry->d_type == DT_REG) { /* If the entry is a regular file */
+						  file_count++;
+					  }
+				  }
+				  closedir(dirp);
+				  strcat(path, "/");
+				  strcat(path, folders[0]);
+				  strcat(path, "_frame_0001.ppm");
+				  if (!scroller->LoadPPM(path)) {
+					  fprintf(stderr, "Could not load picture!");
+					  return 1;
+				  }
+				  else {
+					  image_gen = scroller;
+				  }
+			  }
+			  else {
+				  fprintf(stderr, "No folders available!");
+				  return 1;
+			  }
+		  }
+		  else {
+			  fprintf(stderr, "Error while getting the current working directory!");
+			  return 1;
+		  }
 	  }
 	  break;
 
