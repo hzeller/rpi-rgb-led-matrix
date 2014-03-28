@@ -87,6 +87,10 @@ You can also set the speed:
      $ sudo ./led-matrix 6 rain 50000
 
 The standard speed is 100000.
+You can also run through all animations:
+
+     $ sudo ./led-matrix 6
+
 Limitations
 -----------
 There seems to be a limit in how fast the GPIO pins can be controlled. Right
