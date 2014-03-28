@@ -51,6 +51,7 @@ LED-Panel to GPIO with this code:
    * OE- (neg. Output enable) : GPIO 2
    * CLK (Serial clock) : GPIO 3
    * STR (Strobe row data) : GPIO 4
+   * GND (Ground, '-') to ground of your Raspberry Pi
 
 Running
 -------
