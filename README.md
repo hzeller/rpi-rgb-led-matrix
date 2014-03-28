@@ -41,6 +41,7 @@ older versions have some different IOs on the header; check
 <http://elinux.org/RPi_Low-level_peripherals> )
 
 LED-Panel to GPIO with this code:
+   * GND (Ground, '-') to ground of your Raspberry Pi
    * R1 (Red 1st bank)   : GPIO 17
    * G1 (Green 1st bank) : GPIO 18
    * B1 (Blue 1st bank)  : GPIO 22
@@ -51,7 +52,6 @@ LED-Panel to GPIO with this code:
    * OE- (neg. Output enable) : GPIO 2
    * CLK (Serial clock) : GPIO 3
    * STR (Strobe row data) : GPIO 4
-   * GND (Ground, '-') to ground of your Raspberry Pi
 
 Running
 -------
@@ -84,3 +84,9 @@ PWM output resolution, such as 10 bits).
 Right now, I tested this with the default Linux distribution ("wheezy"). Because
 this does not have any realtime patches, the PWM can look a bit uneven under
 load. If you test this with realtime extensions, let me know how it works.
+
+One of the next steps: actually make the DMA controller in the RPi do the work
+of sending stuff in a timely manner to the GPIO ports, just setting up the
+sequence in memory. Advantages: much less realtime capabilities needed and
+essentially no main-CPU needed, more time to do other things, such as generating
+the graphics to be displayed.
