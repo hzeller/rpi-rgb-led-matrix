@@ -3,6 +3,11 @@ Controlling a 32 x 32 RGB LED Matrix Panel with a Raspberry Pi and Android / iPh
 
 This is mostly experimental code.
 
+The Android / iPhone app has not been finished yet, but you can use the code
+with the standard terminal (see Running). I use my Raspberry Pi headless and
+if you want to run the code without having Putty always open, use "tmux"
+(sudo apt-get install tmux).
+
 This code is based on the great work of Henner Zeller <h.zeller@acm.org>
 (https://github.com/hzeller/rpi-rgb-led-matrix and see also
 https://github.com/hzeller/rpi-matrix-pixelpusher) and tries to extend
@@ -19,7 +24,7 @@ adds much possibilities to the RGB Matrix and I also favor the RPi.
 
 Overview
 --------
-I use a 32x32 RGB LED Matrix Panel from Sparkfun, which is smimilar to the
+I use a 32x32 RGB LED Matrix Panel from Sparkfun, which is similar to the
 Adafruit 32x32 RGB LED Matrix Panel, but a lot cheaper.These displays are
 also available in 32x16 - they just have one bank.
 
@@ -36,6 +41,9 @@ class in led-matrix.h does that.
 
 Connection
 ----------
+There is a good tutorial on Adafruit:
+http://learn.adafruit.com/connecting-a-16x32-rgb-led-matrix-panel-to-a-raspberry-pi
+
 The RPi has 3.3V logic output level, but a display operated at 5V digests these
 logic levels just fine (also, the display will work well with 4V; watch out,
 they easily can sink 2 Amps if all LEDs are on). Since we only need output
@@ -72,8 +80,13 @@ GPIO pins can be accessed:
 The most interesting one is probably the demo '6' which requires a (series of) ppm (type
 raw) with a height and width of 32 pixel; there are examples included (rain, Bubbles, glitter, nightdrive, tree, etc):
 
-     $ sudo ./led-matrix 6 rain
+     $ sudo ./led-matrix 6 tree
 
+You can also set the speed:
+
+     $ sudo ./led-matrix 6 rain 50000
+
+The standard speed is 100000.
 Limitations
 -----------
 There seems to be a limit in how fast the GPIO pins can be controlled. Right
