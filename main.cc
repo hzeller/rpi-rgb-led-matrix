@@ -1573,7 +1573,7 @@ public:
 	void Run() {
 		const int columns = matrix_->columns();
 		int pic_frame = 1;
-		int frames = file_count + 1;
+		int frames = file_count;
 		while (running_) {
 			LoadPPM(path);
 			if (image_ == NULL) {
