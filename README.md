@@ -1,19 +1,27 @@
-Controlling RGB LED display with Raspberry Pi GPIO
-==================================================
+Controlling a 32 x 32 RGB LED Matrix Panel with a Raspberry Pi and Android / iPhone
+===================================================================================
 
 This is mostly experimental code.
 
-Code is (c) Henner Zeller <h.zeller@acm.org>, and I grant you the permission
-to do whatever you want with it :)
+This code is based on the great work of Henner Zeller <h.zeller@acm.org>
+(https://github.com/hzeller/rpi-rgb-led-matrix and see also
+https://github.com/hzeller/rpi-matrix-pixelpusher) and tries to extend
+the possibilities of controlling a RGB Matrix. Moreover I got inspired by
+Adafruit (https://github.com/adafruit/RGB-matrix-Panel) and Matt Hill
+<matt@codebones.com> (https://github.com/mattdh666/rpi-led-matrix-panel).
+
+I want to make a Raspberry Pi version of the "Game Frame: The Art of Pixels"
+(https://www.kickstarter.com/projects/jerware/game-frame-the-art-of-pixels)
+and the "PIXEL: Interactive LED Art"
+(https://www.kickstarter.com/projects/alinke/pixel-interactive-led-art), because
+both projects are absolutely amazing. However I think the Raspberry Pi
+adds much possibilities to the RGB Matrix and I also favor the RPi.
 
 Overview
 --------
-The 32x32 RGB LED matrix panels can be scored at AdaFruit or eBay. If you are
-in China, I'd try to get them directly from some manufacturer or Taobao.
-They all seem to have the same standard interface, essentially controlling
-two banks of 16 rows (0..15 and 16..31). There are always two rows (n and n+16),
-that are controlled in parallel
-(These displays are also available in 32x16 - they just have one bank).
+I use a 32x32 RGB LED Matrix Panel from Sparkfun, which is smimilar to the
+Adafruit 32x32 RGB LED Matrix Panel, but a lot cheaper.These displays are
+also available in 32x16 - they just have one bank.
 
 The data for each row needs to be clocked in serially using one bit for red,
 green and blue for both rows that are controlled in parallel (= 6 bits), then
@@ -51,6 +59,7 @@ LED-Panel to GPIO with this code:
    * OE- (neg. Output enable) : GPIO 2
    * CLK (Serial clock) : GPIO 3
    * STR (Strobe row data) : GPIO 4
+   * GND (Ground, '-') to ground of your Raspberry Pi
 
 Running
 -------
@@ -60,14 +69,10 @@ GPIO pins can be accessed:
      $ make
      $ sudo ./led-matrix
 
-The most interesting one is probably the demo '1' which requires a ppm (type
-raw) with a height of 32 pixel - it is infinitely scrolled over the screen; for
-convenience, there is a little runtext.ppm example included:
+The most interesting one is probably the demo '6' which requires a (series of) ppm (type
+raw) with a height and width of 32 pixel; there are examples included (rain, Bubbles, glitter, nightdrive, tree, etc):
 
-     $ sudo ./led-matrix 1 runtext.ppm
-
-Here is a video of how it looks:
-<http://www.youtube.com/watch?v=OJvEWyvO4ro>
+     $ sudo ./led-matrix 6 rain
 
 Limitations
 -----------
@@ -76,10 +81,4 @@ now, I only get about 10Mhz clock speed which ultimately limits the smallest
 time constant for the PWM. Thus, only 7 bit PWM looks ok with not too much
 flicker.
 
-The output should be luminance ('gamma') corrected, but isn't currently
-in the code (this can be simply done in SetPixel(), but ideally, we have more
-PWM output resolution, such as 10 bits).
-
-Right now, I tested this with the default Linux distribution ("wheezy"). Because
-this does not have any realtime patches, the PWM can look a bit uneven under
-load. If you test this with realtime extensions, let me know how it works.
+I tested this with the latest version of Raspbian.

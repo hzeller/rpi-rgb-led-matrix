@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdio.h>
 
 #include "gpio.h"
 
@@ -54,23 +55,39 @@ static void sleep_nanos(long nanos) {
   }
 }
 
+static uint8_t luminance_curve(uint8_t c) {
+	if (c < 64) return c / 4;
+	if (c < 128) return ((c - 63) * 3 + 63) / 4;
+	return ((c - 127) * 6 + 255) / 4;
+}
+
 RGBMatrix::RGBMatrix(GPIO *io) : io_(io) {
   // Tell GPIO about all bits we intend to use.
   IoBits b;
-  b.raw = 0;
+  b.raw = 0; //Setzt alle IoBits auf 0
   b.bits.output_enable = b.bits.clock = b.bits.strobe = 1;
   b.bits.r1 = b.bits.g1 = b.bits.b1 = 1;
   b.bits.r2 = b.bits.g2 = b.bits.b2 = 1;
-  b.bits.row = 0xf;
+  b.bits.row = 0xf; //f = 15
   // Initialize outputs, make sure that all of these are supported bits.
+  //b.raw = 00000011110001100000011110011100
   const uint32_t result = io_->InitOutputs(b.raw);
-  assert(result == b.raw);
+  assert(result == b.raw);  //Prüft, ob die Aussage wahr ist
   assert(kPWMBits < 8);    // only up to 7 makes sense.
+  
+  for (int i = 0; i < 256; ++i) {
+	luminance_lut[i] = luminance_curve(i);
+  }
+
   ClearScreen();
 }
 
 void RGBMatrix::ClearScreen() {
-  memset(&bitplane_, 0, sizeof(bitplane_));
+  memset(&bitplane_, 0, sizeof(bitplane_)); //& stellt einen Verweis dar
+}
+
+void RGBMatrix::FillAll(uint8_t setze) {
+	memset(&bitplane_, setze, sizeof(bitplane_)); //& stellt einen Verweis dar
 }
 
 void RGBMatrix::FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
@@ -87,6 +104,10 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
   // TODO: re-map values to be luminance corrected (sometimes called 'gamma').
   // Ideally, we had like 10PWM bits for this, but we're too slow for that :/
   
+  red = luminance_lut[red];
+  green = luminance_lut[green];
+  blue = luminance_lut[blue];
+
   // Scale to the number of bit planes we actually have, so that MSB matches
   // MSB of PWM.
   red   >>= 8 - kPWMBits;
@@ -94,8 +115,8 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
   blue  >>= 8 - kPWMBits;
 
   for (int b = 0; b < kPWMBits; ++b) {
-    uint8_t mask = 1 << b;
-    IoBits *bits = &bitplane_[b].row[y & 0xf].column[x];
+    uint8_t mask = 1 << b; //Verschieben um PWM zu simulieren
+    IoBits *bits = &bitplane_[b].row[y & 0xf].column[x];  //Zeigt auf die Bits eines Pixels
     if (y < 16) {   // Upper sub-panel.
       bits->bits.r1 = (red & mask) == mask;
       bits->bits.g1 = (green & mask) == mask;
@@ -115,7 +136,7 @@ void RGBMatrix::UpdateScreen() {
   serial_mask.bits.clock = 1;
 
   IoBits row_mask;
-  row_mask.bits.row = 0xf;
+  row_mask.bits.row = 0xf; //0xf = 15
 
   IoBits clock, output_enable, strobe;    
   clock.bits.clock = 1;
@@ -147,9 +168,9 @@ void RGBMatrix::UpdateScreen() {
 
       row_bits.bits.row = row;
       io_->SetBits(row_bits.raw & row_mask.raw);
-      io_->ClearBits(~row_bits.raw & row_mask.raw);
+      io_->ClearBits(~row_bits.raw & row_mask.raw); //~ entspricht dem Gegenteil
 
-      io_->SetBits(strobe.raw);   // Strobe
+      io_->SetBits(strobe.raw);   // Strobe (Latch)
       io_->ClearBits(strobe.raw);
 
       // Now switch on for the given sleep time.
