@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*- */
 // Some experimental code.
 // (c) H. Zeller <h.zeller@acm.org>. License: do whatever you want with it :)
 //
@@ -149,11 +150,15 @@ void RGBMatrix::UpdateScreen() {
       //
       // However, in particular for longer chaining, it seems we need some more
       // wait time to settle.
+      const long kIOStabilizeWaitNanos = 5;
       for (uint8_t col = 0; col < kColumns; ++col) {
         const IoBits &out = rowdata.column[col];
         io_->ClearBits(~out.raw & serial_mask.raw);  // also: resets clock.
+        sleep_nanos(kIOStabilizeWaitNanos);
         io_->SetBits(out.raw & serial_mask.raw);
+        sleep_nanos(kIOStabilizeWaitNanos);
         io_->SetBits(clock.raw);
+        sleep_nanos(kIOStabilizeWaitNanos);
       }
 
       io_->SetBits(output_enable.raw);  // switch off while strobe.
