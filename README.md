@@ -94,5 +94,5 @@ data to the GPIO pins than doing it directly. So even if offloading this
 task to the DMA controller would improve the realtime-ness, it is too slow for
 any meaningful disply.
 
-[hub75]: https://github.com/hzeller/rpi-rgb-matrix/raw/master/img/hub75.jpg
+[hub75]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/hub75.jpg
 
