@@ -53,6 +53,9 @@ LED-Panel to GPIO with this code:
    * CLK (Serial clock) : GPIO 3
    * STR (Strobe row data) : GPIO 4
 
+This is the typical pinout on these LED panels
+![Hub 75 interface][hub75]
+
 Running
 -------
 The main.cc has some testing demos. You need to run this as root so that the
@@ -85,8 +88,11 @@ Right now, I tested this with the default Linux distribution ("wheezy"). Because
 this does not have any realtime patches, the PWM can look a bit uneven under
 load. If you test this with realtime extensions, let me know how it works.
 
-One of the next steps: actually make the DMA controller in the RPi do the work
-of sending stuff in a timely manner to the GPIO ports, just setting up the
-sequence in memory. Advantages: much less realtime capabilities needed and
-essentially no main-CPU needed, more time to do other things, such as generating
-the graphics to be displayed.
+One experiment was to use the DMA controller of the RPi to circumvent the
+realtime problems. However, it turns out that the DMA controller slower writing
+data to the GPIO pins than doing it directly. So even if offloading this
+task to the DMA controller would improve the realtime-ness, it is too slow for
+any meaningful disply.
+
+[hub75]: https://github.com/hzeller/rpi-rgb-matrix/raw/master/img/hub75.jpg
+
