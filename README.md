@@ -58,17 +58,37 @@ This is the typical pinout on these LED panels
 
 Running
 -------
-The main.cc has some testing demos. You need to run this as root so that the
-GPIO pins can be accessed:
+The main.cc has some testing demos.
+
 
      $ make
-     $ sudo ./led-matrix
+     $ ./led-matrix
+     usage: ./led-matrix <options> -D <demo-nr> [optional parameter]
+     Options:
+             -D <demo-nr>  : Always needs to be set
+             -d            : run as daemon. Use this when starting in
+                             /etc/init.d, but also when running without
+                             terminal.
+             -t <seconds>  : Run for these number of seconds, then exit
+                    (if neither -d nor -t are supplied, waits for <RETURN>)
+     Demos, choosen with -D
+             0  - some rotating square
+             1  - forward scrolling an image
+             2  - backward scrolling an image
+             3  - test image: a square
+             4  - Pulsing color
+     Example:
+             ./led-matrix -d -t 10 -D 1 runtext.ppm
+     Scrolls the runtext for 10 seconds
+
+To run the actual demos, you need to run this as root so that the
+GPIO pins can be accessed.
 
 The most interesting one is probably the demo '1' which requires a ppm (type
 raw) with a height of 32 pixel - it is infinitely scrolled over the screen; for
 convenience, there is a little runtext.ppm example included:
 
-     $ sudo ./led-matrix 1 runtext.ppm
+     $ sudo ./led-matrix -D 1 runtext.ppm
 
 Here is a video of how it looks:
 <http://www.youtube.com/watch?v=OJvEWyvO4ro>

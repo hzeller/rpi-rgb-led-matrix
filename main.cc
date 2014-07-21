@@ -253,11 +253,11 @@ static int usage(const char *progname) {
           progname);
   fprintf(stderr, "Options:\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
-          "\t-d            : run as daemon. Use this when starting in "
-          "\t/etc/init.d, but also when running without\n"
-          "\tterminal such as in cron\n"
+          "\t-d            : run as daemon. Use this when starting in\n"
+          "\t                /etc/init.d, but also when running without\n"
+          "\t                terminal.\n"
           "\t-t <seconds>  : Run for these number of seconds, then exit\n"
-          "\t       (if neither -d nor -t are supplied, waits for <RETURN>\n");
+          "\t       (if neither -d nor -t are supplied, waits for <RETURN>)\n");
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image\n"
