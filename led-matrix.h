@@ -13,8 +13,8 @@ public:
   void ClearScreen();
   void FillScreen(uint8_t red, uint8_t green, uint8_t blue);
 
-  int width() const { return kColumns; }
-  int height() const { return kDisplayRows; }
+  inline int width() const { return kColumns; }
+  inline int height() const { return kDisplayRows; }
   void SetPixel(uint8_t x, uint8_t y,
                 uint8_t red, uint8_t green, uint8_t blue);
 
@@ -49,10 +49,12 @@ private:
     //
     // Sometimes, 16x32 boards actually might not have 2x8, but 1x16, which
     // means 1:16 multiplexing for that as well. In that case, remove the '/ 2'.
+    // Rarely needed.
     kDoubleRows = kDisplayRows / 2,  // Calculated constant.
 
-    // Calculated constant that you probably don't want to change.
+    // Calculated constants that you probably don't want to change.
     kColumns = kChainedBoards * 32,
+    kRowMask = kDoubleRows - 1
   };
 
   union IoBits {
