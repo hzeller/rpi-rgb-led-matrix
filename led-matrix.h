@@ -29,7 +29,7 @@ private:
   enum {
     // Displays typically come in (rows x columns) = 16x32 or 32x32
     // configuration. Set number of rows in your display here, so 16 or 32.
-    kDisplayRows = 32,   // Either 32 or 16
+    kDisplayRows = 32,
 
     // You can chain the output of one board to the input of the next board.
     // That increases the total number of columns you can display. With only
