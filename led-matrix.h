@@ -27,8 +27,10 @@ private:
   friend class UpdateThread;
 
   // Updates the screen, connected to the GPIO pins, once.
-  // Call this in a continous loop in some realtime
-  // thread.
+  // (If you were calling this before as public method in a thread to
+  //  update the screen: this is not necessary anymore. The RGBMatrix does
+  //  this now by itself already. You can get rid of that thread. Sorry for the
+  //  API-change inconvenience).
   void UpdateScreen();
 
   GPIO *const io_;
