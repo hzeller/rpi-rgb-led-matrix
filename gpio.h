@@ -22,12 +22,12 @@ class GPIO {
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(uint32_t value) {
-    *(gpio_port_ + 7) = value;
+    gpio_port_[0x1C / sizeof(uint32_t)] = value;
   }
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   inline void ClearBits(uint32_t value) {
-    *(gpio_port_ + 10) = value;
+    gpio_port_[0x28 / sizeof(uint32_t)] = value;
   }
 
   inline void Write(uint32_t value) {

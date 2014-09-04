@@ -1,11 +1,17 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+
 #include "thread.h"
 #include "led-matrix.h"
 
 #include <assert.h>
-#include <unistd.h>
+#include <getopt.h>
+#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include <algorithm>
 
 using std::min;
@@ -48,11 +54,10 @@ public:
     const int height = matrix_->height();
     uint32_t count = 0;
     while (running_) {
-      usleep(5000);
+      sleep(2);
       ++count;
-      int color = (count >> 9) % 6;
-      int value = count & 0xFF;
-      if (count & 0x100) value = 255 - value;
+      int color = count % 6;
+      int value = 0xff;
       int r, g, b;
       switch (color) {
       case 0: r = value; g = b = 0; break;
@@ -153,8 +158,9 @@ private:
 
 class ImageScroller : public RGBMatrixManipulator {
 public:
-  ImageScroller(RGBMatrix *m)
-    : RGBMatrixManipulator(m), image_(NULL), horizontal_position_(0) {
+  ImageScroller(RGBMatrix *m, int scroll_jumps)
+    : RGBMatrixManipulator(m), scroll_jumps_(scroll_jumps),
+      image_(NULL), horizontal_position_(0) {
   }
 
   // _very_ simplified. Can only read binary P6 PPM. Expects newlines in headers
@@ -188,7 +194,7 @@ public:
     }
 #undef EXIT_WITH_MSG
     fclose(f);
-    fprintf(stderr, "Read image with %dx%d\n", width_, height_);
+    fprintf(stderr, "Read image '%s' with %dx%d\n", filename, width_, height_);
     horizontal_position_ = 0;
     return true;
   }
@@ -205,13 +211,11 @@ public:
       for (int x = 0; x < screen_width; ++x) {
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = getPixel((horizontal_position_ + x) % width_, y);
-          // Display upside down on my desk. Lets flip :)
-          int disp_x = screen_width - x;
-          int disp_y = screen_height - y;
-          matrix_->SetPixel(disp_x, disp_y, p.red, p.green, p.blue);
+          matrix_->SetPixel(x, y, p.red, p.green, p.blue);
         }
       }
-      ++horizontal_position_;
+      horizontal_position_ += scroll_jumps_;
+      if (horizontal_position_ < 0) horizontal_position_ = width_;
     }
   }
 
@@ -237,25 +241,93 @@ private:
     return image_[x + width_ * y];
   }
 
+  const int scroll_jumps_;
   int width_;
   int height_;
   Pixel *image_;
-  uint32_t horizontal_position_;
+  int32_t horizontal_position_;
 };
 
+static int usage(const char *progname) {
+  fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
+          progname);
+  fprintf(stderr, "Options:\n"
+          "\t-D <demo-nr>  : Always needs to be set\n"
+          "\t-d            : run as daemon. Use this when starting in\n"
+          "\t                /etc/init.d, but also when running without\n"
+          "\t                terminal.\n"
+          "\t-t <seconds>  : Run for these number of seconds, then exit\n"
+          "\t       (if neither -d nor -t are supplied, waits for <RETURN>)\n");
+  fprintf(stderr, "Demos, choosen with -D\n");
+  fprintf(stderr, "\t0  - some rotating square\n"
+          "\t1  - forward scrolling an image\n"
+          "\t2  - backward scrolling an image\n"
+          "\t3  - test image: a square\n"
+          "\t4  - Pulsing color\n");
+  fprintf(stderr, "Example:\n\t%s -t 10 -D 1 runtext.ppm\n"
+          "Scrolls the runtext for 10 seconds\n", progname);
+  return 1;
+}
+
 int main(int argc, char *argv[]) {
-  int demo = 0;
-  if (argc > 1) {
-    demo = atoi(argv[1]);
+  bool as_daemon = false;
+  int runtime_seconds = -1;
+  int demo = -1;
+  const char *demo_parameter = NULL;
+
+  int opt;
+  while ((opt = getopt(argc, argv, "D:t:d")) != -1) {
+    switch (opt) {
+    case 'D':
+      demo = atoi(optarg);
+      break;
+
+    case 'd':
+      as_daemon = true;
+      break;
+
+    case 't':
+      runtime_seconds = atoi(optarg);
+      break;
+
+    default: /* '?' */
+      return usage(argv[0]);
+    }
   }
-  fprintf(stderr, "Using demo %d\n", demo);
+
+  if (optind < argc) {
+    demo_parameter = argv[optind];
+  }
+
+  if (demo < 0) {
+    fprintf(stderr, "Expect required option -D <demo>\n");
+    return usage(argv[0]);
+  }
+
+  if (getuid() != 0) {
+    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
+            "Prepend 'sudo' to the command:\n\tsudo %s ...\n",
+            argv[0]);
+    return 1;
+  }
+    
+  if (as_daemon) {
+    if (fork() != 0)
+      return 0;
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+  }
 
   GPIO io;
   if (!io.Init())
     return 1;
 
+  // The matrix, our 'frame buffer'.
   RGBMatrix m(&io);
     
+  // The RGBMatrixManipulator objects are filling
+  // the matrix continuously.
   RGBMatrixManipulator *image_gen = NULL;
   switch (demo) {
   case 0:
@@ -263,37 +335,46 @@ int main(int argc, char *argv[]) {
     break;
 
   case 1:
-    if (argc > 2) {
-      ImageScroller *scroller = new ImageScroller(&m);
-      if (!scroller->LoadPPM(argv[2]))
+  case 2:
+    if (demo_parameter) {
+      ImageScroller *scroller = new ImageScroller(&m, demo == 1 ? 1 : -1);
+      if (!scroller->LoadPPM(demo_parameter))
         return 1;
       image_gen = scroller;
     } else {
-      fprintf(stderr, "Demo %d Requires PPM image as parameter", demo);
+      fprintf(stderr, "Demo %d Requires PPM image as parameter\n", demo);
       return 1;
     }
     break;
 
-  case 2:
+  case 3:
     image_gen = new SimpleSquare(&m);
     break;
 
-  default:
+  case 4:
     image_gen = new ColorPulseGenerator(&m);
     break;
   }
 
   if (image_gen == NULL)
-    return 1;
+    return usage(argv[0]);
 
+  // the DisplayUpdater continuously pushes the matrix
+  // content to the display.
   RGBMatrixManipulator *updater = new DisplayUpdater(&m);
-  updater->Start(10);  // high priority
+  updater->Start(10);   // high priority
 
   image_gen->Start();
 
-  // Things are set up. Just wait for <RETURN> to be pressed.
-  printf("Press <RETURN> to exit and reset LEDs\n");
-  getchar();
+  if (as_daemon) {
+    sleep(runtime_seconds > 0 ? runtime_seconds : INT_MAX);
+  } else if (runtime_seconds > 0) {
+    sleep(runtime_seconds);
+  } else {
+    // Things are set up. Just wait for <RETURN> to be pressed.
+    printf("Press <RETURN> to exit and reset LEDs\n");
+    getchar();
+  }
 
   // Stopping threads and wait for them to join.
   delete image_gen;

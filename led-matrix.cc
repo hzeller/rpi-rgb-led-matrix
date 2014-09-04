@@ -152,7 +152,7 @@ void RGBMatrix::UpdateScreen() {
       //
       // However, in particular for longer chaining, it seems we need some more
       // wait time to settle.
-      const long kIOStabilizeWaitNanos = 256;
+      const long kIOStabilizeWaitNanos = 5;
       for (uint8_t col = 0; col < kColumns; ++col) {
         const IoBits &out = rowdata.column[col];
         io_->ClearBits(~out.raw & serial_mask.raw);  // also: resets clock.
