@@ -59,6 +59,29 @@ LED-Panel to GPIO with this code:
 This is the typical pinout on these LED panels
 ![Hub 75 interface][hub75]
 
+Configuration
+-------------
+The default settings are for a single 32x32 display. If you have different
+settings, such as a 16x32 display or multiple displays chained, you can change
+these constants in `led-matrix.h`
+
+     // Displays typically come in (rows x columns) = 16x32 or 32x32
+     // configuration. Set number of rows in your display here, so 16 or 32.
+     kDisplayRows = 32   // Either 32 or 16
+
+     // You can chain the output of one board to the input of the next board.
+     // That increases the total number of columns you can display. With only
+     // one board, this is 1.
+     kChainedBoards = 1
+
+     // Maximum PWM resolution. The number of gray-values you can display per
+     // color is 2^kPWMBits, so 4 -> 16 gray values (=> 16*16*16 = 4096 colors )
+     // Higher values up to 7 are possible, but things get sluggish with slower
+     // refresh rate.
+     kPWMBits = 4
+
+After changing these settings, you need to recompile.
+
 Running
 -------
 The main.cc has some testing demos.
