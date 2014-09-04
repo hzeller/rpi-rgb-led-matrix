@@ -12,9 +12,9 @@
 //
 // Extend it, then just implement Run(). Example:
 /*
-  class MyCrazyDemo : public RGBMatrixManipulator {
+  class MyCrazyDemo : public ThreadedMatrixManipulator {
   public:
-    MyCrazyDemo(RGBMatrix *m) : RGBMatrixManipulator(m) {}
+    MyCrazyDemo(RGBMatrix *m) : ThreadedMatrixManipulator(m) {}
     virtual void Run() {
       unsigned char c;
       while (running_) {
@@ -22,7 +22,7 @@
           c++;
           for (int x = 0; x < matrix_->width(); ++x) {
             for (int y = 0; y < matrix_->height(); ++y) {
-              matrix_->SetPixel(c, c, c);
+              matrix_->SetPixel(x, y, c, c, c);
             }
           }
           usleep(15 * 1000);
