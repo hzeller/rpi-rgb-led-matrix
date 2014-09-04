@@ -1,4 +1,4 @@
-
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 #include "gpio.h"
 
 #define BCM2708_PERI_BASE        0x20000000

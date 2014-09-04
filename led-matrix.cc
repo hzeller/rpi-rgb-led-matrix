@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 // Some experimental code.
 // (c) H. Zeller <h.zeller@acm.org>. License: do whatever you want with it :)
 //
@@ -85,6 +86,7 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
                          uint8_t red, uint8_t green, uint8_t blue) {
   if (x >= width() || y >= height()) return;
 
+#if 0
   // My setup: having four panels connected  [>] [>]
   //                                                 v
   //                                         [<] [<]
@@ -94,7 +96,8 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
     x = 127 - x;
     y = 63 - y;
   }
-  
+#endif
+
   // TODO: re-map values to be luminance corrected (sometimes called 'gamma').
   // Ideally, we had like 10PWM bits for this, but we're too slow for that :/
   
@@ -107,7 +110,7 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
   for (int b = 0; b < kPWMBits; ++b) {
     uint8_t mask = 1 << b;
     IoBits *bits = &bitplane_[b].row[y & 0xf].column[x];
-    if (y < 16) {   // Upper sub-panel.
+    if (y < kDoubleRows) {   // Upper sub-panel.
       bits->bits.r1 = (red & mask) == mask;
       bits->bits.g1 = (green & mask) == mask;
       bits->bits.b1 = (blue & mask) == mask;

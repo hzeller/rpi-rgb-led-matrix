@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 #ifndef RPI_GPIO_H
 #define RPI_GPIO_H
 

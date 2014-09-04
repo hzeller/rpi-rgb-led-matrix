@@ -1,5 +1,4 @@
-// -*- c++ -*-
-
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 #ifndef RPI_THREAD_H
 #define RPI_THREAD_H
 #include <pthread.h>

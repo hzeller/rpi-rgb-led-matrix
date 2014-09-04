@@ -1,4 +1,4 @@
-// -*- c++ -*-
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 // Controlling a 32x32 RGB matrix via GPIO.
 
 #ifndef RPI_RGBMATRIX_H
@@ -8,16 +8,13 @@
 #include "gpio.h"
 
 class RGBMatrix {
- public:
+public:
   RGBMatrix(GPIO *io);
   void ClearScreen();
   void FillScreen(uint8_t red, uint8_t green, uint8_t blue);
 
-  // Here the set-up  [>] [>]
-  //                         v
-  //                  [<] [<]   ... so column 65..127 are backwards.
-  int width() const { return 64; }
-  int height() const { return 64; }
+  int width() const { return kColumns; }
+  int height() const { return kDisplayRows; }
   void SetPixel(uint8_t x, uint8_t y,
                 uint8_t red, uint8_t green, uint8_t blue);
 
@@ -25,19 +22,42 @@ class RGBMatrix {
   // thread.
   void UpdateScreen();
 
-
 private:
   GPIO *const io_;
 
+  // Configuration settings.
   enum {
-    kDoubleRows = 16,     // Physical constant of the used board.
-    kChainedBoards = 4,   // Number of boards that are daisy-chained.
+    // Displays typically come in (rows x columns) = 16x32 or 32x32
+    // configuration. Set number of rows in your display here, so 16 or 32.
+    kDisplayRows = 32,
+
+    // You can chain the output of one board to the input of the next board.
+    // That increases the total number of columns you can display. With only
+    // one board, this is 1.
+    kChainedBoards = 1,
+
+    // Maximum PWM resolution. The number of gray-values you can display
+    // per color is 2^kPWMBits, so 4 -> 16 gray values (= 16*16*16 = 4096 colors)
+    // Higher values up to 7 are possible, but things get sluggish with slower
+    // refresh rate.
+    kPWMBits = 4,
+
+    // Usually, the display is divided in two parts, so the 16x32 display are
+    // actually 2x8 rows that are filled in parallel; the 32x32 board are 2x16
+    // rows. This is usually given in the datasheet as 1:8 or 1:16 multiplexing.
+    // These 'double rows' are what this is.
+    //
+    // Sometimes, 16x32 boards actually might not have 2x8, but 1x16, which
+    // means 1:16 multiplexing for that as well. In that case, remove the '/ 2'.
+    kDoubleRows = kDisplayRows / 2,  // Calculated constant.
+
+    // Calculated constant that you probably don't want to change.
     kColumns = kChainedBoards * 32,
-    kPWMBits = 4          // maximum PWM resolution.
   };
 
   union IoBits {
     struct {
+      // These reflect the GPIO mapping.
       unsigned int unused1 : 2;  // 0..1
       unsigned int output_enable : 1;  // 2
       unsigned int clock  : 1;   // 3
@@ -68,5 +88,4 @@ private:
 
   Screen bitplane_[kPWMBits];
 };
-
 #endif  // RPI_RGBMATRIX_H

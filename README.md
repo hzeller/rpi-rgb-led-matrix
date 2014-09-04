@@ -8,12 +8,14 @@ to do whatever you want with it :)
 
 Overview
 --------
-The 32x32 RGB LED matrix panels can be scored at AdaFruit or eBay. If you are
-in China, I'd try to get them directly from some manufacturer or Taobao.
+The 32x32 or 16x32 RGB LED matrix panels can be scored at AdaFruit or eBay.
+If you are in China, I'd try to get them directly from some manufacturer or
+Taobao.
 They all seem to have the same standard interface, essentially controlling
-two banks of 16 rows (0..15 and 16..31). There are always two rows (n and n+16),
+two banks of 16 rows (0..15 and 16..31) There are always two rows (n and n+16),
 that are controlled in parallel
-(These displays are also available in 32x16 - they just have one bank).
+(These displays are also available in 16x32 - they just have one bank of 16 or
+two banks of 8)
 
 The data for each row needs to be clocked in serially using one bit for red,
 green and blue for both rows that are controlled in parallel (= 6 bits), then
@@ -48,7 +50,8 @@ LED-Panel to GPIO with this code:
    * R2 (Red 2nd bank)   : GPIO 23
    * G2 (Green 2nd bank) : GPIO 24
    * B2 (Blue 2nd bank)  : GPIO 25
-   * A, B, C, D (Row address) : GPIO 7, 8, 9, 10
+   * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (There is no `D` needed if you
+	   have a display with 16 rows with 1:8 multiplexing)
    * OE- (neg. Output enable) : GPIO 2
    * CLK (Serial clock) : GPIO 3
    * STR (Strobe row data) : GPIO 4
@@ -92,7 +95,7 @@ One experiment was to use the DMA controller of the RPi to circumvent the
 realtime problems. However, it turns out that the DMA controller slower writing
 data to the GPIO pins than doing it directly. So even if offloading this
 task to the DMA controller would improve the realtime-ness, it is too slow for
-any meaningful disply.
+any meaningful display.
 
 [hub75]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/hub75.jpg
 
