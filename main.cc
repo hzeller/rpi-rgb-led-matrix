@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 
-#include "thread.h"
 #include "led-matrix.h"
+#include "threaded-matrix-manipulator.h"
 
 #include <assert.h>
 #include <getopt.h>
@@ -17,38 +17,15 @@
 using std::min;
 using std::max;
 
-// Base-class for a Thread that does something with a matrix.
-class RGBMatrixManipulator : public Thread {
-public:
-  RGBMatrixManipulator(RGBMatrix *m) : running_(true), matrix_(m) {}
-  virtual ~RGBMatrixManipulator() { running_ = false; }
-
-  // Run() implementation needs to check running_ regularly.
-
-protected:
-  volatile bool running_;  // TODO: use mutex, but this is good enough for now.
-  RGBMatrix *const matrix_;
-};
-
-// Pump pixels to screen. Needs to be high priority real-time because jitter
-// here will make the PWM uneven.
-class DisplayUpdater : public RGBMatrixManipulator {
-public:
-  DisplayUpdater(RGBMatrix *m) : RGBMatrixManipulator(m) {}
-
-  void Run() {
-    while (running_) {
-      matrix_->UpdateScreen();
-    }
-  }
-};
-
-// -- The following are demo image generators.
+/*
+ * The following are demo image generators. They all use the utility
+ * class ThreadedMatrixManipulator to generate new frames.
+ */
 
 // Simple generator that pulses through RGB and White.
-class ColorPulseGenerator : public RGBMatrixManipulator {
+class ColorPulseGenerator : public ThreadedMatrixManipulator {
 public:
-  ColorPulseGenerator(RGBMatrix *m) : RGBMatrixManipulator(m) {}
+  ColorPulseGenerator(RGBMatrix *m) : ThreadedMatrixManipulator(m) {}
   void Run() {
     const int width = matrix_->width();
     const int height = matrix_->height();
@@ -74,9 +51,9 @@ public:
   }
 };
 
-class SimpleSquare : public RGBMatrixManipulator {
+class SimpleSquare : public ThreadedMatrixManipulator {
 public:
-  SimpleSquare(RGBMatrix *m) : RGBMatrixManipulator(m) {}
+  SimpleSquare(RGBMatrix *m) : ThreadedMatrixManipulator(m) {}
   void Run() {
     const int width = matrix_->width();
     const int height = matrix_->height();
@@ -97,9 +74,9 @@ public:
 };
 
 // Simple class that generates a rotating block on the screen.
-class RotatingBlockGenerator : public RGBMatrixManipulator {
+class RotatingBlockGenerator : public ThreadedMatrixManipulator {
 public:
-  RotatingBlockGenerator(RGBMatrix *m) : RGBMatrixManipulator(m) {}
+  RotatingBlockGenerator(RGBMatrix *m) : ThreadedMatrixManipulator(m) {}
 
   uint8_t scale_col(int val, int lo, int hi) {
     if (val < lo) return 0;
@@ -157,10 +134,10 @@ private:
   }
 };
 
-class ImageScroller : public RGBMatrixManipulator {
+class ImageScroller : public ThreadedMatrixManipulator {
 public:
   ImageScroller(RGBMatrix *m, int scroll_jumps)
-    : RGBMatrixManipulator(m), scroll_jumps_(scroll_jumps),
+    : ThreadedMatrixManipulator(m), scroll_jumps_(scroll_jumps),
       image_(NULL), horizontal_position_(0) {
   }
 
@@ -311,7 +288,13 @@ int main(int argc, char *argv[]) {
             argv[0]);
     return 1;
   }
-    
+
+  // Initialize GPIO pins. This might fail when we don't have permissions.
+  GPIO io;
+  if (!io.Init())
+    return 1;
+  
+  // Start daemon before we start any threads.
   if (as_daemon) {
     if (fork() != 0)
       return 0;
@@ -320,16 +303,12 @@ int main(int argc, char *argv[]) {
     close(STDERR_FILENO);
   }
 
-  GPIO io;
-  if (!io.Init())
-    return 1;
-
-  // The matrix, our 'frame buffer'.
+  // The matrix, our 'frame buffer' and display updater.
   RGBMatrix m(&io);
     
-  // The RGBMatrixManipulator objects are filling
+  // The ThreadedMatrixManipulator objects are filling
   // the matrix continuously.
-  RGBMatrixManipulator *image_gen = NULL;
+  ThreadedMatrixManipulator *image_gen = NULL;
   switch (demo) {
   case 0:
     image_gen = new RotatingBlockGenerator(&m);
@@ -360,13 +339,12 @@ int main(int argc, char *argv[]) {
   if (image_gen == NULL)
     return usage(argv[0]);
 
-  // the DisplayUpdater continuously pushes the matrix
-  // content to the display.
-  RGBMatrixManipulator *updater = new DisplayUpdater(&m);
-  updater->Start(10);   // high priority
-
+  // Image generating demo is crated. Now start the thread.
   image_gen->Start();
 
+  // Now, the image genreation runs in the background. We can do arbitrary
+  // things here in parallel. In this demo, we're essentially just
+  // waiting for one of the conditions to exit.
   if (as_daemon) {
     sleep(runtime_seconds > 0 ? runtime_seconds : INT_MAX);
   } else if (runtime_seconds > 0) {
@@ -377,14 +355,8 @@ int main(int argc, char *argv[]) {
     getchar();
   }
 
-  // Stopping threads and wait for them to join.
+  // Stop image generating thread.
   delete image_gen;
-  delete updater;
-
-  // Final thing before exit: clear screen and update once, so that
-  // we don't have random pixels burn
-  m.ClearScreen();
-  m.UpdateScreen();
 
   return 0;
 }

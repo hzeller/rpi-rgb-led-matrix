@@ -7,9 +7,13 @@
 #include <stdint.h>
 #include "gpio.h"
 
+// The RGB matrix provides the framebuffer and the facilities to constantly
+// update the LED matrix.
 class RGBMatrix {
 public:
   RGBMatrix(GPIO *io);
+  ~RGBMatrix();
+
   void ClearScreen();
   void FillScreen(uint8_t red, uint8_t green, uint8_t blue);
 
@@ -18,12 +22,17 @@ public:
   void SetPixel(uint8_t x, uint8_t y,
                 uint8_t red, uint8_t green, uint8_t blue);
 
-  // Updates the screen once. Call this in a continous loop in some realtime
+private:
+  class UpdateThread;
+  friend class UpdateThread;
+
+  // Updates the screen, connected to the GPIO pins, once.
+  // Call this in a continous loop in some realtime
   // thread.
   void UpdateScreen();
 
-private:
   GPIO *const io_;
+  UpdateThread *updater_;
 
   // Configuration settings.
   enum {

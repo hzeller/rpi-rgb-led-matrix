@@ -15,6 +15,7 @@
 #include <time.h>
 
 #include "gpio.h"
+#include "threaded-matrix-manipulator.h"
 
 // Clocking in a row takes about 3.4usec (TODO: this is actually per board)
 // Because clocking the data in is part of the 'wait time', we need to
@@ -55,7 +56,23 @@ static void sleep_nanos(long nanos) {
   }
 }
 
-RGBMatrix::RGBMatrix(GPIO *io) : io_(io) {
+// Pump pixels to screen. Needs to be high priority real-time because jitter
+class RGBMatrix::UpdateThread : public ThreadedMatrixManipulator {
+public:
+  UpdateThread(RGBMatrix *matrix) : ThreadedMatrixManipulator(matrix) {}
+
+  virtual void Run() {
+    while (running_) {
+      matrix_->UpdateScreen();
+    }
+
+    // Make sure the screen is clean and no glaring pixels in the end.
+    matrix_->ClearScreen();
+    matrix_->UpdateScreen();
+  }
+};
+
+RGBMatrix::RGBMatrix(GPIO *io) : io_(io), updater_(NULL) {
   // Tell GPIO about all bits we intend to use.
   IoBits b;
   b.raw = 0;
@@ -68,6 +85,12 @@ RGBMatrix::RGBMatrix(GPIO *io) : io_(io) {
   assert(result == b.raw);
   assert(kPWMBits < 8);    // only up to 7 makes sense.
   ClearScreen();
+  updater_ = new UpdateThread(this);
+  updater_->Start(10);
+}
+
+RGBMatrix::~RGBMatrix() {
+  delete updater_;
 }
 
 void RGBMatrix::ClearScreen() {
