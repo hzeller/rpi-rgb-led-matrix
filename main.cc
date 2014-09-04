@@ -112,7 +112,8 @@ public:
     const int cent_y = matrix_->height() / 2;
 
     // The square to rotate (inner square + black frame) needs to cover the
-    // whole area, even if diagnoal.
+    // whole area, even if diagnoal. Thus, when rotating, the outer pixels from
+    // the previous frame are cleared.
     const int rotate_square = min(matrix_->width(), matrix_->height()) * 1.41;
     const int min_rotate = cent_x - rotate_square / 2;
     const int max_rotate = cent_x + rotate_square / 2;
@@ -131,7 +132,7 @@ public:
       for (int x = min_rotate; x < max_rotate; ++x) {
         for (int y = min_rotate; y < max_rotate; ++y) {
           float disp_x, disp_y;
-          Rotate(x - cent_x, y - cent_y,
+          Rotate(x - cent_x, y - cent_x,
                  deg_to_rad * rotation, &disp_x, &disp_y);
           if (x >= min_display && x < max_display &&
               y >= min_display && y < max_display) { // within display square
