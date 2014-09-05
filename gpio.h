@@ -30,12 +30,15 @@ class GPIO {
     gpio_port_[0x28 / sizeof(uint32_t)] = value;
   }
 
-  inline void Write(uint32_t value) {
+  // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
+  inline void WriteMaskedBits(uint32_t value, uint32_t mask) {
     // Writing a word is two operations. The IO is actually pretty slow, so
     // this should probably  be unnoticable.
-    SetBits(value & output_bits_);
-    ClearBits(~value & output_bits_);
+    ClearBits(~value & mask);
+    SetBits(value & mask);
   }
+
+  inline void Write(uint32_t value) { WriteMaskedBits(value, output_bits_); }
 
  private:
   uint32_t output_bits_;

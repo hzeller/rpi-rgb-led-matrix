@@ -11,60 +11,43 @@
 // update the LED matrix.
 class RGBMatrix {
 public:
-  RGBMatrix(GPIO *io);
+  RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1);
   ~RGBMatrix();
 
   void ClearScreen();
   void FillScreen(uint8_t red, uint8_t green, uint8_t blue);
 
-  inline int width() const { return kColumns; }
-  inline int height() const { return kDisplayRows; }
+  inline int width() const { return columns_; }
+  inline int height() const { return rows_; }
   void SetPixel(uint8_t x, uint8_t y,
                 uint8_t red, uint8_t green, uint8_t blue);
+
+  // Some value between 1..7. Returns boolean to signify if value was within
+  // range.
+  bool SetPWMBits(uint8_t value);
+  uint8_t pwmbits() { return pwm_bits_; }
 
 private:
   class UpdateThread;
   friend class UpdateThread;
 
   // Updates the screen, connected to the GPIO pins, once.
-  // Call this in a continous loop in some realtime
-  // thread.
+  // (If you were calling this before as public method in a thread to
+  //  update the screen: this is not necessary anymore. The RGBMatrix does
+  //  this now by itself already. You can get rid of that thread. Sorry for the
+  //  API-change inconvenience).
   void UpdateScreen();
+
+  const int rows_;     // Number of rows. 16 or 32.
+  const int columns_;  // Number of columns. Number of chained boards * 32.
+
+  uint8_t pwm_bits_;   // PWM bits to display.
+
+  const int double_rows_;
+  const uint8_t row_mask_;
 
   GPIO *const io_;
   UpdateThread *updater_;
-
-  // Configuration settings.
-  enum {
-    // Displays typically come in (rows x columns) = 16x32 or 32x32
-    // configuration. Set number of rows in your display here, so 16 or 32.
-    kDisplayRows = 32,
-
-    // You can chain the output of one board to the input of the next board.
-    // That increases the total number of columns you can display. With only
-    // one board, this is 1.
-    kChainedBoards = 1,
-
-    // Maximum PWM resolution. The number of gray-values you can display
-    // per color is 2^kPWMBits, so 4 -> 16 gray values (= 16*16*16 = 4096 colors)
-    // Higher values up to 7 are possible, but things get sluggish with slower
-    // refresh rate.
-    kPWMBits = 4,
-
-    // Usually, the display is divided in two parts, so the 16x32 display are
-    // actually 2x8 rows that are filled in parallel; the 32x32 board are 2x16
-    // rows. This is usually given in the datasheet as 1:8 or 1:16 multiplexing.
-    // These 'double rows' are what this is.
-    //
-    // Sometimes, 16x32 boards actually might not have 2x8, but 1x16, which
-    // means 1:16 multiplexing for that as well. In that case, remove the '/ 2'.
-    // Rarely needed.
-    kDoubleRows = kDisplayRows / 2,  // Calculated constant.
-
-    // Calculated constants that you probably don't want to change.
-    kColumns = kChainedBoards * 32,
-    kRowMask = kDoubleRows - 1
-  };
 
   union IoBits {
     struct {
@@ -87,16 +70,14 @@ private:
     uint32_t raw;
     IoBits() : raw(0) {}
   };
-
-  // A double row represents row n and n+16. The physical layout of the
-  // 32x32 RGB is two sub-panels with 32 columns and 16 rows.
-  struct DoubleRow {
-    IoBits column[kColumns];  // only color bits are set
-  };
-  struct Screen {
-    DoubleRow row[kDoubleRows];
-  };
-
-  Screen bitplane_[kPWMBits];
+ 
+  // The frame-buffer is organized in bitplanes.
+  // Highest level (slowest to cycle through) are double rows.
+  // For each double-row, we store pwm-bits columns of a bitplane.
+  // Each bitplane-column is pre-filled IoBits, of which the colors are set.
+  // Of course, that means that we store unrelated bits in the frame-buffer,
+  // but it allows easy access in the critical section.
+  IoBits *bitplane_framebuffer_;
+  inline IoBits *ValueAt(int double_row, int column, int bit);
 };
 #endif  // RPI_RGBMATRIX_H

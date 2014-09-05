@@ -59,52 +59,34 @@ LED-Panel to GPIO with this code:
 This is the typical pinout on these LED panels
 ![Hub 75 interface][hub75]
 
-Configuration
--------------
-The default settings are for a single 32x32 display. If you have different
-settings, such as a 16x32 display or multiple displays chained, you can change
-these constants in `led-matrix.h`
-
-     // Displays typically come in (rows x columns) = 16x32 or 32x32
-     // configuration. Set number of rows in your display here, so 16 or 32.
-     kDisplayRows = 32
-
-     // You can chain the output of one board to the input of the next board.
-     // That increases the total number of columns you can display. With only
-     // one board, this is 1.
-     kChainedBoards = 1
-
-     // Maximum PWM resolution. The number of gray-values you can display per
-     // color is 2^kPWMBits, so 4 -> 16 gray values (=> 16*16*16 = 4096 colors )
-     // Higher values up to 7 are possible, but things get sluggish with slower
-     // refresh rate.
-     kPWMBits = 4
-
-After changing these settings, you need to recompile.
-
 Running
 -------
-The main.cc has some testing demos.
-
+The main.cc has some testing demos. Via command line flags, you can choose
+the display type you have (16x32 or 32x32), and how many you have chained.
+(Previous versions of this software required to do modifications in the source,
+that is now all dynamically configurable).
 
      $ make
      $ ./led-matrix
      usage: ./led-matrix <options> -D <demo-nr> [optional parameter]
      Options:
-             -D <demo-nr>  : Always needs to be set
-             -d            : run as daemon. Use this when starting in
-                             /etc/init.d, but also when running without
-                             terminal.
-             -t <seconds>  : Run for these number of seconds, then exit
-                    (if neither -d nor -t are supplied, waits for <RETURN>)
+         -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
+         -c <chained>  : Chained boards. Use 1 for one board
+         -p <pwm-bits> : PWM bits used. Somewhere between 1 and 7
+         -D <demo-nr>  : Always needs to be set
+         -d            : run as daemon. Use this when starting in
+                         /etc/init.d, but also when running without
+                         terminal.
+         -t <seconds>  : Run for these number of seconds, then exit
+                (if neither -d nor -t are supplied, waits for <RETURN>)
      Demos, choosen with -D
-             0  - some rotating square
-             1  - forward scrolling an image
-             2  - backward scrolling an image
-             3  - test image: a square
-             4  - Pulsing color
+         0  - some rotating square
+         1  - forward scrolling an image
+         2  - backward scrolling an image
+         3  - test image: a square
+         4  - Pulsing color
      Example:
-             ./led-matrix -d -t 10 -D 1 runtext.ppm
+         ./led-matrix -d -t 10 -D 1 runtext.ppm
      Scrolls the runtext for 10 seconds
 
 To run the actual demos, you need to run this as root so that the

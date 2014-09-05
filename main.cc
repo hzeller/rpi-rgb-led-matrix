@@ -57,18 +57,18 @@ public:
   void Run() {
     const int width = matrix_->width();
     const int height = matrix_->height();
-    // Diagonaly
+    // Diagonal
     for (int x = 0; x < width; ++x) {
-        matrix_->SetPixel(x, x, 255, 255, 255);
-        matrix_->SetPixel(height -1 - x, x, 255, 0, 255);
+      matrix_->SetPixel(x, x, 255, 255, 255);           // white
+      matrix_->SetPixel(height -1 - x, x, 255, 0, 255); // magenta
     }
     for (int x = 0; x < width; ++x) {
-      matrix_->SetPixel(x, 0, 255, 0, 0);
-      matrix_->SetPixel(x, height - 1, 255, 255, 0);
+      matrix_->SetPixel(x, 0, 255, 0, 0);              // top line: red
+      matrix_->SetPixel(x, height - 1, 255, 255, 0);   // bottom line: yellow
     }
     for (int y = 0; y < height; ++y) {
-      matrix_->SetPixel(0, y, 0, 0, 255);
-      matrix_->SetPixel(width - 1, y, 0, 255, 0);
+      matrix_->SetPixel(0, y, 0, 0, 255);              // left line: blue
+      matrix_->SetPixel(width - 1, y, 0, 255, 0);      // right line: green
     }
   }
 };
@@ -136,18 +136,17 @@ private:
 
 class ImageScroller : public ThreadedMatrixManipulator {
 public:
-  ImageScroller(RGBMatrix *m, int scroll_jumps)
+  ImageScroller(RGBMatrix *m, int scroll_jumps, int scroll_ms = 30)
     : ThreadedMatrixManipulator(m), scroll_jumps_(scroll_jumps),
-      image_(NULL), horizontal_position_(0) {
+      scroll_ms_(scroll_ms),
+      horizontal_position_(0) {
   }
 
   // _very_ simplified. Can only read binary P6 PPM. Expects newlines in headers
   // Not really robust. Use at your own risk :)
+  // This allows reload of an image while things are running, e.g. you can
+  // life-update the content.
   bool LoadPPM(const char *filename) {
-    if (image_) {
-      delete [] image_;
-      image_ = NULL;
-    }
     FILE *f = fopen(filename, "r");
     if (f == NULL) return false;
     char header_buf[256];
@@ -157,22 +156,27 @@ public:
     if (sscanf(line, "P6 ") == EOF)
       EXIT_WITH_MSG("Can only handle P6 as PPM type.");
     line = ReadLine(f, header_buf, sizeof(header_buf));
-    if (!line || sscanf(line, "%d %d ", &width_, &height_) != 2)
+    int new_width, new_height;
+    if (!line || sscanf(line, "%d %d ", &new_width, &new_height) != 2)
       EXIT_WITH_MSG("Width/height expected");
     int value;
     line = ReadLine(f, header_buf, sizeof(header_buf));
     if (!line || sscanf(line, "%d ", &value) != 1 || value != 255)
       EXIT_WITH_MSG("Only 255 for maxval allowed.");
-    const size_t pixel_count = width_ * height_;
-    image_ = new Pixel [ pixel_count ];
+    const size_t pixel_count = new_width * new_height;
+    Pixel *new_image = new Pixel [ pixel_count ];
     assert(sizeof(Pixel) == 3);   // we make that assumption.
-    if (fread(image_, sizeof(Pixel), pixel_count, f) != pixel_count) {
+    if (fread(new_image, sizeof(Pixel), pixel_count, f) != pixel_count) {
       line = "";
       EXIT_WITH_MSG("Not enough pixels read.");
     }
 #undef EXIT_WITH_MSG
     fclose(f);
-    fprintf(stderr, "Read image '%s' with %dx%d\n", filename, width_, height_);
+    new_image_.image = new_image;
+    new_image_.width = new_width;
+    new_image_.height = new_height;
+    fprintf(stderr, "Read image '%s' with %dx%d\n", filename,
+            new_width, new_height);
     horizontal_position_ = 0;
     return true;
   }
@@ -181,19 +185,25 @@ public:
     const int screen_height = matrix_->height();
     const int screen_width = matrix_->width();
     while (running_) {
-      if (image_ == NULL) {
+      if (new_image_.IsValid()) {
+        current_image_.Delete();
+        current_image_ = new_image_;
+        new_image_.Reset();
+      }
+      if (!current_image_.IsValid()) {
         usleep(100 * 1000);
         continue;
       }
-      usleep(30 * 1000);
+      usleep(scroll_ms_ * 1000);
       for (int x = 0; x < screen_width; ++x) {
         for (int y = 0; y < screen_height; ++y) {
-          const Pixel &p = getPixel((horizontal_position_ + x) % width_, y);
+          const Pixel &p = current_image_.getPixel(
+                       (horizontal_position_ + x) % current_image_.width, y);
           matrix_->SetPixel(x, y, p.red, p.green, p.blue);
         }
       }
       horizontal_position_ += scroll_jumps_;
-      if (horizontal_position_ < 0) horizontal_position_ = width_;
+      if (horizontal_position_ < 0) horizontal_position_ = current_image_.width;
     }
   }
 
@@ -202,6 +212,23 @@ private:
     uint8_t red;
     uint8_t green;
     uint8_t blue;
+  };
+
+  struct Image {
+    Image() : width(-1), height(-1), image(NULL) {}
+    ~Image() { Delete(); }
+    void Delete() { delete [] image; Reset(); }
+    void Reset() { image = NULL; width = -1; height = -1; }
+    inline bool IsValid() { return image && height > 0 && width > 0; }
+    const Pixel &getPixel(int x, int y) {
+      static Pixel dummy;
+      if (x < 0 || x > width || y < 0 || y > height) return dummy;
+      return image[x + width * y];
+    }
+
+    int width;
+    int height;
+    Pixel *image;
   };
 
   // Read line, skip comments.
@@ -213,16 +240,10 @@ private:
     return result;
   }
 
-  const Pixel &getPixel(int x, int y) {
-    static Pixel dummy;
-    if (x < 0 || x > width_ || y < 0 || y > height_) return dummy;
-    return image_[x + width_ * y];
-  }
-
   const int scroll_jumps_;
-  int width_;
-  int height_;
-  Pixel *image_;
+  const int scroll_ms_;
+  Image current_image_;
+  Image new_image_;
   int32_t horizontal_position_;
 };
 
@@ -230,6 +251,10 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
           progname);
   fprintf(stderr, "Options:\n"
+          "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
+          "Default: 32\n"
+          "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
+          "\t-p <pwm-bits> : PWM bits used. Somewhere between 1 and 7\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
           "\t-d            : run as daemon. Use this when starting in\n"
           "\t                /etc/init.d, but also when running without\n"
@@ -238,8 +263,8 @@ static int usage(const char *progname) {
           "\t       (if neither -d nor -t are supplied, waits for <RETURN>)\n");
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
-          "\t1  - forward scrolling an image\n"
-          "\t2  - backward scrolling an image\n"
+          "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
+          "\t2  - backward scrolling an image (-m <scroll-ms>)\n"
           "\t3  - test image: a square\n"
           "\t4  - Pulsing color\n");
   fprintf(stderr, "Example:\n\t%s -t 10 -D 1 runtext.ppm\n"
@@ -251,10 +276,15 @@ int main(int argc, char *argv[]) {
   bool as_daemon = false;
   int runtime_seconds = -1;
   int demo = -1;
+  int rows = 32;
+  int pwm_bits = -1;
+  int chain = 1;
+  int scroll_ms = 30;
+
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "D:t:d")) != -1) {
+  while ((opt = getopt(argc, argv, "D:t:d:r:p:c:m:")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -268,6 +298,22 @@ int main(int argc, char *argv[]) {
       runtime_seconds = atoi(optarg);
       break;
 
+    case 'r':
+      rows = atoi(optarg);
+      break;
+
+    case 'p':
+      pwm_bits = atoi(optarg);
+      break;
+
+    case 'c':
+      chain = atoi(optarg);
+      break;
+
+    case 'm':
+      scroll_ms = atoi(optarg);
+      break;
+
     default: /* '?' */
       return usage(argv[0]);
     }
@@ -278,14 +324,23 @@ int main(int argc, char *argv[]) {
   }
 
   if (demo < 0) {
-    fprintf(stderr, "Expect required option -D <demo>\n");
+    fprintf(stderr, "Expected required option -D <demo>\n");
     return usage(argv[0]);
   }
 
   if (getuid() != 0) {
     fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command:\n\tsudo %s ...\n",
-            argv[0]);
+            "Prepend 'sudo' to the command:\n\tsudo %s ...\n", argv[0]);
+    return 1;
+  }
+
+  if (rows != 16 && rows != 32) {
+    fprintf(stderr, "Rows can either be 16 or 32\n");
+    return 1;
+  }
+
+  if (chain < 1 || chain > 8) {
+    fprintf(stderr, "Chain outside usable range\n");
     return 1;
   }
 
@@ -304,7 +359,12 @@ int main(int argc, char *argv[]) {
   }
 
   // The matrix, our 'frame buffer' and display updater.
-  RGBMatrix m(&io);
+  RGBMatrix m(&io, rows, chain);
+
+  if (pwm_bits > 0 && !m.SetPWMBits(pwm_bits)) {
+    fprintf(stderr, "PWM bits outside supported range\n");
+    return 1;
+  }
     
   // The ThreadedMatrixManipulator objects are filling
   // the matrix continuously.
@@ -317,7 +377,9 @@ int main(int argc, char *argv[]) {
   case 1:
   case 2:
     if (demo_parameter) {
-      ImageScroller *scroller = new ImageScroller(&m, demo == 1 ? 1 : -1);
+      ImageScroller *scroller = new ImageScroller(&m,
+                                                  demo == 1 ? 1 : -1,
+                                                  scroll_ms);
       if (!scroller->LoadPPM(demo_parameter))
         return 1;
       image_gen = scroller;

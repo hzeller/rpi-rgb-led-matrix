@@ -14,6 +14,13 @@
 #include <string.h>
 #include <time.h>
 
+#define SHOW_REFRESH_RATE 0
+
+#if SHOW_REFRESH_RATE
+# include <stdio.h>
+# include <sys/time.h>
+#endif
+
 #include "gpio.h"
 #include "threaded-matrix-manipulator.h"
 
@@ -23,7 +30,11 @@
 static const int kRowClockTime = 3400;
 static const int kBaseTime = kRowClockTime;  // smallest possible value.
 
-const long row_sleep_nanos[8] = {   // Only using the first kPWMBits elements.
+enum {
+  kBitPlanes = 7  // maximum usable bitplanes.
+};
+
+const long row_sleep_nanos[8] = {
   (1 * kBaseTime) - kRowClockTime,
   (2 * kBaseTime) - kRowClockTime,
   (4 * kBaseTime) - kRowClockTime,
@@ -63,7 +74,17 @@ public:
 
   virtual void Run() {
     while (running_) {
+#if SHOW_REFRESH_RATE
+      struct timeval start, end;
+      gettimeofday(&start, NULL);
+#endif
       matrix_->UpdateScreen();
+#if SHOW_REFRESH_RATE
+      gettimeofday(&end, NULL);
+      int64_t usec = ((uint64_t)end.tv_sec * 1000000 + end.tv_usec)
+        - ((int64_t)start.tv_sec * 1000000 + start.tv_usec);
+      printf("\b\b\b\b\b\b\b%5.1fHz", 1e6 / usec);
+#endif
     }
 
     // Make sure the screen is clean and no glaring pixels in the end.
@@ -72,18 +93,21 @@ public:
   }
 };
 
-RGBMatrix::RGBMatrix(GPIO *io) : io_(io), updater_(NULL) {
+RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
+  : rows_(rows), columns_(32 * chained_displays), pwm_bits_(kBitPlanes),
+    double_rows_(rows / 2), row_mask_(double_rows_ - 1),
+  io_(io), updater_(NULL) {
   // Tell GPIO about all bits we intend to use.
   IoBits b;
   b.raw = 0;
   b.bits.output_enable = b.bits.clock = b.bits.strobe = 1;
   b.bits.r1 = b.bits.g1 = b.bits.b1 = 1;
   b.bits.r2 = b.bits.g2 = b.bits.b2 = 1;
-  b.bits.row = kRowMask;
+  b.bits.row = 0x0f;
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io_->InitOutputs(b.raw);
   assert(result == b.raw);
-  assert(kPWMBits < 8);    // only up to 7 makes sense.
+  bitplane_framebuffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   ClearScreen();
   updater_ = new UpdateThread(this);
   updater_->Start(10);
@@ -91,10 +115,19 @@ RGBMatrix::RGBMatrix(GPIO *io) : io_(io), updater_(NULL) {
 
 RGBMatrix::~RGBMatrix() {
   delete updater_;
+  delete [] bitplane_framebuffer_;
+}
+
+bool RGBMatrix::SetPWMBits(uint8_t value) {
+  if (value > kBitPlanes)
+    return false;
+  pwm_bits_ = value;
+  return true;
 }
 
 void RGBMatrix::ClearScreen() {
-  memset(&bitplane_, 0, sizeof(bitplane_));
+  memset(bitplane_framebuffer_, 0,
+         sizeof(*bitplane_framebuffer_) * double_rows_ * columns_ * kBitPlanes);
 }
 
 void RGBMatrix::FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
@@ -105,35 +138,29 @@ void RGBMatrix::FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
   }
 }
 
+inline RGBMatrix::IoBits *RGBMatrix::ValueAt(int double_row, int column,
+                                             int bit) {
+  return &bitplane_framebuffer_[ double_row * (columns_ * kBitPlanes)
+                                 + bit * columns_
+                                 + column ];
+}
+
 void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
                          uint8_t red, uint8_t green, uint8_t blue) {
   if (x >= width() || y >= height()) return;
 
-#if 0
-  // My setup: having four panels connected  [>] [>]
-  //                                                 v
-  //                                         [<] [<]
-  // So we have up to column 64 one direction, then folding around. Lets map
-  // that backward
-  if (y > 31) {
-    x = 127 - x;
-    y = 63 - y;
-  }
-#endif
-
   // TODO: re-map values to be luminance corrected (sometimes called 'gamma').
   // Ideally, we had like 10PWM bits for this, but we're too slow for that :/
-  
-  // Scale to the number of bit planes we actually have, so that MSB matches
-  // MSB of PWM.
-  red   >>= 8 - kPWMBits;
-  green >>= 8 - kPWMBits;
-  blue  >>= 8 - kPWMBits;
 
-  for (int b = 0; b < kPWMBits; ++b) {
+  // We only maximum use kBitPlanes. So make sure our MSBit is aligned with that.
+  red >>= (8 - kBitPlanes);
+  green >>= (8 - kBitPlanes);
+  blue >>= (8 - kBitPlanes);
+
+  for (int b = 0; b < kBitPlanes; ++b) {
     uint8_t mask = 1 << b;
-    IoBits *bits = &bitplane_[b].row[y & kRowMask].column[x];
-    if (y < kDoubleRows) {   // Upper sub-panel.
+    IoBits *bits = ValueAt(y & row_mask_, x, b);
+    if (y < double_rows_) {   // Upper sub-panel.
       bits->bits.r1 = (red & mask) == mask;
       bits->bits.g1 = (green & mask) == mask;
       bits->bits.b1 = (blue & mask) == mask;
@@ -146,26 +173,28 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
 }
 
 void RGBMatrix::UpdateScreen() {
-  IoBits serial_mask;   // Mask of bits we need to set while clocking in.
-  serial_mask.bits.r1 = serial_mask.bits.g1 = serial_mask.bits.b1 = 1;
-  serial_mask.bits.r2 = serial_mask.bits.g2 = serial_mask.bits.b2 = 1;
-  serial_mask.bits.clock = 1;
+  IoBits color_clk_mask;   // Mask of bits we need to set while clocking in.
+  color_clk_mask.bits.r1 = color_clk_mask.bits.g1 = color_clk_mask.bits.b1 = 1;
+  color_clk_mask.bits.r2 = color_clk_mask.bits.g2 = color_clk_mask.bits.b2 = 1;
+  color_clk_mask.bits.clock = 1;
 
   IoBits row_mask;
-  row_mask.bits.row = kRowMask;
+  row_mask.bits.row = 0x0f;
 
-  IoBits clock, output_enable, strobe;    
+  IoBits clock, output_enable, strobe, row_address;
   clock.bits.clock = 1;
   output_enable.bits.output_enable = 1;
   strobe.bits.strobe = 1;
 
-  IoBits row_bits;
-  for (uint8_t row = 0; row < kDoubleRows; ++row) {
+  const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
+  for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
+    row_address.bits.row = d_row;
+    io_->WriteMaskedBits(row_address.raw, row_mask.raw);  // Set row address
+
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
-    for (int b = 0; b < kPWMBits; ++b) {
-      const DoubleRow &rowdata = bitplane_[b].row[row];
-
+    for (int b = kBitPlanes - pwm_to_show; b < kBitPlanes; ++b) {
+      IoBits *row_data = ValueAt(d_row, 0, b);
       // Clock in the row. The time this takes is the smalles time we can
       // leave the LEDs on, thus the smallest time-constant we can use for
       // PWM (doubling the sleep time with each bit).
@@ -175,31 +204,23 @@ void RGBMatrix::UpdateScreen() {
       //
       // However, in particular for longer chaining, it seems we need some more
       // wait time to settle.
-      const long kIOStabilizeWaitNanos = 5;
-      for (uint8_t col = 0; col < kColumns; ++col) {
-        const IoBits &out = rowdata.column[col];
-        io_->ClearBits(~out.raw & serial_mask.raw);  // also: resets clock.
-        sleep_nanos(kIOStabilizeWaitNanos);
-        io_->SetBits(out.raw & serial_mask.raw);
-        sleep_nanos(kIOStabilizeWaitNanos);
-        io_->SetBits(clock.raw);
-        sleep_nanos(kIOStabilizeWaitNanos);
+      for (uint8_t col = 0; col < columns_; ++col) {
+        const IoBits &out = *row_data++;
+        io_->WriteMaskedBits(out.raw, color_clk_mask.raw);  // col + reset clock
+        io_->SetBits(clock.raw);               // Rising edge: clock color in.
       }
 
-      io_->SetBits(output_enable.raw);  // switch off while strobe.
+      io_->ClearBits(color_clk_mask.raw);    // clock back to normal.
 
-      row_bits.bits.row = row;
-      io_->SetBits(row_bits.raw & row_mask.raw);
-      io_->ClearBits(~row_bits.raw & row_mask.raw);
+      io_->SetBits(output_enable.raw);  // switch output off while strobing row.
 
-      io_->SetBits(strobe.raw);   // Strobe
+      io_->SetBits(strobe.raw);   // Strobe in the previously clocked in row.
       io_->ClearBits(strobe.raw);
 
-      // Now switch on for the given sleep time.
+      // Now switch on for the sleep time necessary for that bit-plane.
       io_->ClearBits(output_enable.raw);
-      // If we use less bits, then use the upper areas which leaves us more
-      // CPU time to do other stuff.
-      sleep_nanos(row_sleep_nanos[b + (7 - kPWMBits)]);
+      sleep_nanos(row_sleep_nanos[b]);
     }
   }
+  io_->SetBits(output_enable.raw);   // Switch off output.
 }
