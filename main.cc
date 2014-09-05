@@ -284,7 +284,7 @@ int main(int argc, char *argv[]) {
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "D:t:d:r:p:c:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "D:t:dr:p:c:m:")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
