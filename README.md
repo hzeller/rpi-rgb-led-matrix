@@ -86,6 +86,8 @@ Here is how the wiring would look like:
 
 ![Chaining multiple displays][matrix64]
 
+In action: [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
+
 Running
 -------
 The main.cc has some testing demos. Via command line flags, you can choose
@@ -126,8 +128,8 @@ convenience, there is a little runtext.ppm example included:
 
      $ sudo ./led-matrix -D 1 runtext.ppm
 
-Here is a video of how it looks:
-<http://www.youtube.com/watch?v=OJvEWyvO4ro>
+Here is a video of how it looks
+[![Runtext][run-vid]](http://youtu.be/watch?v=OJvEWyvO4ro)
 
 **CPU use**
 
@@ -271,5 +273,7 @@ any meaningful display.
 
 [hub75]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/hub75.jpg
 [matrix64]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/chained-64x64.jpg
+[pp-vid]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/pixelpusher-vid.jpg
+[run-vid]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/running-vid.jpg
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
 [ada]: http://www.adafruit.com/products/420
