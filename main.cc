@@ -136,6 +136,8 @@ private:
 
 class ImageScroller : public ThreadedMatrixManipulator {
 public:
+  // Scroll image with "scroll_jumps" pixels every "scroll_ms" milliseconds.
+  // If "scroll_ms" is negative, don't do any scrolling.
   ImageScroller(RGBMatrix *m, int scroll_jumps, int scroll_ms = 30)
     : ThreadedMatrixManipulator(m), scroll_jumps_(scroll_jumps),
       scroll_ms_(scroll_ms),
@@ -194,7 +196,6 @@ public:
         usleep(100 * 1000);
         continue;
       }
-      usleep(scroll_ms_ * 1000);
       for (int x = 0; x < screen_width; ++x) {
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = current_image_.getPixel(
@@ -204,6 +205,12 @@ public:
       }
       horizontal_position_ += scroll_jumps_;
       if (horizontal_position_ < 0) horizontal_position_ = current_image_.width;
+      if (scroll_ms_ <= 0) {
+        // No scrolling. We don't need the image anymore.
+        current_image_.Delete();
+      } else {
+        usleep(scroll_ms_ * 1000);
+      }
     }
   }
 
@@ -221,8 +228,8 @@ private:
     void Reset() { image = NULL; width = -1; height = -1; }
     inline bool IsValid() { return image && height > 0 && width > 0; }
     const Pixel &getPixel(int x, int y) {
-      static Pixel dummy;
-      if (x < 0 || x > width || y < 0 || y > height) return dummy;
+      static Pixel black;
+      if (x < 0 || x > width || y < 0 || y > height) return black;
       return image[x + width * y];
     }
 
