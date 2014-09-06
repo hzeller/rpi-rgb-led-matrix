@@ -305,7 +305,7 @@ static int usage(const char *progname) {
           "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
           "Default: 32\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
-          "\t-L            : 'Large' display, composed out of 4x 32x32\n"
+          "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
           "\t-p <pwm-bits> : Bits used for PWM. Something between 1..7\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
           "\t-d            : run as daemon. Use this when starting in\n"
@@ -368,6 +368,7 @@ int main(int argc, char *argv[]) {
       break;
 
     case 'L':
+      // The 'large' display assumes a chain of four displays with 32x32
       chain = 4;
       rows = 32;
       large_display = true;
@@ -398,9 +399,12 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (chain < 1 || chain > 8) {
+  if (chain < 1) {
     fprintf(stderr, "Chain outside usable range\n");
     return 1;
+  }
+  if (chain > 8) {
+    fprintf(stderr, "That is a long chain. Expect some flicker.\n");
   }
 
   // Initialize GPIO pins. This might fail when we don't have permissions.
@@ -427,6 +431,7 @@ int main(int argc, char *argv[]) {
   Canvas *canvas = matrix;
 
   if (large_display) {
+    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
     canvas = new LargeSquare64x64Canvas(canvas);
   }
 
