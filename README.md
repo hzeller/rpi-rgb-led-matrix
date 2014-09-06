@@ -1,7 +1,7 @@
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
-A library to control
+A library to control commonly available 32x32 or 16x32 RGB LED panels.
 
 Code is (c) Henner Zeller <h.zeller@acm.org> with license
 [CC BY-SA](https://creativecommons.org/licenses/by-sa/2.0/).
@@ -10,14 +10,14 @@ original author.
 
 Overview
 --------
-The 32x32 or 16x32 RGB LED matrix panels can be scored at AdaFruit or eBay.
-If you are in China, I'd try to get them directly from some manufacturer or
-Taobao.
+The 32x32 or 16x32 RGB LED matrix panels can be scored at [AdaFruit][ada]
+or eBay. If you are in China, I'd try to get them directly from some
+manufacturer or Taobao.
+
 They all seem to have the same standard interface, essentially controlling
 two banks of 16 rows (0..15 and 16..31) There are always two rows (n and n+16),
 that are controlled in parallel
-(These displays are also available in 16x32 - they just have one bank of 16 or
-two banks of 8)
+(These displays are also available in 16x32; in that case, it is two banks of 8).
 
 The data for each row needs to be clocked in serially using one bit for red,
 green and blue for both rows that are controlled in parallel (= 6 bits), then
@@ -270,4 +270,4 @@ any meaningful display.
 [hub75]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/hub75.jpg
 [matrix64]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/chained-64x64.jpg
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
-
+[ada]: http://www.adafruit.com/products/420
