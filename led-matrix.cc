@@ -198,12 +198,8 @@ void RGBMatrix::UpdateScreen() {
       // Clock in the row. The time this takes is the smalles time we can
       // leave the LEDs on, thus the smallest time-constant we can use for
       // PWM (doubling the sleep time with each bit).
-      // So this is the critical path; I'd love to know if we can employ some
-      // DMA techniques to speed this up.
+      // So this is the critical path (tested with DMA: actually _slower_)
       // (With this code, one row roughly takes 3.0 - 3.4usec to clock in).
-      //
-      // However, in particular for longer chaining, it seems we need some more
-      // wait time to settle.
       for (uint8_t col = 0; col < columns_; ++col) {
         const IoBits &out = *row_data++;
         io_->WriteMaskedBits(out.raw, color_clk_mask.raw);  // col + reset clock
