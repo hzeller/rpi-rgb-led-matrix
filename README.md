@@ -51,7 +51,7 @@ LED-Panel to GPIO with this code:
    * G2 (Green 2nd bank) : GPIO 24
    * B2 (Blue 2nd bank)  : GPIO 25
    * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (There is no `D` needed if you
-	   have a display with 16 rows with 1:8 multiplexing)
+    have a display with 16 rows with 1:8 multiplexing)
    * OE- (neg. Output enable) : GPIO 2
    * CLK (Serial clock) : GPIO 3
    * STR (Strobe row data) : GPIO 4
@@ -107,6 +107,51 @@ convenience, there is a little runtext.ppm example included:
 Here is a video of how it looks:
 <http://www.youtube.com/watch?v=OJvEWyvO4ro>
 
+A word about power
+------------------
+
+These displays suck a lot of current. At 5V, when all LEDs are on (full white),
+my LED panel draws about 3.4A. That means, you need a beefy power supply to
+drive these panels; a 2A USB charger or similar is not enough for a
+32x32 panel; it might be for a 16x32.
+
+If you connect multiple boards together, you needs a power supply that can
+keep up with 3.5A / panel. Good are PC power supplies that often provide > 20A
+on the 5V rail.
+
+The current draw is pretty spiky. Due to the PWM of the LEDs, there are very
+short peaks of about 4 microseconds to about 1ms of full current draw.
+Often, the power cable can't support these very short spikes due to inherent
+inductance. This can results in 'noisy' outputs, with random pixels not behaving
+as they should. On top of that, the quality of the output quickly gets erratic
+when it drops under 4.5V (I have seen panels that only work stable at 5.5V).
+
+To remedy, you should
+    - Have fairly thick cables connecting the power to the board.
+      Plan to not loose more than 50mV from the source to the LED matrix.
+      So that would be 50mV / 3.5A = 14 mOhm. For both wires, so 7mOhm each
+      trace.
+      A 1mm^2 copper cable has about 17.5mOhm/meter, so you'd need a **2.5mm^2
+      copper cable per meter and panel**. Multiply by meter and
+      number of panels to get the needed cross-section.
+      (For Americans: that would be ~13 gauge wire for 3 ft and one panel)
+   
+    - It is good to buffer the current spikes directly at the panel. The most
+      spikes happen while PWM-ing a single line.
+      So let's say we want to buffer the energy to power a single line without
+      dropping more than 50mV. We use 3.5A which is 3.5Joule/second. We do
+      about 140Hz refresh rate and divide that in 16 lines, so we need
+      3.5 Joule/140/16 =~ 1.6mJoule in the time period to display one line.
+      We want to get the energy out of the voltage drop of 50mV; so with
+      W = 1/2*C*U^2, we can calculate the capacitance needed:
+        C = 2 * 1.6mJoule / ((5V)^2 - (5V - 50mV)^2) =~ 6400 microFarad
+      So, proably **2 x 3300microFarad** low-ESR capacitors in parallel
+      are a good choice (two, because lower parallel ESR; also fits easier under
+      board).
+      (In reality, we need of course less, as the highest ripple comes with
+       50% duty cyle thus half the current; also the input is recharching all
+       the time. But: as engineer plan for maximum and then some).
+   
 Limitations
 -----------
 There seems to be a limit in how fast the GPIO pins can be controlled. Right
@@ -129,4 +174,3 @@ task to the DMA controller would improve the realtime-ness, it is too slow for
 any meaningful display.
 
 [hub75]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/hub75.jpg
-
