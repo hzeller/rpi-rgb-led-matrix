@@ -3,9 +3,9 @@ Controlling RGB LED display with Raspberry Pi GPIO
 
 A library to control
 
-Code is (c) Henner Zeller <h.zeller@acm.org>
-[CC BY-SA](https://creativecommons.org/licenses/by-sa/2.0/)
-You can do whatever you want with it, as long as you keep the credit to the
+Code is (c) Henner Zeller <h.zeller@acm.org> with license
+[CC BY-SA](https://creativecommons.org/licenses/by-sa/2.0/).
+So - you can do whatever you want with it, as long as you keep the credit to the
 original author.
 
 Overview
@@ -201,7 +201,7 @@ you can use that particular version and easily update it if there are changes
      git submodule add git@github.com:hzeller/rpi-rgb-led-matrix.git matrix
 
 This will check out the repository in a subdirectory `matrix/`.
-the library to build would be matrix/lib, so let's hook that into your toplevel
+the library to build would be `matrix/lib`, so let's hook that into your toplevel
 Makefile.
 I suggest to set up some variables like this:
 
@@ -209,7 +209,7 @@ I suggest to set up some variables like this:
      RGB_LIBDIR=matrix/lib
      RGB_LIBRARY_NAME=rgbmatrix
      RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
-     LDFLAGS=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+     LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
 Also, you want to add a target to build the libary in your sub-module
 
