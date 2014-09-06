@@ -24,4 +24,26 @@ private:
   pthread_t thread_;
 };
 
+// Non-recursive Mutex.
+class Mutex {
+public:
+  Mutex() { pthread_mutex_init(&mutex_, NULL); }
+  ~Mutex() { pthread_mutex_destroy(&mutex_); }
+  void Lock() { pthread_mutex_lock(&mutex_); }
+  void Unlock() { pthread_mutex_unlock(&mutex_); }
+  void WaitOn(pthread_cond_t *cond) { pthread_cond_wait(cond, &mutex_); }
+
+private:
+  pthread_mutex_t mutex_;
+};
+
+// Useful RAII wrapper around mutex.
+class MutexLock {
+public:
+  MutexLock(Mutex *m) : mutex_(m) { mutex_->Lock(); }
+  ~MutexLock() { mutex_->Unlock(); }
+private:
+  Mutex *const mutex_;
+};
+
 #endif  // RPI_THREAD_H

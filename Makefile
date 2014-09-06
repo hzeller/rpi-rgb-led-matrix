@@ -7,15 +7,13 @@ BINARIES=led-matrix
 RGB_INCDIR=include
 RGB_LIBDIR=lib
 RGB_LIBRARY_NAME=rgbmatrix
-
-LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
-# To link, we also need some other libraries, librt, libm and libpthread
+RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 LDFLAGS=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
 all : $(BINARIES)
 
 $(LIBRARY):
-	$(MAKE) -C lib/
+	$(MAKE) -C $(RGB_LIBDIR)
 
 led-matrix : $(OBJECTS) $(LIBRARY)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
