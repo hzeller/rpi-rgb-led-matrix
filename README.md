@@ -144,7 +144,7 @@ you can use that particular version and easily update it if there are changes:
 
      git submodule add https://github.com/hzeller/rpi-rgb-led-matrix.git matrix
 
-(Read more about how to integrate [submodules in git][git-submodules])
+(Read more about how to use [submodules in git][git-submodules])
 
 This will check out the repository in a subdirectory `matrix/`.
 the library to build would be `matrix/lib`, so let's hook that into your toplevel
