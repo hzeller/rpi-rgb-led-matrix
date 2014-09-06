@@ -1,10 +1,12 @@
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
-This is mostly experimental code.
+A library to control
 
-Code is (c) Henner Zeller <h.zeller@acm.org>, and I grant you the permission
-to do whatever you want with it :)
+Code is (c) Henner Zeller <h.zeller@acm.org>
+[CC BY-SA](https://creativecommons.org/licenses/by-sa/2.0/)
+You can do whatever you want with it, as long as you keep the credit to the
+original author.
 
 Overview
 --------
@@ -189,8 +191,53 @@ So when you connect these boards to a power source, keep the following in mind:
 Using the API
 -------------
 While there is a demo program, the matrix code can be used independently as
-a library.
-(TODO: document more).
+a library. The includes are in `include/`, the library to link is built
+in `lib/`. So if you are proficient in C++, then use it in your code.
+
+Due to the wonders of github, it is pretty easy to be up-to-date.
+I suggest to add this code as a sub-module in your git repository. That way
+you can use that particular version and easily update it if there are changes
+
+     git submodule add git@github.com:hzeller/rpi-rgb-led-matrix.git matrix
+
+This will check out the repository in a subdirectory `matrix/`.
+the library to build would be matrix/lib, so let's hook that into your toplevel
+Makefile.
+I suggest to set up some variables like this:
+
+     RGB_INCDIR=matrix/include
+     RGB_LIBDIR=matrix/lib
+     RGB_LIBRARY_NAME=rgbmatrix
+     RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
+     LDFLAGS=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+
+Also, you want to add a target to build the libary in your sub-module
+
+	 # (FYI: Make sure, there is a TAB-character in front of the $(MAKE))
+     $(RGB_LIBRARY):
+		 $(MAKE) -C $(RGB_LIBDIR)
+
+Now, your final binary needs to depend on your objects and also the
+`$(RGB_LIBRARY)`
+
+     my-binary : $(OBJECTS) $(RGB_LIBRARY)
+	     $(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
+
+As an example, see the [PixelPusher implementation][pixelpush] which is using
+this library in a git sub-module.
+
+Note, all the types provided are in the `rgb_matrix` namespace. That way, they
+won't clash with other types you might use in your code; in particular pretty
+common names such as `GPIO` or `Canvas` might run into trouble clashing.
+
+Anyway, for convenience you just might add these using-declarations in your
+code:
+
+     // The types eported by the RGB-Matrix library.
+     using rgb_matrix::Canvas;
+     using rgb_matrix::GPIO;
+     using rgb_matrix::RGBMatrix;
+     using rgb_matrix::ThreadedCanvasManipulator;
 
 Limitations
 -----------
@@ -215,3 +262,5 @@ any meaningful display.
 
 [hub75]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/hub75.jpg
 [matrix64]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/chained-64x64.jpg
+[pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
+

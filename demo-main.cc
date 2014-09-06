@@ -17,7 +17,7 @@
 using std::min;
 using std::max;
 
-// The types used from the RGB-Matrix library.
+// The types eported by the RGB-Matrix library.
 using rgb_matrix::Canvas;
 using rgb_matrix::GPIO;
 using rgb_matrix::RGBMatrix;
