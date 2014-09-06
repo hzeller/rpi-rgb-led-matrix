@@ -147,8 +147,8 @@ you can use that particular version and easily update it if there are changes:
 (Read more about how to use [submodules in git][git-submodules])
 
 This will check out the repository in a subdirectory `matrix/`.
-the library to build would be `matrix/lib`, so let's hook that into your toplevel
-Makefile.
+The library to build would be in directory `matrix/lib`, so let's hook that
+into your toplevel Makefile.
 I suggest to set up some variables like this:
 
      RGB_INCDIR=matrix/include
@@ -174,12 +174,12 @@ this library in a git sub-module.
 
 Note, all the types provided are in the `rgb_matrix` namespace. That way, they
 won't clash with other types you might use in your code; in particular pretty
-common names such as `GPIO` or `Canvas` might run into trouble clashing.
+common names such as `GPIO` or `Canvas` might run into clashing trouble.
 
 Anyway, for convenience you just might add using-declarations in your
 code:
 
-     // The types eported by the RGB-Matrix library.
+     // Types exported by the RGB-Matrix library.
      using rgb_matrix::Canvas;
      using rgb_matrix::GPIO;
      using rgb_matrix::RGBMatrix;
@@ -189,9 +189,8 @@ Or, if you are lazy, just import the whole namespace:
 
      using namespace rgb_matrix;
 
-Read the `minimal-example.cc` to get started, then have a look
-into `demo-main.cc` (Don't ask me how to program your demo, you should only use
-the API when you are comfortable coding).
+Read the [`minimal-example.cc`](./minimal-example.cc) to get started, then
+have a look into [`demo-main.cc`](./demo-main.cc).
 
 A word about power
 ------------------
