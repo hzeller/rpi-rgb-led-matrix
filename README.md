@@ -68,12 +68,15 @@ number of displays that are chained. You end up with a very wide
 display (chain * 32 pixels).
 
 You can as well chain multiple boards together and then arrange them in
-different physical layout. Say you have 4 displays with 32x32 - if we chain
-them, we get a physical 32x128 display. If we arrange them in a square, we
-get a logical display of 64x64 pixels. For convenience, we should only deal
-with the logical display of 64x64 pixels in our program: implement a `Canvas`
+different layout. Say you have 4 displays with 32x32 - if we chain
+them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
+the boards in a square, we get a logical display of 64x64 pixels.
+
+For convenience, we should only deal with the logical coordinates of
+64x64 pixels in our program: implement a `Canvas`
 interface to do the coordinate mapping. Have a look at
-`class LargeSquare64x64Canvas` for an example.
+`class LargeSquare64x64Canvas` for an example and see how it is delegating to
+the underlying RGBMatrix with changed coordinates.
 
 Here is how the wiring would look like:
 
@@ -91,12 +94,14 @@ that is now all dynamically configurable).
      usage: ./led-matrix <options> -D <demo-nr> [optional parameter]
      Options:
          -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
-         -c <chained>  : Chained boards. Use 1 for one board
+         -c <chained>  : Daisy-chained boards. Default: 1.
+         -L            : 'Large' display, composed out of 4 times 32x32
+         -p <pwm-bits> : Bits used for PWM. Something between 1..7
          -D <demo-nr>  : Always needs to be set
          -d            : run as daemon. Use this when starting in
                          /etc/init.d, but also when running without
-                         terminal.
-         -t <seconds>  : Run for these number of seconds, then exit
+                         terminal (e.g. cron)
+         -t <seconds>  : Run for these number of seconds, then exit.
                 (if neither -d nor -t are supplied, waits for <RETURN>)
      Demos, choosen with -D
          0  - some rotating square
@@ -133,7 +138,7 @@ computer as the precise timing needed might be slipping. Even if the system is
 otherwise idle, you might see occasional brightness variations in the darker
 areas of your picture.
 Ideally, this would run on a system with hard realtime guarantees
-(haven't tried that yet).
+(There are Linux extensions for that, but haven't tried that yet).
 
 A word about power
 ------------------
