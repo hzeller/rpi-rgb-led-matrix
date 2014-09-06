@@ -132,7 +132,7 @@ To remedy, you should
      Plan to not loose more than 50mV from the source to the LED matrix.
      So that would be 50mV / 3.5A = 14 mOhm. For both wires, so 7mOhm each
      trace.
-     A 1mm^2 copper cable has about 17.5mOhm/meter, so you'd need a **2.5mm^2
+     A 1mm² copper cable has about 17.5mOhm/meter, so you'd need a **2.5mm²
      copper cable per meter and panel**. Multiply by meter and
      number of panels to get the needed cross-section.
      (For Americans: that would be ~13 gauge wire for 3 ft and one panel)
@@ -145,8 +145,8 @@ To remedy, you should
      3.5 Joule/140/16 =~ 1.6mJoule in the time period to display one line.
      We want to get the energy out of the voltage drop of 50mV; so with
      W = 1/2*C*U^2, we can calculate the capacitance needed:
-       C = 2 * 1.6mJoule / ((5V)^2 - (5V - 50mV)^2) =~ 6400 microFarad.
-     So, proably **2 x 3300microFarad** low-ESR capacitors in parallel directly
+       C = 2 * 1.6mJoule / ((5V)^2 - (5V - 50mV)^2) =~ 6400µF.
+     So, **2 x 3300µF** low-ESR capacitors in parallel directly
      at the board are a good choice (two, because lower parallel ESR; also
      fits easier under board).
      (In reality, we need of course less, as the highest ripple comes with
