@@ -12,10 +12,10 @@ LDFLAGS=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
 all : $(BINARIES)
 
-$(LIBRARY):
+$(RGB_LIBRARY):
 	$(MAKE) -C $(RGB_LIBDIR)
 
-led-matrix : $(OBJECTS) $(LIBRARY)
+led-matrix : $(OBJECTS) $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
 
 %.o : %.cc
