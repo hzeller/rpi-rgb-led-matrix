@@ -22,7 +22,7 @@
 #endif
 
 #include "gpio.h"
-#include "threaded-matrix-manipulator.h"
+#include "thread.h"
 
 // Clocking in a row takes about 3.4usec (TODO: this is actually per board)
 // Because clocking the data in is part of the 'wait time', we need to
@@ -68,9 +68,10 @@ static void sleep_nanos(long nanos) {
 }
 
 // Pump pixels to screen. Needs to be high priority real-time because jitter
-class RGBMatrix::UpdateThread : public ThreadedMatrixManipulator {
+class RGBMatrix::UpdateThread : public Thread {
 public:
-  UpdateThread(RGBMatrix *matrix) : ThreadedMatrixManipulator(matrix) {}
+  UpdateThread(RGBMatrix *matrix) : running_(true), matrix_(matrix) {}
+  virtual ~UpdateThread() { running_ = false; }
 
   virtual void Run() {
     while (running_) {
@@ -91,6 +92,10 @@ public:
     matrix_->ClearScreen();
     matrix_->UpdateScreen();
   }
+
+private:
+  volatile bool running_;  // TODO: use mutex, but this is good enough for now.
+  RGBMatrix *const matrix_;  
 };
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
@@ -145,9 +150,9 @@ inline RGBMatrix::IoBits *RGBMatrix::ValueAt(int double_row, int column,
                                  + column ];
 }
 
-void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
+void RGBMatrix::SetPixel(int x, int y,
                          uint8_t red, uint8_t green, uint8_t blue) {
-  if (x >= width() || y >= height()) return;
+  if (x < 0 || y < 0 || x >= width() || y >= height()) return;
 
   // TODO: re-map values to be luminance corrected (sometimes called 'gamma').
   // Ideally, we had like 10PWM bits for this, but we're too slow for that :/

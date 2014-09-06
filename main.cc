@@ -1,7 +1,7 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 
 #include "led-matrix.h"
-#include "threaded-matrix-manipulator.h"
+#include "threaded-canvas-manipulator.h"
 
 #include <assert.h>
 #include <getopt.h>
@@ -19,18 +19,18 @@ using std::max;
 
 /*
  * The following are demo image generators. They all use the utility
- * class ThreadedMatrixManipulator to generate new frames.
+ * class ThreadedCanvasManipulator to generate new frames.
  */
 
 // Simple generator that pulses through RGB and White.
-class ColorPulseGenerator : public ThreadedMatrixManipulator {
+class ColorPulseGenerator : public ThreadedCanvasManipulator {
 public:
-  ColorPulseGenerator(RGBMatrix *m) : ThreadedMatrixManipulator(m) {}
+  ColorPulseGenerator(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
-    const int width = matrix_->width();
-    const int height = matrix_->height();
+    const int width = canvas()->width();
+    const int height = canvas()->height();
     uint32_t continuum = 0;
-    while (running_) {
+    while (running()) {
       usleep(5 * 1000);
       continuum += 1;
       continuum %= 3 * 255;
@@ -50,37 +50,37 @@ public:
       }
       for (int x = 0; x < width; ++x)
         for (int y = 0; y < height; ++y)
-          matrix_->SetPixel(x, y, r, g, b);
+          canvas()->SetPixel(x, y, r, g, b);
     }
   }
 };
 
-class SimpleSquare : public ThreadedMatrixManipulator {
+class SimpleSquare : public ThreadedCanvasManipulator {
 public:
-  SimpleSquare(RGBMatrix *m) : ThreadedMatrixManipulator(m) {}
+  SimpleSquare(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
-    const int width = matrix_->width();
-    const int height = matrix_->height();
+    const int width = canvas()->width();
+    const int height = canvas()->height();
     // Diagonal
     for (int x = 0; x < width; ++x) {
-      matrix_->SetPixel(x, x, 255, 255, 255);           // white
-      matrix_->SetPixel(height -1 - x, x, 255, 0, 255); // magenta
+      canvas()->SetPixel(x, x, 255, 255, 255);           // white
+      canvas()->SetPixel(height -1 - x, x, 255, 0, 255); // magenta
     }
     for (int x = 0; x < width; ++x) {
-      matrix_->SetPixel(x, 0, 255, 0, 0);              // top line: red
-      matrix_->SetPixel(x, height - 1, 255, 255, 0);   // bottom line: yellow
+      canvas()->SetPixel(x, 0, 255, 0, 0);              // top line: red
+      canvas()->SetPixel(x, height - 1, 255, 255, 0);   // bottom line: yellow
     }
     for (int y = 0; y < height; ++y) {
-      matrix_->SetPixel(0, y, 0, 0, 255);              // left line: blue
-      matrix_->SetPixel(width - 1, y, 0, 255, 0);      // right line: green
+      canvas()->SetPixel(0, y, 0, 0, 255);              // left line: blue
+      canvas()->SetPixel(width - 1, y, 0, 255, 0);      // right line: green
     }
   }
 };
 
 // Simple class that generates a rotating block on the screen.
-class RotatingBlockGenerator : public ThreadedMatrixManipulator {
+class RotatingBlockGenerator : public ThreadedCanvasManipulator {
 public:
-  RotatingBlockGenerator(RGBMatrix *m) : ThreadedMatrixManipulator(m) {}
+  RotatingBlockGenerator(Canvas *m) : ThreadedCanvasManipulator(m) {}
 
   uint8_t scale_col(int val, int lo, int hi) {
     if (val < lo) return 0;
@@ -89,41 +89,41 @@ public:
   }
 
   void Run() {
-    const int cent_x = matrix_->width() / 2;
-    const int cent_y = matrix_->height() / 2;
+    const int cent_x = canvas()->width() / 2;
+    const int cent_y = canvas()->height() / 2;
 
     // The square to rotate (inner square + black frame) needs to cover the
     // whole area, even if diagnoal. Thus, when rotating, the outer pixels from
     // the previous frame are cleared.
-    const int rotate_square = min(matrix_->width(), matrix_->height()) * 1.41;
+    const int rotate_square = min(canvas()->width(), canvas()->height()) * 1.41;
     const int min_rotate = cent_x - rotate_square / 2;
     const int max_rotate = cent_x + rotate_square / 2;
 
     // The square to display is within the visible area.
-    const int display_square = min(matrix_->width(), matrix_->height()) * 0.7;
+    const int display_square = min(canvas()->width(), canvas()->height()) * 0.7;
     const int min_display = cent_x - display_square / 2;
     const int max_display = cent_x + display_square / 2;
 
     const float deg_to_rad = 2 * 3.14159265 / 360;
     int rotation = 0;
-    while (running_) {
+    while (running()) {
       ++rotation;
       usleep(15 * 1000);
       rotation %= 360;
       for (int x = min_rotate; x < max_rotate; ++x) {
         for (int y = min_rotate; y < max_rotate; ++y) {
-          float disp_x, disp_y;
+          float rot_x, rot_y;
           Rotate(x - cent_x, y - cent_x,
-                 deg_to_rad * rotation, &disp_x, &disp_y);
+                 deg_to_rad * rotation, &rot_x, &rot_y);
           if (x >= min_display && x < max_display &&
               y >= min_display && y < max_display) { // within display square
-            matrix_->SetPixel(disp_x + cent_x, disp_y + cent_y,
-                              scale_col(x, min_display, max_display),
-                              255 - scale_col(y, min_display, max_display),
-                              scale_col(y, min_display, max_display));
+            canvas()->SetPixel(rot_x + cent_x, rot_y + cent_y,
+                               scale_col(x, min_display, max_display),
+                               255 - scale_col(y, min_display, max_display),
+                               scale_col(y, min_display, max_display));
           } else {
             // black frame.
-            matrix_->SetPixel(disp_x + cent_x, disp_y + cent_y, 0, 0, 0);
+            canvas()->SetPixel(rot_x + cent_x, rot_y + cent_y, 0, 0, 0);
           }
         }
       }
@@ -138,12 +138,12 @@ private:
   }
 };
 
-class ImageScroller : public ThreadedMatrixManipulator {
+class ImageScroller : public ThreadedCanvasManipulator {
 public:
   // Scroll image with "scroll_jumps" pixels every "scroll_ms" milliseconds.
   // If "scroll_ms" is negative, don't do any scrolling.
-  ImageScroller(RGBMatrix *m, int scroll_jumps, int scroll_ms = 30)
-    : ThreadedMatrixManipulator(m), scroll_jumps_(scroll_jumps),
+  ImageScroller(Canvas *m, int scroll_jumps, int scroll_ms = 30)
+    : ThreadedCanvasManipulator(m), scroll_jumps_(scroll_jumps),
       scroll_ms_(scroll_ms),
       horizontal_position_(0) {
   }
@@ -188,9 +188,9 @@ public:
   }
 
   void Run() {
-    const int screen_height = matrix_->height();
-    const int screen_width = matrix_->width();
-    while (running_) {
+    const int screen_height = canvas()->height();
+    const int screen_width = canvas()->width();
+    while (running()) {
       if (new_image_.IsValid()) {
         current_image_.Delete();
         current_image_ = new_image_;
@@ -203,8 +203,8 @@ public:
       for (int x = 0; x < screen_width; ++x) {
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = current_image_.getPixel(
-                       (horizontal_position_ + x) % current_image_.width, y);
-          matrix_->SetPixel(x, y, p.red, p.green, p.blue);
+                                                   (horizontal_position_ + x) % current_image_.width, y);
+          canvas()->SetPixel(x, y, p.red, p.green, p.blue);
         }
       }
       horizontal_position_ += scroll_jumps_;
@@ -377,9 +377,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }
     
-  // The ThreadedMatrixManipulator objects are filling
+  // The ThreadedCanvasManipulator objects are filling
   // the matrix continuously.
-  ThreadedMatrixManipulator *image_gen = NULL;
+  ThreadedCanvasManipulator *image_gen = NULL;
   switch (demo) {
   case 0:
     image_gen = new RotatingBlockGenerator(&m);
