@@ -67,8 +67,8 @@ in a daisy-chain manner. There is a parameter in the demo program to give
 number of displays that are chained. You end up with a very wide
 display (chain * 32 pixels).
 
-You can as well chain multiple boards together and then arrange them in
-different layout. Say you have 4 displays with 32x32 - if we chain
+You can as well chain multiple boards together and then arrange them in a
+different layout. Say you have 4 displays with 32x32 -- if we chain
 them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
 the boards in a square, we get a logical display of 64x64 pixels.
 
