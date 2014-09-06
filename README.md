@@ -56,7 +56,8 @@ LED-Panel to GPIO with this code:
    * CLK (Serial clock) : GPIO 3
    * STR (Strobe row data) : GPIO 4
 
-This is the typical pinout on these LED panels
+Here a typical pinout on these LED panels; picture next to the connector:
+
 ![Hub 75 interface][hub75]
 
 **Chaining**
