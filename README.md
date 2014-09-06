@@ -196,9 +196,12 @@ in `lib/`. So if you are proficient in C++, then use it in your code.
 
 Due to the wonders of github, it is pretty easy to be up-to-date.
 I suggest to add this code as a sub-module in your git repository. That way
-you can use that particular version and easily update it if there are changes
+you can use that particular version and easily update it if there are changes:
 
      git submodule add git@github.com:hzeller/rpi-rgb-led-matrix.git matrix
+
+(You explicitly have to go into that subdirectory and `git pull` to get the
+latest version, so your code does not have to track a moving target.)
 
 This will check out the repository in a subdirectory `matrix/`.
 the library to build would be `matrix/lib`, so let's hook that into your toplevel
