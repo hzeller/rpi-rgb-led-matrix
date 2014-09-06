@@ -1,7 +1,8 @@
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
-A library to control commonly available 32x32 or 16x32 RGB LED panels.
+A library to control commonly available 32x32 or 16x32 RGB LED panels with the
+Raspberry Pi.
 
 Code is (c) Henner Zeller <h.zeller@acm.org> with license
 [CC BY-SA](https://creativecommons.org/licenses/by-sa/2.0/).
