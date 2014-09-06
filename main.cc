@@ -17,6 +17,46 @@
 using std::min;
 using std::max;
 
+// This is an example how to use the Canvas abstraction to map coordinates.
+//
+// This is a Canvas that delegates to some other Canvas (typically, the RGB
+// matrix). 
+//
+// Here, we want to address four 32x32 panels as one big 64x64 panel. Physically,
+// we chain them together and do a 180 degree 'curve', somewhat like this:
+// [>] [>]		
+//         v
+// [<] [<]
+class LargeSquare64x64Canvas : public Canvas {
+public:
+  // This class takes over ownership of the delegatee.
+  LargeSquare64x64Canvas(Canvas *delegatee) : delegatee_(delegatee) {
+    // Our assumptions of the underlying geometry:
+    assert(delegatee->height() == 32);
+    assert(delegatee->width() == 128);
+  }
+  virtual ~LargeSquare64x64Canvas() { delete delegatee_; }
+
+  virtual void ClearScreen() { delegatee_->ClearScreen(); }
+  virtual void FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
+    delegatee_->FillScreen(red, green, blue);
+  }
+  virtual int width() const { return 64; }
+  virtual int height() const { return 64; }
+  virtual void SetPixel(int x, int y,
+                        uint8_t red, uint8_t green, uint8_t blue) {
+    // We have up to column 64 one direction, then folding around. Lets map
+    if (y > 31) {
+      x = 127 - x;
+      y = 63 - y;
+    }
+    delegatee_->SetPixel(x, y, red, green, blue);
+  }
+
+private:
+  Canvas *delegatee_;
+};
+
 /*
  * The following are demo image generators. They all use the utility
  * class ThreadedCanvasManipulator to generate new frames.
@@ -265,6 +305,8 @@ static int usage(const char *progname) {
           "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
           "Default: 32\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
+          "\t-L            : 'Large' display, composed out of 4x 32x32\n"
+          "\t-p <pwm-bits> : Bits used for PWM. Something between 1..7\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
           "\t-d            : run as daemon. Use this when starting in\n"
           "\t                /etc/init.d, but also when running without\n"
@@ -289,11 +331,13 @@ int main(int argc, char *argv[]) {
   int rows = 32;
   int chain = 1;
   int scroll_ms = 30;
+  int pwm_bits = -1;
+  bool large_display = false;
 
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "D:t:dr:p:c:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "D:t:dr:p:c:m:L")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -317,6 +361,16 @@ int main(int argc, char *argv[]) {
 
     case 'm':
       scroll_ms = atoi(optarg);
+      break;
+
+    case 'p':
+      pwm_bits = atoi(optarg);
+      break;
+
+    case 'L':
+      chain = 4;
+      rows = 32;
+      large_display = true;
       break;
 
     default: /* '?' */
@@ -364,8 +418,18 @@ int main(int argc, char *argv[]) {
   }
 
   // The matrix, our 'frame buffer' and display updater.
-  Canvas *canvas = new RGBMatrix(&io, rows, chain);
-    
+  RGBMatrix *matrix = new RGBMatrix(&io, rows, chain);
+  if (pwm_bits > 0 && !matrix->SetPWMBits(pwm_bits)) {
+    fprintf(stderr, "Invalid range of pwm-bits");
+    return 1;
+  }
+
+  Canvas *canvas = matrix;
+
+  if (large_display) {
+    canvas = new LargeSquare64x64Canvas(canvas);
+  }
+
   // The ThreadedCanvasManipulator objects are filling
   // the matrix continuously.
   ThreadedCanvasManipulator *image_gen = NULL;
@@ -419,7 +483,6 @@ int main(int argc, char *argv[]) {
 
   // Stop image generating thread.
   delete image_gen;
-
   delete canvas;
 
   return 0;
