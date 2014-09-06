@@ -67,6 +67,18 @@ in a daisy-chain manner. There is a parameter in the demo program to give
 number of displays that are chained. You end up with a very wide
 display (chain * 32 pixels).
 
+You can as well chain multiple boards together and then arrange them in
+different physical layout. Say you have 4 displays with 32x32 - if we chain
+them, we get a physical 32x128 display. If we arrange them in a square, we
+get a logical display of 64x64 pixels. For convenience, we should only deal
+with the logical display of 64x64 pixels in our program: implement a `Canvas`
+interface to do the coordinate mapping. Have a look at
+`class LargeSquare64x64Canvas` for an example.
+
+Here is how the wiring would look like:
+
+![Chaining multiple displays][matrix64]
+
 Running
 -------
 The main.cc has some testing demos. Via command line flags, you can choose
@@ -107,6 +119,21 @@ convenience, there is a little runtext.ppm example included:
 
 Here is a video of how it looks:
 <http://www.youtube.com/watch?v=OJvEWyvO4ro>
+
+**CPU use**
+
+These displays need to be updated constantly to show an image with PWMed
+LEDs. For one 32x32 display, every second about 500'000 pixels have to be
+updated. We can't use any hardware support to do that - thus the constant
+CPU use on an RPi is roughly 30%. Keep that in mind if you plan to run other
+things on this computer.
+
+Also, the output quality is suceptible to other heavy tasks running on that
+computer as the precise timing needed might be slipping. Even if the system is
+otherwise idle, you might see occasional brightness variations in the darker
+areas of your picture.
+Ideally, this would run on a system with hard realtime guarantees
+(haven't tried that yet).
 
 A word about power
 ------------------
@@ -175,3 +202,4 @@ task to the DMA controller would improve the realtime-ness, it is too slow for
 any meaningful display.
 
 [hub75]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/hub75.jpg
+[matrix64]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/chained-64x64.jpg
