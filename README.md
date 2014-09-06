@@ -15,22 +15,9 @@ The 32x32 or 16x32 RGB LED matrix panels can be scored at [AdaFruit][ada]
 or eBay. If you are in China, I'd try to get them directly from some
 manufacturer or Taobao.
 
-They all seem to have the same standard interface, essentially controlling
-two banks of 16 rows (0..15 and 16..31) There are always two rows (n and n+16),
-that are controlled in parallel
-(These displays are also available in 16x32; in that case, it is two banks of 8).
-
-The data for each row needs to be clocked in serially using one bit for red,
-green and blue for both rows that are controlled in parallel (= 6 bits), then
-a positive clock edge to shift them in - 32 pixels for one row are clocked in
-like this (or more: you can chain these displays).
-With 'strobe', the data is transferred to the output buffers for the row.
-There are four bits that select the current row(-pair) to be displayed.
-Also, there is an 'output enable' which switches if LEDs are on at all.
-
-Since LEDs can only be on or off, we have to do our own PWM. The `RGBMatrix`
-class in `include/led-matrix.h` does that. You can use this as a library
-in your own projects or just use the demo binary provided here.
+The `RGBMatrix` class provided in `include/led-matrix.h` does what is needed
+to control these. You can use this as a library in your own projects or just
+use the demo binary provided here which provides some useful examples.
 
 Connection
 ----------
@@ -60,32 +47,8 @@ LED-Panel to GPIO with this code:
    * CLK (Serial clock) : GPIO 3
    * STR (Strobe row data) : GPIO 4
 
-Here a typical pinout on these LED panels; picture next to the connector:
-
+Here a typical pinout on these LED panels, found on the circuit board:
 ![Hub 75 interface][hub75]
-
-**Chaining**
-
-Displays also have an output port, that you can connect to the next display
-in a daisy-chain manner. There is a parameter in the demo program to give
-number of displays that are chained. You end up with a very wide
-display (chain * 32 pixels).
-
-You can as well chain multiple boards together and then arrange them in a
-different layout. Say you have 4 displays with 32x32 -- if we chain
-them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
-the boards in a square, we get a logical display of 64x64 pixels.
-
-For convenience, we should only deal with the logical coordinates of
-64x64 pixels in our program: implement a `Canvas`
-interface to do the coordinate mapping. Have a look at
-`class LargeSquare64x64Canvas` for an example and see how it is delegating to
-the underlying RGBMatrix with changed coordinates.
-
-Here is how the wiring would look like:
-
-<img src="img/chained-64x64.jpg" width="400px"> In action:
-[![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
 
 Running
 -------
@@ -145,51 +108,29 @@ areas of your picture.
 Ideally, this would run on a system with hard realtime guarantees
 (There are Linux extensions for that, but haven't tried that yet).
 
-A word about power
-------------------
+Chaining
+--------
 
-These displays suck a lot of current. At 5V, when all LEDs are on (full white),
-my LED panel draws about 3.4A. That means, you need a beefy power supply to
-drive these panels; a 2A USB charger or similar is not enough for a
-32x32 panel; it might be for a 16x32.
+Displays also have an output port, that you can connect to the next display
+in a daisy-chain manner. There is a parameter in the demo program to give
+number of displays that are chained. You end up with a very wide
+display (chain * 32 pixels).
 
-If you connect multiple boards together, you needs a power supply that can
-keep up with 3.5A / panel. Good are PC power supplies that often provide > 20A
-on the 5V rail.
+You can as well chain multiple boards together and then arrange them in a
+different layout. Say you have 4 displays with 32x32 -- if we chain
+them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
+the boards in a square, we get a logical display of 64x64 pixels.
 
-The current draw is pretty spiky. Due to the PWM of the LEDs, there are very
-short peaks of about 4 microseconds to about 1ms of full current draw.
-Often, the power cable can't support these very short spikes due to inherent
-inductance. This can results in 'noisy' outputs, with random pixels not behaving
-as they should. On top of that, the quality of the output quickly gets erratic
-when it drops under 4.5V (I have seen panels that only work stable at 5.5V). So
-having a capacitor close is good.
+For convenience, we should only deal with the logical coordinates of
+64x64 pixels in our program: implement a `Canvas`
+interface to do the coordinate mapping. Have a look at
+`class LargeSquare64x64Canvas` for an example and see how it is delegating to
+the underlying RGBMatrix with changed coordinates.
 
-When you connect these boards to a power source, keep the following in mind:
-   - Have fairly thick cables connecting the power to the board.
-     Plan to not loose more than 50mV from the source to the LED matrix.
-     So that would be 50mV / 3.5A = 14 mOhm. For both supply wires, so 7mOhm
-     each trace.
-     A 1mm² copper cable has about 17.5mOhm/meter, so you'd need a **2.5mm²
-     copper cable per meter and panel**. Multiply by meter and
-     number of panels to get the needed cross-section.
-     (For Americans: that would be ~13 gauge wire for 3 ft and one panel)
+Here is how the wiring would look like:
 
-   - It is good to buffer the current spikes directly at the panel. The most
-     spikes happen while PWM-ing a single line.
-     So let's say we want to buffer the energy to power a single line without
-     dropping more than 50mV. We use 3.5A which is 3.5Joule/second. We do
-     about 140Hz refresh rate and divide that in 16 lines, so we need
-     3.5 Joule/140/16 = ~1.6mJoule in the time period to display one line.
-     We want to get the energy out of the voltage drop of 50mV; so with
-     W = 1/2*C*U², we can calculate the capacitance needed:
-       C = 2 * 1.6mJoule / ((5V)² - (5V - 50mV)²) = ~6400µF.
-     So, **2 x 3300µF** low-ESR capacitors in parallel directly
-     at the board are a good choice (two, because lower parallel ESR; also
-     fits easier under board).
-     (In reality, we need of course less, as the highest ripple comes with
-      50% duty cyle thus half the current; also the input is recharching all
-      the time. But: as engineer plan for maximum and then some).
+<img src="img/chained-64x64.jpg" width="400px"> In action:
+[![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
 
 Using the API
 -------------
@@ -248,6 +189,73 @@ code:
 Or, if you are lazy, just import the whole namespace:
 
      using namespace rgb_matrix;
+
+
+A word about power
+------------------
+
+These displays suck a lot of current. At 5V, when all LEDs are on (full white),
+my LED panel draws about 3.4A. That means, you need a beefy power supply to
+drive these panels; a 2A USB charger or similar is not enough for a
+32x32 panel; it might be for a 16x32.
+
+If you connect multiple boards together, you needs a power supply that can
+keep up with 3.5A / panel. Good are PC power supplies that often provide > 20A
+on the 5V rail.
+
+The current draw is pretty spiky. Due to the PWM of the LEDs, there are very
+short peaks of about 4 microseconds to about 1ms of full current draw.
+Often, the power cable can't support these very short spikes due to inherent
+inductance. This can results in 'noisy' outputs, with random pixels not behaving
+as they should. On top of that, the quality of the output quickly gets erratic
+when it drops under 4.5V (I have seen panels that only work stable at 5.5V). So
+having a capacitor close is good.
+
+When you connect these boards to a power source, keep the following in mind:
+   - Have fairly thick cables connecting the power to the board.
+     Plan to not loose more than 50mV from the source to the LED matrix.
+     So that would be 50mV / 3.5A = 14 mOhm. For both supply wires, so 7mOhm
+     each trace.
+     A 1mm² copper cable has about 17.5mOhm/meter, so you'd need a **2.5mm²
+     copper cable per meter and panel**. Multiply by meter and
+     number of panels to get the needed cross-section.
+     (For Americans: that would be ~13 gauge wire for 3 ft and one panel)
+
+   - It is good to buffer the current spikes directly at the panel. The most
+     spikes happen while PWM-ing a single line.
+     So let's say we want to buffer the energy to power a single line without
+     dropping more than 50mV. We use 3.5A which is 3.5Joule/second. We do
+     about 140Hz refresh rate and divide that in 16 lines, so we need
+     3.5 Joule/140/16 = ~1.6mJoule in the time period to display one line.
+     We want to get the energy out of the voltage drop of 50mV; so with
+     W = 1/2*C*U², we can calculate the capacitance needed:
+       C = 2 * 1.6mJoule / ((5V)² - (5V - 50mV)²) = ~6400µF.
+     So, **2 x 3300µF** low-ESR capacitors in parallel directly
+     at the board are a good choice (two, because lower parallel ESR; also
+     fits easier under board).
+     (In reality, we need of course less, as the highest ripple comes with
+      50% duty cyle thus half the current; also the input is recharching all
+      the time. But: as engineer plan for maximum and then some).
+
+Technical details
+-----------------
+
+The matrix modules available on the market all seem to have the same
+standard interface, essentially controlling
+two banks of 16 rows (0..15 and 16..31) There are always two rows (n and n+16),
+that are controlled in parallel
+(These displays are also available in 16x32; in that case, it is two banks of 8).
+
+The data for each row needs to be clocked in serially using one bit for red,
+green and blue for both rows that are controlled in parallel (= 6 bits), then
+a positive clock edge to shift them in - 32 pixels for one row are clocked in
+like this (or more: you can chain these displays).
+With 'strobe', the data is transferred to the output buffers for the row.
+There are four bits that select the current row(-pair) to be displayed.
+Also, there is an 'output enable' which switches if LEDs are on at all.
+
+Since LEDs can only be on or off, we have to do our own PWM by constantly
+clocking in pixels.
 
 Limitations
 -----------
