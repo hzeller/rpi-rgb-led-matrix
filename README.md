@@ -157,13 +157,14 @@ short peaks of about 4 microseconds to about 1ms of full current draw.
 Often, the power cable can't support these very short spikes due to inherent
 inductance. This can results in 'noisy' outputs, with random pixels not behaving
 as they should. On top of that, the quality of the output quickly gets erratic
-when it drops under 4.5V (I have seen panels that only work stable at 5.5V).
+when it drops under 4.5V (I have seen panels that only work stable at 5.5V). So
+having a capacitor close is good.
 
-To remedy, you should
+So when you connect these boards to a power source, keep the following in mind:
    - Have fairly thick cables connecting the power to the board.
      Plan to not loose more than 50mV from the source to the LED matrix.
-     So that would be 50mV / 3.5A = 14 mOhm. For both wires, so 7mOhm each
-     trace.
+     So that would be 50mV / 3.5A = 14 mOhm. For both supply wires, so 7mOhm
+     each trace.
      A 1mm² copper cable has about 17.5mOhm/meter, so you'd need a **2.5mm²
      copper cable per meter and panel**. Multiply by meter and
      number of panels to get the needed cross-section.
@@ -174,17 +175,23 @@ To remedy, you should
      So let's say we want to buffer the energy to power a single line without
      dropping more than 50mV. We use 3.5A which is 3.5Joule/second. We do
      about 140Hz refresh rate and divide that in 16 lines, so we need
-     3.5 Joule/140/16 =~ 1.6mJoule in the time period to display one line.
+     3.5 Joule/140/16 = ~1.6mJoule in the time period to display one line.
      We want to get the energy out of the voltage drop of 50mV; so with
      W = 1/2*C*U², we can calculate the capacitance needed:
-       C = 2 * 1.6mJoule / ((5V)² - (5V - 50mV)²) =~ 6400µF.
+       C = 2 * 1.6mJoule / ((5V)² - (5V - 50mV)²) = ~6400µF.
      So, **2 x 3300µF** low-ESR capacitors in parallel directly
      at the board are a good choice (two, because lower parallel ESR; also
      fits easier under board).
      (In reality, we need of course less, as the highest ripple comes with
       50% duty cyle thus half the current; also the input is recharching all
       the time. But: as engineer plan for maximum and then some).
-   
+
+Using the API
+-------------
+While there is a demo program, the matrix code can be used independently as
+a library.
+(TODO: document more).
+
 Limitations
 -----------
 There seems to be a limit in how fast the GPIO pins can be controlled. Right
