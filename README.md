@@ -144,8 +144,8 @@ To remedy, you should
      about 140Hz refresh rate and divide that in 16 lines, so we need
      3.5 Joule/140/16 =~ 1.6mJoule in the time period to display one line.
      We want to get the energy out of the voltage drop of 50mV; so with
-     W = 1/2*C*U^2, we can calculate the capacitance needed:
-       C = 2 * 1.6mJoule / ((5V)^2 - (5V - 50mV)^2) =~ 6400µF.
+     W = 1/2*C*U², we can calculate the capacitance needed:
+       C = 2 * 1.6mJoule / ((5V)² - (5V - 50mV)²) =~ 6400µF.
      So, **2 x 3300µF** low-ESR capacitors in parallel directly
      at the board are a good choice (two, because lower parallel ESR; also
      fits easier under board).
