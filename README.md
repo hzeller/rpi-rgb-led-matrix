@@ -84,7 +84,7 @@ the underlying RGBMatrix with changed coordinates.
 
 Here is how the wiring would look like:
 
-![Chaining multiple displays][matrix64]
+![Chaining multiple displays](./img/chained-64x64.jpg =300x)
 
 In action: [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
 
