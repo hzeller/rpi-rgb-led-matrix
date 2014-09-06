@@ -59,6 +59,13 @@ LED-Panel to GPIO with this code:
 This is the typical pinout on these LED panels
 ![Hub 75 interface][hub75]
 
+**Chaining**
+
+Displays also have an output port, that you can connect to the next display
+in a daisy-chain manner. There is a parameter in the demo program to give
+number of displays that are chained. You end up with a very wide
+display (chain * 32 pixels).
+
 Running
 -------
 The main.cc has some testing demos. Via command line flags, you can choose

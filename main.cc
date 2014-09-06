@@ -29,20 +29,24 @@ public:
   void Run() {
     const int width = matrix_->width();
     const int height = matrix_->height();
-    uint32_t count = 0;
+    uint32_t continuum = 0;
     while (running_) {
-      sleep(2);
-      ++count;
-      int color = count % 6;
-      int value = 0xff;
-      int r, g, b;
-      switch (color) {
-      case 0: r = value; g = b = 0; break;
-      case 1: r = g = value; b = 0; break;
-      case 2: g = value; r = b = 0; break;
-      case 3: g = b = value; r = 0; break;
-      case 4: b = value; r = g = 0; break;
-      default: r = g = b = value; break;
+      usleep(5 * 1000);
+      continuum += 1;
+      continuum %= 3 * 255;
+      int r = 0, g = 0, b = 0;
+      if (continuum <= 255) {
+        int c = continuum;
+        b = 255 - c;
+        r = c;
+      } else if (continuum > 255 && continuum <= 511) {
+        int c = continuum - 256;
+        r = 255 - c;
+        g = c;
+      } else {
+        int c = continuum - 512;
+        g = 255 - c;
+        b = c;
       }
       for (int x = 0; x < width; ++x)
         for (int y = 0; y < height; ++y)
@@ -291,7 +295,7 @@ int main(int argc, char *argv[]) {
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "D:t:d:r:p:c:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "D:t:dr:p:c:m:")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
