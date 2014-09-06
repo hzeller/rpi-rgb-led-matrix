@@ -230,7 +230,7 @@ Note, all the types provided are in the `rgb_matrix` namespace. That way, they
 won't clash with other types you might use in your code; in particular pretty
 common names such as `GPIO` or `Canvas` might run into trouble clashing.
 
-Anyway, for convenience you just might add these using-declarations in your
+Anyway, for convenience you just might add using-declarations in your
 code:
 
      // The types eported by the RGB-Matrix library.
@@ -238,6 +238,10 @@ code:
      using rgb_matrix::GPIO;
      using rgb_matrix::RGBMatrix;
      using rgb_matrix::ThreadedCanvasManipulator;
+
+Or, if you are lazy, just import the whole namespace:
+
+     using namespace rgb_matrix;
 
 Limitations
 -----------
