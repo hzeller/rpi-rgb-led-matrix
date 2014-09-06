@@ -5,6 +5,7 @@
 
 #include "thread.h"
 
+namespace rgb_matrix {
 //
 // Typically, your programs will crate a canvas and then updating the image
 // in a loop. If you want to do stuff in parallel, then this utility class
@@ -59,5 +60,6 @@ private:
   volatile bool running_;  // TODO: use mutex, but this is good enough for now.
   Canvas *const canvas_;
 };
+}  // namespace rgb_matrix
 
 #endif  // RPI_THREADED_CANVAS_MANIPULATOR_H

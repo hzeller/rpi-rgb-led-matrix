@@ -17,6 +17,12 @@
 using std::min;
 using std::max;
 
+// The types used from the RGB-Matrix library.
+using rgb_matrix::Canvas;
+using rgb_matrix::GPIO;
+using rgb_matrix::RGBMatrix;
+using rgb_matrix::ThreadedCanvasManipulator;
+
 // This is an example how to use the Canvas abstraction to map coordinates.
 //
 // This is a Canvas that delegates to some other Canvas (typically, the RGB

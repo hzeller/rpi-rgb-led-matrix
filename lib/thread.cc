@@ -6,6 +6,7 @@
 #include <string.h>
 #include <assert.h>
 
+namespace rgb_matrix {
 void *Thread::PthreadCallRun(void *tobject) {
   reinterpret_cast<Thread*>(tobject)->Run();
   return NULL;
@@ -32,3 +33,5 @@ void Thread::Start(int priority) {
 
   started_ = true;
 }
+
+}  // namespace rgb_matrix

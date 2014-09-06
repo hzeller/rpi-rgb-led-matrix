@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "gpio.h"
 
+namespace rgb_matrix {
 // An interface for things a Canvas can do. The RGBMatrix implements this
 // interface, so you can use that directly. However, this abstraction allows
 // you to e.g. create delegating implementations that do a particular
@@ -96,4 +97,6 @@ private:
   IoBits *bitplane_framebuffer_;
   inline IoBits *ValueAt(int double_row, int column, int bit);
 };
+
+}  // end namespace rgb_matrix
 #endif  // RPI_RGBMATRIX_H

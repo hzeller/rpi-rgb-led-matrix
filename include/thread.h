@@ -1,8 +1,10 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 #ifndef RPI_THREAD_H
 #define RPI_THREAD_H
+
 #include <pthread.h>
 
+namespace rgb_matrix {
 // Simple thread abstraction.
 class Thread {
 public:
@@ -45,5 +47,7 @@ public:
 private:
   Mutex *const mutex_;
 };
+
+}  // end namespace rgb_matrix
 
 #endif  // RPI_THREAD_H

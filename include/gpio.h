@@ -4,6 +4,9 @@
 
 #include <stdint.h>
 
+// Putting this in our namespace to not collide with other things called like
+// this.
+namespace rgb_matrix {
 // For now, everything is initialized as output.
 class GPIO {
  public:
@@ -44,5 +47,5 @@ class GPIO {
   uint32_t output_bits_;
   volatile uint32_t *gpio_port_;
 };
-
+}  // end namespace rgb_matrix
 #endif  // RPI_GPIO_H

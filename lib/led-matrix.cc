@@ -67,6 +67,7 @@ static void sleep_nanos(long nanos) {
   }
 }
 
+namespace rgb_matrix {
 // Pump pixels to screen. Needs to be high priority real-time because jitter
 class RGBMatrix::UpdateThread : public Thread {
 public:
@@ -225,3 +226,4 @@ void RGBMatrix::UpdateScreen() {
   }
   io_->SetBits(output_enable.raw);   // Switch off output.
 }
+}  // namespace rgb_matrix
