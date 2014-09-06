@@ -84,9 +84,8 @@ the underlying RGBMatrix with changed coordinates.
 
 Here is how the wiring would look like:
 
-<img src="img/chained-64x64.jpg" width="300px">
-
-In action: [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
+<img src="img/chained-64x64.jpg" width="300px"> In action:
+[![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
 
 Running
 -------
