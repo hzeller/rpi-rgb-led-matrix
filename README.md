@@ -129,7 +129,7 @@ convenience, there is a little runtext.ppm example included:
      $ sudo ./led-matrix -D 1 runtext.ppm
 
 Here is a video of how it looks
-[![Runtext][run-vid]](http://youtu.be/watch?v=OJvEWyvO4ro)
+[![Runtext][run-vid]](http://youtu.be/OJvEWyvO4ro)
 
 **CPU use**
 
