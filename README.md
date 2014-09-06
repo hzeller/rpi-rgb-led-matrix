@@ -145,10 +145,10 @@ To remedy, you should
      3.5 Joule/140/16 =~ 1.6mJoule in the time period to display one line.
      We want to get the energy out of the voltage drop of 50mV; so with
      W = 1/2*C*U^2, we can calculate the capacitance needed:
-       C = 2 * 1.6mJoule / ((5V)^2 - (5V - 50mV)^2) =~ 6400 microFarad
-     So, proably **2 x 3300microFarad** low-ESR capacitors in parallel
-     are a good choice (two, because lower parallel ESR; also fits easier under
-     board).
+       C = 2 * 1.6mJoule / ((5V)^2 - (5V - 50mV)^2) =~ 6400 microFarad.
+     So, proably **2 x 3300microFarad** low-ESR capacitors in parallel directly
+     at the board are a good choice (two, because lower parallel ESR; also
+     fits easier under board).
      (In reality, we need of course less, as the highest ripple comes with
       50% duty cyle thus half the current; also the input is recharching all
       the time. But: as engineer plan for maximum and then some).
