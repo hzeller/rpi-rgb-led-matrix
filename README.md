@@ -271,9 +271,9 @@ data to the GPIO pins than doing it directly. So even if offloading this
 task to the DMA controller would improve the realtime-ness, it is too slow for
 any meaningful display.
 
-[hub75]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/hub75.jpg
-[matrix64]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/chained-64x64.jpg
-[pp-vid]: https://github.com/hzeller/rpi-rgb-led-matrix/raw/master/img/pixelpusher-vid.jpg
+[hub75]: ./img/hub75.jpg
+[matrix64]: ./img/chained-64x64.jpg
+[pp-vid]: ./img/pixelpusher-vid.jpg
 [run-vid]: ./img/running-vid.jpg
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
 [ada]: http://www.adafruit.com/products/420
