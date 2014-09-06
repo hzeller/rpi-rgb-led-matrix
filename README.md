@@ -28,8 +28,9 @@ With 'strobe', the data is transferred to the output buffers for the row.
 There are four bits that select the current row(-pair) to be displayed.
 Also, there is an 'output enable' which switches if LEDs are on at all.
 
-Since LEDs can only be on or off, we have to do our own PWM. The RGBMatrix
-class in led-matrix.h does that.
+Since LEDs can only be on or off, we have to do our own PWM. The `RGBMatrix`
+class in `include/led-matrix.h` does that. You can use this as a library
+in your own projects or just use the demo binary provided here.
 
 Connection
 ----------
@@ -163,7 +164,7 @@ as they should. On top of that, the quality of the output quickly gets erratic
 when it drops under 4.5V (I have seen panels that only work stable at 5.5V). So
 having a capacitor close is good.
 
-So when you connect these boards to a power source, keep the following in mind:
+When you connect these boards to a power source, keep the following in mind:
    - Have fairly thick cables connecting the power to the board.
      Plan to not loose more than 50mV from the source to the LED matrix.
      So that would be 50mV / 3.5A = 14 mOhm. For both supply wires, so 7mOhm
