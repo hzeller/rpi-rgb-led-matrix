@@ -190,6 +190,9 @@ Or, if you are lazy, just import the whole namespace:
 
      using namespace rgb_matrix;
 
+Read the `minimal-example.cc` to get started, then have a look
+into `demo-main.cc` (Don't ask me how to program your demo, you should only use
+the API when you are comfortable coding).
 
 A word about power
 ------------------
