@@ -265,7 +265,6 @@ static int usage(const char *progname) {
           "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
           "Default: 32\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
-          "\t-p <pwm-bits> : PWM bits used. Somewhere between 1 and 7\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
           "\t-d            : run as daemon. Use this when starting in\n"
           "\t                /etc/init.d, but also when running without\n"
@@ -288,7 +287,6 @@ int main(int argc, char *argv[]) {
   int runtime_seconds = -1;
   int demo = -1;
   int rows = 32;
-  int pwm_bits = -1;
   int chain = 1;
   int scroll_ms = 30;
 
@@ -311,10 +309,6 @@ int main(int argc, char *argv[]) {
 
     case 'r':
       rows = atoi(optarg);
-      break;
-
-    case 'p':
-      pwm_bits = atoi(optarg);
       break;
 
     case 'c':
@@ -370,25 +364,20 @@ int main(int argc, char *argv[]) {
   }
 
   // The matrix, our 'frame buffer' and display updater.
-  RGBMatrix m(&io, rows, chain);
-
-  if (pwm_bits > 0 && !m.SetPWMBits(pwm_bits)) {
-    fprintf(stderr, "PWM bits outside supported range\n");
-    return 1;
-  }
+  Canvas *canvas = new RGBMatrix(&io, rows, chain);
     
   // The ThreadedCanvasManipulator objects are filling
   // the matrix continuously.
   ThreadedCanvasManipulator *image_gen = NULL;
   switch (demo) {
   case 0:
-    image_gen = new RotatingBlockGenerator(&m);
+    image_gen = new RotatingBlockGenerator(canvas);
     break;
 
   case 1:
   case 2:
     if (demo_parameter) {
-      ImageScroller *scroller = new ImageScroller(&m,
+      ImageScroller *scroller = new ImageScroller(canvas,
                                                   demo == 1 ? 1 : -1,
                                                   scroll_ms);
       if (!scroller->LoadPPM(demo_parameter))
@@ -401,11 +390,11 @@ int main(int argc, char *argv[]) {
     break;
 
   case 3:
-    image_gen = new SimpleSquare(&m);
+    image_gen = new SimpleSquare(canvas);
     break;
 
   case 4:
-    image_gen = new ColorPulseGenerator(&m);
+    image_gen = new ColorPulseGenerator(canvas);
     break;
   }
 
@@ -430,6 +419,8 @@ int main(int argc, char *argv[]) {
 
   // Stop image generating thread.
   delete image_gen;
+
+  delete canvas;
 
   return 0;
 }

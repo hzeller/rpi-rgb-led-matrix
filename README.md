@@ -79,7 +79,6 @@ that is now all dynamically configurable).
      Options:
          -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
          -c <chained>  : Chained boards. Use 1 for one board
-         -p <pwm-bits> : PWM bits used. Somewhere between 1 and 7
          -D <demo-nr>  : Always needs to be set
          -d            : run as daemon. Use this when starting in
                          /etc/init.d, but also when running without
