@@ -314,6 +314,7 @@ static int usage(const char *progname) {
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
           "\t-p <pwm-bits> : Bits used for PWM. Something between 1..7\n"
+          "\t-g            : Do gamma correction (experimental)\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
           "\t-d            : run as daemon. Use this when starting in\n"
           "\t                /etc/init.d, but also when running without\n"
@@ -340,11 +341,12 @@ int main(int argc, char *argv[]) {
   int scroll_ms = 30;
   int pwm_bits = -1;
   bool large_display = false;
+  bool do_gamma = false;
 
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "D:t:dr:p:c:m:L")) != -1) {
+  while ((opt = getopt(argc, argv, "dgD:t:r:p:c:m:L")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -372,6 +374,10 @@ int main(int argc, char *argv[]) {
 
     case 'p':
       pwm_bits = atoi(optarg);
+      break;
+
+    case 'g':
+      do_gamma = true;
       break;
 
     case 'L':
@@ -430,6 +436,7 @@ int main(int argc, char *argv[]) {
 
   // The matrix, our 'frame buffer' and display updater.
   RGBMatrix *matrix = new RGBMatrix(&io, rows, chain);
+  matrix->set_gamma_correct(do_gamma);
   if (pwm_bits > 0 && !matrix->SetPWMBits(pwm_bits)) {
     fprintf(stderr, "Invalid range of pwm-bits");
     return 1;

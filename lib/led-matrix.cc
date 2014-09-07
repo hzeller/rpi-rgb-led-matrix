@@ -100,7 +100,8 @@ private:
 };
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
-  : rows_(rows), columns_(32 * chained_displays), pwm_bits_(kBitPlanes),
+  : rows_(rows), columns_(32 * chained_displays),
+    pwm_bits_(kBitPlanes), do_gamma_(false),
     double_rows_(rows / 2), row_mask_(double_rows_ - 1),
   io_(io), updater_(NULL) {
   // Tell GPIO about all bits we intend to use.
@@ -144,6 +145,13 @@ void RGBMatrix::FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
   }
 }
 
+static uint16_t simple_gamma_correct(uint8_t c) {
+    // Simplified gamma ~= 2.2
+    if (c < 64) return c;
+    if (c < 128) return ((c - 63) * 3 + 63);
+    return ((c - 127) * 6 + 255);
+}
+
 inline RGBMatrix::IoBits *RGBMatrix::ValueAt(int double_row, int column,
                                              int bit) {
   return &bitplane_framebuffer_[ double_row * (columns_ * kBitPlanes)
@@ -155,8 +163,12 @@ void RGBMatrix::SetPixel(int x, int y,
                          uint8_t red, uint8_t green, uint8_t blue) {
   if (x < 0 || y < 0 || x >= width() || y >= height()) return;
 
-  // TODO: re-map values to be luminance corrected (sometimes called 'gamma').
   // Ideally, we had like 10PWM bits for this, but we're too slow for that :/
+  if (do_gamma_) {
+    red = simple_gamma_correct(red) >> 4;
+    green = simple_gamma_correct(green) >> 4;
+    blue = simple_gamma_correct(blue) >> 4;
+  }
 
   // We only maximum use kBitPlanes. So make sure our MSBit is aligned with that.
   red >>= (8 - kBitPlanes);

@@ -44,6 +44,10 @@ public:
   bool SetPWMBits(uint8_t value);
   uint8_t pwmbits() { return pwm_bits_; }
 
+  // Do luminance correction with gamma=~2.2. Experimental.
+  void set_gamma_correct(bool on) { do_gamma_ = on; }
+  bool gamma_correct() const { return do_gamma_; }
+
 private:
   class UpdateThread;
   friend class UpdateThread;
@@ -59,6 +63,7 @@ private:
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
   uint8_t pwm_bits_;   // PWM bits to display.
+  bool do_gamma_;      // do gamma correction.
 
   const int double_rows_;
   const uint8_t row_mask_;

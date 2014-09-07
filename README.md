@@ -208,11 +208,14 @@ The current draw is pretty spiky. Due to the PWM of the LEDs, there are very
 short peaks of about 4 microseconds to about 1ms of full current draw.
 Often, the power cable can't support these very short spikes due to inherent
 inductance. This can results in 'noisy' outputs, with random pixels not behaving
-as they should. On top of that, the quality of the output quickly gets erratic
-when it drops under 4.5V (I have seen panels that only work stable at 5.5V). So
-having a capacitor close is good.
+as they should. A low ESR capacitor close to the input is good in these cases.
 
-When you connect these boards to a power source, keep the following in mind:
+On some displays, the quality of the output quickly gets erratic
+when voltage drops below 4.5V. Some even need a little bit higher voltage around
+5.5V to work reliably.
+
+When you connect these boards to a power source, the following are good
+guidelines:
    - Have fairly thick cables connecting the power to the board.
      Plan to not loose more than 50mV from the source to the LED matrix.
      So that would be 50mV / 3.5A = 14 mOhm. For both supply wires, so 7mOhm
@@ -238,6 +241,8 @@ When you connect these boards to a power source, keep the following in mind:
       50% duty cyle thus half the current; also the input is recharching all
       the time. But: as engineer plan for maximum and then some).
 
+   - If you still see noise, increase the voltage sligthly to 5.5V.
+   
 Technical details
 -----------------
 
