@@ -116,7 +116,7 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
   bitplane_framebuffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   ClearScreen();
   updater_ = new UpdateThread(this);
-  updater_->Start(10);
+  updater_->Start(49);  // Highest priority below kernel tasks.
 }
 
 RGBMatrix::~RGBMatrix() {
