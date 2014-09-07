@@ -266,6 +266,7 @@ public:
 
 private:
   struct Pixel {
+    Pixel() : red(0), green(0), blue(0){}
     uint8_t red;
     uint8_t green;
     uint8_t blue;
@@ -279,7 +280,7 @@ private:
     inline bool IsValid() { return image && height > 0 && width > 0; }
     const Pixel &getPixel(int x, int y) {
       static Pixel black;
-      if (x < 0 || x > width || y < 0 || y > height) return black;
+      if (x < 0 || x >= width || y < 0 || y >= height) return black;
       return image[x + width * y];
     }
 
