@@ -17,11 +17,7 @@
 using std::min;
 using std::max;
 
-// The types eported by the RGB-Matrix library.
-using rgb_matrix::Canvas;
-using rgb_matrix::GPIO;
-using rgb_matrix::RGBMatrix;
-using rgb_matrix::ThreadedCanvasManipulator;
+using namespace rgb_matrix;
 
 // This is an example how to use the Canvas abstraction to map coordinates.
 //
@@ -194,6 +190,11 @@ public:
       horizontal_position_(0) {
   }
 
+  virtual ~ImageScroller() {
+    Stop();
+    WaitStopped();   // only now it is safe to delete our instance variables.
+  }
+
   // _very_ simplified. Can only read binary P6 PPM. Expects newlines in headers
   // Not really robust. Use at your own risk :)
   // This allows reload of an image while things are running, e.g. you can
@@ -224,12 +225,14 @@ public:
     }
 #undef EXIT_WITH_MSG
     fclose(f);
-    new_image_.image = new_image;
-    new_image_.width = new_width;
-    new_image_.height = new_height;
     fprintf(stderr, "Read image '%s' with %dx%d\n", filename,
             new_width, new_height);
     horizontal_position_ = 0;
+    MutexLock l(&mutex_new_image_);
+    new_image_.Delete();  // in case we reload faster than is picked up
+    new_image_.image = new_image;
+    new_image_.width = new_width;
+    new_image_.height = new_height;
     return true;
   }
 
@@ -237,10 +240,13 @@ public:
     const int screen_height = canvas()->height();
     const int screen_width = canvas()->width();
     while (running()) {
-      if (new_image_.IsValid()) {
-        current_image_.Delete();
-        current_image_ = new_image_;
-        new_image_.Reset();
+      {
+        MutexLock l(&mutex_new_image_);
+        if (new_image_.IsValid()) {
+          current_image_.Delete();
+          current_image_ = new_image_;
+          new_image_.Reset();
+        }
       }
       if (!current_image_.IsValid()) {
         usleep(100 * 1000);
@@ -300,8 +306,14 @@ private:
 
   const int scroll_jumps_;
   const int scroll_ms_;
+
+  // Current image is only manipulated in our thread.
   Image current_image_;
+
+  // New image can be loaded from another thread, then taken over in main thread.
+  Mutex mutex_new_image_;
   Image new_image_;
+
   int32_t horizontal_position_;
 };
 

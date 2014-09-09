@@ -14,11 +14,16 @@ void *Thread::PthreadCallRun(void *tobject) {
 
 Thread::Thread() : started_(false) {}
 Thread::~Thread() {
+  WaitStopped();
+}
+
+void Thread::WaitStopped() {
   if (!started_) return;
   int result = pthread_join(thread_, NULL);
   if (result != 0) {
     fprintf(stderr, "err code: %d %s\n", result, strerror(result));
   }
+  started_ = false;
 }
 
 void Thread::Start(int priority) {

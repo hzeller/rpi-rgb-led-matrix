@@ -1,5 +1,6 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-
+#ifndef RPI_CANVAS_H
+#define RPI_CANVAS_H
 #include <stdint.h>
 
 namespace rgb_matrix {
@@ -20,3 +21,4 @@ public:
 };
 
 }  // namespace rgb_matrix
+#endif  // RPI_CANVAS_H

@@ -13,6 +13,9 @@ public:
   // The destructor waits for Run() to return so make sure it does.
   virtual ~Thread();
   
+  // Wait for the Run() method to return.
+  void WaitStopped();
+
   // Start thread. If realtime_priority is > 0, then this will be a
   // thread with SCHED_FIFO and the given priority.
   void Start(int realtime_priority = 0);
