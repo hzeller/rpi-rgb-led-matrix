@@ -15,7 +15,7 @@ static void DrawOnCanvas(Canvas *canvas) {
      * Let's create a simple animation. We use the canvas to draw
      * pixels. We wait between each step to have a slower animation.
      */
-    canvas->FillScreen(0, 0, 255);
+    canvas->Fill(0, 0, 255);
 
     int center_x = canvas->width() / 2;
     int center_y = canvas->height() / 2;
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     DrawOnCanvas(canvas);    // Using the canvas.
 
     // Animation finished. Shut down the RGB matrix.
-    canvas->ClearScreen();
+    canvas->Clear();
     delete canvas;
 
     return 0;

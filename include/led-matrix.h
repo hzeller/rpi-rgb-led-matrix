@@ -6,23 +6,9 @@
 
 #include <stdint.h>
 #include "gpio.h"
+#include "canvas.h"
 
 namespace rgb_matrix {
-// An interface for things a Canvas can do. The RGBMatrix implements this
-// interface, so you can use that directly. However, this abstraction allows
-// you to e.g. create delegating implementations that do a particular
-// transformation, e.g. compose images or map coordinates in a funky way. So
-// it might be a good idea to have your demos write to a Canvas instead.
-class Canvas {
-public:
-  virtual ~Canvas() {}
-  virtual void ClearScreen() = 0;
-  virtual void FillScreen(uint8_t red, uint8_t green, uint8_t blue) = 0;
-  virtual int width() const = 0;
-  virtual int height() const = 0;
-  virtual void SetPixel(int x, int y,
-                        uint8_t red, uint8_t green, uint8_t blue) = 0;
-};
 
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
@@ -31,13 +17,12 @@ public:
   RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1);
   virtual ~RGBMatrix();
 
-  virtual void ClearScreen();
-  virtual void FillScreen(uint8_t red, uint8_t green, uint8_t blue);
-
   virtual int width() const { return columns_; }
   virtual int height() const { return rows_; }
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue);
+  virtual void Clear();
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
   // Some value between 1..7. Returns boolean to signify if value was within
   // range.

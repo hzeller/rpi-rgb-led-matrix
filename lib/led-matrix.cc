@@ -90,7 +90,7 @@ public:
     }
 
     // Make sure the screen is clean and no glaring pixels in the end.
-    matrix_->ClearScreen();
+    matrix_->Clear();
     matrix_->UpdateScreen();
   }
 
@@ -115,7 +115,7 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
   const uint32_t result = io_->InitOutputs(b.raw);
   assert(result == b.raw);
   bitplane_framebuffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
-  ClearScreen();
+  Clear();
   updater_ = new UpdateThread(this);
   updater_->Start(49);  // Highest priority below kernel tasks.
 }
@@ -132,12 +132,12 @@ bool RGBMatrix::SetPWMBits(uint8_t value) {
   return true;
 }
 
-void RGBMatrix::ClearScreen() {
+void RGBMatrix::Clear() {
   memset(bitplane_framebuffer_, 0,
          sizeof(*bitplane_framebuffer_) * double_rows_ * columns_ * kBitPlanes);
 }
 
-void RGBMatrix::FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
+void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   for (int x = 0; x < width(); ++x) {
     for (int y = 0; y < height(); ++y) {
       SetPixel(x, y, red, green, blue);

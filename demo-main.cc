@@ -43,9 +43,9 @@ public:
   }
   virtual ~LargeSquare64x64Canvas() { delete delegatee_; }
 
-  virtual void ClearScreen() { delegatee_->ClearScreen(); }
-  virtual void FillScreen(uint8_t red, uint8_t green, uint8_t blue) {
-    delegatee_->FillScreen(red, green, blue);
+  virtual void Clear() { delegatee_->Clear(); }
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) {
+    delegatee_->Fill(red, green, blue);
   }
   virtual int width() const { return 64; }
   virtual int height() const { return 64; }
