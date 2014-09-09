@@ -4,6 +4,7 @@
 #define RPI_THREADED_CANVAS_MANIPULATOR_H
 
 #include "thread.h"
+#include "canvas.h"
 
 namespace rgb_matrix {
 //
@@ -19,14 +20,14 @@ namespace rgb_matrix {
     virtual void Run() {
       unsigned char c;
       while (running()) {
-          // Calculate the next frame.
-          c++;
-          for (int x = 0; x < canvas()->width(); ++x) {
-            for (int y = 0; y < canvas()->height(); ++y) {
-              canvas()->SetPixel(x, y, c, c, c);
-            }
+        // Calculate the next frame.
+        c++;
+        for (int x = 0; x < canvas()->width(); ++x) {
+          for (int y = 0; y < canvas()->height(); ++y) {
+            canvas()->SetPixel(x, y, c, c, c);
           }
-          usleep(15 * 1000);
+        }
+        usleep(15 * 1000);
       }
     }
   };
@@ -36,7 +37,8 @@ namespace rgb_matrix {
   MyCrazyDemo *demo = new MyCrazyDemo(&matrix);
   demo->Start();   // Start doing things.
   // This now runs in the background, you can do other things here,
-  // e.g. aquiring new data or simply wait.
+  // e.g. aquiring new data or simply wait. But for waiting, you wouldn't
+  // need a thread in the first place.
   demo->Stop();
   delete demo;
 */
@@ -46,18 +48,24 @@ public:
   virtual ~ThreadedCanvasManipulator() {  Stop(); }
 
   // Stop the thread at the next possible time Run() checks the running_ flag.
-  void Stop() { running_ = false; }
+  void Stop() {
+    MutexLock l(&mutex_);
+    running_ = false;
+  }
 
-  // Implement this and run while running_ is true. In other words: return from
-  // this method once running_ becomes false.
+  // Implement this and run while running() returns true.
   virtual void Run() = 0;
 
 protected:
   inline Canvas *canvas() { return canvas_; }
-  inline bool running() { return running_; }
+  inline bool running() {
+    MutexLock l(&mutex_);
+    return running_;
+  }
 
 private:
-  volatile bool running_;  // TODO: use mutex, but this is good enough for now.
+  Mutex mutex_;
+  bool running_;
   Canvas *const canvas_;
 };
 }  // namespace rgb_matrix

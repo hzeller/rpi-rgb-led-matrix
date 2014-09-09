@@ -72,10 +72,12 @@ namespace rgb_matrix {
 class RGBMatrix::UpdateThread : public Thread {
 public:
   UpdateThread(RGBMatrix *matrix) : running_(true), matrix_(matrix) {}
-  virtual ~UpdateThread() { running_ = false; }
+  virtual ~UpdateThread() {
+    Stop();
+  }
 
   virtual void Run() {
-    while (running_) {
+    while (running()) {
 #if SHOW_REFRESH_RATE
       struct timeval start, end;
       gettimeofday(&start, NULL);
@@ -95,7 +97,17 @@ public:
   }
 
 private:
-  volatile bool running_;  // TODO: use mutex, but this is good enough for now.
+  inline bool running() {
+    MutexLock l(&mutex_);
+    return running_;
+  }
+
+  void Stop() {
+    MutexLock l(&mutex_);
+    running_ = false;
+  }
+  Mutex mutex_;
+  bool running_;
   RGBMatrix *const matrix_;  
 };
 

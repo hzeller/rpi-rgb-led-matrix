@@ -9,7 +9,6 @@
 #include "canvas.h"
 
 namespace rgb_matrix {
-
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
 class RGBMatrix : public Canvas {
