@@ -154,11 +154,17 @@ void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
 }
 
 // Run cie1931 luminance correction and scale to output bitplanes
-// TODO: this can be a lookup-table, as it is const for const kBitPlanes.
 static uint16_t luminance_cie1931(uint8_t c) {
   float out_factor = ((1 << kBitPlanes) - 1);
   float v = c * 100.0 / 255.0;
   return out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3));
+}
+
+static uint16_t *CreateLuminanceCIE1931LookupTable() {
+  uint16_t *result = new uint16_t [ 256 ];
+  for (int i = 0; i < 256; ++i)
+    result[i] = luminance_cie1931(i);
+  return result;
 }
 
 inline RGBMatrix::IoBits *RGBMatrix::ValueAt(int double_row, int column,
@@ -174,9 +180,11 @@ void RGBMatrix::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   uint16_t red, green, blue;
 
   if (do_luminance_correct_) {
-    red = luminance_cie1931(r);
-    green = luminance_cie1931(g);
-    blue = luminance_cie1931(b);
+    // We're leaking this table. So be it :)
+    static uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable();
+    red = luminance_lookup[r];
+    green = luminance_lookup[g];
+    blue = luminance_lookup[b];
   } else {
     enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
     red   = (shift > 0) ? (r << shift) : (r >> -shift);
