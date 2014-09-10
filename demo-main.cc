@@ -22,11 +22,11 @@ using namespace rgb_matrix;
 // This is an example how to use the Canvas abstraction to map coordinates.
 //
 // This is a Canvas that delegates to some other Canvas (typically, the RGB
-// matrix). 
+// matrix).
 //
 // Here, we want to address four 32x32 panels as one big 64x64 panel. Physically,
 // we chain them together and do a 180 degree 'curve', somewhat like this:
-// [>] [>]		
+// [>] [>]
 //         v
 // [<] [<]
 class LargeSquare64x64Canvas : public Canvas {
@@ -115,6 +115,34 @@ public:
     for (int y = 0; y < height; ++y) {
       canvas()->SetPixel(0, y, 0, 0, 255);              // left line: blue
       canvas()->SetPixel(width - 1, y, 0, 255, 0);      // right line: green
+    }
+  }
+};
+
+class GrayScaleBlock : public ThreadedCanvasManipulator {
+public:
+  GrayScaleBlock(Canvas *m) : ThreadedCanvasManipulator(m) {}
+  void Run() {
+    const int sub_blocks = 16;
+    const int width = canvas()->width();
+    const int height = canvas()->height();
+    const int x_step = max(1, width / sub_blocks);
+    const int y_step = max(1, height / sub_blocks);
+    uint8_t count = 0;
+    while (running()) {
+      for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+          int c = sub_blocks * (y / y_step) + x / x_step;
+          switch (count % 4) {
+          case 0: canvas()->SetPixel(x, y, c, c, c); break;
+          case 1: canvas()->SetPixel(x, y, c, 0, 0); break;
+          case 2: canvas()->SetPixel(x, y, 0, c, 0); break;
+          case 3: canvas()->SetPixel(x, y, 0, 0, c); break;
+          }
+        }
+      }
+      count++;
+      sleep(1);
     }
   }
 };
@@ -338,7 +366,8 @@ static int usage(const char *progname) {
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
           "\t2  - backward scrolling an image (-m <scroll-ms>)\n"
           "\t3  - test image: a square\n"
-          "\t4  - Pulsing color\n");
+          "\t4  - Pulsing color\n"
+          "\t5  - Grayscale Block\n");
   fprintf(stderr, "Example:\n\t%s -t 10 -D 1 runtext.ppm\n"
           "Scrolls the runtext for 10 seconds\n", progname);
   return 1;
@@ -436,7 +465,7 @@ int main(int argc, char *argv[]) {
   GPIO io;
   if (!io.Init())
     return 1;
-  
+
   // Start daemon before we start any threads.
   if (as_daemon) {
     if (fork() != 0)
@@ -490,6 +519,10 @@ int main(int argc, char *argv[]) {
 
   case 4:
     image_gen = new ColorPulseGenerator(canvas);
+    break;
+
+  case 5:
+    image_gen = new GrayScaleBlock(canvas);
     break;
   }
 
