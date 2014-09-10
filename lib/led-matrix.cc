@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 #define SHOW_REFRESH_RATE 0
 
@@ -24,28 +25,23 @@
 #include "gpio.h"
 #include "thread.h"
 
-// Clocking in a row takes about 3.4usec (TODO: this is actually per board)
-// Because clocking the data in is part of the 'wait time', we need to
-// substract that from the row sleep time.
-static const int kRowClockTime = 3400;
-static const int kBaseTime = kRowClockTime;  // smallest possible value.
-
 enum {
-  kBitPlanes = 7  // maximum usable bitplanes.
+  kBitPlanes = 11  // maximum usable bitplanes.
 };
 
-const long row_sleep_nanos[8] = {
-  (1 * kBaseTime) - kRowClockTime,
-  (2 * kBaseTime) - kRowClockTime,
-  (4 * kBaseTime) - kRowClockTime,
-  (8 * kBaseTime) - kRowClockTime,
-  (16 * kBaseTime) - kRowClockTime,
-  (32 * kBaseTime) - kRowClockTime,
-  (64 * kBaseTime) - kRowClockTime,
-  // Too much flicker with 8 bits. We should have a separate screen pass
-  // with this bit plane. Or interlace. Or trick with -OE switch on in the
-  // middle of row-clocking, thus have kRowClockTime / 2
-  (128 * kBaseTime) - kRowClockTime, // too much flicker.
+static const long kBaseTimeNanos = 200;
+const long row_sleep_nanos[11] = {
+  (1 * kBaseTimeNanos),
+  (2 * kBaseTimeNanos),
+  (4 * kBaseTimeNanos),
+  (8 * kBaseTimeNanos),
+  (16 * kBaseTimeNanos),
+  (32 * kBaseTimeNanos),
+  (64 * kBaseTimeNanos),
+  (128 * kBaseTimeNanos),
+  (256 * kBaseTimeNanos),
+  (512 * kBaseTimeNanos),
+  (1024 * kBaseTimeNanos),
 };
 
 static void sleep_nanos(long nanos) {
@@ -87,7 +83,7 @@ public:
       gettimeofday(&end, NULL);
       int64_t usec = ((uint64_t)end.tv_sec * 1000000 + end.tv_usec)
         - ((int64_t)start.tv_sec * 1000000 + start.tv_usec);
-      printf("\b\b\b\b\b\b\b%5.1fHz", 1e6 / usec);
+      printf("\b\b\b\b\b\b\b\b%6.1fHz", 1e6 / usec);
 #endif
     }
 
@@ -108,12 +104,12 @@ private:
   }
   Mutex mutex_;
   bool running_;
-  RGBMatrix *const matrix_;  
+  RGBMatrix *const matrix_;
 };
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
   : rows_(rows), columns_(32 * chained_displays),
-    pwm_bits_(kBitPlanes), do_gamma_(false),
+    pwm_bits_(kBitPlanes), do_luminance_correct_(true),
     double_rows_(rows / 2), row_mask_(double_rows_ - 1),
   io_(io), updater_(NULL) {
   // Tell GPIO about all bits we intend to use.
@@ -157,11 +153,12 @@ void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   }
 }
 
-static uint16_t simple_gamma_correct(uint8_t c) {
-    // Simplified gamma ~= 2.2
-    if (c < 64) return c;
-    if (c < 128) return ((c - 63) * 3 + 63);
-    return ((c - 127) * 6 + 255);
+// Run cie1931 luminance correction and scale to output bitplanes
+// TODO: this can be a lookup-table, as it is const for const kBitPlanes.
+static uint16_t luminance_cie1931(uint8_t c) {
+  float out_factor = ((1 << kBitPlanes) - 1);
+  float v = c * 100.0 / 255.0;
+  return out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3));
 }
 
 inline RGBMatrix::IoBits *RGBMatrix::ValueAt(int double_row, int column,
@@ -171,24 +168,24 @@ inline RGBMatrix::IoBits *RGBMatrix::ValueAt(int double_row, int column,
                                  + column ];
 }
 
-void RGBMatrix::SetPixel(int x, int y,
-                         uint8_t red, uint8_t green, uint8_t blue) {
+void RGBMatrix::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   if (x < 0 || y < 0 || x >= width() || y >= height()) return;
 
-  // Ideally, we had like 10PWM bits for this, but we're too slow for that :/
-  if (do_gamma_) {
-    red = simple_gamma_correct(red) >> 4;
-    green = simple_gamma_correct(green) >> 4;
-    blue = simple_gamma_correct(blue) >> 4;
+  uint16_t red, green, blue;
+
+  if (do_luminance_correct_) {
+    red = luminance_cie1931(r);
+    green = luminance_cie1931(g);
+    blue = luminance_cie1931(b);
+  } else {
+    enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
+    red   = (shift > 0) ? (r << shift) : (r >> -shift);
+    green = (shift > 0) ? (g << shift) : (g >> -shift);
+    blue  = (shift > 0) ? (b << shift) : (b >> -shift);
   }
 
-  // We only maximum use kBitPlanes. So make sure our MSBit is aligned with that.
-  red >>= (8 - kBitPlanes);
-  green >>= (8 - kBitPlanes);
-  blue >>= (8 - kBitPlanes);
-
   for (int b = 0; b < kBitPlanes; ++b) {
-    uint8_t mask = 1 << b;
+    uint16_t mask = 1 << b;
     IoBits *bits = ValueAt(y & row_mask_, x, b);
     if (y < double_rows_) {   // Upper sub-panel.
       bits->bits.r1 = (red & mask) == mask;
@@ -225,12 +222,9 @@ void RGBMatrix::UpdateScreen() {
     // full PWM of one row before switching rows.
     for (int b = kBitPlanes - pwm_to_show; b < kBitPlanes; ++b) {
       IoBits *row_data = ValueAt(d_row, 0, b);
-      // Clock in the row. The time this takes is the smalles time we can
-      // leave the LEDs on, thus the smallest time-constant we can use for
-      // PWM (doubling the sleep time with each bit).
-      // So this is the critical path (tested with DMA: actually _slower_)
-      // (With this code, one row roughly takes 3.0 - 3.4usec to clock in).
-      for (uint8_t col = 0; col < columns_; ++col) {
+      // We clock these in while we are dark. This actually increases the
+      // dark time, but we ignore that a bit.
+      for (int col = 0; col < columns_; ++col) {
         const IoBits &out = *row_data++;
         io_->WriteMaskedBits(out.raw, color_clk_mask.raw);  // col + reset clock
         io_->SetBits(clock.raw);               // Rising edge: clock color in.
@@ -238,16 +232,14 @@ void RGBMatrix::UpdateScreen() {
 
       io_->ClearBits(color_clk_mask.raw);    // clock back to normal.
 
-      io_->SetBits(output_enable.raw);  // switch output off while strobing row.
-
       io_->SetBits(strobe.raw);   // Strobe in the previously clocked in row.
       io_->ClearBits(strobe.raw);
 
       // Now switch on for the sleep time necessary for that bit-plane.
       io_->ClearBits(output_enable.raw);
       sleep_nanos(row_sleep_nanos[b]);
+      io_->SetBits(output_enable.raw);  // switch output off while strobing row.
     }
   }
-  io_->SetBits(output_enable.raw);   // Switch off output.
 }
 }  // namespace rgb_matrix

@@ -28,9 +28,9 @@ public:
   bool SetPWMBits(uint8_t value);
   uint8_t pwmbits() { return pwm_bits_; }
 
-  // Do luminance correction with gamma=~2.2. Experimental.
-  void set_gamma_correct(bool on) { do_gamma_ = on; }
-  bool gamma_correct() const { return do_gamma_; }
+  // Do luminance correction with cie1931
+  void set_luminance_correct(bool on) { do_luminance_correct_ = on; }
+  bool luminance_correct() const { return do_luminance_correct_; }
 
 private:
   class UpdateThread;
@@ -47,7 +47,7 @@ private:
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
   uint8_t pwm_bits_;   // PWM bits to display.
-  bool do_gamma_;      // do gamma correction.
+  bool do_luminance_correct_;
 
   const int double_rows_;
   const uint8_t row_mask_;
@@ -76,7 +76,7 @@ private:
     uint32_t raw;
     IoBits() : raw(0) {}
   };
- 
+
   // The frame-buffer is organized in bitplanes.
   // Highest level (slowest to cycle through) are double rows.
   // For each double-row, we store pwm-bits columns of a bitplane.

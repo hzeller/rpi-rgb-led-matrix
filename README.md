@@ -64,7 +64,8 @@ that is now all dynamically configurable).
          -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
          -c <chained>  : Daisy-chained boards. Default: 1.
          -L            : 'Large' display, composed out of 4 times 32x32
-         -p <pwm-bits> : Bits used for PWM. Something between 1..7
+         -p <pwm-bits> : Bits used for PWM. Something between 1..11
+         -l            : Don't do luminance correction (CIE1931)
          -D <demo-nr>  : Always needs to be set
          -d            : run as daemon. Use this when starting in
                          /etc/init.d, but also when running without
@@ -242,7 +243,7 @@ guidelines:
       the time. But: as engineer plan for maximum and then some).
 
    - If you still see noise, increase the voltage sligthly to 5.5V.
-   
+
 Technical details
 -----------------
 
@@ -265,24 +266,24 @@ clocking in pixels.
 
 Limitations
 -----------
-There seems to be a limit in how fast the GPIO pins can be controlled. Right
-now, I only get about 10Mhz clock speed which ultimately limits the smallest
-time constant for the PWM. Thus, only 7 bit PWM looks ok with not too much
-flicker.
-
-The output should be luminance ('gamma') corrected, but isn't currently
-in the code (this can be simply done in SetPixel(), but ideally, we have more
-PWM output resolution, such as 10 bits).
+There seems to be a limit in how fast the GPIO pins can be controlled.
+We get about 10Mhz clock speed out of GPIO clocking. Do do things correctly,
+we would have to take the time it takes to clock a row in as essentially the
+lowest PWM time (~3.4µs).
+However, we just ignore this 'black' time, and switch the row on once we have it.
+With that, we do PWM with the lowest time period of about 200ns, which brings
+us display update rates of ~140Hz at a PWM of 11 bits.
 
 Right now, I tested this with the default Linux distribution ("wheezy"). Because
 this does not have any realtime patches, the PWM can look a bit uneven under
-load. If you test this with realtime extensions, let me know how it works.
+load. If you test this with realtime extensions (`CONFIG_PREEMPT_RT`), let me
+know how that works.
 
-One experiment was to use the DMA controller of the RPi to circumvent the
+(One experiment was to use the DMA controller of the RPi to circumvent the
 realtime problems. However, it turns out that the DMA controller slower writing
 data to the GPIO pins than doing it directly. So even if offloading this
 task to the DMA controller would improve the realtime-ness, it is too slow for
-any meaningful display.
+any meaningful display.)
 
 [hub75]: ./img/hub75.jpg
 [matrix64]: ./img/chained-64x64.jpg

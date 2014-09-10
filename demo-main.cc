@@ -130,8 +130,8 @@ public:
     const int y_step = max(1, height / sub_blocks);
     uint8_t count = 0;
     while (running()) {
-      for (int x = 0; x < width; ++x) {
-        for (int y = 0; y < height; ++y) {
+      for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
           int c = sub_blocks * (y / y_step) + x / x_step;
           switch (count % 4) {
           case 0: canvas()->SetPixel(x, y, c, c, c); break;
@@ -142,7 +142,7 @@ public:
         }
       }
       count++;
-      sleep(1);
+      sleep(2);
     }
   }
 };
@@ -353,8 +353,8 @@ static int usage(const char *progname) {
           "Default: 32\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
-          "\t-p <pwm-bits> : Bits used for PWM. Something between 1..7\n"
-          "\t-g            : Do gamma correction (experimental)\n"
+          "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
+          "\t-l            : Don't do luminance correction (CIE1931)\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
           "\t-d            : run as daemon. Use this when starting in\n"
           "\t                /etc/init.d, but also when running without\n"
@@ -382,12 +382,12 @@ int main(int argc, char *argv[]) {
   int scroll_ms = 30;
   int pwm_bits = -1;
   bool large_display = false;
-  bool do_gamma = false;
+  bool do_luminance_correct = true;
 
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "dgD:t:r:p:c:m:L")) != -1) {
+  while ((opt = getopt(argc, argv, "dlD:t:r:p:c:m:L")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -417,8 +417,8 @@ int main(int argc, char *argv[]) {
       pwm_bits = atoi(optarg);
       break;
 
-    case 'g':
-      do_gamma = true;
+    case 'l':
+      do_luminance_correct = !do_luminance_correct;
       break;
 
     case 'L':
@@ -477,9 +477,9 @@ int main(int argc, char *argv[]) {
 
   // The matrix, our 'frame buffer' and display updater.
   RGBMatrix *matrix = new RGBMatrix(&io, rows, chain);
-  matrix->set_gamma_correct(do_gamma);
+  matrix->set_luminance_correct(do_luminance_correct);
   if (pwm_bits > 0 && !matrix->SetPWMBits(pwm_bits)) {
-    fprintf(stderr, "Invalid range of pwm-bits");
+    fprintf(stderr, "Invalid range of pwm-bits\n");
     return 1;
   }
 
