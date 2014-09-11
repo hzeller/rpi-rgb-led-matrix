@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 // Small example how to use the library.
 // For more examples, look at demo-main.cc
 //

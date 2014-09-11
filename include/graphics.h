@@ -31,14 +31,19 @@ public:
   bool LoadFont(const char *path);
 
   // Return height of font in pixels. Returns -1 if font has not been loaded.
-  int GetFontHeight() const { return font_height_; }
+  int height() const { return font_height_; }
+
+  // Return baseline. Pixels from the topline to the baseline.
+  int baseline() const { return base_line_; }
 
   // Return width of given character, or -1 if font is not loaded or character
   // does not exist.
   int CharacterWidth(uint32_t unicode_codepoint) const;
 
-  // Draws the unicode character at position "x","y" with "color". If we don't
-  // have it in the font, draws the replacement character "�" if available.
+  // Draws the unicode character at position "x","y" with "color". The "y"
+  // position is the baseline of the font.
+  // If we don't have it in the font, draws the replacement character "�" if
+  // available.
   // Returns how much we advance on the screen, which is the width of the
   // character or 0 if we didn't draw any chracter.
   int DrawGlyph(Canvas *c, int x, int y, const Color &color,
@@ -50,6 +55,7 @@ private:
   const Glyph *FindGlyph(uint32_t codepoint) const;
 
   int font_height_;
+  int base_line_;
   CodepointGlyphMap glyphs_;
 };
 
