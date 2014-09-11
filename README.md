@@ -102,7 +102,10 @@ that wants to output something:
 
 	 # output stops on end-of-file, so let's sleep a bit
      (echo -e "foo\nbar" ; sleep 2) | sudo ./text-example fonts/7x13.bdf
-	 
+
+You could as well connect this to a long-running process that updates the
+display by sending new lines. An empty line will clear the screen.
+
 **CPU use**
 
 These displays need to be updated constantly to show an image with PWMed
