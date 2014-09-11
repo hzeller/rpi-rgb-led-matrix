@@ -3,7 +3,7 @@
 # So
 #   -lrgbmatrix
 ##
-OBJECTS=gpio.o led-matrix.o thread.o
+OBJECTS=gpio.o led-matrix.o thread.o bdf-font.o graphics.o
 TARGET=librgbmatrix.a
 
 INCDIR=../include
