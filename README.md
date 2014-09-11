@@ -94,6 +94,15 @@ convenience, there is a little runtext.ppm example included:
 Here is a video of how it looks
 [![Runtext][run-vid]](http://youtu.be/OJvEWyvO4ro)
 
+There are also two examples `minimal-example.cc` and `text-example.cc` that
+show use of the API. The text example allows for some interactive output of
+text (using a bitmap-font found in the `fonts/` directory), but it could also
+be used to connct via a pipe, say you have an program or shell-script
+that wants to output something:
+
+	 # output stops on end-of-file, so let's sleep a bit
+     (echo -e "foo\nbar" ; sleep 2) | sudo ./text-example fonts/7x13.bdf
+	 
 **CPU use**
 
 These displays need to be updated constantly to show an image with PWMed
