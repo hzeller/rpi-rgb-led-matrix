@@ -1,3 +1,4 @@
+// -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 // Small example how to use the library.
 // For more examples, look at demo-main.cc
 //
@@ -5,6 +6,7 @@
 
 #include <unistd.h>
 #include <math.h>
+#include <stdio.h>
 
 using rgb_matrix::GPIO;
 using rgb_matrix::RGBMatrix;
@@ -37,7 +39,7 @@ int main(int argc, char *argv[]) {
     GPIO io;
     if (!io.Init())
         return 1;
-
+    
     /*
      * Set up the RGBMatrix. It implements a 'Canvas' interface.
      */
