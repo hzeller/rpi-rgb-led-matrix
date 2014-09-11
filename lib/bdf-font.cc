@@ -57,13 +57,17 @@ bool Font::LoadFont(const char *path) {
       // it always left-aligned.
       bitmap_shift =
         8 * (sizeof(rowbitmap_t) - ((current_glyph->width + 7) / 8)) + x_offset;
+      row = -1;  // let's not start yet, wait for BITMAP
+    }
+    else if (strncmp(buffer, "BITMAP", strlen("BITMAP")) == 0) {
       row = 0;
     }
-    else if (current_glyph && row < current_glyph->height
-             && sscanf(buffer, "%x", &current_glyph->bitmap[row])) {
+    else if (current_glyph && row >= 0 && row < current_glyph->height
+             && (sscanf(buffer, "%x", &current_glyph->bitmap[row]) == 1)) {
       current_glyph->bitmap[row] <<= bitmap_shift;
       row++;
-    } else if (strncmp(buffer, "ENDCHAR", strlen("ENDCHAR")) == 0) {
+    }
+    else if (strncmp(buffer, "ENDCHAR", strlen("ENDCHAR")) == 0) {
       if (current_glyph && row == current_glyph->height) {
         free(glyphs_[codepoint]);  // just in case there was one.
         glyphs_[codepoint] = current_glyph;
