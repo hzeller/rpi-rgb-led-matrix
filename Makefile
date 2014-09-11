@@ -20,6 +20,9 @@ led-matrix : demo-main.o $(RGB_LIBRARY)
 minimal-example : minimal-example.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) minimal-example.o -o $@ $(LDFLAGS)
 
+text-example : text-example.o $(RGB_LIBRARY)
+	$(CXX) $(CXXFLAGS) text-example.o -o $@ $(LDFLAGS)
+
 %.o : %.cc
 	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -c -o $@ $<
 

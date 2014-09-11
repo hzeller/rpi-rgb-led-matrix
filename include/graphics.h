@@ -61,10 +61,9 @@ private:
 
 // -- Some utility functions.
 
-// Draw text, encoded in utf8, with given "font" at "x","y" with "color".
+// Draw text, encoded in UTF-8, with given "font" at "x","y" with "color".
 // Returns how far we advance on the screen.
-int DrawText(Canvas *c, const Font &font,
-             int x, int y, const Color &color,
+int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color,
              const char *utf8_text);
 
 // lines, circles and stuff.
