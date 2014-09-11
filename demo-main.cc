@@ -47,7 +47,7 @@ public:
   virtual int height() const { return 64; }
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue) {
-    if (x < 0 || x > width() || y < 0 || y > height()) return;
+    if (x < 0 || x >= width() || y < 0 || y >= height()) return;
     // We have up to column 64 one direction, then folding around. Lets map
     if (y > 31) {
       x = 127 - x;
