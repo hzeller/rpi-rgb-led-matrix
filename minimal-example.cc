@@ -3,8 +3,6 @@
 //
 #include "led-matrix.h"
 
-#include "graphics.h"
-
 #include <unistd.h>
 #include <math.h>
 #include <stdio.h>
@@ -12,8 +10,6 @@
 using rgb_matrix::GPIO;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::Canvas;
-using rgb_matrix::Font;
-using rgb_matrix::Color;
 
 static void DrawOnCanvas(Canvas *canvas) {
     /*
@@ -36,10 +32,6 @@ static void DrawOnCanvas(Canvas *canvas) {
 }
 
 int main(int argc, char *argv[]) {
-    rgb_matrix::Font font;
-    font.LoadFont(argv[1]);
-    printf("Font height: %d\n", font.GetFontHeight());
-
     /*
      * Set up GPIO pins. This fails when not running as root.
      */
@@ -54,7 +46,6 @@ int main(int argc, char *argv[]) {
     int chain = 1;   // Number of boards chained together.
     Canvas *canvas = new RGBMatrix(&io, rows, chain);
 
-    rgb_matrix::DrawText(canvas, font, 0, 12, Color(255, 0, 0), "Hello World");
     DrawOnCanvas(canvas);    // Using the canvas.
 
     // Animation finished. Shut down the RGB matrix.
