@@ -98,9 +98,9 @@ There are also two examples `minimal-example.cc` and `text-example.cc` that
 show use of the API. The text example allows for some interactive output of
 text (using a bitmap-font found in the `fonts/` directory), but it could also
 be used to connct via a pipe, say you have an program or shell-script
-that wants to output something; let's display the time:
+that wants to output something; let's display the time in blue:
 
-     (while :; do date +%T ; sleep 0.5 ; done) | sudo ./text-example -f fonts/10x20.bdf
+     (while :; do date +%T ; sleep 0.2 ; done) | sudo ./text-example -f fonts/8x13B.bdf -y8 -c2 -C0,0,255
 
 You could as well connect this to a long-running process that updates the
 display by sending new lines. An empty line will clear the screen.
