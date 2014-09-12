@@ -111,7 +111,21 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
   : rows_(rows), columns_(32 * chained_displays),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true),
     double_rows_(rows / 2), row_mask_(double_rows_ - 1),
-  io_(io), updater_(NULL) {
+  io_(NULL), updater_(NULL) {
+  bitplane_framebuffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
+  Clear();
+  SetGPIO(io);
+}
+
+RGBMatrix::~RGBMatrix() {
+  delete updater_;
+  delete [] bitplane_framebuffer_;
+}
+
+void RGBMatrix::SetGPIO(GPIO *io) {
+  if (io == NULL) return;  // nothing to set.
+  if (io_ != NULL) return;  // already set.
+  io_ = io;
   // Tell GPIO about all bits we intend to use.
   IoBits b;
   b.raw = 0;
@@ -122,15 +136,8 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io_->InitOutputs(b.raw);
   assert(result == b.raw);
-  bitplane_framebuffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
-  Clear();
   updater_ = new UpdateThread(this);
   updater_->Start(49);  // Highest priority below kernel tasks.
-}
-
-RGBMatrix::~RGBMatrix() {
-  delete updater_;
-  delete [] bitplane_framebuffer_;
 }
 
 bool RGBMatrix::SetPWMBits(uint8_t value) {
@@ -140,20 +147,14 @@ bool RGBMatrix::SetPWMBits(uint8_t value) {
   return true;
 }
 
-void RGBMatrix::Clear() {
-  memset(bitplane_framebuffer_, 0,
-         sizeof(*bitplane_framebuffer_) * double_rows_ * columns_ * kBitPlanes);
+inline RGBMatrix::IoBits *RGBMatrix::ValueAt(int double_row, int column,
+                                             int bit) {
+  return &bitplane_framebuffer_[ double_row * (columns_ * kBitPlanes)
+                                 + bit * columns_
+                                 + column ];
 }
 
-void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
-  for (int x = 0; x < width(); ++x) {
-    for (int y = 0; y < height(); ++y) {
-      SetPixel(x, y, red, green, blue);
-    }
-  }
-}
-
-// Run cie1931 luminance correction and scale to output bitplanes
+// Do CIE1931 luminance correction and scale to output bitplanes
 static uint16_t luminance_cie1931(uint8_t c) {
   float out_factor = ((1 << kBitPlanes) - 1);
   float v = c * 100.0 / 255.0;
@@ -167,42 +168,66 @@ static uint16_t *CreateLuminanceCIE1931LookupTable() {
   return result;
 }
 
-inline RGBMatrix::IoBits *RGBMatrix::ValueAt(int double_row, int column,
-                                             int bit) {
-  return &bitplane_framebuffer_[ double_row * (columns_ * kBitPlanes)
-                                 + bit * columns_
-                                 + column ];
-}
-
-void RGBMatrix::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-  if (x < 0 || y < 0 || x >= width() || y >= height()) return;
-
-  uint16_t red, green, blue;
-
+inline uint16_t RGBMatrix::MapColor(uint8_t c) {
   if (do_luminance_correct_) {
     // We're leaking this table. So be it :)
     static uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-    red = luminance_lookup[r];
-    green = luminance_lookup[g];
-    blue = luminance_lookup[b];
+    return luminance_lookup[c];
   } else {
     enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
-    red   = (shift > 0) ? (r << shift) : (r >> -shift);
-    green = (shift > 0) ? (g << shift) : (g >> -shift);
-    blue  = (shift > 0) ? (b << shift) : (b >> -shift);
+    return (shift > 0) ? (c << shift) : (c >> -shift);
   }
+}
+
+void RGBMatrix::Clear() {
+  memset(bitplane_framebuffer_, 0,
+         sizeof(*bitplane_framebuffer_) * double_rows_ * columns_ * kBitPlanes);
+}
+
+void RGBMatrix::Fill(uint8_t r, uint8_t g, uint8_t b) {
+  const uint16_t red   = MapColor(r);
+  const uint16_t green = MapColor(g);
+  const uint16_t blue  = MapColor(b);
 
   for (int b = 0; b < kBitPlanes; ++b) {
     uint16_t mask = 1 << b;
-    IoBits *bits = ValueAt(y & row_mask_, x, b);
-    if (y < double_rows_) {   // Upper sub-panel.
+    IoBits plane_bits;
+    plane_bits.raw = 0;
+    plane_bits.bits.r1 = plane_bits.bits.r2 = (red & mask) == mask;
+    plane_bits.bits.g1 = plane_bits.bits.g2 = (green & mask) == mask;
+    plane_bits.bits.b1 = plane_bits.bits.b2 = (blue & mask) == mask;
+    for (int row = 0; row < double_rows_; ++row) {
+      IoBits *row_data = ValueAt(row, 0, b);
+      for (int col = 0; col < columns_; ++col) {
+        (row_data++)->raw = plane_bits.raw;
+      }
+    }
+  }
+}
+
+void RGBMatrix::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+  if (x < 0 || x >= columns_ || y < 0 || y >= rows_) return;
+
+  const uint16_t red   = MapColor(r);
+  const uint16_t green = MapColor(g);
+  const uint16_t blue  = MapColor(b);
+
+  IoBits *bits = ValueAt(y & row_mask_, x, 0);
+  if (y < double_rows_) {   // Upper sub-panel.
+    for (int b = 0; b < kBitPlanes; ++b) {
+      const uint16_t mask = 1 << b;
       bits->bits.r1 = (red & mask) == mask;
       bits->bits.g1 = (green & mask) == mask;
       bits->bits.b1 = (blue & mask) == mask;
-    } else {        // Lower sub-panel.
+      bits += columns_;
+    }
+  } else {
+    for (int b = 0; b < kBitPlanes; ++b) {
+      const uint16_t mask = 1 << b;
       bits->bits.r2 = (red & mask) == mask;
       bits->bits.g2 = (green & mask) == mask;
       bits->bits.b2 = (blue & mask) == mask;
+      bits += columns_;
     }
   }
 }
@@ -246,7 +271,7 @@ void RGBMatrix::UpdateScreen() {
       // Now switch on for the sleep time necessary for that bit-plane.
       io_->ClearBits(output_enable.raw);
       sleep_nanos(row_sleep_nanos[b]);
-      io_->SetBits(output_enable.raw);  // switch output off while strobing row.
+      io_->SetBits(output_enable.raw);
     }
   }
 }
