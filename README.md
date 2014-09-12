@@ -102,8 +102,10 @@ that wants to output something; let's display the time in blue:
 
      (while :; do date +%T ; sleep 0.2 ; done) | sudo ./text-example -f fonts/8x13B.bdf -y8 -c2 -C0,0,255
 
-You could as well connect this to a long-running process that updates the
-display by sending new lines. An empty line will clear the screen.
+You could connect this via a pipe to any process that just outputs new
+information on standard-output every now and then. The screen is filled with
+text until it overflows which then clears it. Or sending an empty line explicitly
+clears the screen (if you want to display an empty line, just send a space).
 
 ![Time][time]
 
