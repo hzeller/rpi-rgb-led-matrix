@@ -105,6 +105,9 @@ that wants to output something; let's display the time in blue:
 You could as well connect this to a long-running process that updates the
 display by sending new lines. An empty line will clear the screen.
 
+![Time][time]
+
+
 **CPU use**
 
 These displays need to be updated constantly to show an image with PWMed
@@ -298,6 +301,7 @@ any meaningful display.)
 
 [hub75]: ./img/hub75.jpg
 [matrix64]: ./img/chained-64x64.jpg
+[time]: ./img/time-display.jpg
 [pp-vid]: ./img/pixelpusher-vid.jpg
 [run-vid]: ./img/running-vid.jpg
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
