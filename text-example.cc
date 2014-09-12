@@ -80,7 +80,14 @@ int main(int argc, char *argv[]) {
   /*
    * Set up the RGBMatrix. It implements a 'Canvas' interface.
    */
-  Canvas *canvas = new RGBMatrix(&io, rows, chain);
+  RGBMatrix *canvas = new RGBMatrix(&io, rows, chain);
+
+  bool all_extreme_colors = true;
+  all_extreme_colors &= color.r == 0 || color.r == 255;
+  all_extreme_colors &= color.g == 0 || color.g == 255;
+  all_extreme_colors &= color.b == 0 || color.b == 255;
+  if (all_extreme_colors)
+    canvas->SetPWMBits(1);
 
   const int x = x_orig;
   int y = y_orig;
