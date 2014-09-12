@@ -7,7 +7,7 @@ Raspberry Pi.
 The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org> with
 GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
 
-The example code is released in the public domain.
+The example code using this library is released in the public domain.
 
 Overview
 --------
