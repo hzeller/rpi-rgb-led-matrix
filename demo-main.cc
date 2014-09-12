@@ -284,7 +284,7 @@ public:
       for (int x = 0; x < screen_width; ++x) {
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = current_image_.getPixel(
-                                                   (horizontal_position_ + x) % current_image_.width, y);
+                     (horizontal_position_ + x) % current_image_.width, y);
           canvas()->SetPixel(x, y, p.red, p.green, p.blue);
         }
       }
