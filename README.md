@@ -4,10 +4,10 @@ Controlling RGB LED display with Raspberry Pi GPIO
 A library to control commonly available 32x32 or 16x32 RGB LED panels with the
 Raspberry Pi.
 
-Code is (c) Henner Zeller <h.zeller@acm.org> with license
-[CC BY-SA](https://creativecommons.org/licenses/by-sa/2.0/).
-So - you can do whatever you want with it, as long as you keep the credit to the
-original author.
+The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org> with
+GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
+
+The example code is released in the public domain.
 
 Overview
 --------

@@ -1,5 +1,8 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 // Small example how write text.
+//
+// This code is public domain
+// (but note, that the led-matrix library this depends on is GPL v2)
 
 #include "led-matrix.h"
 #include "graphics.h"

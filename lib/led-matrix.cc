@@ -1,10 +1,17 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-// Some experimental code.
-// (c) H. Zeller <h.zeller@acm.org>. License: do whatever you want with it :)
+// Copyright (C) 2013 Henner Zeller <h.zeller@acm.org>
 //
-// Using GPIO to control a 32x32 rgb LED panel (typically you find them with the
-// suffix such as P4 or P5: that is the pitch in mm.
-// So "32x32 rgb led p5" should find you something on 'the internets'.
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation version 2.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
 #include "led-matrix.h"
 
