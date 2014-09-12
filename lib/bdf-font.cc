@@ -28,7 +28,9 @@ Font::~Font() {
   }
 }
 
+// TODO: that might not be working for all input files yet.
 bool Font::LoadFont(const char *path) {
+  if (!path || !*path) return false;
   FILE *f = fopen(path, "r");
   if (f == NULL)
     return false;
