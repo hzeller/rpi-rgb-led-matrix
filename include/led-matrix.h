@@ -26,7 +26,7 @@ public:
   void SetGPIO(GPIO *io);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
-  // simple comic-colors, 1 might be sufficient.
+  // simple comic-colors, 1 might be sufficient. Lower require less CPU.
   // Returns boolean to signify if value was within range.
   bool SetPWMBits(uint8_t value);
   uint8_t pwmbits() { return pwm_bits_; }

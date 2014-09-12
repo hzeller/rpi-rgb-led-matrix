@@ -189,7 +189,7 @@ void RGBMatrix::Fill(uint8_t r, uint8_t g, uint8_t b) {
   const uint16_t green = MapColor(g);
   const uint16_t blue  = MapColor(b);
 
-  for (int b = 0; b < kBitPlanes; ++b) {
+  for (int b = kBitPlanes - pwm_bits_; b < kBitPlanes; ++b) {
     uint16_t mask = 1 << b;
     IoBits plane_bits;
     plane_bits.raw = 0;
@@ -212,9 +212,10 @@ void RGBMatrix::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   const uint16_t green = MapColor(g);
   const uint16_t blue  = MapColor(b);
 
-  IoBits *bits = ValueAt(y & row_mask_, x, 0);
+  const int min_bit_plane = kBitPlanes - pwm_bits_;
+  IoBits *bits = ValueAt(y & row_mask_, x, min_bit_plane);
   if (y < double_rows_) {   // Upper sub-panel.
-    for (int b = 0; b < kBitPlanes; ++b) {
+    for (int b = min_bit_plane; b < kBitPlanes; ++b) {
       const uint16_t mask = 1 << b;
       bits->bits.r1 = (red & mask) == mask;
       bits->bits.g1 = (green & mask) == mask;
@@ -222,7 +223,7 @@ void RGBMatrix::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
       bits += columns_;
     }
   } else {
-    for (int b = 0; b < kBitPlanes; ++b) {
+    for (int b = min_bit_plane; b < kBitPlanes; ++b) {
       const uint16_t mask = 1 << b;
       bits->bits.r2 = (red & mask) == mask;
       bits->bits.g2 = (green & mask) == mask;

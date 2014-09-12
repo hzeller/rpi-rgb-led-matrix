@@ -70,8 +70,6 @@ class ColorPulseGenerator : public ThreadedCanvasManipulator {
 public:
   ColorPulseGenerator(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
-    const int width = canvas()->width();
-    const int height = canvas()->height();
     uint32_t continuum = 0;
     while (running()) {
       usleep(5 * 1000);
@@ -91,9 +89,7 @@ public:
         g = 255 - c;
         b = c;
       }
-      for (int x = 0; x < width; ++x)
-        for (int y = 0; y < height; ++y)
-          canvas()->SetPixel(x, y, r, g, b);
+      canvas()->Fill(r, g, b);
     }
   }
 };
