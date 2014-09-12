@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   int y_orig = -1;
 
   int opt;
-  while ((opt = getopt(argc, argv, "r:c:x:y:")) != -1) {
+  while ((opt = getopt(argc, argv, "r:c:x:y:f:C:")) != -1) {
     switch (opt) {
     case 'r': rows = atoi(optarg); break;
     case 'c': chain = atoi(optarg); break;
