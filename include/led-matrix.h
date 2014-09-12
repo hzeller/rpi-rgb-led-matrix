@@ -13,24 +13,35 @@ namespace rgb_matrix {
 // update the LED matrix.
 class RGBMatrix : public Canvas {
 public:
+  // Initialize RGB matrix with GPIO to write to. The "rows" are the number
+  // of rows supported by the display, so 32 or 16. Number of "chained_display"s
+  // tells many of these are daisy-chained together.
+  // If "io" is not NULL, starts refreshing the screen immediately; you can
+  // defer that by setting GPIO later with SetGPIO().
   RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1);
   virtual ~RGBMatrix();
 
+  // Set GPIO output if it was not set already in constructor (oterwise: no-op).
+  // Starts display refresh thread if this is the first setting.
+  void SetGPIO(GPIO *io);
+
+  // Set PWM bits used for output. Default is 11, but if you only deal with
+  // simple comic-colors, 1 might be sufficient.
+  // Returns boolean to signify if value was within range.
+  bool SetPWMBits(uint8_t value);
+  uint8_t pwmbits() { return pwm_bits_; }
+
+  // Map brightness of output linearly to input with CIE1931 profile.
+  void set_luminance_correct(bool on) { do_luminance_correct_ = on; }
+  bool luminance_correct() const { return do_luminance_correct_; }
+
+  // -- Canvas interface
   virtual int width() const { return columns_; }
   virtual int height() const { return rows_; }
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-
-  // Some value between 1..7. Returns boolean to signify if value was within
-  // range.
-  bool SetPWMBits(uint8_t value);
-  uint8_t pwmbits() { return pwm_bits_; }
-
-  // Do luminance correction with cie1931
-  void set_luminance_correct(bool on) { do_luminance_correct_ = on; }
-  bool luminance_correct() const { return do_luminance_correct_; }
 
 private:
   class UpdateThread;
@@ -43,6 +54,9 @@ private:
   //  API-change inconvenience).
   void UpdateScreen();
 
+  // Map color
+  inline uint16_t MapColor(uint8_t c);
+
   const int rows_;     // Number of rows. 16 or 32.
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
@@ -52,7 +66,7 @@ private:
   const int double_rows_;
   const uint8_t row_mask_;
 
-  GPIO *const io_;
+  GPIO *io_;
   UpdateThread *updater_;
 
   union IoBits {
