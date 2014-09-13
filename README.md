@@ -12,9 +12,9 @@ The example code using this library is released in the public domain.
 
 Overview
 --------
-The 32x32 or 16x32 RGB LED matrix panels can be scored at [AdaFruit][ada]
-or eBay. If you are in China, I'd try to get them directly from some
-manufacturer or Taobao.
+The 32x32 or 16x32 RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
+[AdaFruit][ada] or eBay. If you are in China, I'd try to get them directly
+from some manufacturer or Taobao.
 
 The `RGBMatrix` class provided in `include/led-matrix.h` does what is needed
 to control these. You can use this as a library in your own projects or just
@@ -321,6 +321,7 @@ the clocking with the needed time-period; that way we get down to 200ns.
 [pp-vid]: ./img/pixelpusher-vid.jpg
 [run-vid]: ./img/running-vid.jpg
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
+[sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/products/420
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
 [emlid-rt]: http://www.emlid.com/raspberry-pi-real-time-kernel-available-for-download/
