@@ -43,77 +43,32 @@ public:
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.
   // Returns boolean to signify if value was within range.
   bool SetPWMBits(uint8_t value);
-  uint8_t pwmbits() { return pwm_bits_; }
+  uint8_t pwmbits();
 
   // Map brightness of output linearly to input with CIE1931 profile.
-  void set_luminance_correct(bool on) { do_luminance_correct_ = on; }
-  bool luminance_correct() const { return do_luminance_correct_; }
+  void set_luminance_correct(bool on);
+  bool luminance_correct() const;
 
-  // -- Canvas interface
-  virtual int width() const { return columns_; }
-  virtual int height() const { return rows_; }
+  // -- Canvas interface. These write to the active FrameCanvas
+  virtual int width() const;
+  virtual int height() const;
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
 private:
+  class Framebuffer;
   class UpdateThread;
   friend class UpdateThread;
+  friend class FrameCanvas;
 
-  // Updates the screen, connected to the GPIO pins, once.
-  // (If you were calling this before as public method in a thread to
-  //  update the screen: this is not necessary anymore. The RGBMatrix does
-  //  this now by itself already. You can get rid of that thread. Sorry for the
-  //  API-change inconvenience).
+  // Updates the screen regularly.
   void UpdateScreen();
 
-  // Map color
-  inline uint16_t MapColor(uint8_t c);
-
-  const int rows_;     // Number of rows. 16 or 32.
-  const int columns_;  // Number of columns. Number of chained boards * 32.
-
-  uint8_t pwm_bits_;   // PWM bits to display.
-  bool do_luminance_correct_;
-
-  const int double_rows_;
-  const uint8_t row_mask_;
-
+  Framebuffer *frame_;
   GPIO *io_;
   UpdateThread *updater_;
-
-  union IoBits {
-    struct {
-      // These reflect the GPIO mapping.
-      unsigned int unused1 : 2;  // 0..1
-      unsigned int output_enable : 1;  // 2
-      unsigned int clock  : 1;   // 3
-      unsigned int strobe : 1;   // 4
-      unsigned int unused2 : 2;  // 5..6
-      unsigned int row : 4;  // 7..10
-      unsigned int unused3 : 6;  // 11..16
-      unsigned int r1 : 1;   // 17
-      unsigned int g1 : 1;   // 18
-      unsigned int unused4 : 3;
-      unsigned int b1 : 1;   // 22
-      unsigned int r2 : 1;   // 23
-      unsigned int g2 : 1;   // 24
-      unsigned int b2 : 1;   // 25
-    } bits;
-    uint32_t raw;
-    IoBits() : raw(0) {}
-  };
-
-  // The frame-buffer is organized in bitplanes.
-  // Highest level (slowest to cycle through) are double rows.
-  // For each double-row, we store pwm-bits columns of a bitplane.
-  // Each bitplane-column is pre-filled IoBits, of which the colors are set.
-  // Of course, that means that we store unrelated bits in the frame-buffer,
-  // but it allows easy access in the critical section.
-  IoBits *bitplane_framebuffer_;
-  inline IoBits *ValueAt(int double_row, int column, int bit);
 };
-
 }  // end namespace rgb_matrix
 #endif  // RPI_RGBMATRIX_H
