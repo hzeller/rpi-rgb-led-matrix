@@ -2,7 +2,8 @@ Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
 A library to control commonly available 32x32 or 16x32 RGB LED panels with the
-Raspberry Pi.
+Raspberry Pi. Can support PWM up to 11Bit per channel, providing true 24bbp
+color with CIE1931 profile (but: see Limitations below).
 
 The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org> with
 GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
