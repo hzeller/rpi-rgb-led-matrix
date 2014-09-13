@@ -92,7 +92,7 @@ RGBMatrix::Framebuffer::~Framebuffer() {
 }
 
 bool RGBMatrix::Framebuffer::SetPWMBits(uint8_t value) {
-  if (value > kBitPlanes)
+  if (value < 1 || value > kBitPlanes)
     return false;
   pwm_bits_ = value;
   return true;
