@@ -284,8 +284,8 @@ clocking in pixels.
 Limitations
 -----------
 If using higher resolution color (This code supports up to 24bpp @3x11 bit PWM),
-you will see glitches - lines that randomly look a bit brighter. At lower
-bit PWM between <= 4, this is typically not visible.
+you will see dynamic glitches - lines that flicker and randomly look a bit
+brighter. At lower bit PWM between <= 4, this is typically not visible.
 
 This is due to the fact that we have to do the PWM ourselves and for
 high-resolution PWM, the smallest time-period is around 200ns. We would need
