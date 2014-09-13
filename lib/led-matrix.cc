@@ -95,7 +95,7 @@ void RGBMatrix::SetGPIO(GPIO *io) {
   io_ = io;
   Framebuffer::InitGPIO(io_);
   updater_ = new UpdateThread(this);
-  updater_->Start(49);  // Highest priority below kernel tasks.
+  updater_->Start(99);  // Whatever we get :)
 }
 
 bool RGBMatrix::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
