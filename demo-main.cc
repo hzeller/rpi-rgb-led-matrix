@@ -478,7 +478,7 @@ int main(int argc, char *argv[]) {
   // The matrix, our 'frame buffer' and display updater.
   RGBMatrix *matrix = new RGBMatrix(&io, rows, chain);
   matrix->set_luminance_correct(do_luminance_correct);
-  if (pwm_bits > 0 && !matrix->SetPWMBits(pwm_bits)) {
+  if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
     fprintf(stderr, "Invalid range of pwm-bits\n");
     return 1;
   }

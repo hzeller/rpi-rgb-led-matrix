@@ -30,9 +30,9 @@ pins, we don't need to worry about level conversion back.
 We need 13 IO pins. It doesn't really matter to which GPIO pins these are
 connected (but the code assumes right now that the row address are adjacent
 bits) - if you use a different layout, change in the `IoBits` union in
-led-matrix.h if necessary (This was done with a Model B,
-older versions have some different IOs on the header; check
-<http://elinux.org/RPi_Low-level_peripherals> )
+framebuffer-internal.h if necessary. Check
+<http://elinux.org/RPi_Low-level_peripherals> for details of available GPIOs
+and pin-header)
 
 LED-Panel to GPIO with this code:
    * GND (Ground, '-') to ground of your Raspberry Pi
@@ -44,8 +44,8 @@ LED-Panel to GPIO with this code:
    * B2 (Blue 2nd bank)  : GPIO 25
    * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (There is no `D` needed if you
     have a display with 16 rows with 1:8 multiplexing)
-   * OE- (neg. Output enable) : GPIO 2
-   * CLK (Serial clock) : GPIO 3
+   * OE- (neg. Output enable) : GPIO 2 (Rev 2 RPi) or GPIO 0 (Rev 1 RPi)
+   * CLK (Serial clock) : GPIO 3 (Rev 2 RPi) or GPIO 1 (Rev 1 RPi)
    * STR (Strobe row data) : GPIO 4
 
 Here a typical pinout on these LED panels, found on the circuit board:

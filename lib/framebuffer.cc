@@ -80,7 +80,9 @@ RGBMatrix::Framebuffer::~Framebuffer() {
   // Tell GPIO about all bits we intend to use.
   IoBits b;
   b.raw = 0;
-  b.bits.output_enable = b.bits.clock = b.bits.strobe = 1;
+  b.bits.output_enable_rev1 = b.bits.output_enable_rev2 = 1;
+  b.bits.clock_rev1 = b.bits.clock_rev2 = 1;
+  b.bits.strobe = 1;
   b.bits.r1 = b.bits.g1 = b.bits.b1 = 1;
   b.bits.r2 = b.bits.g2 = b.bits.b2 = 1;
   b.bits.row = 0x0f;
@@ -90,7 +92,7 @@ RGBMatrix::Framebuffer::~Framebuffer() {
 }
 
 bool RGBMatrix::Framebuffer::SetPWMBits(uint8_t value) {
-  if (value > kBitPlanes)
+  if (value < 1 || value > kBitPlanes)
     return false;
   pwm_bits_ = value;
   return true;
@@ -187,14 +189,15 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
   IoBits color_clk_mask;   // Mask of bits we need to set while clocking in.
   color_clk_mask.bits.r1 = color_clk_mask.bits.g1 = color_clk_mask.bits.b1 = 1;
   color_clk_mask.bits.r2 = color_clk_mask.bits.g2 = color_clk_mask.bits.b2 = 1;
-  color_clk_mask.bits.clock = 1;
+  color_clk_mask.bits.clock_rev1 = color_clk_mask.bits.clock_rev2 = 1;
 
   IoBits row_mask;
   row_mask.bits.row = 0x0f;
 
   IoBits clock, output_enable, strobe, row_address;
-  clock.bits.clock = 1;
-  output_enable.bits.output_enable = 1;
+  clock.bits.clock_rev1 = clock.bits.clock_rev2 = 1;
+  output_enable.bits.output_enable_rev1 = 1;
+  output_enable.bits.output_enable_rev2 = 1;
   strobe.bits.strobe = 1;
 
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.

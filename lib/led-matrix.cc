@@ -39,8 +39,10 @@ namespace rgb_matrix {
 class RGBMatrix::UpdateThread : public Thread {
 public:
   UpdateThread(RGBMatrix *matrix) : running_(true), matrix_(matrix) {}
-  virtual ~UpdateThread() {
-    Stop();
+
+  void Stop() {
+    MutexLock l(&mutex_);
+    running_ = false;
   }
 
   virtual void Run() {
@@ -57,10 +59,6 @@ public:
       printf("\b\b\b\b\b\b\b\b%6.1fHz", 1e6 / usec);
 #endif
     }
-
-    // Make sure the screen is clean and no glaring pixels in the end.
-    matrix_->Clear();
-    matrix_->UpdateScreen();
   }
 
 private:
@@ -69,10 +67,6 @@ private:
     return running_;
   }
 
-  void Stop() {
-    MutexLock l(&mutex_);
-    running_ = false;
-  }
   Mutex mutex_;
   bool running_;
   RGBMatrix *const matrix_;
@@ -86,7 +80,12 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
 }
 
 RGBMatrix::~RGBMatrix() {
+  updater_->Stop();
+  updater_->WaitStopped();
   delete updater_;
+
+  frame_->Clear();
+  frame_->DumpToMatrix(io_);
   delete frame_;
 }
 
@@ -94,9 +93,9 @@ void RGBMatrix::SetGPIO(GPIO *io) {
   if (io == NULL) return;  // nothing to set.
   if (io_ != NULL) return;  // already set.
   io_ = io;
-  frame_->InitGPIO(io_);
+  Framebuffer::InitGPIO(io_);
   updater_ = new UpdateThread(this);
-  updater_->Start(49);  // Highest priority below kernel tasks.
+  updater_->Start(99);  // Whatever we get :)
 }
 
 bool RGBMatrix::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }

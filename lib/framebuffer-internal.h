@@ -42,7 +42,8 @@ public:
 
   void DumpToMatrix(GPIO *io);
 
-  // Canvas-inspired methods, but non-virtual on this level.
+  // Canvas-inspired methods, but we're not implementing this interface to not
+  // have an unnecessary vtable.
   inline int width() const { return columns_; }
   inline int height() const { return rows_; }
   void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
@@ -64,21 +65,23 @@ private:
 
   union IoBits {
     struct {
-      // These reflect the GPIO mapping.
-      unsigned int unused1 : 2;  // 0..1
-      unsigned int output_enable : 1;  // 2
-      unsigned int clock  : 1;   // 3
-      unsigned int strobe : 1;   // 4
-      unsigned int unused2 : 2;  // 5..6
-      unsigned int row : 4;  // 7..10
-      unsigned int unused3 : 6;  // 11..16
-      unsigned int r1 : 1;   // 17
-      unsigned int g1 : 1;   // 18
+      // These reflect the GPIO mapping. The Revision1 and Revision2 boards
+      // have different GPIO mappings for 0/1 vs 3/4. Just use both.
+      unsigned int output_enable_rev1 : 1;  // 0
+      unsigned int clock_rev1 : 1;          // 1
+      unsigned int output_enable_rev2 : 1;  // 2
+      unsigned int clock_rev2  : 1;         // 3
+      unsigned int strobe : 1;              // 4
+      unsigned int unused2 : 2;             // 5..6
+      unsigned int row : 4;                 // 7..10
+      unsigned int unused3 : 6;             // 11..16
+      unsigned int r1 : 1;                  // 17
+      unsigned int g1 : 1;                  // 18
       unsigned int unused4 : 3;
-      unsigned int b1 : 1;   // 22
-      unsigned int r2 : 1;   // 23
-      unsigned int g2 : 1;   // 24
-      unsigned int b2 : 1;   // 25
+      unsigned int b1 : 1;                  // 22
+      unsigned int r2 : 1;                  // 23
+      unsigned int g2 : 1;                  // 24
+      unsigned int b2 : 1;                  // 25
     } bits;
     uint32_t raw;
     IoBits() : raw(0) {}
