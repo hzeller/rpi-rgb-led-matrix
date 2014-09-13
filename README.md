@@ -322,7 +322,7 @@ the clocking with the needed time-period; that way we get down to 200ns.
 [run-vid]: ./img/running-vid.jpg
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
 [sparkfun]: https://www.sparkfun.com/products/12584
-[ada]: http://www.adafruit.com/products/420
+[ada]: http://www.adafruit.com/product/1484
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
 [emlid-rt]: http://www.emlid.com/raspberry-pi-real-time-kernel-available-for-download/
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf
