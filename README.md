@@ -282,24 +282,37 @@ clocking in pixels.
 
 Limitations
 -----------
+If using higher resolution color (This code supports up to 24bpp @3x11 bit PWM),
+you will see glitches - lines that randomly look a bit brighter. At lower
+bit PWM between <= 4, this is typically not visible.
+
+This is due to the fact that we have to do the PWM ourselves and for
+high-resolution PWM, the smallest time-period is around 200ns. We would need
+hard real-time requirements of the operating system of << 200ns.
+Even for realtime environments, that is pretty tough.
+We're running this on a general purpose computer with no dedicated
+realtime hardware (such as dedicated, separate realtime core(s) we could use
+on the BeagleBone Black). Linux does provide some support for realtime
+applications, but the latency goals here are in the tens of microseconds at
+best. Even with realtime-patches applied (I tried the
+[RPi wheezy image provided by Emlid][emlid-rt]), this does not make much of
+a dent.
+
+According to the paper [How fast is fast enough? Choosing between Xenomai and
+Linux for real-time applications][rt-paper], it might pay off to move the display
+update part to the kernel. Future TODO.
+
+(One experiment already done was to use the DMA controller of the RPi to make
+use of dedicated hardware. However, it turns out that the DMA controller was
+slower writing data than using GPIO directly. But maybe it might be worthwile if
+it turns out to have more stable realtime properties.)
+
 There seems to be a limit in how fast the GPIO pins can be controlled.
 We get about 10Mhz clock speed out of GPIO clocking. Do do things correctly,
 we would have to take the time it takes to clock a row in as essentially the
 lowest PWM time (~3.4µs).
-However, we just ignore this 'black' time, and switch the row on once we have it.
-With that, we do PWM with the lowest time period of about 200ns, which brings
-us display update rates of ~140Hz at a PWM of 11 bits.
-
-Right now, I tested this with the default Linux distribution ("wheezy"). Because
-this does not have any realtime patches, the PWM can look a bit uneven under
-load. If you test this with realtime extensions (`CONFIG_PREEMPT_RT`), let me
-know how that works.
-
-(One experiment was to use the DMA controller of the RPi to circumvent the
-realtime problems. However, it turns out that the DMA controller slower writing
-data to the GPIO pins than doing it directly. So even if offloading this
-task to the DMA controller would improve the realtime-ness, it is too slow for
-any meaningful display.)
+However, we just ignore this 'black' time, and switch the row on and off after
+the clocking with the needed time-period; that way we get down to 200ns.
 
 [hub75]: ./img/hub75.jpg
 [matrix64]: ./img/chained-64x64.jpg
@@ -309,3 +322,5 @@ any meaningful display.)
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
 [ada]: http://www.adafruit.com/products/420
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
+[emlid-rt]: http://www.emlid.com/raspberry-pi-real-time-kernel-available-for-download/
+[rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf
