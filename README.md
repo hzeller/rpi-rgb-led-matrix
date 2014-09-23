@@ -245,7 +245,7 @@ guidelines:
      (For Americans: that would be ~13 gauge wire for 3 ft and one panel)
 
    - You might consider using aluminum mounting brackets or bars as part of
-     your power trace solution. With 1mm²aluminums' specific resistivity of
+     your power trace solution. With aluminum of 1mm² specific resistivity of
      about 28mΩ/meter, you'd need a cross sectional area of about 4mm² per panel
      and meter.
 
@@ -254,7 +254,7 @@ guidelines:
 
    - Often these boards come with connectors that have cables crimped on.
      These cables are typically too thin; you might want to clip them close to
-     the connector wire your proper, thick cable to it.
+     the connector solder your proper, thick cable to it.
 
    - It is good to buffer the current spikes directly at the panel. The most
      spikes happen while PWM-ing a single line.
