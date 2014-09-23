@@ -220,10 +220,11 @@ drive these panels; a 2A USB charger or similar is not enough for a
 
 If you connect multiple boards together, you needs a power supply that can
 keep up with 3.5A / panel. Good are PC power supplies that often provide > 20A
-on the 5V rail.
+on the 5V rail. Also you can get dedicated 5V high current switching power
+supplies for these kind of applications (check eBay).
 
 The current draw is pretty spiky. Due to the PWM of the LEDs, there are very
-short peaks of about 4 microseconds to about 1ms of full current draw.
+short peaks of a couple of 100ns to about 1ms of full current draw.
 Often, the power cable can't support these very short spikes due to inherent
 inductance. This can results in 'noisy' outputs, with random pixels not behaving
 as they should. A low ESR capacitor close to the input is good in these cases.
@@ -235,7 +236,7 @@ when voltage drops below 4.5V. Some even need a little bit higher voltage around
 When you connect these boards to a power source, the following are good
 guidelines:
    - Have fairly thick cables connecting the power to the board.
-     Plan to not loose more than 50mV from the source to the LED matrix.
+     Plan not to loose more than 50mV from the source to the LED matrix.
      So that would be 50mV / 3.5A = 14 mΩ. For both supply wires, so 7mΩ
      each trace.
      A 1mm² copper cable has about 17.5mΩ/meter, so you'd need a **2.5mm²
@@ -271,8 +272,8 @@ guidelines:
       50% duty cyle thus half the current; also the input is recharching all
       the time. But: as engineer plan for maximum and then some).
 
-   - If you still see noise, increase the voltage sligthly to 5.5V. This is
-     typically only a symptom of too thin traces.
+   - If you still see noise, increase the voltage sligthly above 5V. But note,
+     this is typically only a symptom of too thin traces.
 
 Technical details
 -----------------
