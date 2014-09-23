@@ -236,12 +236,24 @@ When you connect these boards to a power source, the following are good
 guidelines:
    - Have fairly thick cables connecting the power to the board.
      Plan to not loose more than 50mV from the source to the LED matrix.
-     So that would be 50mV / 3.5A = 14 mOhm. For both supply wires, so 7mOhm
+     So that would be 50mV / 3.5A = 14 mΩ. For both supply wires, so 7mΩ
      each trace.
-     A 1mm² copper cable has about 17.5mOhm/meter, so you'd need a **2.5mm²
-     copper cable per meter and panel**. Multiply by meter and
-     number of panels to get the needed cross-section.
+     A 1mm² copper cable has about 17.5mΩ/meter, so you'd need a **2.5mm²
+     copper cable per meter and panel**. Multiply by meter and number of
+     panels to get the needed cross-section.
      (For Americans: that would be ~13 gauge wire for 3 ft and one panel)
+
+   - You might consider using aluminum mounting brackets or bars as part of
+     your power trace solution. With 1mm²aluminums' specific resistivity of
+     about 28mΩ/meter, you'd need a cross sectional area of about 4mm² per panel
+     and meter.
+
+   - These are the minimum values to not drop more than 50mV. As engineer, you'd
+     like to aim for less than that :)
+
+   - Often these boards come with connectors that have cables crimped on.
+     These cables are typically too thin; you might want to clip them close to
+     the connector wire your proper, thick cable to it.
 
    - It is good to buffer the current spikes directly at the panel. The most
      spikes happen while PWM-ing a single line.
@@ -259,7 +271,8 @@ guidelines:
       50% duty cyle thus half the current; also the input is recharching all
       the time. But: as engineer plan for maximum and then some).
 
-   - If you still see noise, increase the voltage sligthly to 5.5V.
+   - If you still see noise, increase the voltage sligthly to 5.5V. This is
+     typically only a symptom of too thin traces.
 
 Technical details
 -----------------
