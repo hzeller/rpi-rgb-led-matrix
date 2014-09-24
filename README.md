@@ -125,19 +125,6 @@ otherwise idle, you might see occasional brightness variations in the darker
 areas of your picture.
 Ideally, this would run on a system with hard realtime guarantees
 (There are Linux extensions for that, but haven't tried that yet).
-
-Inverted Colors ?
------------------
-There are some displays out there that use inverse logic for the colors. You
-notice that your image looks like a 'negative'. In that case, uncomment the
-`DEFINES` line in `lib/Makefile`
-
-     DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
-
-Then, recompile
-
-     make clean
-     make
  
 Chaining
 --------
@@ -287,6 +274,19 @@ guidelines:
 
    - If you still see noise, increase the voltage sligthly above 5V. But note,
      this is typically only a symptom of too thin traces.
+
+Inverted Colors ?
+-----------------
+There are some displays out there that use inverse logic for the colors. You
+notice that your image looks like a 'negative'. In that case, uncomment the
+`DEFINES` line in `lib/Makefile`
+
+     DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
+
+Then, recompile
+
+     make clean
+     make
 
 Technical details
 -----------------
