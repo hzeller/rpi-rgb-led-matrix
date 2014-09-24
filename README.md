@@ -14,7 +14,7 @@ Overview
 --------
 The 32x32 or 16x32 RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
 [AdaFruit][ada] or eBay. If you are in China, I'd try to get them directly
-from some manufacturer or Taobao.
+from some manufacturer, Taobao or Alibaba.
 
 The `RGBMatrix` class provided in `include/led-matrix.h` does what is needed
 to control these. You can use this as a library in your own projects or just
@@ -22,17 +22,21 @@ use the demo binary provided here which provides some useful examples.
 
 Connection
 ----------
-The RPi has 3.3V logic output level, but a display operated at 5V digests these
-logic levels just fine (also, the display will work well with 4V; watch out,
-they easily can sink 2 Amps if all LEDs are on). Since we only need output
-pins, we don't need to worry about level conversion back.
+You need a seprate power supply for the panel. There is a connector for that
+separate from the logic connector, typically in the center of the board.
+The board requires 5V (double check the polarity: what is printed
+on the board is correct - I once got boards with supplied cables that had red
+(suggesting `+`) and black (suggesting `GND`) reversed!). This power supply is
+used to light the LEDs; plan for ~3.5 Ampere per 32x32 panel.
 
-We need 13 IO pins. It doesn't really matter to which GPIO pins these are
-connected (but the code assumes right now that the row address are adjacent
-bits) - if you use a different layout, change in the `IoBits` union in
-framebuffer-internal.h if necessary. Check
-<http://elinux.org/RPi_Low-level_peripherals> for details of available GPIOs
-and pin-header)
+The RPi has 3.3V logic output level, but a display operated at 5V interprets
+these logic levels just fine. Since we only need output pins on the RPi, we don't
+need to worry about level conversion back.
+
+We need 13 IO pins. The following work out of the box (if you need to use a
+different set of pins, change the `IoBits` union in framebuffer-internal.h.
+Check <http://elinux.org/RPi_Low-level_peripherals> for details of available
+GPIOs and pin-header).
 
 LED-Panel to GPIO with this code:
    * GND (Ground, '-') to ground of your Raspberry Pi
@@ -123,8 +127,8 @@ Also, the output quality is suceptible to other heavy tasks running on that
 computer as the precise timing needed might be slipping. Even if the system is
 otherwise idle, you might see occasional brightness variations in the darker
 areas of your picture.
-Ideally, this would run on a system with hard realtime guarantees
-(There are Linux extensions for that, but haven't tried that yet).
+(Even with realtime extensions enabled in Linux, this is still a (smaller)
+problem).
  
 Chaining
 --------
@@ -279,9 +283,10 @@ Inverted Colors ?
 -----------------
 There are some displays out there that use inverse logic for the colors. You
 notice that your image looks like a 'negative'. In that case, uncomment the
-`DEFINES` line in `lib/Makefile`
+folling `DEFINES` line in `lib/Makefile` by removing the `#` at the beginning
+of the line.
 
-     DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
+     #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
 
 Then, recompile
 
