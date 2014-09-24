@@ -120,19 +120,31 @@ static uint16_t *CreateLuminanceCIE1931LookupTable() {
 }
 
 inline uint16_t RGBMatrix::Framebuffer::MapColor(uint8_t c) {
+#ifdef INVERSE_RGB_DISPLAY_COLORS
+#  define COLOR_OUT_BITS(x) (x) ^ 0xffff
+#else
+#  define COLOR_OUT_BITS(x) (x)
+#endif
+
   if (do_luminance_correct_) {
     // We're leaking this table. So be it :)
     static uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-    return luminance_lookup[c];
+    return COLOR_OUT_BITS(luminance_lookup[c]);
   } else {
     enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
-    return (shift > 0) ? (c << shift) : (c >> -shift);
+    return COLOR_OUT_BITS((shift > 0) ? (c << shift) : (c >> -shift));
   }
+
+#undef COLOR_OUT_BITS
 }
 
 void RGBMatrix::Framebuffer::Clear() {
+#ifdef INVERSE_RGB_DISPLAY_COLORS
+  Fill(0, 0, 0);
+#else
   memset(bitplane_buffer_, 0,
          sizeof(*bitplane_buffer_) * double_rows_ * columns_ * kBitPlanes);
+#endif
 }
 
 void RGBMatrix::Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {

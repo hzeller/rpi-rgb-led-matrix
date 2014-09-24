@@ -6,8 +6,12 @@
 OBJECTS=gpio.o led-matrix.o framebuffer.o thread.o bdf-font.o graphics.o
 TARGET=librgbmatrix.a
 
+# If you see that your display is inverse, you might have a matrix variant
+# has uses inverse logic for the RGB bits. Attempt this
+#DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS
+
 INCDIR=../include
-CXXFLAGS=-Wall -O3 -g
+CXXFLAGS=-Wall -O3 -g $(DEFINES)
 
 $(TARGET) : $(OBJECTS)
 	ar rcs $@ $^
