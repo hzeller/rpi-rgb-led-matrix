@@ -50,6 +50,7 @@ public:
   bool luminance_correct() const;
 
   // -- Canvas interface. These write to the active FrameCanvas
+  // (see documentation in canvas.h)
   virtual int width() const;
   virtual int height() const;
   virtual void SetPixel(int x, int y,
