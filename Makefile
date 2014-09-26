@@ -1,5 +1,5 @@
 CXXFLAGS=-Wall -O3 -g
-BINARIES=led-matrix minimal-example text-example
+BINARIES=led-matrix minimal-example text-example cool-example
 
 # Where our library resides. It is split between includes and the binary
 # library in lib
@@ -22,6 +22,9 @@ minimal-example : minimal-example.o $(RGB_LIBRARY)
 
 text-example : text-example.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) text-example.o -o $@ $(LDFLAGS)
+
+cool-example : cool-example.o $(RGB_LIBRARY)
+	$(CXX) $(CXXFLAGS) cool-example.o -o $@ $(LDFLAGS)
 
 %.o : %.cc
 	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -c -o $@ $<
