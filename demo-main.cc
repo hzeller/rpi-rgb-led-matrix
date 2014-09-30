@@ -345,6 +345,468 @@ private:
   int32_t horizontal_position_;
 };
 
+
+// Abelian sandpile
+// Contributed by: Vliedel
+class Sandpile : public ThreadedCanvasManipulator {
+public:
+  Sandpile(Canvas *m, int delay_ms=50)
+    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms) {
+    width_ = canvas()->width() - 1; // We need an odd width
+    height_ = canvas()->height() - 1; // We need an odd height
+    
+    // Allocate memory
+    values_ = new int*[width_];
+    for (int x=0; x<width_; ++x) {
+      values_[x] = new int[height_];
+    }
+    newValues_ = new int*[width_];
+    for (int x=0; x<width_; ++x) {
+      newValues_[x] = new int[height_];
+    }
+    
+    // Init values
+    srand(time(NULL));
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        values_[x][y] = 0;
+      }
+    }
+  }
+  ~Sandpile() {
+    for (int x=0; x<width_; ++x) {
+      delete [] values_[x];
+    }
+    delete [] values_;
+    for (int x=0; x<width_; ++x) {
+      delete [] newValues_[x];
+    }
+    delete [] newValues_;
+  }
+  void Run() {
+    while (running()) {
+      // Drop a sand grain in the centre
+      values_[width_/2][height_/2]++;
+      updateValues();
+      
+      for (int x=0; x<width_; ++x) {
+        for (int y=0; y<height_; ++y) {
+          switch (values_[x][y]) {
+            case 0:
+              canvas()->SetPixel(x, y, 0, 0, 0);
+              break;
+            case 1:
+              canvas()->SetPixel(x, y, 0, 0, 200);
+              break;
+            case 2:
+              canvas()->SetPixel(x, y, 0, 200, 0);
+              break;
+            case 3:
+              canvas()->SetPixel(x, y, 150, 100, 0);
+              break;
+            default:
+              canvas()->SetPixel(x, y, 200, 0, 0);
+          }
+        }
+      }
+      usleep(delay_ms_ * 1000); // ms
+    }
+  }
+private:
+  void updateValues() {
+    // Copy values to newValues
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        newValues_[x][y] = values_[x][y];
+      }
+    }
+    // Update newValues based on values
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        if (values_[x][y] > 3) {
+          // Collapse
+          if (x>0)
+            newValues_[x-1][y]++;
+          if (x<width_-1)
+            newValues_[x+1][y]++;
+          if (y>0)
+            newValues_[x][y-1]++;
+          if (y<height_-1)
+            newValues_[x][y+1]++;
+          newValues_[x][y] -= 4;
+        }
+      }
+    }
+    // Copy newValues to values
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        values_[x][y] = newValues_[x][y];
+      }
+    }
+  }
+  int width_;
+  int height_;
+  int** values_;
+  int** newValues_;
+  int delay_ms_;
+};
+
+
+// Conway's game of life
+// Contributed by: Vliedel
+class GameLife : public ThreadedCanvasManipulator {
+public:
+  GameLife(Canvas *m, int delay_ms=500, bool torus=true)
+    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms), torus_(torus) {
+    width_ = canvas()->width();
+    height_ = canvas()->height();
+    
+    // Allocate memory
+    values_ = new int*[width_];
+    for (int x=0; x<width_; ++x) {
+      values_[x] = new int[height_];
+    }
+    newValues_ = new int*[width_];
+    for (int x=0; x<width_; ++x) {
+      newValues_[x] = new int[height_];
+    }
+    
+    // Init values randomly
+    srand(time(NULL));
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        values_[x][y]=rand()%2;
+      }
+    }
+    r_ = rand()%255;
+    g_ = rand()%255;
+    b_ = rand()%255;
+    
+    if (r_<150 && g_<150 && b_<150) {
+      int c = rand()%3;
+      switch (c) {
+        case 0:
+          r_ = 200;
+          break;
+        case 1:
+          g_ = 200;
+          break;
+        case 2:
+          b_ = 200;
+          break;
+      }
+    }
+    
+  }
+  ~GameLife() {
+    for (int x=0; x<width_; ++x) {
+      delete [] values_[x];
+    }
+    delete [] values_;
+    for (int x=0; x<width_; ++x) {
+      delete [] newValues_[x];
+    }
+    delete [] newValues_;
+  }
+  void Run() {
+    while (running()) {
+      
+      updateValues();
+      
+      for (int x=0; x<width_; ++x) {
+        for (int y=0; y<height_; ++y) {
+          if (values_[x][y])
+            canvas()->SetPixel(x, y, r_, g_, b_);
+          else
+            canvas()->SetPixel(x, y, 0, 0, 0);
+        }
+      }
+      usleep(delay_ms_ * 1000); // ms
+    }
+  }
+private:
+  int numAliveNeighbours(int x, int y) {
+    int num=0;
+    if (torus_) {
+      // Edges are connected (torus)
+      num += values_[(x-1+width_)%width_][(y-1+height_)%height_];
+      num += values_[(x-1+width_)%width_][y                    ];
+      num += values_[(x-1+width_)%width_][(y+1        )%height_];
+      num += values_[(x+1       )%width_][(y-1+height_)%height_];
+      num += values_[(x+1       )%width_][y                    ];
+      num += values_[(x+1       )%width_][(y+1        )%height_];
+      num += values_[x                  ][(y-1+height_)%height_];
+      num += values_[x                  ][(y+1        )%height_];
+    }
+    else {
+      // Edges are not connected (no torus)
+      if (x>0) {
+        if (y>0)
+          num += values_[x-1][y-1];
+        if (y<height_-1)
+          num += values_[x-1][y+1];
+        num += values_[x-1][y];
+      }
+      if (x<width_-1) {
+        if (y>0)
+          num += values_[x+1][y-1];
+        if (y<31)
+          num += values_[x+1][y+1];
+        num += values_[x+1][y];
+      }
+      if (y>0)
+        num += values_[x][y-1];
+      if (y<height_-1)
+        num += values_[x][y+1];
+    }
+    return num;
+  }
+  
+  void updateValues() {
+    // Copy values to newValues
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        newValues_[x][y] = values_[x][y];
+      }
+    }
+    // update newValues based on values
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        int num = numAliveNeighbours(x,y);
+        if (values_[x][y]) {
+          // cell is alive
+          if (num < 2 || num > 3)
+            newValues_[x][y] = 0;
+        }
+        else {
+          // cell is dead
+          if (num == 3)
+            newValues_[x][y] = 1;
+        }
+      }
+    }
+    // copy newValues to values
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        values_[x][y] = newValues_[x][y];
+      }
+    }
+  }
+  int** values_;
+  int** newValues_;
+  int delay_ms_;
+  int r_;
+  int g_;
+  int b_;
+  int width_;
+  int height_;
+  bool torus_;
+};
+
+// Langton's ant
+// Contributed by: Vliedel
+class Ant : public ThreadedCanvasManipulator {
+public:
+  Ant(Canvas *m, int delay_ms=500)
+    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms) {
+    numColors_ = 4;
+    width_ = canvas()->width();
+    height_ = canvas()->height();
+    values_ = new int*[width_];
+    for (int x=0; x<width_; ++x) {
+      values_[x] = new int[height_];
+    }
+  }
+  ~Ant() {
+    for (int x=0; x<width_; ++x) {
+      delete [] values_[x];
+    }
+    delete [] values_;
+  }
+  void Run() {
+    antX_ = width_/2;
+    antY_ = height_/2-3;
+    antDir_ = 0;
+    for (int x=0; x<width_; ++x) {
+      for (int y=0; y<height_; ++y) {
+        values_[x][y] = 0;
+        updatePixel(x, y);
+      }
+    }
+    
+    while (running()) {
+      
+      // LLRR
+      switch (values_[antX_][antY_]) {
+        case 0:
+        case 1:
+          antDir_ = (antDir_+1+4) % 4;
+          break;
+        case 2:
+        case 3:
+          antDir_ = (antDir_-1+4) % 4;
+          break;
+      }
+      
+      values_[antX_][antY_] = (values_[antX_][antY_] + 1) % numColors_;
+      int oldX = antX_;
+      int oldY = antY_;
+      switch (antDir_) {
+        case 0:
+          antX_++;
+          break;
+        case 1:
+          antY_++;
+          break;
+        case 2:
+          antX_--;
+          break;
+        case 3:
+          antY_--;
+          break;
+      }
+      updatePixel(oldX, oldY);
+      if (antX_ < 0 || antX_ >= width_ || antY_ < 0 || antY_ >= height_)
+        return;
+      updatePixel(antX_, antY_);
+      usleep(delay_ms_ * 1000);
+    }
+  }
+private:
+  void updatePixel(int x, int y) {
+    switch (values_[x][y]) {
+      case 0:
+        canvas()->SetPixel(x, y, 200, 0, 0);
+        break;
+      case 1:
+        canvas()->SetPixel(x, y, 0, 200, 0);
+        break;
+      case 2:
+        canvas()->SetPixel(x, y, 0, 0, 200);
+        break;
+      case 3:
+        canvas()->SetPixel(x, y, 150, 100, 0);
+        break;
+    }
+    if (x == antX_ && y == antY_)
+      canvas()->SetPixel(x, y, 0, 0, 0);
+  }
+  int numColors_;
+  int** values_;
+  int antX_;
+  int antY_;
+  int antDir_; // 0 right, 1 up, 2 left, 3 down
+  int delay_ms_;
+  int width_;
+  int height_;
+};
+
+
+
+// Imitation of volume bars
+// Purely random height doesn't look realistic
+// Contributed by: Vliedel
+class VolumeBars : public ThreadedCanvasManipulator {
+public:
+  VolumeBars(Canvas *m, int delay_ms=50, int numBars=8)
+    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms),
+      numBars_(numBars), t_(0) {
+  }
+  ~VolumeBars() {
+    delete [] barHeights_;
+    delete [] barFreqs_;
+    delete [] barMeans_;
+  }
+  void Run() {
+    const int width = canvas()->width();
+    height_ = canvas()->height();
+    barWidth_ = width/numBars_;
+    barHeights_ = new int[numBars_];
+    barMeans_ = new int[numBars_];
+    barFreqs_ = new int[numBars_];
+    heightGreen_  = height_*4/12;
+    heightYellow_ = height_*8/12;
+    heightOrange_ = height_*10/12;
+    heightRed_    = height_*12/12;
+    
+    // Array of possible bar means
+    int numMeans = 10;
+    int means[10] = {1,2,3,4,5,6,7,8,16,32};
+    for (int i=0; i<numMeans; ++i) {
+      means[i] = height_ - means[i]*height_/8;
+    }
+    // Initialize bar means randomly
+    srand(time(NULL));
+    for (int i=0; i<numBars_; ++i) {
+      barMeans_[i] = rand()%numMeans;
+      barFreqs_[i] = 1<<(rand()%3);
+    }
+    
+    // Start the loop
+    while (running()) {
+      if (t_ % 8 == 0) {
+        // Change the means
+        for (int i=0; i<numBars_; ++i) {
+          barMeans_[i] += rand()%3 - 1;
+          if (barMeans_[i] >= numMeans)
+            barMeans_[i] = numMeans-1;
+          if (barMeans_[i] < 0)
+            barMeans_[i] = 0;
+        }
+      }
+      
+      // Update bar heights
+      t_++;
+      for (int i=0; i<numBars_; ++i) {
+        barHeights_[i] = (height_ - means[barMeans_[i]])* sin(0.1*t_*barFreqs_[i]) + means[barMeans_[i]];
+        if (barHeights_[i] < height_/8)
+          barHeights_[i] = rand() % (height_/8) + 1;
+      }
+      
+      for (int i=0; i<numBars_; ++i) {
+        int y;
+        for (y=0; y<barHeights_[i]; ++y) {
+          if (y<heightGreen_) {
+            drawBarRow(i, y, 0, 200, 0);
+          }
+          else if (y<heightYellow_) {
+            drawBarRow(i, y, 150, 150, 0);
+          }
+          else if (y<heightOrange_) {
+            drawBarRow(i, y, 250, 100, 0);
+          }
+          else {
+            drawBarRow(i, y, 200, 0, 0);
+          }
+        }
+        // Anything above the bar should be black
+        for (; y<height_; ++y) {
+          drawBarRow(i, y, 0, 0, 0);
+        }
+      }
+      usleep(delay_ms_ * 1000);
+    }
+  }
+private:
+  void drawBarRow(int bar, uint8_t y, uint8_t r, uint8_t g, uint8_t b) {
+    for (uint8_t x=bar*barWidth_; x<(bar+1)*barWidth_; ++x) {
+      canvas()->SetPixel(x, height_-1-y, r, g, b);
+    }
+  }
+  int delay_ms_;
+  int numBars_;
+  int* barHeights_;
+  int barWidth_;
+  int height_;
+  int heightGreen_;
+  int heightYellow_;
+  int heightOrange_;
+  int heightRed_;
+  int* barFreqs_;
+  int* barMeans_;
+  int t_;
+};
+
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
           progname);
@@ -367,7 +829,11 @@ static int usage(const char *progname) {
           "\t2  - backward scrolling an image (-m <scroll-ms>)\n"
           "\t3  - test image: a square\n"
           "\t4  - Pulsing color\n"
-          "\t5  - Grayscale Block\n");
+          "\t5  - Grayscale Block\n"
+          "\t6  - Abelian sandpile model (-m <time-step-ms>)\n"
+          "\t7  - Conway's game of life (-m <time-step-ms>)\n"
+          "\t8  - Langton's ant (-m <time-step-ms>)\n"
+          "\t9  - Volume bars (-m <time-step-ms>)\n");
   fprintf(stderr, "Example:\n\t%s -t 10 -D 1 runtext.ppm\n"
           "Scrolls the runtext for 10 seconds\n", progname);
   return 1;
@@ -523,6 +989,22 @@ int main(int argc, char *argv[]) {
 
   case 5:
     image_gen = new GrayScaleBlock(canvas);
+    break;
+
+  case 6:
+    image_gen = new Sandpile(canvas, scroll_ms);
+    break;
+
+  case 7:
+    image_gen = new GameLife(canvas, scroll_ms);
+    break;
+
+  case 8:
+    image_gen = new Ant(canvas, scroll_ms);
+    break;
+
+  case 9:
+    image_gen = new VolumeBars(canvas, scroll_ms, canvas->width()/2);
     break;
   }
 
