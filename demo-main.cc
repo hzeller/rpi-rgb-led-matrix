@@ -373,6 +373,7 @@ public:
       }
     }
   }
+
   ~Sandpile() {
     for (int x=0; x<width_; ++x) {
       delete [] values_[x];
@@ -383,6 +384,7 @@ public:
     }
     delete [] newValues_;
   }
+
   void Run() {
     while (running()) {
       // Drop a sand grain in the centre
@@ -412,6 +414,7 @@ public:
       usleep(delay_ms_ * 1000); // ms
     }
   }
+
 private:
   void updateValues() {
     // Copy values to newValues
@@ -420,6 +423,7 @@ private:
         newValues_[x][y] = values_[x][y];
       }
     }
+
     // Update newValues based on values
     for (int x=0; x<width_; ++x) {
       for (int y=0; y<height_; ++y) {
@@ -444,6 +448,7 @@ private:
       }
     }
   }
+
   int width_;
   int height_;
   int** values_;
@@ -496,8 +501,8 @@ public:
           break;
       }
     }
-    
   }
+
   ~GameLife() {
     for (int x=0; x<width_; ++x) {
       delete [] values_[x];
@@ -508,6 +513,7 @@ public:
     }
     delete [] newValues_;
   }
+
   void Run() {
     while (running()) {
       
@@ -524,6 +530,7 @@ public:
       usleep(delay_ms_ * 1000); // ms
     }
   }
+
 private:
   int numAliveNeighbours(int x, int y) {
     int num=0;
@@ -592,6 +599,7 @@ private:
       }
     }
   }
+
   int** values_;
   int** newValues_;
   int delay_ms_;
@@ -617,12 +625,14 @@ public:
       values_[x] = new int[height_];
     }
   }
+
   ~Ant() {
     for (int x=0; x<width_; ++x) {
       delete [] values_[x];
     }
     delete [] values_;
   }
+
   void Run() {
     antX_ = width_/2;
     antY_ = height_/2-3;
@@ -634,8 +644,7 @@ public:
       }
     }
     
-    while (running()) {
-      
+    while (running()) {      
       // LLRR
       switch (values_[antX_][antY_]) {
         case 0:
@@ -672,6 +681,7 @@ public:
       usleep(delay_ms_ * 1000);
     }
   }
+
 private:
   void updatePixel(int x, int y) {
     switch (values_[x][y]) {
@@ -691,6 +701,7 @@ private:
     if (x == antX_ && y == antY_)
       canvas()->SetPixel(x, y, 0, 0, 0);
   }
+
   int numColors_;
   int** values_;
   int antX_;
@@ -712,11 +723,13 @@ public:
     : ThreadedCanvasManipulator(m), delay_ms_(delay_ms),
       numBars_(numBars), t_(0) {
   }
+
   ~VolumeBars() {
     delete [] barHeights_;
     delete [] barFreqs_;
     delete [] barMeans_;
   }
+
   void Run() {
     const int width = canvas()->width();
     height_ = canvas()->height();
@@ -758,7 +771,8 @@ public:
       // Update bar heights
       t_++;
       for (int i=0; i<numBars_; ++i) {
-        barHeights_[i] = (height_ - means[barMeans_[i]])* sin(0.1*t_*barFreqs_[i]) + means[barMeans_[i]];
+        barHeights_[i] = (height_ - means[barMeans_[i]])
+          * sin(0.1*t_*barFreqs_[i]) + means[barMeans_[i]];
         if (barHeights_[i] < height_/8)
           barHeights_[i] = rand() % (height_/8) + 1;
       }
@@ -787,12 +801,14 @@ public:
       usleep(delay_ms_ * 1000);
     }
   }
+
 private:
   void drawBarRow(int bar, uint8_t y, uint8_t r, uint8_t g, uint8_t b) {
     for (uint8_t x=bar*barWidth_; x<(bar+1)*barWidth_; ++x) {
       canvas()->SetPixel(x, height_-1-y, r, g, b);
     }
   }
+
   int delay_ms_;
   int numBars_;
   int* barHeights_;
