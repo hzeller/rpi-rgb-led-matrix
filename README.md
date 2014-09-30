@@ -230,7 +230,7 @@ supplies for these kind of applications (check eBay).
 The current draw is pretty spiky. Due to the PWM of the LEDs, there are very
 short peaks of a couple of 100ns to about 1ms of full current draw.
 Often, the power cable can't support these very short spikes due to inherent
-inductance. This can results in 'noisy' outputs, with random pixels not behaving
+inductance. This can result in 'noisy' outputs, with random pixels not behaving
 as they should. A low ESR capacitor close to the input is good in these cases.
 
 On some displays, the quality of the output quickly gets erratic
