@@ -83,6 +83,11 @@ that is now all dynamically configurable).
          2  - backward scrolling an image
          3  - test image: a square
          4  - Pulsing color
+         5  - Grayscale Block
+         6  - Abelian sandpile model (-m <time-step-ms>)
+         7  - Conway's game of life (-m <time-step-ms>)
+         8  - Langton's ant (-m <time-step-ms>)
+         9  - Volume bars (-m <time-step-ms>)
      Example:
          ./led-matrix -d -t 10 -D 1 runtext.ppm
      Scrolls the runtext for 10 seconds
