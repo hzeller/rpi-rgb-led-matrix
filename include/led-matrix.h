@@ -35,7 +35,7 @@ public:
   RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1);
   virtual ~RGBMatrix();
 
-  // Set GPIO output if it was not set already in constructor (oterwise: no-op).
+  // Set GPIO output if it was not set already in constructor (otherwise: no-op).
   // Starts display refresh thread if this is the first setting.
   void SetGPIO(GPIO *io);
 
