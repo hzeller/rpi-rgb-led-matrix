@@ -199,6 +199,9 @@ Now, your final binary needs to depend on your objects and also the
 As an example, see the [PixelPusher implementation][pixelpush] which is using
 this library in a git sub-module.
 
+If you are writing your own Makefile, make sure to pass the `-O3` option to
+the compiler to make sure to generate fast code.
+
 Note, all the types provided are in the `rgb_matrix` namespace. That way, they
 won't clash with other types you might use in your code; in particular pretty
 common names such as `GPIO` or `Canvas` might run into clashing trouble.
