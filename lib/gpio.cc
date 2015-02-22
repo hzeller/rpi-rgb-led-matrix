@@ -36,12 +36,15 @@
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
 
 /*static*/ const uint32_t ::rgb_matrix::GPIO::kValidBits 
-= ((1 <<  0) | (1 <<  1) | // Revision 1 accessible
-   (1 <<  2) | (1 <<  3) | // Revision 2 accessible
+= ((1 <<  0) | (1 <<  1) | // RPi 1 - Revision 1 accessible
+   (1 <<  2) | (1 <<  3) | // RPi 1 - Revision 2 accessible
    (1 <<  4) | (1 <<  7) | (1 << 8) | (1 <<  9) |
-   (1 << 10) | (1 << 11) | (1 << 14) | (1 << 15)| (1 <<17) | (1 << 18)|
-   (1 << 22) | (1 << 23) | (1 << 24) | (1 << 25)| (1 << 27));
-   
+   (1 << 10) | (1 << 11) | (1 << 14) | (1 << 15)| (1 <<17) | (1 << 18) |
+   (1 << 22) | (1 << 23) | (1 << 24) | (1 << 25)| (1 << 27) |
+   // support for A+/B+!
+   (1 <<  5) | (1 <<  6) | (1 << 12) | (1 << 13) | (1 << 16) |
+   (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26)
+);
 
 namespace rgb_matrix {
 GPIO::GPIO() : output_bits_(0), gpio_port_(NULL) {
@@ -54,7 +57,7 @@ uint32_t GPIO::InitOutputs(uint32_t outputs) {
   }
   outputs &= kValidBits;   // Sanitize input.
   output_bits_ = outputs;
-  for (uint32_t b = 0; b < 27; ++b) {
+  for (uint32_t b = 0; b <= 27; ++b) {
     if (outputs & (1 << b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
