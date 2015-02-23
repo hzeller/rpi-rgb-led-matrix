@@ -1,4 +1,5 @@
 CXXFLAGS=-Wall -O3 -g
+OBJECTS=demo-main.o minimal-example.o text-example.o
 BINARIES=led-matrix minimal-example text-example
 
 # Where our library resides. It is split between includes and the binary
