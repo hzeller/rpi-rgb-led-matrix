@@ -130,19 +130,7 @@ bool GPIO::Init() {
 // ----------
 // TODO: timing needs to be improved. It is jittery due to the nature of running
 // in a non-realtime operating system, and apparently the nanosleep() does not
-// make any effort to even be close to accurate. Here are some half-ass
-// implementations that are choosen depending on the platform - but they are
-// still lacking. In particular in darker areas in full 11bit PWM, there are
-// brightness glitches.
-//
-// Various ideas:
-//   - use build-in timers, e.g. RPi2 apparently has one at 0x3F003000
-//   - use CPU cycle counter (probably not available in user-space though)
-//     for accurate time measurement, then use regular nanosleep() to inch
-//     towards the time, then use busy loop to get there.
-//   - reconsider DMA. DMA proofed to be much slower than direct GPIO access
-//     in the past, but if it can give more predictable timing, maybe it is
-//     worth investigating that.
+// make any effort to even be close to accurate.
 // ----------
 
 static volatile uint32_t *timer1Mhz = NULL;
@@ -169,9 +157,9 @@ void Timers::sleep_nanos(long nanos) {
   // For larger duration, we use nanosleep() to give the operating system
   // a chance to do something else.
   // However, these timings have a lot of jitter, so we do a two way
-  // approach: we use nanosleep(), but not for a shorter time period so
-  // that we can tolerate some jitter (we need at least an offset of 20usec
-  // as the nanosleep implementations on RPi actually have such offset).
+  // approach: we use nanosleep(), but for some shorter time period so
+  // that we can tolerate some jitter (also, we need at least an offset of
+  // 20usec as the nanosleep implementations on RPi actually have such offset).
   //
   // We use the global 1Mhz hardware timer to measure the actual time period
   // that has passed, and then inch forward for the remaining time with
