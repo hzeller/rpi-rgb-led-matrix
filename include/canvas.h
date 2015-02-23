@@ -21,9 +21,12 @@ namespace rgb_matrix {
 // An interface for things a Canvas can do. The RGBMatrix implements this
 // interface, so you can use it directly wherever a canvas is needed.
 // However, this abstraction allows you to e.g. create delegating
-// implementations that do a particular transformation, e.g. compose images,
-// scale, rotate, anti-alias or translate coordinates in a funky way.
-// So it might be a good idea to have your demos write to a Canvas instead.
+// implementations that do a particular transformation, e.g. re-map
+// pixels (as you might lay out the physical RGB matrix in a different way),
+// compose images (OR, XOR, transparecy), scale, rotate, anti-alias or
+// translate coordinates in a funky way.
+// It is a good idea to have your applications use the concept of
+// a Canvas to write the content to instead of directly using the RGBMatrix.
 class Canvas {
 public:
   virtual ~Canvas() {}
