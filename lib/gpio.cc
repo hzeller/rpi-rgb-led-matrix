@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
+#include <time.h>
 #include <unistd.h>
 
 #define GPIO_REGISTER_BLOCK_SIZE (4*1024)
@@ -116,4 +117,26 @@ bool GPIO::Init() {
   gpio_port_ = (volatile uint32_t *)gpio_map;
   return true;
 }
+
+// The implementation of sleep nanos is kept here as well as we interact
+// with the RPI detection logic.
+void sleep_nanos(long nanos) {
+  // For sleep times above 20usec, nanosleep seems to be fine, but it has
+  // an offset of about 20usec (on the RPi distribution I was testing it on).
+  // That means, we need to give it 80us to get 100us.
+  // For values lower than roughly 30us, this is not accurate anymore and we
+  // need to switch to busy wait.
+  // TODO: compile Linux kernel realtime extensions and watch if the offset-time
+  // changes and hope for less jitter.
+  if (nanos > 28000) {
+    struct timespec sleep_time = { 0, nanos - 20000 };
+    nanosleep(&sleep_time, NULL);
+  } else {
+    // The following loop is determined empirically on a 700Mhz RPi
+    for (int i = nanos >> 2; i != 0; --i) {
+      asm("");   // force GCC not to optimize this away.
+    }
+  }
+}
+
 }  // namespace rgb_matrix

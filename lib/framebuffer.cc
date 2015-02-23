@@ -19,10 +19,11 @@
 
 #include "framebuffer-internal.h"
 
+#include "timing-internal.h"
+
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
 #include <math.h>
 
 namespace rgb_matrix {
@@ -31,38 +32,6 @@ enum {
 };
 
 static const long kBaseTimeNanos = 200;
-const long row_sleep_nanos[11] = {
-  (1 * kBaseTimeNanos),
-  (2 * kBaseTimeNanos),
-  (4 * kBaseTimeNanos),
-  (8 * kBaseTimeNanos),
-  (16 * kBaseTimeNanos),
-  (32 * kBaseTimeNanos),
-  (64 * kBaseTimeNanos),
-  (128 * kBaseTimeNanos),
-  (256 * kBaseTimeNanos),
-  (512 * kBaseTimeNanos),
-  (1024 * kBaseTimeNanos),
-};
-
-static void sleep_nanos(long nanos) {
-  // For sleep times above 20usec, nanosleep seems to be fine, but it has
-  // an offset of about 20usec (on the RPi distribution I was testing it on).
-  // That means, we need to give it 80us to get 100us.
-  // For values lower than roughly 30us, this is not accurate anymore and we
-  // need to switch to busy wait.
-  // TODO: compile Linux kernel realtime extensions and watch if the offset-time
-  // changes and hope for less jitter.
-  if (nanos > 28000) {
-    struct timespec sleep_time = { 0, nanos - 20000 };
-    nanosleep(&sleep_time, NULL);
-  } else {
-    // The following loop is determined empirically on a 700Mhz RPi
-    for (int i = nanos >> 2; i != 0; --i) {
-      asm("");   // force GCC not to optimize this away.
-    }
-  }
-}
 
 RGBMatrix::Framebuffer::Framebuffer(int rows, int columns)
   : rows_(rows), columns_(columns),
@@ -236,7 +205,7 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
 
       // Now switch on for the sleep time necessary for that bit-plane.
       io->ClearBits(output_enable.raw);
-      sleep_nanos(row_sleep_nanos[b]);
+      rgb_matrix::sleep_nanos(kBaseTimeNanos << b);
       io->SetBits(output_enable.raw);
     }
   }
