@@ -832,6 +832,7 @@ static int usage(const char *progname) {
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
           "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
+          "\t-j            : Low jitter. Experimental. Only RPi2\n"
           "\t-l            : Don't do luminance correction (CIE1931)\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
           "\t-d            : run as daemon. Use this when starting in\n"
@@ -865,11 +866,12 @@ int main(int argc, char *argv[]) {
   int pwm_bits = -1;
   bool large_display = false;
   bool do_luminance_correct = true;
+  bool experimental_low_jitter = false;
 
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "dlD:t:r:p:c:m:L")) != -1) {
+  while ((opt = getopt(argc, argv, "dlD:t:r:p:c:m:L:j")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -910,6 +912,10 @@ int main(int argc, char *argv[]) {
       large_display = true;
       break;
 
+    case 'j':
+      experimental_low_jitter = true;
+      break;
+
     default: /* '?' */
       return usage(argv[0]);
     }
@@ -947,6 +953,8 @@ int main(int argc, char *argv[]) {
   GPIO io;
   if (!io.Init())
     return 1;
+
+  Timers::Init(experimental_low_jitter);
 
   // Start daemon before we start any threads.
   if (as_daemon) {

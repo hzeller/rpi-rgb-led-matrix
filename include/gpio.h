@@ -21,6 +21,18 @@
 // Putting this in our namespace to not collide with other things called like
 // this.
 namespace rgb_matrix {
+
+// Initialize sleeping stuff we use to get accurate timing.
+// (somewhat unrelated to gpio, but here for header-file economics)
+class Timers {
+public:
+  // Initialize timer subsystem. If this is on a Raspberry Pi 2, in which we
+  // can 'afford' to waste a core, this offers as well full busy-looping.
+  // (experimental right now)
+  static void Init(bool use_experimental_low_jitter=false);
+  static void sleep_nanos(long t);
+};
+
 // For now, everything is initialized as output.
 class GPIO {
  public:

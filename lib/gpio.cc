@@ -56,7 +56,7 @@ GPIO::GPIO() : output_bits_(0), gpio_port_(NULL) {
    
 uint32_t GPIO::InitOutputs(uint32_t outputs) {
   if (gpio_port_ == NULL) {
-    fprintf(stderr, "Attempt to init outputs but initialized.\n");
+    fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
     return 0;
   }
   outputs &= kValidBits;   // Sanitize input.
@@ -115,12 +115,54 @@ bool GPIO::Init() {
   }
 
   gpio_port_ = (volatile uint32_t *)gpio_map;
+
+  Timers::Init(); // Will call IsRaspberryPi2() again, but not time critical.
   return true;
 }
 
-// The implementation of sleep nanos is kept here as well as we interact
-// with the RPI detection logic.
-void sleep_nanos(long nanos) {
+// ----------
+// TODO: timing needs to be improved. It is jittery due to the nature of running
+// in a non-realtime operating system, and apparently the nanosleep() does not
+// make any effort to even be close to accurate. Here are some half-ass
+// implementations that are choosen depending on the platform - but they are
+// still lacking. In particular in darker areas in full 11bit PWM, there are
+// brightness glitches.
+//
+// Various ideas:
+//   - use build-in timers, e.g. RPi2 apparently has one at 0x3F003000
+//   - use CPU cycle counter (probably not available in user-space though)
+//     for accurate time measurement, then use regular nanosleep() to inch
+//     towards the time, then use busy loop to get there.
+//   - reconsider DMA. DMA proofed to be much slower than direct GPIO access
+//     in the past, but if it can give more predictable timing, maybe it is
+//     worth investigating that.
+// ----------
+
+
+// We use different implementations to work around somewhat messed up nanosleep
+// on linux. We choose the actual implementation when we set up GPIOs.
+static void sleep_nanos_rpi_1(long nanos);
+static void sleep_nanos_rpi_2(long nanos);
+static void sleep_nanos_rpi_2_forcebusyloop(long nanos);
+static void (*sleep_impl)(long) = sleep_nanos_rpi_1;
+
+void Timers::Init(bool experimental_low_jitter) {
+  const bool isRPI2 = IsRaspberryPi2();
+  if (isRPI2) {
+    if (experimental_low_jitter)
+      sleep_impl = sleep_nanos_rpi_2_forcebusyloop;  // (yeah, ick)
+    else
+      sleep_impl = sleep_nanos_rpi_2;
+  } else {
+    sleep_impl = sleep_nanos_rpi_1;
+  }
+}
+
+void Timers::sleep_nanos(long nanos) {
+  sleep_impl(nanos);
+}
+
+static void sleep_nanos_rpi_1(long nanos) {
   // For sleep times above 20usec, nanosleep seems to be fine, but it has
   // an offset of about 20usec (on the RPi distribution I was testing it on).
   // That means, we need to give it 80us to get 100us.
@@ -133,10 +175,36 @@ void sleep_nanos(long nanos) {
     nanosleep(&sleep_time, NULL);
   } else {
     // The following loop is determined empirically on a 700Mhz RPi
-    for (int i = nanos >> 2; i != 0; --i) {
-      asm("");   // force GCC not to optimize this away.
+    for (uint32_t i = (nanos - 70) >> 2; i != 0; --i) {
+      asm("nop");
     }
   }
 }
 
-}  // namespace rgb_matrix
+static void sleep_nanos_rpi_2(long nanos) {
+  // For sleep times above 20usec, nanosleep seems to be fine, but it has
+  // an offset of about 15usec.
+  // TODO: Play around with built-in timers of CPU, like the one at 0x3F003000
+  // TODO: also, we might trick linux into giving us a dedicated core.
+  if (nanos > 28000) {
+    struct timespec sleep_time = { 0, nanos - 15000 };
+    nanosleep(&sleep_time, NULL);
+  } else {
+    // The following loop is determined empirically on a 900Mhz RPi 2
+    for (uint32_t i = (nanos - 20) * 100 / 110; i != 0; --i) {
+      asm("");
+    }
+  }
+}
+
+// On RPi2, we can choose to be wasteful and essentially dedicate a full
+// core to this task (TODO: this should probably access the CPU counter, but
+// it might not be available in user-space. Verify).
+static void sleep_nanos_rpi_2_forcebusyloop(long nanos) {
+  // The following loop is determined empirically on a 900Mhz RPi 2
+  for (uint32_t i = (nanos - 20) * 100 / 110; i != 0; --i) {
+    asm("");
+  }
+}
+
+} // namespace rgb_matrix

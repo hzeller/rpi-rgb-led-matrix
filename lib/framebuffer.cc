@@ -19,8 +19,6 @@
 
 #include "framebuffer-internal.h"
 
-#include "timing-internal.h"
-
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
@@ -205,7 +203,7 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
 
       // Now switch on for the sleep time necessary for that bit-plane.
       io->ClearBits(output_enable.raw);
-      rgb_matrix::sleep_nanos(kBaseTimeNanos << b);
+      Timers::sleep_nanos(kBaseTimeNanos << b);
       io->SetBits(output_enable.raw);
     }
   }
