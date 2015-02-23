@@ -19,7 +19,8 @@
 #define BCM2708_PERI_BASE        0x20000000
 #define BCM2709_PERI_BASE        0x3F000000
 
-#define GPIO_REGISTER_OFFSET       0x200000
+#define GPIO_REGISTER_OFFSET         0x200000
+#define COUNTER_1Mhz_REGISTER_OFFSET   0x3000
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -29,7 +30,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define GPIO_REGISTER_BLOCK_SIZE (4*1024)
+#define REGISTER_BLOCK_SIZE (4*1024)
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) or SET_GPIO_ALT(x,y)
 #define INP_GPIO(g) *(gpio_port_+((g)/10)) &= ~(7<<(((g)%10)*3))
@@ -87,37 +88,43 @@ static bool IsRaspberryPi2() {
   return false;
 }
 
-// Based on code example found in http://elinux.org/RPi_Low-level_peripherals
-bool GPIO::Init() {
+static char *mmap_bcm_register(off_t register_offset) {
+  const bool isRPI2 = IsRaspberryPi2();
+  const off_t base = (isRPI2 ? BCM2709_PERI_BASE : BCM2708_PERI_BASE);
+
   int mem_fd;
   if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
     perror("can't open /dev/mem: ");
-    return false;
+    return NULL;
   }
 
-  const bool isRPI2 = IsRaspberryPi2();
-  const off_t gpio_offset = (isRPI2 ? BCM2709_PERI_BASE : BCM2708_PERI_BASE)
-    + GPIO_REGISTER_OFFSET;
-
-  char *gpio_map =
-    (char*) mmap(NULL,                     // Any adddress in our space will do
-                 GPIO_REGISTER_BLOCK_SIZE, // Map length
-                 PROT_READ|PROT_WRITE,     // Enable r/w on GPIO registers.
+  char *result =
+    (char*) mmap(NULL,                  // Any adddress in our space will do
+                 REGISTER_BLOCK_SIZE,   // Map length
+                 PROT_READ|PROT_WRITE,  // Enable r/w on GPIO registers.
                  MAP_SHARED,
-                 mem_fd,                   // File to map
-                 gpio_offset               // Offset to GPIO peripheral
+                 mem_fd,                // File to map
+                 base + register_offset // Offset to bcm register
                  );
   close(mem_fd);
 
-  if (gpio_map == MAP_FAILED) {
-    fprintf(stderr, "mmap error %ld\n", (long)gpio_map);
+  if (result == MAP_FAILED) {
+    fprintf(stderr, "mmap error %p\n", result);
+  }
+  return (char*) result;
+}
+
+// Based on code example found in http://elinux.org/RPi_Low-level_peripherals
+bool GPIO::Init() {
+  char *gpio_map = mmap_bcm_register(GPIO_REGISTER_OFFSET);
+  if (gpio_map == NULL) {
     return false;
   }
 
   gpio_port_ = (volatile uint32_t *)gpio_map;
 
-  Timers::Init(); // Will call IsRaspberryPi2() again, but not time critical.
-  return true;
+  // To be compatible with old code, make sure to initialize this here.
+  return Timers::Init();
 }
 
 // ----------
@@ -138,69 +145,63 @@ bool GPIO::Init() {
 //     worth investigating that.
 // ----------
 
+static volatile uint32_t *timer1Mhz = NULL;
 
-// We use different implementations to work around somewhat messed up nanosleep
-// on linux. We choose the actual implementation when we set up GPIOs.
 static void sleep_nanos_rpi_1(long nanos);
 static void sleep_nanos_rpi_2(long nanos);
-static void sleep_nanos_rpi_2_forcebusyloop(long nanos);
-static void (*sleep_impl)(long) = sleep_nanos_rpi_1;
+static void (*busy_sleep_impl)(long) = sleep_nanos_rpi_1;
 
-void Timers::Init(bool experimental_low_jitter) {
-  const bool isRPI2 = IsRaspberryPi2();
-  if (isRPI2) {
-    if (experimental_low_jitter)
-      sleep_impl = sleep_nanos_rpi_2_forcebusyloop;  // (yeah, ick)
-    else
-      sleep_impl = sleep_nanos_rpi_2;
-  } else {
-    sleep_impl = sleep_nanos_rpi_1;
+bool Timers::Init() {
+  char *timer_map = mmap_bcm_register(COUNTER_1Mhz_REGISTER_OFFSET);
+  if (timer_map == NULL) {
+    return false;
   }
+  timer1Mhz = &((volatile uint32_t *)timer_map)[1];
+
+  const bool isRPI2 = IsRaspberryPi2();
+  busy_sleep_impl = isRPI2 ? sleep_nanos_rpi_2 : sleep_nanos_rpi_1;
+  return true;
 }
 
 void Timers::sleep_nanos(long nanos) {
-  sleep_impl(nanos);
+  // For smaller durations, we go straight to busy wait.
+
+  // For larger duration, we use nanosleep() to give the operating system
+  // a chance to do something else.
+  // However, these timings have a lot of jitter, so we do a two way
+  // approach: we use nanosleep(), but not for a shorter time period so
+  // that we can tolerate some jitter (we need at least an offset of 20usec
+  // as the nanosleep implementations on RPi actually have such offset).
+  //
+  // We use the global 1Mhz hardware timer to measure the actual time period
+  // that has passed, and then inch forward for the remaining time with
+  // busy wait.
+  if (nanos > 30000) {
+    const uint32_t before = *timer1Mhz;
+    struct timespec sleep_time = { 0, nanos - 25000 };
+    nanosleep(&sleep_time, NULL);
+    const uint32_t after = *timer1Mhz;
+    const long nanoseconds_passed = 1000 * (uint32_t)(after - before);
+    if (nanoseconds_passed > nanos) {
+      return;  // darn, missed it.
+    } else {
+      nanos -= nanoseconds_passed; // remaining time with busy-loop
+    }
+  }
+
+  busy_sleep_impl(nanos);
 }
 
 static void sleep_nanos_rpi_1(long nanos) {
-  // For sleep times above 20usec, nanosleep seems to be fine, but it has
-  // an offset of about 20usec (on the RPi distribution I was testing it on).
-  // That means, we need to give it 80us to get 100us.
-  // For values lower than roughly 30us, this is not accurate anymore and we
-  // need to switch to busy wait.
-  // TODO: compile Linux kernel realtime extensions and watch if the offset-time
-  // changes and hope for less jitter.
-  if (nanos > 28000) {
-    struct timespec sleep_time = { 0, nanos - 20000 };
-    nanosleep(&sleep_time, NULL);
-  } else {
-    // The following loop is determined empirically on a 700Mhz RPi
-    for (uint32_t i = (nanos - 70) >> 2; i != 0; --i) {
-      asm("nop");
-    }
+  if (nanos < 70) return;
+  // The following loop is determined empirically on a 700Mhz RPi
+  for (uint32_t i = (nanos - 70) >> 2; i != 0; --i) {
+    asm("nop");
   }
 }
 
 static void sleep_nanos_rpi_2(long nanos) {
-  // For sleep times above 20usec, nanosleep seems to be fine, but it has
-  // an offset of about 15usec.
-  // TODO: Play around with built-in timers of CPU, like the one at 0x3F003000
-  // TODO: also, we might trick linux into giving us a dedicated core.
-  if (nanos > 28000) {
-    struct timespec sleep_time = { 0, nanos - 15000 };
-    nanosleep(&sleep_time, NULL);
-  } else {
-    // The following loop is determined empirically on a 900Mhz RPi 2
-    for (uint32_t i = (nanos - 20) * 100 / 110; i != 0; --i) {
-      asm("");
-    }
-  }
-}
-
-// On RPi2, we can choose to be wasteful and essentially dedicate a full
-// core to this task (TODO: this should probably access the CPU counter, but
-// it might not be available in user-space. Verify).
-static void sleep_nanos_rpi_2_forcebusyloop(long nanos) {
+  if (nanos < 20) return;
   // The following loop is determined empirically on a 900Mhz RPi 2
   for (uint32_t i = (nanos - 20) * 100 / 110; i != 0; --i) {
     asm("");

@@ -22,14 +22,10 @@
 // this.
 namespace rgb_matrix {
 
-// Initialize sleeping stuff we use to get accurate timing.
-// (somewhat unrelated to gpio, but here for header-file economics)
+// More precise than default OS provided timing.
 class Timers {
 public:
-  // Initialize timer subsystem. If this is on a Raspberry Pi 2, in which we
-  // can 'afford' to waste a core, this offers as well full busy-looping.
-  // (experimental right now)
-  static void Init(bool use_experimental_low_jitter=false);
+  static bool Init();
   static void sleep_nanos(long t);
 };
 
