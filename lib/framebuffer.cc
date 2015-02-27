@@ -24,14 +24,6 @@
 #include <string.h>
 #include <math.h>
 
-// Sometimes, the clocking signals are too fast for long cables or because
-// there is noise on the logic inputs of the boards.
-// If you get erratic output, in particular with multiple boards connected,
-// you can try adding something to this value.
-// 0 clocks in as fast as possible, values up to 100 can make
-// sense. Note, however, this will decrease your refresh rate.
-#define SIGNAL_SETTLE_NANOS 12
-
 namespace rgb_matrix {
 enum {
   kBitPlanes = 11  // maximum usable bitplanes.
@@ -172,13 +164,6 @@ void RGBMatrix::Framebuffer::SetPixel(int x, int y,
   }
 }
 
-#if SIGNAL_SETTLE_NANOS > 0
-#   define settle_delay() Timers::sleep_nanos(SIGNAL_SETTLE_NANOS)
-#else
-// Make it a NOP
-#   define settle_delay() do {} while(0)
-#endif
-
 void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
   IoBits color_clk_mask;   // Mask of bits we need to set while clocking in.
   color_clk_mask.bits.r1 = color_clk_mask.bits.g1 = color_clk_mask.bits.b1 = 1;
@@ -208,14 +193,11 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
       for (int col = 0; col < columns_; ++col) {
         const IoBits &out = *row_data++;
         io->WriteMaskedBits(out.raw, color_clk_mask.raw);  // col + reset clock
-        settle_delay();
         io->SetBits(clock.raw);               // Rising edge: clock color in.
-        settle_delay();
       }
       io->ClearBits(color_clk_mask.raw);    // clock back to normal.
 
       io->SetBits(strobe.raw);   // Strobe in the previously clocked in row.
-      settle_delay();
       io->ClearBits(strobe.raw);
 
       // Now switch on for the sleep time necessary for that bit-plane.

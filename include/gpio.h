@@ -18,6 +18,9 @@
 
 #include <stdint.h>
 
+// The new RPi is often too fast for noise-troubled LED panels. Slow it down.
+#define RGB_SLOWDOWN_GPIO 1
+
 // Putting this in our namespace to not collide with other things called like
 // this.
 namespace rgb_matrix {
@@ -48,11 +51,17 @@ class GPIO {
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(uint32_t value) {
     gpio_port_[0x1C / sizeof(uint32_t)] = value;
+#if RGB_SLOWDOWN_GPIO
+    gpio_port_[0x1C / sizeof(uint32_t)] = value;
+#endif
   }
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   inline void ClearBits(uint32_t value) {
     gpio_port_[0x28 / sizeof(uint32_t)] = value;
+#if RGB_SLOWDOWN_GPIO
+    gpio_port_[0x28 / sizeof(uint32_t)] = value;
+#endif
   }
 
   // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
