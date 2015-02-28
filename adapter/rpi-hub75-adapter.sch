@@ -186,17 +186,17 @@ Wire Wire Line
 	2900 3900 3000 3900
 Text GLabel 3000 3000 0    51   Output ~ 0
 strobe
-Text GLabel 3500 4500 2    51   Output ~ 0
-p1_r1
-Text GLabel 3000 4400 0    51   Output ~ 0
-p1_g1
-Text GLabel 3000 4300 0    51   Output ~ 0
-p1_b1
 Text GLabel 3500 4200 2    51   Output ~ 0
-p1_r2
-Text GLabel 3000 4200 0    51   Output ~ 0
-p1_g2
+p1_r1
 Text GLabel 3000 4100 0    51   Output ~ 0
+p1_g1
+Text GLabel 3000 4200 0    51   Output ~ 0
+p1_b1
+Text GLabel 3000 4400 0    51   Output ~ 0
+p1_r2
+Text GLabel 3000 4300 0    51   Output ~ 0
+p1_g2
+Text GLabel 3500 4500 2    51   Output ~ 0
 p1_b2
 Text GLabel 3500 3900 2    51   Output ~ 0
 row_A
@@ -222,15 +222,15 @@ Text GLabel 3500 3700 2    51   Output ~ 0
 p0_b2
 Text GLabel 3000 3300 0    51   Output ~ 0
 OE
-Text GLabel 5550 2300 0    51   Input ~ 0
+Text GLabel 5550 2900 0    51   Input ~ 0
 p0_g1
-Text GLabel 5550 2200 0    51   Input ~ 0
+Text GLabel 5550 2800 0    51   Input ~ 0
 p0_r1
-Text GLabel 5550 2400 0    51   Input ~ 0
+Text GLabel 5550 2700 0    51   Input ~ 0
 p0_b1
 Text GLabel 5550 2500 0    51   Input ~ 0
 p0_r2
-Text GLabel 5550 2700 0    51   Input ~ 0
+Text GLabel 5550 2400 0    51   Input ~ 0
 p0_b2
 Text GLabel 5550 2600 0    51   Input ~ 0
 p0_g2
@@ -261,7 +261,7 @@ Text GLabel 5550 4150 0    51   Input ~ 0
 row_D
 Text GLabel 5550 4250 0    51   Input ~ 0
 strobe
-Text GLabel 5550 2900 0    51   Input ~ 0
+Text GLabel 5550 2200 0    51   Input ~ 0
 OE
 $Comp
 L CONN_02X08 Panel-2
@@ -274,13 +274,13 @@ F 3 "" H 8500 3900 60  0000 C CNN
 	1    8500 5100
 	1    0    0    -1  
 $EndComp
-Text GLabel 5550 5000 0    51   Input ~ 0
+Text GLabel 5550 5600 0    51   Input ~ 0
 p1_g1
-Text GLabel 5550 4900 0    51   Input ~ 0
+Text GLabel 5550 5500 0    51   Input ~ 0
 p1_r1
-Text GLabel 5550 5100 0    51   Input ~ 0
-p1_b1
 Text GLabel 5550 5400 0    51   Input ~ 0
+p1_b1
+Text GLabel 5550 5100 0    51   Input ~ 0
 p1_b2
 Text GLabel 5550 5300 0    51   Input ~ 0
 p1_g2
@@ -446,32 +446,12 @@ Wire Wire Line
 	5550 4550 5550 4600
 Wire Wire Line
 	5550 5900 5550 5950
-Wire Wire Line
-	6950 2900 8250 2900
-Text GLabel 5550 5600 0    51   Input ~ 0
+Text GLabel 5550 4900 0    51   Input ~ 0
 OE
-Text GLabel 5550 5500 0    51   Input ~ 0
+Text GLabel 5550 5000 0    51   Input ~ 0
 clock
-Text GLabel 5550 2800 0    51   Input ~ 0
+Text GLabel 5550 2300 0    51   Input ~ 0
 clock
-Wire Wire Line
-	6950 2800 8250 2800
-Wire Wire Line
-	6950 5600 8250 5600
-Wire Wire Line
-	8250 5600 8250 5450
-Wire Wire Line
-	6950 5500 8150 5500
-Wire Wire Line
-	8150 5500 8150 5350
-Wire Wire Line
-	8150 5350 8250 5350
-Wire Wire Line
-	6950 5400 7800 5400
-Wire Wire Line
-	7800 5400 7800 5050
-Wire Wire Line
-	7800 5050 8250 5050
 Text GLabel 6950 5300 2    51   Output ~ 0
 p1_g2_buf
 Text GLabel 8750 4950 2    51   Input ~ 0
@@ -482,34 +462,10 @@ Connection ~ 9300 5450
 Connection ~ 9300 5050
 Text GLabel 5550 5200 0    51   Input ~ 0
 p1_r2
-Wire Wire Line
-	6950 5200 7650 5200
-Wire Wire Line
-	7650 5200 7650 4950
-Wire Wire Line
-	7650 4950 8250 4950
-Wire Wire Line
-	6950 5100 7550 5100
-Wire Wire Line
-	7550 5100 7550 4850
-Wire Wire Line
-	7550 4850 8250 4850
-Text GLabel 6950 5000 2    51   Output ~ 0
-p1_g1_buff
+Text GLabel 6950 5100 2    51   Output ~ 0
+p1_b2_buff
 Text GLabel 8750 4750 2    51   Input ~ 0
 p1_g1_buff
-Wire Wire Line
-	6950 4900 7400 4900
-Wire Wire Line
-	7400 4900 7400 4750
-Wire Wire Line
-	7400 4750 8250 4750
-Wire Wire Line
-	6950 2700 7750 2700
-Wire Wire Line
-	7750 2700 7750 2500
-Wire Wire Line
-	7750 2500 8250 2500
 Wire Wire Line
 	9300 2300 9300 2950
 Connection ~ 9300 2500
@@ -518,24 +474,10 @@ Text GLabel 6950 2600 2    51   Output ~ 0
 p0_g2_buff
 Text GLabel 8750 2400 2    51   Input ~ 0
 p0_g2_buff
-Wire Wire Line
-	6950 2500 7650 2500
-Wire Wire Line
-	7650 2500 7650 2400
-Wire Wire Line
-	7650 2400 8250 2400
-Wire Wire Line
-	6950 2400 7550 2400
-Wire Wire Line
-	7550 2400 7550 2300
-Wire Wire Line
-	7550 2300 8250 2300
-Text GLabel 6950 2300 2    51   Output ~ 0
+Text GLabel 6950 2900 2    51   Output ~ 0
 p0_g1_buff
 Text GLabel 8750 2200 2    51   Input ~ 0
 p0_g1_buff
-Wire Wire Line
-	6950 2200 8250 2200
 Text GLabel 6950 4150 2    51   Output ~ 0
 row_D_buff
 Text GLabel 8750 2700 2    51   Input ~ 0
@@ -619,4 +561,52 @@ F 3 "" H 5350 5800 60  0000 C CNN
 $EndComp
 Wire Wire Line
 	5350 5800 5550 5800
+Text GLabel 8250 2200 0    51   Input ~ 0
+p0_r1_buff
+Text GLabel 8250 2800 0    51   Input ~ 0
+clock_buff_0
+Text GLabel 6950 2800 2    51   Output ~ 0
+p0_r1_buff
+Text GLabel 8250 2500 0    51   Input ~ 0
+p0_b2_buff
+Text GLabel 8250 2300 0    51   Input ~ 0
+p0_b1_buff
+Text GLabel 8250 2400 0    51   Input ~ 0
+p0_r2_buff
+Text GLabel 8250 2900 0    51   Input ~ 0
+OE_buff_0
+Text GLabel 6950 2700 2    51   Output ~ 0
+p0_b1_buff
+Text GLabel 6950 2400 2    51   Output ~ 0
+p0_b2_buff
+Text GLabel 6950 2500 2    51   Output ~ 0
+p0_r2_buff
+Text GLabel 6950 2300 2    51   Output ~ 0
+clock_buff_0
+Text GLabel 6950 2200 2    51   Output ~ 0
+OE_buff_0
+Text GLabel 8250 4750 0    51   Input ~ 0
+p1_r1_buff
+Text GLabel 8250 4850 0    51   Input ~ 0
+p1_b1_buff
+Text GLabel 8250 4950 0    51   Input ~ 0
+p1_r2_buff
+Text GLabel 8250 5050 0    51   Input ~ 0
+p1_b2_buff
+Text GLabel 8250 5350 0    51   Input ~ 0
+clock_buff_1
+Text GLabel 8250 5450 0    51   Input ~ 0
+OE_buff_1
+Text GLabel 6950 4900 2    51   Output ~ 0
+OE_buff_1
+Text GLabel 6950 5000 2    51   Output ~ 0
+clock_buff_1
+Text GLabel 6950 5200 2    51   Output ~ 0
+p1_r2_buff
+Text GLabel 6950 5400 2    51   Output ~ 0
+p1_b1_buff
+Text GLabel 6950 5500 2    51   Output ~ 0
+p1_r1_buff
+Text GLabel 6950 5600 2    51   Output ~ 0
+p1_g1_buff
 $EndSCHEMATC
