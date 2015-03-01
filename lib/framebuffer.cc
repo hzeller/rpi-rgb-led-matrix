@@ -31,8 +31,9 @@ enum {
 
 static const long kBaseTimeNanos = 200;
 
-RGBMatrix::Framebuffer::Framebuffer(int rows, int columns)
-  : rows_(rows), columns_(columns),
+RGBMatrix::Framebuffer::Framebuffer(int rows, int columns, int parallel)
+  : rows_(rows), parallel_(parallel), height_(rows * parallel),
+    columns_(columns),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true),
     double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
@@ -47,11 +48,20 @@ RGBMatrix::Framebuffer::~Framebuffer() {
   // Tell GPIO about all bits we intend to use.
   IoBits b;
   b.raw = 0;
+
+#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING
   b.bits.output_enable_rev1 = b.bits.output_enable_rev2 = 1;
   b.bits.clock_rev1 = b.bits.clock_rev2 = 1;
+#endif
+
+  b.bits.output_enable = 1;
+  b.bits.clock = 1;
   b.bits.strobe = 1;
-  b.bits.r1 = b.bits.g1 = b.bits.b1 = 1;
-  b.bits.r2 = b.bits.g2 = b.bits.b2 = 1;
+
+  b.bits.p0_r1 = b.bits.p0_g1 = b.bits.p0_b1 = 1;
+  b.bits.p0_r2 = b.bits.p0_g2 = b.bits.p0_b2 = 1;
+  b.bits.p1_r1 = b.bits.p1_g1 = b.bits.p1_b1 = 1;
+  b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
   b.bits.row = 0x0f;
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io->InitOutputs(b.raw);
@@ -123,9 +133,12 @@ void RGBMatrix::Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
     uint16_t mask = 1 << b;
     IoBits plane_bits;
     plane_bits.raw = 0;
-    plane_bits.bits.r1 = plane_bits.bits.r2 = (red & mask) == mask;
-    plane_bits.bits.g1 = plane_bits.bits.g2 = (green & mask) == mask;
-    plane_bits.bits.b1 = plane_bits.bits.b2 = (blue & mask) == mask;
+    plane_bits.bits.p0_r1 = plane_bits.bits.p0_r2 =
+      plane_bits.bits.p1_r1 = plane_bits.bits.p1_r2 = (red & mask) == mask;
+    plane_bits.bits.p0_g1 = plane_bits.bits.p0_g2 =
+      plane_bits.bits.p1_g1 = plane_bits.bits.p1_g2 = (green & mask) == mask;
+    plane_bits.bits.p0_b1 = plane_bits.bits.p0_b2 =
+      plane_bits.bits.p1_b1 = plane_bits.bits.p1_b2 = (blue & mask) == mask;
     for (int row = 0; row < double_rows_; ++row) {
       IoBits *row_data = ValueAt(row, 0, b);
       for (int col = 0; col < columns_; ++col) {
@@ -137,46 +150,86 @@ void RGBMatrix::Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
 
 void RGBMatrix::Framebuffer::SetPixel(int x, int y,
                                       uint8_t r, uint8_t g, uint8_t b) {
-  if (x < 0 || x >= columns_ || y < 0 || y >= rows_) return;
+  if (x < 0 || x >= columns_ || y < 0 || y >= height_) return;
 
   const uint16_t red   = MapColor(r);
   const uint16_t green = MapColor(g);
   const uint16_t blue  = MapColor(b);
 
+  // TODO: add parallel
   const int min_bit_plane = kBitPlanes - pwm_bits_;
   IoBits *bits = ValueAt(y & row_mask_, x, min_bit_plane);
-  if (y < double_rows_) {   // Upper sub-panel.
-    for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-      const uint16_t mask = 1 << b;
-      bits->bits.r1 = (red & mask) == mask;
-      bits->bits.g1 = (green & mask) == mask;
-      bits->bits.b1 = (blue & mask) == mask;
-      bits += columns_;
+
+  if (y < rows_) {
+    if (y < double_rows_) {   // Upper sub-panel.
+      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
+        const uint16_t mask = 1 << b;
+        bits->bits.p0_r1 = (red & mask) == mask;
+        bits->bits.p0_g1 = (green & mask) == mask;
+        bits->bits.p0_b1 = (blue & mask) == mask;
+        bits += columns_;
+      }
+    } else {
+      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
+        const uint16_t mask = 1 << b;
+        bits->bits.p0_r2 = (red & mask) == mask;
+        bits->bits.p0_g2 = (green & mask) == mask;
+        bits->bits.p0_b2 = (blue & mask) == mask;
+        bits += columns_;
+      }
     }
   } else {
-    for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-      const uint16_t mask = 1 << b;
-      bits->bits.r2 = (red & mask) == mask;
-      bits->bits.g2 = (green & mask) == mask;
-      bits->bits.b2 = (blue & mask) == mask;
-      bits += columns_;
+    if (y - rows_ < double_rows_) {   // Upper sub-panel.
+      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
+        const uint16_t mask = 1 << b;
+        bits->bits.p1_r1 = (red & mask) == mask;
+        bits->bits.p1_g1 = (green & mask) == mask;
+        bits->bits.p1_b1 = (blue & mask) == mask;
+        bits += columns_;
+      }
+    } else {
+      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
+        const uint16_t mask = 1 << b;
+        bits->bits.p1_r2 = (red & mask) == mask;
+        bits->bits.p1_g2 = (green & mask) == mask;
+        bits->bits.p1_b2 = (blue & mask) == mask;
+        bits += columns_;
+      }
     }
   }
 }
 
 void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
   IoBits color_clk_mask;   // Mask of bits we need to set while clocking in.
-  color_clk_mask.bits.r1 = color_clk_mask.bits.g1 = color_clk_mask.bits.b1 = 1;
-  color_clk_mask.bits.r2 = color_clk_mask.bits.g2 = color_clk_mask.bits.b2 = 1;
+  color_clk_mask.bits.p0_r1
+    = color_clk_mask.bits.p0_g1
+    = color_clk_mask.bits.p0_b1
+    = color_clk_mask.bits.p0_r2
+    = color_clk_mask.bits.p0_g2
+    = color_clk_mask.bits.p0_b2
+    = color_clk_mask.bits.p1_r1
+    = color_clk_mask.bits.p1_g1
+    = color_clk_mask.bits.p1_b1
+    = color_clk_mask.bits.p1_r2
+    = color_clk_mask.bits.p1_g2
+    = color_clk_mask.bits.p1_b2 = 1;
+
+#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING
   color_clk_mask.bits.clock_rev1 = color_clk_mask.bits.clock_rev2 = 1;
+#endif
+  color_clk_mask.bits.clock = 1;
 
   IoBits row_mask;
   row_mask.bits.row = 0x0f;
 
   IoBits clock, output_enable, strobe, row_address;
+#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING
   clock.bits.clock_rev1 = clock.bits.clock_rev2 = 1;
-  output_enable.bits.output_enable_rev1 = 1;
-  output_enable.bits.output_enable_rev2 = 1;
+  output_enable.bits.output_enable_rev1
+    = output_enable.bits.output_enable_rev2 = 1;
+#endif
+  clock.bits.clock = 1;
+  output_enable.bits.output_enable = 1;
   strobe.bits.strobe = 1;
 
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.

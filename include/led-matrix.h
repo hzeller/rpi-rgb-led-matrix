@@ -13,7 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
-// Controlling a 32x32 RGB matrix via GPIO.
+// Controlling 16x32 or 32x32 RGB matrixes via GPIO. It allows daisy chaining
+// of a string of these, and also connecting a parallel string on newer
+// Raspberry Pis with more GPIO pins available.
 
 #ifndef RPI_RGBMATRIX_H
 #define RPI_RGBMATRIX_H
@@ -25,14 +27,31 @@
 namespace rgb_matrix {
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
+// This will provide a Canvas that represents the display with
+// (32 * chained_displays)x(rows * parallel_displays) pixels.
+// If you arrange the panels in a different way in the physical space, write
+// a delegating Canvas that does coordinate remapping, like the
+// LargeSquare64x64Canvas in demo-main.cc.
 class RGBMatrix : public Canvas {
 public:
-  // Initialize RGB matrix with GPIO to write to. The "rows" are the number
+  // Initialize RGB matrix with GPIO to write to.
+  //
+  // The "rows" are the number
   // of rows supported by the display, so 32 or 16. Number of "chained_display"s
-  // tells many of these are daisy-chained together.
+  // tells many of these are daisy-chained together (output of one connected
+  // to input of next).
+  //
+  // The "parallel_display" number determines if there is one or two displays
+  // connected in parallel to the GPIO port - this only works with newer
+  // Raspberry Pi that have 40 interface pins.
+  //
   // If "io" is not NULL, starts refreshing the screen immediately; you can
   // defer that by setting GPIO later with SetGPIO().
-  RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1);
+  //
+  // The resulting canvas is (rows * parallel_displays) high and
+  // (32 * chained_displays) wide.
+  RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1,
+            int parallel_displays = 1);
   virtual ~RGBMatrix();
 
   // Set GPIO output if it was not set already in constructor (otherwise: no-op).

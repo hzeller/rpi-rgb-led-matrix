@@ -48,8 +48,8 @@ LED-Panel to GPIO with this code:
    * B2 (Blue 2nd bank)  : GPIO 25
    * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (There is no `D` needed if you
     have a display with 16 rows with 1:8 multiplexing)
-   * OE- (neg. Output enable) : GPIO 2 (Rev 2 RPi) or GPIO 0 (Rev 1 RPi)
-   * CLK (Serial clock) : GPIO 3 (Rev 2 RPi) or GPIO 1 (Rev 1 RPi)
+   * OE- (neg. Output enable) : GPIO 0 (Rev 1 RPi), GPIO 27 (everything else)
+   * CLK (Serial clock)    : GPIO 11
    * STR (Strobe row data) : GPIO 4
 
 Here a typical pinout on these LED panels, found on the circuit board:

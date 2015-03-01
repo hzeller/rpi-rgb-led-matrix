@@ -72,8 +72,9 @@ private:
   RGBMatrix *const matrix_;
 };
 
-RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays)
-  : frame_(new Framebuffer(rows, 32 * chained_displays)),
+RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
+                     int parallel_displays)
+  : frame_(new Framebuffer(rows, 32 * chained_displays, parallel_displays)),
     io_(NULL), updater_(NULL) {
   Clear();
   SetGPIO(io);
