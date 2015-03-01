@@ -829,7 +829,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n"
           "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
           "Default: 32\n"
-          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1 or 2. "
+          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
@@ -950,8 +950,8 @@ int main(int argc, char *argv[]) {
   if (chain > 8) {
     fprintf(stderr, "That is a long chain. Expect some flicker.\n");
   }
-  if (parallel < 1 || parallel > 2) {
-    fprintf(stderr, "Parallel outside usable range\n");
+  if (parallel < 1 || parallel > 3) {
+    fprintf(stderr, "Parallel outside usable range.\n");
     return 1;
   }
 

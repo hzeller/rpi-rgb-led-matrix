@@ -89,8 +89,8 @@ int main(int argc, char *argv[]) {
   if (chain > 8) {
     fprintf(stderr, "That is a long chain. Expect some flicker.\n");
   }
-  if (parallel < 1 || parallel > 2) {
-    fprintf(stderr, "Parallel outside usable range\n");
+  if (parallel < 1 || parallel > 3) {
+    fprintf(stderr, "Parallel outside usable range.\n");
     return 1;
   }
 

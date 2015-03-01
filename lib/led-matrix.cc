@@ -94,7 +94,7 @@ void RGBMatrix::SetGPIO(GPIO *io) {
   if (io == NULL) return;  // nothing to set.
   if (io_ != NULL) return;  // already set.
   io_ = io;
-  Framebuffer::InitGPIO(io_);
+  frame_->InitGPIO(io_);
   updater_ = new UpdateThread(this);
   updater_->Start(99);  // Whatever we get :)
 }

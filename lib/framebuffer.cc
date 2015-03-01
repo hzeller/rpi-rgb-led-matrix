@@ -19,6 +19,7 @@
 
 #include "framebuffer-internal.h"
 
+#include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
@@ -31,6 +32,16 @@ enum {
 
 static const long kBaseTimeNanos = 200;
 
+// Only if SUPPORT_TRIPLE_PARALLEL is not defined, we allow classic wiring.
+// This is just the negative of SUPPORT_TRIPLE_PARALLEL, but conceptually
+// it is something different as it means some 'classic' GPIO pins have a
+// different function. So make it a separate #define for readability.
+#ifdef SUPPORT_TRIPLE_PARALLEL
+#  undef SUPPORT_CLASSIC_LED_GPIO_WIRING_
+#else
+#  define SUPPORT_CLASSIC_LED_GPIO_WIRING_
+#endif
+
 RGBMatrix::Framebuffer::Framebuffer(int rows, int columns, int parallel)
   : rows_(rows), parallel_(parallel), height_(rows * parallel),
     columns_(columns),
@@ -38,18 +49,27 @@ RGBMatrix::Framebuffer::Framebuffer(int rows, int columns, int parallel)
     double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
+  assert(rows_ <= 32);
+  assert(parallel >= 1 && parallel <= 3);
+#ifndef SUPPORT_TRIPLE_PARALLEL
+  if (parallel >= 3) {
+    fprintf(stderr, "In order for parallel=3 to work, you need to "
+            "define SUPPORT_TRIPLE_PARALLEL in lib/Makefile.\n");
+    assert(parallel < 3);
+  }
+#endif
 }
 
 RGBMatrix::Framebuffer::~Framebuffer() {
   delete [] bitplane_buffer_;
 }
 
-/* statuc */ void RGBMatrix::Framebuffer::InitGPIO(GPIO *io) {
+/* statuct */ void RGBMatrix::Framebuffer::InitGPIO(GPIO *io) {
   // Tell GPIO about all bits we intend to use.
   IoBits b;
   b.raw = 0;
 
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING
+#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
   b.bits.output_enable_rev1 = b.bits.output_enable_rev2 = 1;
   b.bits.clock_rev1 = b.bits.clock_rev2 = 1;
 #endif
@@ -60,8 +80,19 @@ RGBMatrix::Framebuffer::~Framebuffer() {
 
   b.bits.p0_r1 = b.bits.p0_g1 = b.bits.p0_b1 = 1;
   b.bits.p0_r2 = b.bits.p0_g2 = b.bits.p0_b2 = 1;
-  b.bits.p1_r1 = b.bits.p1_g1 = b.bits.p1_b1 = 1;
-  b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
+
+  if (parallel_ >= 2) {
+    b.bits.p1_r1 = b.bits.p1_g1 = b.bits.p1_b1 = 1;
+    b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
+  }
+
+#ifdef SUPPORT_TRIPLE_PARALLEL
+  if (parallel_ >= 3) {
+    b.bits.p2_r1 = b.bits.p2_g1 = b.bits.p2_b1 = 1;
+    b.bits.p2_r2 = b.bits.p2_g2 = b.bits.p2_b2 = 1;
+  }
+#endif
+
   b.bits.row = 0x0f;
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io->InitOutputs(b.raw);
@@ -139,6 +170,11 @@ void RGBMatrix::Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
       plane_bits.bits.p1_g1 = plane_bits.bits.p1_g2 = (green & mask) == mask;
     plane_bits.bits.p0_b1 = plane_bits.bits.p0_b2 =
       plane_bits.bits.p1_b1 = plane_bits.bits.p1_b2 = (blue & mask) == mask;
+#ifdef SUPPORT_TRIPLE_PARALLEL
+    plane_bits.bits.p2_r1 = plane_bits.bits.p2_r2 = (red & mask) == mask;
+    plane_bits.bits.p2_g1 = plane_bits.bits.p2_g2 = (green & mask) == mask;
+    plane_bits.bits.p2_b1 = plane_bits.bits.p2_b2 = (blue & mask) == mask;
+#endif
     for (int row = 0; row < double_rows_; ++row) {
       IoBits *row_data = ValueAt(row, 0, b);
       for (int col = 0; col < columns_; ++col) {
@@ -156,11 +192,14 @@ void RGBMatrix::Framebuffer::SetPixel(int x, int y,
   const uint16_t green = MapColor(g);
   const uint16_t blue  = MapColor(b);
 
-  // TODO: add parallel
   const int min_bit_plane = kBitPlanes - pwm_bits_;
   IoBits *bits = ValueAt(y & row_mask_, x, min_bit_plane);
 
+  // Manually expand the three cases for better performance.
+  // TODO(hzeller): This is a bit repetetive. Test if it pays off to just
+  // pre-calc rgb mask and apply.
   if (y < rows_) {
+    // Parallel chain #1
     if (y < double_rows_) {   // Upper sub-panel.
       for (int b = min_bit_plane; b < kBitPlanes; ++b) {
         const uint16_t mask = 1 << b;
@@ -178,7 +217,8 @@ void RGBMatrix::Framebuffer::SetPixel(int x, int y,
         bits += columns_;
       }
     }
-  } else {
+  } else if (y >= rows_ && y < 2 * rows_) {
+    // Parallel chain #2
     if (y - rows_ < double_rows_) {   // Upper sub-panel.
       for (int b = min_bit_plane; b < kBitPlanes; ++b) {
         const uint16_t mask = 1 << b;
@@ -196,6 +236,27 @@ void RGBMatrix::Framebuffer::SetPixel(int x, int y,
         bits += columns_;
       }
     }
+#ifdef SUPPORT_TRIPLE_PARALLEL
+  } else {
+    // Parallel chain #3
+    if (y - 2*rows_ < double_rows_) {   // Upper sub-panel.
+      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
+        const uint16_t mask = 1 << b;
+        bits->bits.p2_r1 = (red & mask) == mask;
+        bits->bits.p2_g1 = (green & mask) == mask;
+        bits->bits.p2_b1 = (blue & mask) == mask;
+        bits += columns_;
+      }
+    } else {
+      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
+        const uint16_t mask = 1 << b;
+        bits->bits.p2_r2 = (red & mask) == mask;
+        bits->bits.p2_g2 = (green & mask) == mask;
+        bits->bits.p2_b2 = (blue & mask) == mask;
+        bits += columns_;
+      }
+    }
+#endif
   }
 }
 
@@ -206,15 +267,29 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
     = color_clk_mask.bits.p0_b1
     = color_clk_mask.bits.p0_r2
     = color_clk_mask.bits.p0_g2
-    = color_clk_mask.bits.p0_b2
-    = color_clk_mask.bits.p1_r1
-    = color_clk_mask.bits.p1_g1
-    = color_clk_mask.bits.p1_b1
-    = color_clk_mask.bits.p1_r2
-    = color_clk_mask.bits.p1_g2
-    = color_clk_mask.bits.p1_b2 = 1;
+    = color_clk_mask.bits.p0_b2 = 1;
 
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING
+  if (parallel_ >= 2) {
+    color_clk_mask.bits.p1_r1
+      = color_clk_mask.bits.p1_g1
+      = color_clk_mask.bits.p1_b1
+      = color_clk_mask.bits.p1_r2
+      = color_clk_mask.bits.p1_g2
+      = color_clk_mask.bits.p1_b2 = 1;
+  }
+
+#ifdef SUPPORT_TRIPLE_PARALLEL
+  if (parallel_ >= 3) {
+    color_clk_mask.bits.p2_r1
+      = color_clk_mask.bits.p2_g1
+      = color_clk_mask.bits.p2_b1
+      = color_clk_mask.bits.p2_r2
+      = color_clk_mask.bits.p2_g2
+      = color_clk_mask.bits.p2_b2 = 1;
+  }
+#endif
+
+#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
   color_clk_mask.bits.clock_rev1 = color_clk_mask.bits.clock_rev2 = 1;
 #endif
   color_clk_mask.bits.clock = 1;
@@ -223,7 +298,7 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
   row_mask.bits.row = 0x0f;
 
   IoBits clock, output_enable, strobe, row_address;
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING
+#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
   clock.bits.clock_rev1 = clock.bits.clock_rev2 = 1;
   output_enable.bits.output_enable_rev1
     = output_enable.bits.output_enable_rev2 = 1;

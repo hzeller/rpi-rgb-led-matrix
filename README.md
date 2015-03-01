@@ -20,6 +20,9 @@ The `RGBMatrix` class provided in `include/led-matrix.h` does what is needed
 to control these. You can use this as a library in your own projects or just
 use the demo binary provided here which provides some useful examples.
 
+Check out the [minimal-example.cc](./minimal-example.cc) to get started using
+this library.
+
 Connection
 ----------
 You need a seprate power supply for the panel. There is a connector for that
@@ -30,30 +33,81 @@ on the board is correct - I once got boards with supplied cables that had red
 used to light the LEDs; plan for ~3.5 Ampere per 32x32 panel.
 
 The RPi has 3.3V logic output level, but a display operated at 5V interprets
-these logic levels just fine. Since we only need output pins on the RPi, we don't
-need to worry about level conversion back.
+these logic levels fine, just make sure to run a very short cable to the board.
+If you do run into glitches or erratic pixels, consider some line-buffering,
+e.g. using the [active adapter PCB](adapter/active/).
+Since we only need output pins on the RPi, we don't need to worry about level
+conversion back.
 
-We need 13 IO pins. The following work out of the box (if you need to use a
-different set of pins, change the `IoBits` union in framebuffer-internal.h.
+For a single chain of LED-panels, we need 13 IO pins. It will work on all
+Rasperry Pis, including the first board revision of the Raspberry Pi 1.
+
 Check <http://elinux.org/RPi_Low-level_peripherals> for details of available
-GPIOs and pin-header).
+GPIOs and pin-header.
 
-LED-Panel to GPIO with this code:
-   * GND (Ground, '-') to ground of your Raspberry Pi
-   * R1 (Red 1st bank)   : GPIO 17
-   * G1 (Green 1st bank) : GPIO 18
-   * B1 (Blue 1st bank)  : GPIO 22
-   * R2 (Red 2nd bank)   : GPIO 23
-   * G2 (Green 2nd bank) : GPIO 24
-   * B2 (Blue 2nd bank)  : GPIO 25
-   * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (There is no `D` needed if you
-    have a display with 16 rows with 1:8 multiplexing)
-   * OE- (neg. Output enable) : GPIO 0 (Rev 1 RPi), GPIO 27 (everything else)
-   * CLK (Serial clock)    : GPIO 11
-   * STR (Strobe row data) : GPIO 4
+LED-Panel to GPIO:
+   * GND (Ground, '-') to ground of your Raspberry Pi (Pin 25 on RPi-header)
+   * R1 (Red 1st bank)   : GPIO 17 (Pin 11 on RPi header)
+   * G1 (Green 1st bank) : GPIO 18 (Pin 12 on RPi header)
+   * B1 (Blue 1st bank)  : GPIO 22 (Pin 15 on RPi header)
+   * R2 (Red 2nd bank)   : GPIO 23 (Pin 16 on RPi header)
+   * G2 (Green 2nd bank) : GPIO 24 (Pin 18 on RPi header)
+   * B2 (Blue 2nd bank)  : GPIO 25 (Pin 22 on RPi header)
+   * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (Pins 26, 24, 21, 19 on RPi-header)
+     (There is no need for `D` needed if you have a display with 16 rows
+      with 1:8 multiplexing)
+   * OE- (neg. Output enable) : GPIO 27 (Pin 13 on RPi header) **(Note, this changed from previous versions of this library)**.
+     On a Raspberry Pi 1 Revision 1 (really old), this is on GPIO 0, Pin 3.
+   * CLK (Serial clock)    : GPIO 11 (Pin 23 on RPi header) **(Note, this changed from previous versions of this library)**
+   * STR (Strobe row data) : GPIO 4 (Pin 7 on RPi header)
+
+Note, each panel has an output that you can daisy-chain it to the next board.
+If you are using only 1 bit pwm (`-p 1` flag), then this can be a very long
+chain. Though full color pwm (color images), the refresh rate goes down
+considerably after 6-8 boards.
 
 Here a typical pinout on these LED panels, found on the circuit board:
 ![Hub 75 interface][hub75]
+
+## Up to 3 Panels with newer Raspberry Pis with 40 GPIO pins! ##
+If you have one of the newer plus models of the Raspberry Pi 1 or the
+Raspberry Pi2, you can control **up to three chains** in parallel. This does not
+cost more CPU overhead, so is essentially coming for free (except that your code
+of needs to generate more pixels of course). For the same number of panels,
+always prefer parallel chains before daisy chaining more panels, as it will
+keep the refresh-rate higher.
+
+Two panels will work right out of the box, for three panels, uncomment the
+line `#DEFINES+=-DSUPPORT_TRIPLE_PARALLEL` in lib/Makefile.
+
+The second and third panel chain share some of the wires of the first panel:
+connect **GND, A, B, C, D, OE, CLK** and **STR** to the same pins you already
+connected the first panel.
+
+Then connect the following
+
+### Second panel ###
+
+   * R1 (Red 1st bank)   : GPIO 12 (Pin 32 on RPi header)
+   * G1 (Green 1st bank) : GPIO 5 (Pin 29 on RPi header)
+   * B1 (Blue 1st bank)  : GPIO 6 (Pin 31 on RPi header)
+   * R2 (Red 2nd bank)   : GPIO 19 (Pin 35 on RPi header)
+   * G2 (Green 2nd bank) : GPIO 13 (Pin 33 on RPi header)
+   * B2 (Blue 2nd bank)  : GPIO 20 (Pin 38 on RPi header)
+
+### Third panel ###
+
+The third panel will use some pins that are otherwise used for I²C and the
+serial interface. If you don't care about these, then we can use these to
+connect a third chain of panels.
+You need to uncomment `#DEFINES+=-DSUPPORT_TRIPLE_PARALLEL` in lib/Makefile.
+
+   * R1 (Red 1st bank)   : GPIO 14, also TxD  (Pin 8 on RPi header)
+   * G1 (Green 1st bank) : GPIO 2, also SDA (Pin 3 on RPi header)
+   * B1 (Blue 1st bank)  : GPIO 3, also SCL (Pin 5 on RPi header)
+   * R2 (Red 2nd bank)   : GPIO 15, also RxD (Pin 10 on RPi header)
+   * G2 (Green 2nd bank) : GPIO 26 (Pin 37 on RPi header)
+   * B2 (Blue 2nd bank)  : GPIO 21 (Pin 40 on RPi header)
 
 Running
 -------
@@ -67,6 +121,7 @@ that is now all dynamically configurable).
      usage: ./led-matrix <options> -D <demo-nr> [optional parameter]
      Options:
          -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
+         -P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. Default: 1
          -c <chained>  : Daisy-chained boards. Default: 1.
          -L            : 'Large' display, composed out of 4 times 32x32
          -p <pwm-bits> : Bits used for PWM. Something between 1..11
