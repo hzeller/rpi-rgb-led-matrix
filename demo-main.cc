@@ -829,6 +829,8 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n"
           "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
           "Default: 32\n"
+          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1 or 2. "
+          "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
           "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
@@ -862,6 +864,7 @@ int main(int argc, char *argv[]) {
   int demo = -1;
   int rows = 32;
   int chain = 1;
+  int parallel = 1;
   int scroll_ms = 30;
   int pwm_bits = -1;
   bool large_display = false;
@@ -870,7 +873,7 @@ int main(int argc, char *argv[]) {
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "dlD:t:r:p:c:m:L")) != -1) {
+  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:m:L")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -886,6 +889,10 @@ int main(int argc, char *argv[]) {
 
     case 'r':
       rows = atoi(optarg);
+      break;
+
+    case 'P':
+      parallel = atoi(optarg);
       break;
 
     case 'c':
@@ -943,6 +950,10 @@ int main(int argc, char *argv[]) {
   if (chain > 8) {
     fprintf(stderr, "That is a long chain. Expect some flicker.\n");
   }
+  if (parallel < 1 || parallel > 2) {
+    fprintf(stderr, "Parallel outside usable range\n");
+    return 1;
+  }
 
   // Initialize GPIO pins. This might fail when we don't have permissions.
   GPIO io;
@@ -959,7 +970,7 @@ int main(int argc, char *argv[]) {
   }
 
   // The matrix, our 'frame buffer' and display updater.
-  RGBMatrix *matrix = new RGBMatrix(&io, rows, chain);
+  RGBMatrix *matrix = new RGBMatrix(&io, rows, chain, parallel);
   matrix->set_luminance_correct(do_luminance_correct);
   if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
     fprintf(stderr, "Invalid range of pwm-bits\n");
