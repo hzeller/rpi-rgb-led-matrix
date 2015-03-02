@@ -35,7 +35,7 @@ used to light the LEDs; plan for ~3.5 Ampere per 32x32 panel.
 The RPi has 3.3V logic output level, but a display operated at 5V interprets
 these logic levels fine, just make sure to run a very short cable to the board.
 If you do run into glitches or erratic pixels, consider some line-buffering,
-e.g. using the [active adapter PCB](./adapter/active).
+e.g. using the [active adapter PCB](./adapter/).
 Since we only need output pins on the RPi, we don't need to worry about level
 conversion back.
 
@@ -71,7 +71,7 @@ considerably after 6-8 boards.
 Here a typical pinout on these LED panels, found on the circuit board:
 ![Hub 75 interface][hub75]
 
-## Up to 3 Panels with newer Raspberry Pis with 40 GPIO pins! ##
+### Up to 3 Panels with newer Raspberry Pis with 40 GPIO pins! ###
 If you have one of the newer plus models of the Raspberry Pi 1 or the
 Raspberry Pi2, you can control **up to three chains** in parallel. This does not
 cost more CPU, so is essentially coming for free (except that your code
@@ -102,7 +102,11 @@ Then connect the following
 The third panel will use some pins that are otherwise used for I²C and the
 serial interface. If you don't care about these, then we can use these to
 connect a third chain of panels.
-You need to uncomment `#DEFINES+=-DSUPPORT_TRIPLE_PARALLEL` in lib/Makefile.
+You need to uncomment
+
+     #DEFINES+=-DSUPPORT_TRIPLE_PARALLEL
+
+in `lib/Makefile`.
 
    * R1 (Red 1st bank)   : GPIO 14, also TxD  (Pin 8 on RPi header)
    * G1 (Green 1st bank) : GPIO 2, also SDA (Pin 3 on RPi header)
@@ -450,7 +454,7 @@ the clocking with the needed time-period; that way we get down to 200ns.
 
 [hub75]: ./img/hub75.jpg
 [matrix64]: ./img/chained-64x64.jpg
-[coordiantes]: ./img/coordinates.png
+[coordinates]: ./img/coordinates.png
 [time]: ./img/time-display.jpg
 [pp-vid]: ./img/pixelpusher-vid.jpg
 [run-vid]: ./img/running-vid.jpg
