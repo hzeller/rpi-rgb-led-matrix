@@ -195,14 +195,47 @@ areas of your picture.
 (Even with realtime extensions enabled in Linux, this is still a (smaller)
 problem).
  
-Chaining
---------
+Chaining, parallel chains and coordinate system
+------------------------------------------------
 
 Displays also have an output port, that you can connect to the next display
 in a daisy-chain manner. There is a parameter in the demo program to give
 number of displays that are chained. You end up with a very wide
-display (chain * 32 pixels).
+display (chain * 32 pixels). Longer chains affect the refresh rate negatively,
+so if you want to stay above 100Hz, don't chain more than 8 panels.
+If you use a PWM depth of 1 bit, the chain can be much longer, up to 50 should
+not be a problem (so I never tested it).
 
+The original Raspberry Pis with 26 GPIO pins just had enough connector pins
+to drive one chain of LED panels. Newer Raspberry Pis have 40 GPIO pins that
+allows to add two additional chains of panels in parallel - the nice thing is,
+that this doesn't require more CPU and allows you to keep your refresh-rate high,
+because you can shorten your chains.
+
+So with that, we have a couple of parameters to keep track of. The *rows* are
+the number of LED rows on a particular module; typically these are 16 for a 16x32
+display or 32 for 32x32 displays.
+
+Then there is the *chain length*, which is the number of panels that are
+daisy chained together.
+
+Finally, there is a parameter how many *parallel* chains we have connected to
+the Pi -- limited to 1 on old Raspberry Pis, up to three on newer Raspberry Pis.
+
+For a single Panel, the chain and parallel parameters are both 1: a single
+chain (with no else in parallel) with a chain length of 1.
+
+The `RGBMatrix` class constructor has parameters for number of rows,
+chain-length and number of parallel. For the demo programs, the `-r` parameter
+gives rows, `-c` the chain-length and `-P` the number of parallel chains.
+
+The coordinate system starts at (0,0) at the top of the first parallel chain,
+furthest away from the Pi. The following picture gives an overview of various
+parameters and the coordinate system.
+
+![Coordinate overview][coordinates]
+
+## Remapping coordinates ##
 You can as well chain multiple boards together and then arrange them in a
 different layout. Say you have 4 displays with 32x32 -- if we chain
 them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
@@ -417,6 +450,7 @@ the clocking with the needed time-period; that way we get down to 200ns.
 
 [hub75]: ./img/hub75.jpg
 [matrix64]: ./img/chained-64x64.jpg
+[coordiantes]: ./img/coordinates.png
 [time]: ./img/time-display.jpg
 [pp-vid]: ./img/pixelpusher-vid.jpg
 [run-vid]: ./img/running-vid.jpg
