@@ -220,22 +220,23 @@ allows to add two additional chains of panels in parallel - the nice thing is,
 that this doesn't require more CPU and allows you to keep your refresh-rate high,
 because you can shorten your chains.
 
-So with that, we have a couple of parameters to keep track of. The *rows* are
+So with that, we have a couple of parameters to keep track of. The **rows** are
 the number of LED rows on a particular module; typically these are 16 for a 16x32
 display or 32 for 32x32 displays.
 
-Then there is the *chain length*, which is the number of panels that are
+Then there is the **chain length**, which is the number of panels that are
 daisy chained together.
 
-Finally, there is a parameter how many *parallel* chains we have connected to
+Finally, there is a parameter how many **parallel** chains we have connected to
 the Pi -- limited to 1 on old Raspberry Pis, up to three on newer Raspberry Pis.
 
-For a single Panel, the chain and parallel parameters are both 1: a single
+For a single Panel, the chain and parallel parameters are both just one: a single
 chain (with no else in parallel) with a chain length of 1.
 
 The `RGBMatrix` class constructor has parameters for number of rows,
-chain-length and number of parallel. For the demo programs, the `-r` parameter
-gives rows, `-c` the chain-length and `-P` the number of parallel chains.
+chain-length and number of parallel. For the demo programs, there are
+command line options for that: `-r` gives rows, `-c` the chain-length and
+`-P` the number of parallel chains.
 
 The coordinate system starts at (0,0) at the top of the first parallel chain,
 furthest away from the Pi. The following picture gives an overview of various
