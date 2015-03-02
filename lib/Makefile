@@ -10,7 +10,8 @@ TARGET=librgbmatrix.a
 # This will only work on the plus models or RPi2 with 40 GPIO pins.
 #
 # This is useful in any case, _unless_ you have an older installation with
-# slightly different cabeling or a Raspberry Pi 1, Revision 1 (very old).
+# classic cabeling of previous versions of this library or a
+# Raspberry Pi 1, Revision 1 (very old).
 #
 # The reason why this is disabled by default is that it is not compatible with
 # GPIO cabelings of previous versions of this software and thus is already
@@ -19,7 +20,7 @@ TARGET=librgbmatrix.a
 # Hence we leave this off for now for the least amount of surprise.
 # If you connect 3 chains in parallel, switch this on. The default
 # will work up to 2 chains just fine, but you won't be able to use I²C.
-#DEFINES+=-DSUPPORT_TRIPLE_PARALLEL
+DEFINES+=-DSUPPORT_MULTI_PARALLEL
 
 # If you see that your display is inverse, you might have a matrix variant
 # has uses inverse logic for the RGB bits. In that case: uncomment this.

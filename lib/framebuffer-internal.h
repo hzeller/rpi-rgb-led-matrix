@@ -67,14 +67,18 @@ private:
 
   union IoBits {
     struct {
-      // This bitset reflects the GPIO mapping.
-#ifdef SUPPORT_TRIPLE_PARALLEL
+      // This bitset reflects the GPIO mapping. The naming of the
+      // pins of type 'p0_r1' means 'first parallel chain, red-bit one'
+#ifdef SUPPORT_MULTI_PARALLEL
       unsigned int unused_0_1         : 2;  // 0..1   (only on RPi 1, Revision 1)
-      unsigned int p2_g1              : 1;  // 2      (masks SDA)
-      unsigned int p2_b1              : 1;  // 3      (masks SCL)
+      unsigned int p2_g1              : 1;  // 2      (masks SDA when parallel=3)
+      unsigned int p2_b1              : 1;  // 3      (masks SCL when parallel=3)
 #else
       // The Revision1 and Revision2 boards have different GPIO mappings
-      // on the same pin. Just use both.
+      // on the pins 2 and 3. Just use both interpretations.
+      // To keep the I2C pins free, we don't use these anymore.
+      // We keep this backward compatible unless SUPPORT_MULTI_PARALLEL
+      // is explicitly chosen.
       unsigned int output_enable_rev1 : 1;  // 0      (RPi 1, Revision 1)
       unsigned int clock_rev1         : 1;  // 1      (RPi 1, Revision 1)
       unsigned int output_enable_rev2 : 1;  // 2      (Pi1.Rev2; masks: I2C SDA)
@@ -87,8 +91,8 @@ private:
       unsigned int clock              : 1;  // 11     (masks: SCKL of SPI_0)
       unsigned int p1_r1              : 1;  // 12     (only on A+/B+/Pi2)
       unsigned int p1_g2              : 1;  // 13     (only on A+/B+/Pi2)
-      unsigned int p2_r1              : 1;  // 14     (masks: TxD)
-      unsigned int p2_r2              : 1;  // 15     (masks: RxD)
+      unsigned int p2_r1              : 1;  // 14     (masks TxD when parallel=3)
+      unsigned int p2_r2              : 1;  // 15     (masks RxD when parallel=3)
       unsigned int unused_16          : 1;  // 16     (only on A+/B+/Pi2)
       unsigned int p0_r1              : 1;  // 17
       unsigned int p0_g1              : 1;  // 18

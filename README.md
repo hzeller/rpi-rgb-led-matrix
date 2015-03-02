@@ -79,12 +79,14 @@ needs to generate more pixels of course). For the same number of panels,
 always prefer parallel chains before daisy chaining more panels, as it will
 keep the refresh-rate higher.
 
-Two panels will work right out of the box, for three panels, uncomment the
-line
+For multiple parallel boards to work, you want to uncomment
 
-     #DEFINES+=-DSUPPORT_TRIPLE_PARALLEL
+     #DEFINES+=-DSUPPORT_MULTI_PARALLEL
 
-in [lib/Makefile](./lib/Makefile).
+in [lib/Makefile](./lib/Makefile). While two parallel panels will work out
+of the box without this, it frees up the pins for I²C, which you might
+want to use for other things. However, for three panels to work, you definitely
+want to uncomment this.
 
 The second and third panel chain share some of the wires of the first panel:
 connect **GND, A, B, C, D, OE, CLK** and **STR** to the same pins you already
@@ -106,9 +108,10 @@ Then connect the following
 The third panel will use some pins that are otherwise used for I²C and the
 serial interface. If you don't care about these, then we can use these to
 connect a third chain of panels.
-You need to uncomment
 
-     #DEFINES+=-DSUPPORT_TRIPLE_PARALLEL
+For three panels, you need to uncomment
+
+     #DEFINES+=-DSUPPORT_MULTI_PARALLEL
 
 in [lib/Makefile](./lib/Makefile).
 

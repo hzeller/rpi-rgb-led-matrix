@@ -32,11 +32,11 @@ enum {
 
 static const long kBaseTimeNanos = 200;
 
-// Only if SUPPORT_TRIPLE_PARALLEL is not defined, we allow classic wiring.
-// This is just the negative of SUPPORT_TRIPLE_PARALLEL, but conceptually
+// Only if SUPPORT_MULTI_PARALLEL is not defined, we allow classic wiring.
+// This is just the negative of SUPPORT_MULTI_PARALLEL, but conceptually
 // it is something different as it means some 'classic' GPIO pins have a
 // different function. So make it a separate #define for readability.
-#ifdef SUPPORT_TRIPLE_PARALLEL
+#ifdef SUPPORT_MULTI_PARALLEL
 #  undef SUPPORT_CLASSIC_LED_GPIO_WIRING_
 #else
 #  define SUPPORT_CLASSIC_LED_GPIO_WIRING_
@@ -51,10 +51,10 @@ RGBMatrix::Framebuffer::Framebuffer(int rows, int columns, int parallel)
   Clear();
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
-#ifndef SUPPORT_TRIPLE_PARALLEL
+#ifndef SUPPORT_MULTI_PARALLEL
   if (parallel >= 3) {
     fprintf(stderr, "In order for parallel=3 to work, you need to "
-            "define SUPPORT_TRIPLE_PARALLEL in lib/Makefile.\n");
+            "define SUPPORT_MULTI_PARALLEL in lib/Makefile.\n");
     assert(parallel < 3);
   }
 #endif
@@ -86,7 +86,7 @@ RGBMatrix::Framebuffer::~Framebuffer() {
     b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
   }
 
-#ifdef SUPPORT_TRIPLE_PARALLEL
+#ifdef SUPPORT_MULTI_PARALLEL
   if (parallel_ >= 3) {
     b.bits.p2_r1 = b.bits.p2_g1 = b.bits.p2_b1 = 1;
     b.bits.p2_r2 = b.bits.p2_g2 = b.bits.p2_b2 = 1;
@@ -170,7 +170,7 @@ void RGBMatrix::Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
       plane_bits.bits.p1_g1 = plane_bits.bits.p1_g2 = (green & mask) == mask;
     plane_bits.bits.p0_b1 = plane_bits.bits.p0_b2 =
       plane_bits.bits.p1_b1 = plane_bits.bits.p1_b2 = (blue & mask) == mask;
-#ifdef SUPPORT_TRIPLE_PARALLEL
+#ifdef SUPPORT_MULTI_PARALLEL
     plane_bits.bits.p2_r1 = plane_bits.bits.p2_r2 = (red & mask) == mask;
     plane_bits.bits.p2_g1 = plane_bits.bits.p2_g2 = (green & mask) == mask;
     plane_bits.bits.p2_b1 = plane_bits.bits.p2_b2 = (blue & mask) == mask;
@@ -236,7 +236,7 @@ void RGBMatrix::Framebuffer::SetPixel(int x, int y,
         bits += columns_;
       }
     }
-#ifdef SUPPORT_TRIPLE_PARALLEL
+#ifdef SUPPORT_MULTI_PARALLEL
   } else {
     // Parallel chain #3
     if (y - 2*rows_ < double_rows_) {   // Upper sub-panel.
@@ -278,7 +278,7 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
       = color_clk_mask.bits.p1_b2 = 1;
   }
 
-#ifdef SUPPORT_TRIPLE_PARALLEL
+#ifdef SUPPORT_MULTI_PARALLEL
   if (parallel_ >= 3) {
     color_clk_mask.bits.p2_r1
       = color_clk_mask.bits.p2_g1
