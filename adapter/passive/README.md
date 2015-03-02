@@ -10,3 +10,7 @@ Passive Adapter PCB to support up to 2 panels
    * This supports two panels and provides convenient breakouts
      for I²C and the serial interface.
    * Open source KiCAD PCB EDA format.
+
+![Preview][rendering]
+
+[rendering]: ../../img/passive2-pcb.png

@@ -11,3 +11,7 @@ Adapter PCB to support up to 2 panels
    * If you are interested in connecting three RGB panels, check out the
      [Active-3](../active-3/) board (it won't support the serial intefaces
      though).
+
+![Preview][rendering]
+
+[rendering]: ../../img/active2-pcb.png
