@@ -29,6 +29,7 @@ LIBS:opto
 LIBS:atmel
 LIBS:contrib
 LIBS:valves
+LIBS:active3-rpi-hub75-adapter-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -709,9 +710,9 @@ $EndComp
 Wire Wire Line
 	4750 6350 4950 6350
 Text GLabel 6350 5450 2    51   Output ~ 0
-OE_buff_1
+OE_buff_2
 Text GLabel 6350 5550 2    51   Output ~ 0
-clock_buff_1
+clock_buff_2
 Text GLabel 6350 5750 2    51   Output ~ 0
 p2_r2_buff
 Text GLabel 6350 5950 2    51   Output ~ 0
@@ -722,4 +723,43 @@ Text GLabel 6350 6150 2    51   Output ~ 0
 p2_g1_buff
 Text GLabel 6350 2700 2    51   Output ~ 0
 strobe_buff_2
+Text GLabel 4950 2700 0    51   Input ~ 0
+strobe
+$Comp
+L GND #PWR021
+U 1 1 54F40772
+P 4800 2600
+F 0 "#PWR021" H 4800 2600 30  0001 C CNN
+F 1 "GND" H 4800 2530 30  0001 C CNN
+F 2 "" H 4800 2600 60  0000 C CNN
+F 3 "" H 4800 2600 60  0000 C CNN
+	1    4800 2600
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	4950 2600 4800 2600
+$Comp
+L CONN_01X01 P2
+U 1 1 54F43868
+P 2750 6400
+F 0 "P2" H 2750 6500 50  0000 C CNN
+F 1 "CONN_01X01" V 2850 6400 50  0000 C CNN
+F 2 "Connect:1pin" H 2750 6400 60  0001 C CNN
+F 3 "" H 2750 6400 60  0000 C CNN
+	1    2750 6400
+	1    0    0    -1  
+$EndComp
+$Comp
+L CONN_01X01 P3
+U 1 1 54F43A29
+P 3150 6400
+F 0 "P3" H 3150 6500 50  0000 C CNN
+F 1 "CONN_01X01" V 3250 6400 50  0000 C CNN
+F 2 "Connect:1pin" H 3150 6400 60  0001 C CNN
+F 3 "" H 3150 6400 60  0000 C CNN
+	1    3150 6400
+	1    0    0    -1  
+$EndComp
+Text Notes 2650 6750 0    60   ~ 0
+Mounting holes\n
 $EndSCHEMATC
