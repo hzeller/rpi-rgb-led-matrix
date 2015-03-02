@@ -80,7 +80,11 @@ always prefer parallel chains before daisy chaining more panels, as it will
 keep the refresh-rate higher.
 
 Two panels will work right out of the box, for three panels, uncomment the
-line `#DEFINES+=-DSUPPORT_TRIPLE_PARALLEL` in lib/Makefile.
+line
+
+     #DEFINES+=-DSUPPORT_TRIPLE_PARALLEL
+
+in [lib/Makefile](./lib/Makefile).
 
 The second and third panel chain share some of the wires of the first panel:
 connect **GND, A, B, C, D, OE, CLK** and **STR** to the same pins you already
@@ -106,7 +110,7 @@ You need to uncomment
 
      #DEFINES+=-DSUPPORT_TRIPLE_PARALLEL
 
-in `lib/Makefile`.
+in [lib/Makefile](./lib/Makefile).
 
    * R1 (Red 1st bank)   : GPIO 14, also TxD  (Pin 8 on RPi header)
    * G1 (Green 1st bank) : GPIO 2, also SDA (Pin 3 on RPi header)
@@ -206,9 +210,9 @@ Displays also have an output port, that you can connect to the next display
 in a daisy-chain manner. There is a parameter in the demo program to give
 number of displays that are chained. You end up with a very wide
 display (chain * 32 pixels). Longer chains affect the refresh rate negatively,
-so if you want to stay above 100Hz, don't chain more than 8 panels.
-If you use a PWM depth of 1 bit, the chain can be much longer, up to 50 should
-not be a problem (so I never tested it).
+so if you want to stay above 100Hz with full color, don't chain more than
+8 panels.
+If you use a PWM depth of 1 bit, the chain can be much longer.
 
 The original Raspberry Pis with 26 GPIO pins just had enough connector pins
 to drive one chain of LED panels. Newer Raspberry Pis have 40 GPIO pins that

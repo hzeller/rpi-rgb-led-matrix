@@ -15,4 +15,4 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
       needed, I²C and serial can't be used (work in progress).
 
 (Note: this is work in progress. I have not tested these yet. Once tested
-successfully, I'll provide an OSH-park link to order them).
+successfully, I'll provide an OSH-park link to make it simple to order them).
