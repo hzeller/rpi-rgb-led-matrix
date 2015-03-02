@@ -25,9 +25,9 @@ this library.
 
 Connection
 ----------
-You need a seprate power supply for the panel. There is a connector for that
-separate from the logic connector, typically in the center of the board.
-The board requires 5V (double check the polarity: what is printed
+You need a separate power supply for the panel. There is a connector for that
+separate from the logic connector, typically a big one in the center of the
+board. The board requires 5V (double check the polarity: what is printed
 on the board is correct - I once got boards with supplied cables that had red
 (suggesting `+`) and black (suggesting `GND`) reversed!). This power supply is
 used to light the LEDs; plan for ~3.5 Ampere per 32x32 panel.
@@ -35,7 +35,7 @@ used to light the LEDs; plan for ~3.5 Ampere per 32x32 panel.
 The RPi has 3.3V logic output level, but a display operated at 5V interprets
 these logic levels fine, just make sure to run a very short cable to the board.
 If you do run into glitches or erratic pixels, consider some line-buffering,
-e.g. using the [active adapter PCB](adapter/active/).
+e.g. using the [active adapter PCB](./adapter/active).
 Since we only need output pins on the RPi, we don't need to worry about level
 conversion back.
 
@@ -53,15 +53,17 @@ LED-Panel to GPIO:
    * R2 (Red 2nd bank)   : GPIO 23 (Pin 16 on RPi header)
    * G2 (Green 2nd bank) : GPIO 24 (Pin 18 on RPi header)
    * B2 (Blue 2nd bank)  : GPIO 25 (Pin 22 on RPi header)
-   * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (Pins 26, 24, 21, 19 on RPi-header)
-     (There is no need for `D` needed if you have a display with 16 rows
+   * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (Pins 26, 24, 21, 19
+     on RPi-header)
+     (Note: there is no need for `D` needed if you have a display with 16 rows
       with 1:8 multiplexing)
    * OE- (neg. Output enable) : GPIO 27 (Pin 13 on RPi header) **(Note, this changed from previous versions of this library)**.
      On a Raspberry Pi 1 Revision 1 (really old), this is on GPIO 0, Pin 3.
    * CLK (Serial clock)    : GPIO 11 (Pin 23 on RPi header) **(Note, this changed from previous versions of this library)**
    * STR (Strobe row data) : GPIO 4 (Pin 7 on RPi header)
 
-Note, each panel has an output that you can daisy-chain it to the next board.
+Note, each panel has an output that allows you to daisy-chain it to the next
+board (see section about chaining below).
 If you are using only 1 bit pwm (`-p 1` flag), then this can be a very long
 chain. Though full color pwm (color images), the refresh rate goes down
 considerably after 6-8 boards.
@@ -72,8 +74,8 @@ Here a typical pinout on these LED panels, found on the circuit board:
 ## Up to 3 Panels with newer Raspberry Pis with 40 GPIO pins! ##
 If you have one of the newer plus models of the Raspberry Pi 1 or the
 Raspberry Pi2, you can control **up to three chains** in parallel. This does not
-cost more CPU overhead, so is essentially coming for free (except that your code
-of needs to generate more pixels of course). For the same number of panels,
+cost more CPU, so is essentially coming for free (except that your code
+needs to generate more pixels of course). For the same number of panels,
 always prefer parallel chains before daisy chaining more panels, as it will
 keep the refresh-rate higher.
 
@@ -159,11 +161,14 @@ convenience, there is a little runtext.ppm example included:
 Here is a video of how it looks
 [![Runtext][run-vid]](http://youtu.be/OJvEWyvO4ro)
 
-There are also two examples `minimal-example.cc` and `text-example.cc` that
-show use of the API. The text example allows for some interactive output of
-text (using a bitmap-font found in the `fonts/` directory), but it could also
-be used to connct via a pipe, say you have an program or shell-script
-that wants to output something; let's display the time in blue:
+There are also two examples [minimal-example.cc](./minimal-example.c) and
+[text-example.cc](./text-example.cc) that show use of the API.
+
+The text example allows for some interactive output of text (using a bitmap-font
+found in the `fonts/` directory). Even though it is just an example, it can
+be useful in its own right. For instance, you can connect to its input with a
+pipe and simply feed text from a shell-script or other program that wants to
+output something. Let's display the time in blue:
 
      (while :; do date +%T ; sleep 0.2 ; done) | sudo ./text-example -f fonts/8x13B.bdf -y8 -c2 -C0,0,255
 
