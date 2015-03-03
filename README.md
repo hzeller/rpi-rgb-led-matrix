@@ -193,14 +193,14 @@ clears the screen (if you want to display an empty line, just send a space).
 
 ### Image Viewer ###
 
-One of the possibly useful demo applications is is also image viewer that
+One of the possibly useful demo applications is an image viewer that
 reads all kinds of image formats, including animated gifs. It is not compiled
-by default, as you need to install the imagemagick depdendency
+by default, as you need to install the imagemagick dependencies first:
 
      sudo aptitude install libmagick++-dev
      make led-image-viewer
 
-Then, you can run it
+Then, you can run it with any common image format:
 
     sudo ./led-image-viewer myimage.gif
 
