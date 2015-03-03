@@ -52,10 +52,12 @@ public:
     for (int y = 0; y < height_; ++y) {
       for (int x = 0; x < width_; ++x) {
         const Magick::Color &c = img.pixelColor(x, y);
-        content_[y * width_ + x] =
-          Pixel(MagickCore::ScaleQuantumToChar(c.redQuantum()),
-                MagickCore::ScaleQuantumToChar(c.greenQuantum()),
-                MagickCore::ScaleQuantumToChar(c.blueQuantum()));
+        if (c.alphaQuantum() == 0) {
+          content_[y * width_ + x] =
+            Pixel(MagickCore::ScaleQuantumToChar(c.redQuantum()),
+                  MagickCore::ScaleQuantumToChar(c.greenQuantum()),
+                  MagickCore::ScaleQuantumToChar(c.blueQuantum()));
+        }
       }
     }
   }
@@ -116,7 +118,7 @@ static bool LoadAnimation(const char *filename, int width, int height,
           (int)coalesced[0].columns(), (int)coalesced[0].rows(),
           width, height);
   for (size_t i = 0; i < coalesced.size(); ++i) {
-    coalesced[i].zoom(Magick::Geometry(width, height));
+    coalesced[i].scale(Magick::Geometry(width, height));
   }
   fprintf(stderr, "Preprocess for display.\n");
   for (size_t i = 0; i < coalesced.size(); ++i) {
@@ -161,7 +163,7 @@ int main(int argc, char *argv[]) {
   bool as_daemon = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:p:")) != -1) {
+  while ((opt = getopt(argc, argv, "r:P:c:p:d")) != -1) {
     switch (opt) {
     case 'r': rows = atoi(optarg); break;
     case 'P': parallel = atoi(optarg); break;
