@@ -20,7 +20,7 @@ TARGET=librgbmatrix.a
 # Hence we leave this off for now for the least amount of surprise.
 # If you connect 3 chains in parallel, switch this on. The default
 # will work up to 2 chains just fine, but you won't be able to use I²C.
-DEFINES+=-DSUPPORT_MULTI_PARALLEL
+#DEFINES+=-DSUPPORT_MULTI_PARALLEL
 
 # If you see that your display is inverse, you might have a matrix variant
 # has uses inverse logic for the RGB bits. In that case: uncomment this.

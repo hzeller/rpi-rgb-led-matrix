@@ -23,7 +23,7 @@ static int usage(const char *progname) {
           "\t-f <font-file>: Use given font.\n"
           "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
           "Default: 32\n"
-          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1 or 2. "
+          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-x <x-origin> : X-Origin of displaying text (Default: 0)\n"
@@ -60,6 +60,8 @@ int main(int argc, char *argv[]) {
         return usage(argv[0]);
       }
       break;
+    default:
+      return usage(argv[0]);
     }
   }
 

@@ -86,7 +86,7 @@ For multiple parallel boards to work, you want to uncomment
 in [lib/Makefile](./lib/Makefile). While two parallel panels will work out
 of the box without this, it frees up the pins for I²C, which you might
 want to use for other things. However, for three panels to work, you definitely
-want to uncomment this.
+need to uncomment this.
 
 The second and third panel chain share some of the wires of the first panel:
 connect **GND, A, B, C, D, OE, CLK** and **STR** to the same pins you already
@@ -190,6 +190,22 @@ clears the screen (if you want to display an empty line, just send a space).
 
 ![Time][time]
 
+
+### Image Viewer ###
+
+One of the possibly useful demo applications is is also image viewer that
+reads all kinds of image formats, including animated gifs. It is not compiled
+by default, as you need to install the imagemagick depdendency
+
+     sudo aptitude install libmagick++-dev
+     make led-image-viewer
+
+Then, you can run it
+
+    sudo ./led-image-viewer myimage.gif
+
+It also supports the standard options to specify the connected
+displays (`-r`, `-c`, `-P`).
 
 **CPU use**
 
