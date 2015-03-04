@@ -299,7 +299,11 @@ void RGBMatrix::Framebuffer::DumpToMatrix(GPIO *io) {
   color_clk_mask.bits.clock = 1;
 
   IoBits row_mask;
+#ifdef ADAFRUIT_RGBMATRIX_HAT
+  row_mask.bits.a = row_mask.bits.b = row_mask.bits.c = row_mask.bits.d = 1;
+#else
   row_mask.bits.row = 0x0f;
+#endif
 
   IoBits clock, output_enable, strobe, row_address;
 #ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
