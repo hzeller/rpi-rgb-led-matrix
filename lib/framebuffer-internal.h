@@ -91,15 +91,18 @@ private:
       unsigned int unused_7_11        : 5;  // 7-11
       unsigned int p0_r2              : 1;  // 12     
       unsigned int p0_g1              : 1;  // 13     
-      unsigned int unused_14_15       : 2;  // 14-15
+      unsigned int p1_r1              : 1;  // 14
+      unsigned int p1_g1              : 1;  // 15
       unsigned int p0_g2              : 1;  // 16     
       unsigned int clock              : 1;  // 17
-      unsigned int unused_18_19       : 1;  // 18-19
+      unsigned int p1_b1              : 1;  // 18
+      unsigned int p1_r2              : 1;  // 19
       unsigned int d                  : 1;  // 20     
       unsigned int strobe             : 1;  // 21     
       unsigned int a                  : 1;  // 22
       unsigned int p0_b2              : 1;  // 23
-      unsigned int unused_24_25       : 2;  // 24-25
+      unsigned int p1_b2              : 1;  // 24
+      unsigned int p1_g2              : 1;  // 25
       unsigned int b                  : 1;  // 26     
       unsigned int c                  : 1;  // 27     
 #else
