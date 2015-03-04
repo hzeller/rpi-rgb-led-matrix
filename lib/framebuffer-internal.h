@@ -84,6 +84,25 @@ private:
       unsigned int output_enable_rev2 : 1;  // 2      (Pi1.Rev2; masks: I2C SDA)
       unsigned int clock_rev2         : 1;  // 3      (Pi1.Rev2; masks: I2C SCL)
 #endif
+#ifdef ADAFRUIT_RGBMATRIX_HAT // assumes 40 pins (A+/B+/Pi2)
+      unsigned int output_enable      : 1;  // 4
+      unsigned int p0_r1              : 1;  // 5      
+      unsigned int p0_b1              : 1;  // 6      
+      unsigned int unused_7_11        : 5;  // 7-11
+      unsigned int p0_r2              : 1;  // 12     
+      unsigned int p0_g1              : 1;  // 13     
+      unsigned int unused_14_15       : 2;  // 14-15
+      unsigned int p0_g2              : 1;  // 16     
+      unsigned int clock              : 1;  // 17
+      unsigned int unused_18_19       : 1;  // 18-19
+      unsigned int d                  : 1;  // 20     
+      unsigned int strobe             : 1;  // 21     
+      unsigned int a                  : 1;  // 22
+      unsigned int p0_b2              : 1;  // 23
+      unsigned int unused_24_25       : 2;  // 24-25
+      unsigned int b                  : 1;  // 26     
+      unsigned int c                  : 1;  // 27     
+#else
       unsigned int strobe             : 1;  // 4
       unsigned int p1_g1              : 1;  // 5      (only on A+/B+/Pi2)
       unsigned int p1_b1              : 1;  // 6      (only on A+/B+/Pi2)
@@ -105,6 +124,7 @@ private:
       unsigned int p0_b2              : 1;  // 25
       unsigned int p2_g2              : 1;  // 26     (only on A+/B+/Pi2)
       unsigned int output_enable      : 1;  // 27     (Not on RPi1, Rev1)
+#endif
     } bits;
     uint32_t raw;
     IoBits() : raw(0) {}
