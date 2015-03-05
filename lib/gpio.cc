@@ -127,6 +127,20 @@ bool GPIO::Init() {
   return Timers::Init();
 }
 
+void GPIO::SetBits(uint32_t value) {
+  gpio_port_[0x1C / sizeof(uint32_t)] = value;
+#ifdef RGB_SLOWDOWN_GPIO
+  gpio_port_[0x1C / sizeof(uint32_t)] = value;
+#endif
+}
+
+void GPIO::ClearBits(uint32_t value) {
+  gpio_port_[0x28 / sizeof(uint32_t)] = value;
+#ifdef RGB_SLOWDOWN_GPIO
+  gpio_port_[0x28 / sizeof(uint32_t)] = value;
+#endif
+}
+
 // ----------
 // TODO: timing needs to be improved. It is jittery due to the nature of running
 // in a non-realtime operating system, and apparently the nanosleep() does not

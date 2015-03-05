@@ -21,10 +21,16 @@
 #define RPI_RGBMATRIX_H
 
 #include <stdint.h>
+#include <vector>
+
 #include "gpio.h"
 #include "canvas.h"
+#include "thread.h"
 
 namespace rgb_matrix {
+class FrameCanvas;   // Canvas for Double- and Multibuffering
+namespace internal { class Framebuffer; }
+
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
 // This will provide a Canvas that represents the display with
@@ -61,12 +67,38 @@ public:
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.
   // Returns boolean to signify if value was within range.
+  //
+  // This sets the PWM bits for the current active FrameCanvas and future
+  // ones that are created with CreateFrameCanvas().
   bool SetPWMBits(uint8_t value);
-  uint8_t pwmbits();
+  uint8_t pwmbits();   // return the pwm-bits of the currently active buffer.
 
   // Map brightness of output linearly to input with CIE1931 profile.
   void set_luminance_correct(bool on);
   bool luminance_correct() const;
+
+  //-- Double- and Multibuffering.
+
+  // Create a new buffer to be used for multi-buffering. The returned new
+  // Buffer implements a Canvas with the same size of thie RGBMatrix.
+  // You can use it to draw off-screen on it, then swap it with the active
+  // buffer using SwapOnVSync(). That would be classic double-buffering.
+  //
+  // You can also create as many FrameCanvas as you like and for instance use
+  // them to pre-fill scenes of an animation for fast playback later.
+  //
+  // The ownership of the created Canvases remains with the RGBMatrix, so you
+  // don't have to worry about deleting them.
+  FrameCanvas *CreateFrameCanvas();
+
+  // This method waits to the next VSync and swaps the active buffer with the
+  // supplied buffer. The formerly active buffer is returned.
+  //
+  // If you pass in NULL, the active buffer is returned, but it won't be
+  // replaced with NULL. You can use the NULL-behavior to just wait on
+  // VSync or to retrieve the initial buffer when preparing a multi-buffer
+  // animation.
+  FrameCanvas *SwapOnVSync(FrameCanvas *other);
 
   // -- Canvas interface. These write to the active FrameCanvas
   // (see documentation in canvas.h)
@@ -78,17 +110,49 @@ public:
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
 private:
-  class Framebuffer;
   class UpdateThread;
   friend class UpdateThread;
-  friend class FrameCanvas;
 
-  // Updates the screen regularly.
-  void UpdateScreen();
+  const int rows_;
+  const int chained_displays_;
+  const int parallel_displays_;
 
-  Framebuffer *frame_;
+  uint8_t pwm_bits_;
+  bool do_luminance_correct_;
+
+  FrameCanvas *active_;
+
   GPIO *io_;
+  Mutex active_frame_sync_;
   UpdateThread *updater_;
+  std::vector<FrameCanvas*> created_frames_;
+};
+
+class FrameCanvas : public Canvas {
+public:
+  // Set PWM bits used for this Frame.
+  // Simple comic-colors, 1 might be sufficient (111 RGB, i.e. 8 colors).
+  // Lower require less CPU.
+  // Returns boolean to signify if value was within range.
+  bool SetPWMBits(uint8_t value);
+  uint8_t pwmbits();
+
+  // -- Canvas interface.
+  virtual int width() const;
+  virtual int height() const;
+  virtual void SetPixel(int x, int y,
+                        uint8_t red, uint8_t green, uint8_t blue);
+  virtual void Clear();
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+
+private:
+  friend class RGBMatrix;
+
+  FrameCanvas(internal::Framebuffer *frame) : frame_(frame){}
+  virtual ~FrameCanvas();
+  internal::Framebuffer *framebuffer() { return frame_; }
+
+  internal::Framebuffer *const frame_;
 };
 }  // end namespace rgb_matrix
 #endif  // RPI_RGBMATRIX_H
