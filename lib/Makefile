@@ -37,8 +37,6 @@ TARGET=librgbmatrix.a
 # wired up 'in the field'. Also it will drop support for the very first
 # Raspberry Pi, Revision 1.
 # Hence we leave this off for now for the least amount of surprise.
-# If you connect 3 chains in parallel, switch this on. The default
-# will work up to 2 chains just fine, but you won't be able to use I²C.
 #DEFINES+=-DSUPPORT_MULTI_PARALLEL
 
 # If you see that your display is inverse, you might have a matrix variant

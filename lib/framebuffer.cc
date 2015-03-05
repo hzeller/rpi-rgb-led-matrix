@@ -55,10 +55,10 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
 #ifndef SUPPORT_MULTI_PARALLEL
-  if (parallel >= 3) {
-    fprintf(stderr, "In order for parallel=3 to work, you need to "
+  if (parallel > 1) {
+    fprintf(stderr, "In order for parallel > 1 to work, you need to "
             "define SUPPORT_MULTI_PARALLEL in lib/Makefile.\n");
-    assert(parallel < 3);
+    assert(parallel == 1);
   }
 #endif
 }
@@ -84,12 +84,12 @@ Framebuffer::~Framebuffer() {
   b.bits.p0_r1 = b.bits.p0_g1 = b.bits.p0_b1 = 1;
   b.bits.p0_r2 = b.bits.p0_g2 = b.bits.p0_b2 = 1;
 
+#ifdef SUPPORT_MULTI_PARALLEL
   if (parallel_ >= 2) {
     b.bits.p1_r1 = b.bits.p1_g1 = b.bits.p1_b1 = 1;
     b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
   }
 
-#ifdef SUPPORT_MULTI_PARALLEL
   if (parallel_ >= 3) {
     b.bits.p2_r1 = b.bits.p2_g1 = b.bits.p2_b1 = 1;
     b.bits.p2_r2 = b.bits.p2_g2 = b.bits.p2_b2 = 1;
@@ -167,16 +167,17 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
     uint16_t mask = 1 << b;
     IoBits plane_bits;
     plane_bits.raw = 0;
-    plane_bits.bits.p0_r1 = plane_bits.bits.p0_r2 =
-      plane_bits.bits.p1_r1 = plane_bits.bits.p1_r2 = (red & mask) == mask;
-    plane_bits.bits.p0_g1 = plane_bits.bits.p0_g2 =
-      plane_bits.bits.p1_g1 = plane_bits.bits.p1_g2 = (green & mask) == mask;
-    plane_bits.bits.p0_b1 = plane_bits.bits.p0_b2 =
-      plane_bits.bits.p1_b1 = plane_bits.bits.p1_b2 = (blue & mask) == mask;
+    plane_bits.bits.p0_r1 = plane_bits.bits.p0_r2 = (red & mask) == mask;
+    plane_bits.bits.p0_g1 = plane_bits.bits.p0_g2 = (green & mask) == mask;
+    plane_bits.bits.p0_b1 = plane_bits.bits.p0_b2 = (blue & mask) == mask;
+
 #ifdef SUPPORT_MULTI_PARALLEL
-    plane_bits.bits.p2_r1 = plane_bits.bits.p2_r2 = (red & mask) == mask;
-    plane_bits.bits.p2_g1 = plane_bits.bits.p2_g2 = (green & mask) == mask;
-    plane_bits.bits.p2_b1 = plane_bits.bits.p2_b2 = (blue & mask) == mask;
+    plane_bits.bits.p1_r1 = plane_bits.bits.p1_r2 =
+      plane_bits.bits.p2_r1 = plane_bits.bits.p2_r2 = (red & mask) == mask;
+    plane_bits.bits.p1_g1 = plane_bits.bits.p1_g2 =
+      plane_bits.bits.p2_g1 = plane_bits.bits.p2_g2 = (green & mask) == mask;
+    plane_bits.bits.p1_b1 = plane_bits.bits.p1_b2 =
+      plane_bits.bits.p2_b1 = plane_bits.bits.p2_b2 = (blue & mask) == mask;
 #endif
     for (int row = 0; row < double_rows_; ++row) {
       IoBits *row_data = ValueAt(row, 0, b);
@@ -220,6 +221,7 @@ void Framebuffer::SetPixel(int x, int y,
         bits += columns_;
       }
     }
+#ifdef SUPPORT_MULTI_PARALLEL
   } else if (y >= rows_ && y < 2 * rows_) {
     // Parallel chain #2
     if (y - rows_ < double_rows_) {   // Upper sub-panel.
@@ -239,7 +241,6 @@ void Framebuffer::SetPixel(int x, int y,
         bits += columns_;
       }
     }
-#ifdef SUPPORT_MULTI_PARALLEL
   } else {
     // Parallel chain #3
     if (y - 2*rows_ < double_rows_) {   // Upper sub-panel.
@@ -272,6 +273,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
     = color_clk_mask.bits.p0_g2
     = color_clk_mask.bits.p0_b2 = 1;
 
+#ifdef SUPPORT_MULTI_PARALLEL
   if (parallel_ >= 2) {
     color_clk_mask.bits.p1_r1
       = color_clk_mask.bits.p1_g1
@@ -281,7 +283,6 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       = color_clk_mask.bits.p1_b2 = 1;
   }
 
-#ifdef SUPPORT_MULTI_PARALLEL
   if (parallel_ >= 3) {
     color_clk_mask.bits.p2_r1
       = color_clk_mask.bits.p2_g1

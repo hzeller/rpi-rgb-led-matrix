@@ -79,14 +79,14 @@ needs to generate more pixels of course). For the same number of panels,
 always prefer parallel chains before daisy chaining more panels, as it will
 keep the refresh-rate higher.
 
-For multiple parallel boards to work, you want to uncomment
+For multiple parallel boards to work, you have to uncomment
 
-     #DEFINES+=-DSUPPORT_MULTI_PARALLEL
+     #DEFINES+=-DSUPPORT_MULTI_PARALLEL   # remove the '#' in the begging
 
-in [lib/Makefile](./lib/Makefile). While two parallel panels will work out
-of the box without this, it frees up the pins for I²C, which you might
-want to use for other things. However, for three panels to work, you definitely
-need to uncomment this.
+in [lib/Makefile](./lib/Makefile).
+If you only use two panels, you will be able to use I²C and the serial line
+connectors on the Raspberry Pi. With three panels, these pins will be used up
+as well.
 
 The second and third panel chain share some of the wires of the first panel:
 connect **GND, A, B, C, D, OE, CLK** and **STR** to the same pins you already
@@ -108,12 +108,6 @@ Then connect the following
 The third panel will use some pins that are otherwise used for I²C and the
 serial interface. If you don't care about these, then we can use these to
 connect a third chain of panels.
-
-For three panels, you need to uncomment
-
-     #DEFINES+=-DSUPPORT_MULTI_PARALLEL
-
-in [lib/Makefile](./lib/Makefile).
 
    * R1 (Red 1st bank)   : GPIO 14, also TxD  (Pin 8 on RPi header)
    * G1 (Green 1st bank) : GPIO 2, also SDA (Pin 3 on RPi header)
