@@ -206,21 +206,6 @@ Then, you can run it with any common image format:
 
 It also supports the standard options to specify the connected
 displays (`-r`, `-c`, `-P`).
-
-**CPU use**
-
-These displays need to be updated constantly to show an image with PWMed
-LEDs. For one 32x32 display, every second about 500'000 pixels have to be
-updated. We can't use any hardware support to do that - thus the constant
-CPU use on an RPi is roughly 30%. Keep that in mind if you plan to run other
-things on this computer.
-
-Also, the output quality is suceptible to other heavy tasks running on that
-computer as the precise timing needed might be slipping. Even if the system is
-otherwise idle, you might see occasional brightness variations in the darker
-areas of your picture.
-(Even with realtime extensions enabled in Linux, this is still a (smaller)
-problem).
  
 Chaining, parallel chains and coordinate system
 ------------------------------------------------
@@ -408,12 +393,34 @@ guidelines:
    - If you still see noise, increase the voltage sligthly above 5V. But note,
      this is typically only a symptom of too thin traces.
 
+Help, some pixels are not displayed properly
+--------------------------------------------
+Some panels don't handle the 3.3V logic level well, in particular with
+faster Raspberry Pis. This results in artifacts like randomly showing up pixels
+or parts of the whole having 'static'.
+
+If you encounter this, try these things
+
+   - Make sure to have as short as possible flat-cables connecting your
+     Raspberry Pi with the LED panel.
+
+   - Use an adapter board with a bus-driver that acts as level shifter between
+     3.3V and 5V. You can find [active adapter PCBs](./adapter/) in a
+     subdirectory of this project. Also, Adafruit made a HAT that has level
+     shifters
+
+   - If you can't implement the above things, or still have problems, you can
+     slow down the GPIO writing a bit. This will of course reduce the
+     frame-rate. Uncomment the following line in the [lib/Makefile](lib/Makefile)
+
+     #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
+     
 Inverted Colors ?
 -----------------
 There are some displays out there that use inverse logic for the colors. You
 notice that your image looks like a 'negative'. In that case, uncomment the
-folling `DEFINES` line in `lib/Makefile` by removing the `#` at the beginning
-of the line.
+folling `DEFINES` line in [lib/Makefile](./lib/Makefile) by removing the `#`
+at the beginning of the line.
 
      #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
 
@@ -441,6 +448,21 @@ Also, there is an 'output enable' which switches if LEDs are on at all.
 
 Since LEDs can only be on or off, we have to do our own PWM by constantly
 clocking in pixels.
+
+**CPU use**
+
+These displays need to be updated constantly to show an image with PWMed
+LEDs. For one 32x32 display, every second about 500'000 pixels have to be
+updated. We can't use any hardware support to do that - thus the constant
+CPU use on an RPi is roughly 30%. Keep that in mind if you plan to run other
+things on this computer (This is less noticable on Raspberry Pi, Version 2).
+
+Also, the output quality is suceptible to other heavy tasks running on that
+computer as the precise timing needed might be slipping. Even if the system is
+otherwise idle, you might see occasional brightness variations in the darker
+areas of your picture.
+(Even with realtime extensions enabled in Linux, this is still a (smaller)
+problem).
 
 Limitations
 -----------
