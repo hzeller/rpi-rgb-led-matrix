@@ -32,6 +32,7 @@
 #include <magick/quantum.h>
 
 using rgb_matrix::GPIO;
+using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
 
 volatile bool interrupt_received = false;
@@ -40,61 +41,56 @@ static void InterruptHandler(int signo) {
 }
 
 namespace {
+// Preprocess as much as possible, so that we can just exchange full frames
+// on VSync.
 class PreprocessedFrame {
 public:
-  PreprocessedFrame(const Magick::Image &img)
-    : width_(img.columns()), height_(img.rows()),
-      content_(new Pixel[width_ * height_]) {
+  PreprocessedFrame(const Magick::Image &img, rgb_matrix::FrameCanvas *output)
+    : canvas_(output) {
     int delay_time = img.animationDelay();  // in 1/100s of a second.
     if (delay_time < 1) delay_time = 1;
     delay_micros_ = delay_time * 10000;
 
-    for (int y = 0; y < height_; ++y) {
-      for (int x = 0; x < width_; ++x) {
+    for (size_t y = 0; y < img.rows(); ++y) {
+      for (size_t x = 0; x < img.columns(); ++x) {
         const Magick::Color &c = img.pixelColor(x, y);
+        int drawX, drawY;
+        CoordinateMapping(x, y, &drawX, &drawY);
         if (c.alphaQuantum() == 0) {
-          content_[y * width_ + x] =
-            Pixel(MagickCore::ScaleQuantumToChar(c.redQuantum()),
-                  MagickCore::ScaleQuantumToChar(c.greenQuantum()),
-                  MagickCore::ScaleQuantumToChar(c.blueQuantum()));
+          output->SetPixel(drawX, drawY,
+                           MagickCore::ScaleQuantumToChar(c.redQuantum()),
+                           MagickCore::ScaleQuantumToChar(c.greenQuantum()),
+                           MagickCore::ScaleQuantumToChar(c.blueQuantum()));
         }
       }
     }
   }
 
-  ~PreprocessedFrame() { delete [] content_; }
-
-  void CopyToCanvas(rgb_matrix::Canvas *canvas) const {
-    Pixel *pixel = content_;
-    for (int y = 0; y < height_; ++y) {
-      for (int x = 0; x < width_; ++x) {
-        canvas->SetPixel(x, y, pixel->r, pixel->g, pixel->b);
-        ++pixel;
-      }
-    }
-  }
+  FrameCanvas *canvas() const { return canvas_; }
 
   int delay_micros() const {
     return delay_micros_;
   }
 
 private:
-  struct Pixel {
-    Pixel() : r(0), g(0), b(0){}
-    Pixel(uint8_t rr, uint8_t gg, uint8_t bb) : r(rr), g(gg), b(bb){}
-    uint8_t r; uint8_t g; uint8_t b;
-  };
-  const int width_;
-  const int height_;
-  int delay_micros_;
+  // In case you have a different physical layout in your matrix,
+  // implement this method differently.
+  void CoordinateMapping(int xin, int yin, int *xout, int *yout) {
+    *xout = xin;
+    *yout = yin;
+  }
 
-  Pixel *content_;
+  FrameCanvas *const canvas_;
+  int delay_micros_;
 };
-}
+}  // end anonymous namespace
 
 // Load still image or animation.
+// Scale, so that it fits in "width" and "height" and store in "image_sequence".
+// If this is a still image, "image_sequence" will contain one image, otherwise
+// all animation frames.
 static bool LoadAnimation(const char *filename, int width, int height,
-                          std::vector<PreprocessedFrame*> *sequence_pics) {
+                          std::vector<Magick::Image> *image_sequence) {
   std::vector<Magick::Image> frames;
   fprintf(stderr, "Read image...\n");
   readImages(&frames, filename);
@@ -105,36 +101,43 @@ static bool LoadAnimation(const char *filename, int width, int height,
 
   // Put together the animation from single frames. GIFs can have nasty
   // disposal modes, but they are handled nicely by coalesceImages()
-  std::vector<Magick::Image> coalesced;
   if (frames.size() > 1) {
     fprintf(stderr, "Assembling animation with %d frames.\n",
             (int)frames.size());
-    Magick::coalesceImages(&coalesced, frames.begin(), frames.end());
+    Magick::coalesceImages(image_sequence, frames.begin(), frames.end());
   } else {
-    coalesced.push_back(frames[0]);   // just a single still image.
+    image_sequence->push_back(frames[0]);   // just a single still image.
   }
 
   fprintf(stderr, "Scale ... %dx%d -> %dx%d\n",
-          (int)coalesced[0].columns(), (int)coalesced[0].rows(),
+          (int)(*image_sequence)[0].columns(), (int)(*image_sequence)[0].rows(),
           width, height);
-  for (size_t i = 0; i < coalesced.size(); ++i) {
-    coalesced[i].scale(Magick::Geometry(width, height));
-  }
-  fprintf(stderr, "Preprocess for display.\n");
-  for (size_t i = 0; i < coalesced.size(); ++i) {
-    sequence_pics->push_back(new PreprocessedFrame(coalesced[i]));
+  for (size_t i = 0; i < image_sequence->size(); ++i) {
+    (*image_sequence)[i].scale(Magick::Geometry(width, height));
   }
   return true;
 }
 
+// Preprocess buffers: create readily filled frame-buffers that can be
+// swapped with the matrix to minimize computation time when we're displaying.
+static void PrepareBuffers(const std::vector<Magick::Image> &images,
+                           RGBMatrix *buffer_factory,
+                           std::vector<PreprocessedFrame*> *frames) {
+  fprintf(stderr, "Preprocess for display.\n");
+  for (size_t i = 0; i < images.size(); ++i) {
+    FrameCanvas *canvas = buffer_factory->CreateFrameCanvas();
+    frames->push_back(new PreprocessedFrame(images[i], canvas));
+  }
+}
+
 static void DisplayAnimation(const std::vector<PreprocessedFrame*> &frames,
-                             rgb_matrix::Canvas *canvas) {
+                             RGBMatrix *matrix) {
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
   fprintf(stderr, "Display.\n");
   for (unsigned int i = 0; !interrupt_received; ++i) {
     const PreprocessedFrame *frame = frames[i % frames.size()];
-    frame->CopyToCanvas(canvas);
+    matrix->SwapOnVSync(frame->canvas());
     if (frames.size() == 1) {
       sleep(86400);  // Only one image. Nothing to do.
     } else {
@@ -221,13 +224,16 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  std::vector<PreprocessedFrame*> sequence_pics;
+  std::vector<Magick::Image> sequence_pics;
   if (!LoadAnimation(filename, matrix->width(), matrix->height(),
                      &sequence_pics)) {
     return 0;
   }
 
-  DisplayAnimation(sequence_pics, matrix);
+  std::vector<PreprocessedFrame*> frames;
+  PrepareBuffers(sequence_pics, matrix, &frames);
+
+  DisplayAnimation(frames, matrix);
 
   fprintf(stderr, "Caught signal. Exiting.\n");
 
