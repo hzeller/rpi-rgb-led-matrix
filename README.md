@@ -411,7 +411,10 @@ If you encounter this, try these things
 
    - If you can't implement the above things, or still have problems, you can
      slow down the GPIO writing a bit. This will of course reduce the
-     frame-rate. Uncomment the following line in the [lib/Makefile](lib/Makefile)
+     frame-rate.
+
+For the slow-down, uncomment the following line in
+the [lib/Makefile](lib/Makefile)
 
      #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
      
