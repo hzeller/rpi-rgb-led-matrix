@@ -15,14 +15,16 @@
 #ifndef RPI_RGBMATRIX_FRAMEBUFFER_INTERNAL_H
 #define RPI_RGBMATRIX_FRAMEBUFFER_INTERNAL_H
 
-#include "led-matrix.h"
+#include <stdint.h>
 
 namespace rgb_matrix {
+class GPIO;
+namespace internal {
 // Internal representation of the frame-buffer that as well can
 // write itself to GPIO.
 // Our internal memory layout mimicks as much as possible what needs to be
 // written out.
-class RGBMatrix::Framebuffer {
+class Framebuffer {
 public:
   Framebuffer(int rows, int columns, int parallel);
   ~Framebuffer();
@@ -119,5 +121,6 @@ private:
   IoBits *bitplane_buffer_;
   inline IoBits *ValueAt(int double_row, int column, int bit);
 };
+}  // namespace internal
 }  // namespace rgb_matrix
 #endif // RPI_RGBMATRIX_FRAMEBUFFER_INTERNAL_H

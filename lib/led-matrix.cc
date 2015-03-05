@@ -21,6 +21,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <pthread.h>
 
 #define SHOW_REFRESH_RATE 0
 
@@ -38,10 +39,12 @@ namespace rgb_matrix {
 // Pump pixels to screen. Needs to be high priority real-time because jitter
 class RGBMatrix::UpdateThread : public Thread {
 public:
-  UpdateThread(RGBMatrix *matrix) : running_(true), matrix_(matrix) {}
+  UpdateThread(GPIO *io, FrameCanvas *initial_frame)
+    : io_(io), running_(true),
+      current_frame_(initial_frame), next_frame_(NULL) {}
 
   void Stop() {
-    MutexLock l(&mutex_);
+    MutexLock l(&running_mutex_);
     running_ = false;
   }
 
@@ -51,7 +54,18 @@ public:
       struct timeval start, end;
       gettimeofday(&start, NULL);
 #endif
-      matrix_->UpdateScreen();
+
+      current_frame_->framebuffer()->DumpToMatrix(io_);
+
+      {
+        MutexLock l(&frame_sync_);
+        if (next_frame_ != NULL) {
+          current_frame_ = next_frame_;
+          next_frame_ = NULL;
+        }
+        pthread_cond_signal(&frame_done_);
+      }
+
 #if SHOW_REFRESH_RATE
       gettimeofday(&end, NULL);
       int64_t usec = ((uint64_t)end.tv_sec * 1000000 + end.tv_usec)
@@ -61,21 +75,36 @@ public:
     }
   }
 
+  FrameCanvas *SwapOnVSync(FrameCanvas *other) {
+    MutexLock l(&frame_sync_);
+    FrameCanvas *previous = current_frame_;
+    next_frame_ = other;
+    frame_sync_.WaitOn(&frame_done_);
+    return previous;
+  }
+
 private:
   inline bool running() {
-    MutexLock l(&mutex_);
+    MutexLock l(&running_mutex_);
     return running_;
   }
 
-  Mutex mutex_;
+  GPIO *const io_;
+  Mutex running_mutex_;
   bool running_;
-  RGBMatrix *const matrix_;
+
+  Mutex frame_sync_;
+  pthread_cond_t frame_done_;
+  FrameCanvas *current_frame_;
+  FrameCanvas *next_frame_;
 };
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
-  : frame_(new Framebuffer(rows, 32 * chained_displays, parallel_displays)),
+  : rows_(rows), chained_displays_(chained_displays),
+    parallel_displays_(parallel_displays),
     io_(NULL), updater_(NULL) {
+  active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io);
 }
@@ -85,39 +114,87 @@ RGBMatrix::~RGBMatrix() {
   updater_->WaitStopped();
   delete updater_;
 
-  frame_->Clear();
-  frame_->DumpToMatrix(io_);
-  delete frame_;
+  // Make sure LEDs are off.
+  active_->Clear();
+  active_->framebuffer()->DumpToMatrix(io_);
+
+  for (size_t i = 0; i < created_frames_.size(); ++i) {
+    delete created_frames_[i];
+  }
 }
 
 void RGBMatrix::SetGPIO(GPIO *io) {
   if (io == NULL) return;  // nothing to set.
   if (io_ != NULL) return;  // already set.
   io_ = io;
-  frame_->InitGPIO(io_);
-  updater_ = new UpdateThread(this);
+  active_->framebuffer()->InitGPIO(io_);
+  updater_ = new UpdateThread(io_, active_);
   updater_->Start(99);  // Whatever we get :)
 }
 
-bool RGBMatrix::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
-uint8_t RGBMatrix::pwmbits() { return frame_->pwmbits(); }
+FrameCanvas *RGBMatrix::CreateFrameCanvas() {
+  FrameCanvas *result =
+    new FrameCanvas(new internal::Framebuffer(rows_, 32 * chained_displays_,
+                                              parallel_displays_));
+  if (created_frames_.empty()) {
+    // First time. Get defaults from initial Framebuffer.
+    pwm_bits_ = result->framebuffer()->pwmbits();
+    do_luminance_correct_ = result->framebuffer()->luminance_correct();
+  } else {
+    result->framebuffer()->SetPWMBits(pwm_bits_);
+    result->framebuffer()->set_luminance_correct(do_luminance_correct_);
+  }
+  created_frames_.push_back(result);
+  return result;
+}
+
+FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other) {
+  return updater_->SwapOnVSync(other);
+}
+
+bool RGBMatrix::SetPWMBits(uint8_t value) {
+  const bool success = active_->framebuffer()->SetPWMBits(value);
+  if (success) {
+    pwm_bits_ = value;
+  }
+  return success;
+}
+uint8_t RGBMatrix::pwmbits() { return active_->framebuffer()->pwmbits(); }
 
 // Map brightness of output linearly to input with CIE1931 profile.
 void RGBMatrix::set_luminance_correct(bool on) {
-  frame_->set_luminance_correct(on);
+  active_->framebuffer()->set_luminance_correct(on);
+  do_luminance_correct_ = on;
 }
-bool RGBMatrix::luminance_correct() const { return frame_->luminance_correct(); }
-void RGBMatrix::UpdateScreen() { frame_->DumpToMatrix(io_); }
+bool RGBMatrix::luminance_correct() const {
+  return active_->framebuffer()->luminance_correct();
+}
 
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
-int RGBMatrix::width() const { return frame_->width(); }
-int RGBMatrix::height() const { return frame_->height(); }
+int RGBMatrix::width() const { return active_->framebuffer()->width(); }
+int RGBMatrix::height() const { return active_->framebuffer()->height(); }
 void RGBMatrix::SetPixel(int x, int y,
+                         uint8_t red, uint8_t green, uint8_t blue) {
+  active_->framebuffer()->SetPixel(x, y, red, green, blue);
+}
+void RGBMatrix::Clear() { return active_->framebuffer()->Clear(); }
+void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+  active_->framebuffer()->Fill(red, green, blue);
+}
+
+// FrameCanvas implementation of Canvas
+FrameCanvas::~FrameCanvas() { delete frame_; }
+int FrameCanvas::width() const { return frame_->width(); }
+int FrameCanvas::height() const { return frame_->height(); }
+void FrameCanvas::SetPixel(int x, int y,
                          uint8_t red, uint8_t green, uint8_t blue) {
   frame_->SetPixel(x, y, red, green, blue);
 }
-void RGBMatrix::Clear() { return frame_->Clear(); }
-void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+void FrameCanvas::Clear() { return frame_->Clear(); }
+void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   frame_->Fill(red, green, blue);
 }
+bool FrameCanvas::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
+uint8_t FrameCanvas::pwmbits() { return frame_->pwmbits(); }
+
 }  // end namespace rgb_matrix
