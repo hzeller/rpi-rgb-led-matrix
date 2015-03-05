@@ -189,9 +189,9 @@ clears the screen (if you want to display an empty line, just send a space).
 
 One of the possibly useful demo applications is an image viewer that
 reads all kinds of image formats, including animated gifs. It is not compiled
-by default, as you need to install the imagemagick dependencies first:
+by default, as you need to install the GraphicsMagick dependencies first:
 
-     sudo aptitude install libmagick++-dev
+     sudo aptitude install libgraphicsmagick++1-dev
      make led-image-viewer
 
 Then, you can run it with any common image format:

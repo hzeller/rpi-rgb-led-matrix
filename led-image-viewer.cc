@@ -29,7 +29,7 @@
 
 #include <vector>
 #include <Magick++.h>
-#include <magick/quantum.h>
+#include <magick/image.h>
 
 using rgb_matrix::GPIO;
 using rgb_matrix::FrameCanvas;
@@ -58,9 +58,9 @@ public:
         CoordinateMapping(x, y, &drawX, &drawY);
         if (c.alphaQuantum() == 0) {
           output->SetPixel(drawX, drawY,
-                           MagickCore::ScaleQuantumToChar(c.redQuantum()),
-                           MagickCore::ScaleQuantumToChar(c.greenQuantum()),
-                           MagickCore::ScaleQuantumToChar(c.blueQuantum()));
+                           ScaleQuantumToChar(c.redQuantum()),
+                           ScaleQuantumToChar(c.greenQuantum()),
+                           ScaleQuantumToChar(c.blueQuantum()));
         }
       }
     }
@@ -159,6 +159,8 @@ static int usage(const char *progname) {
 }
 
 int main(int argc, char *argv[]) {
+  Magick::InitializeMagick(*argv);
+
   int rows = 32;
   int chain = 1;
   int parallel = 1;
