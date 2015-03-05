@@ -390,8 +390,8 @@ guidelines:
 Help, some pixels are not displayed properly
 --------------------------------------------
 Some panels don't handle the 3.3V logic level well, in particular with
-faster Raspberry Pis. This results in artifacts like randomly showing up pixels
-or parts of the whole having 'static'.
+faster Raspberry Pis Version 2. This results in artifacts like randomly
+showing up pixels or parts of the panel showing 'static'.
 
 If you encounter this, try these things
 
@@ -401,14 +401,13 @@ If you encounter this, try these things
    - Use an adapter board with a bus-driver that acts as level shifter between
      3.3V and 5V. You can find [active adapter PCBs](./adapter/) in a
      subdirectory of this project. Also, Adafruit made a HAT that has level
-     shifters
+     shifters.
 
    - If you can't implement the above things, or still have problems, you can
      slow down the GPIO writing a bit. This will of course reduce the
-     frame-rate.
+     frame-rate, so it comes at a cost.
 
-For the slow-down, uncomment the following line in
-the [lib/Makefile](lib/Makefile)
+For GPIO slow-down, uncomment the following line in [lib/Makefile](lib/Makefile)
 
      #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
      
