@@ -41,7 +41,9 @@ class RGBMatrix::UpdateThread : public Thread {
 public:
   UpdateThread(GPIO *io, FrameCanvas *initial_frame)
     : io_(io), running_(true),
-      current_frame_(initial_frame), next_frame_(NULL) {}
+      current_frame_(initial_frame), next_frame_(NULL) {
+    pthread_cond_init(&frame_done_, NULL);
+  }
 
   void Stop() {
     MutexLock l(&running_mutex_);
