@@ -39,6 +39,9 @@ static const long kBaseTimeNanos = 200;
 // This is just the negative of SUPPORT_MULTI_PARALLEL, but conceptually
 // it is something different as it means some 'classic' GPIO pins have a
 // different function. So make it a separate #define for readability.
+#ifdef ADAFRUIT_RGBMATRIX_HAT
+#  undef SUPPORT_MULTI_PARALLEL
+#endif
 #if   defined(SUPPORT_MULTI_PARALLEL) || defined(ADAFRUIT_RGBMATRIX_HAT)
 #  undef SUPPORT_CLASSIC_LED_GPIO_WIRING_
 #else

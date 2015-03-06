@@ -43,7 +43,8 @@ TARGET=librgbmatrix.a
 # has uses inverse logic for the RGB bits. In that case: uncomment this.
 #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS
 
-DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
+# Uncomment the following line for Adafruit Matrix HAT gpio mappings
+#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g $(DEFINES)
