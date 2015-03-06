@@ -39,7 +39,10 @@ static const long kBaseTimeNanos = 200;
 // This is just the negative of SUPPORT_MULTI_PARALLEL, but conceptually
 // it is something different as it means some 'classic' GPIO pins have a
 // different function. So make it a separate #define for readability.
-#ifdef SUPPORT_MULTI_PARALLEL
+#ifdef ADAFRUIT_RGBMATRIX_HAT
+#  undef SUPPORT_MULTI_PARALLEL
+#endif
+#if   defined(SUPPORT_MULTI_PARALLEL) || defined(ADAFRUIT_RGBMATRIX_HAT)
 #  undef SUPPORT_CLASSIC_LED_GPIO_WIRING_
 #else
 #  define SUPPORT_CLASSIC_LED_GPIO_WIRING_
@@ -96,7 +99,11 @@ Framebuffer::~Framebuffer() {
   }
 #endif
 
-  b.bits.row = 0x0f;
+#ifdef ADAFRUIT_RGBMATRIX_HAT
+  b.bits.a = b.bits.b = b.bits.c = b.bits.d = 1;
+#else
+   b.bits.row = 0x0f;		  
+#endif
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io->InitOutputs(b.raw);
   assert(result == b.raw);
@@ -299,7 +306,11 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   color_clk_mask.bits.clock = 1;
 
   IoBits row_mask;
+#ifdef ADAFRUIT_RGBMATRIX_HAT
+  row_mask.bits.a = row_mask.bits.b = row_mask.bits.c = row_mask.bits.d = 1;
+#else
   row_mask.bits.row = 0x0f;
+#endif
 
   IoBits clock, output_enable, strobe, row_address;
 #ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
@@ -313,7 +324,14 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
 
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
-    row_address.bits.row = d_row;
+  #ifdef ADAFRUIT_RGBMATRIX_HAT
+    row_address.bits.a = d_row;
+    row_address.bits.b = d_row >> 1;
+    row_address.bits.c = d_row >> 2;
+    row_address.bits.d = d_row >> 3;
+  #else
+     row_address.bits.row = d_row;
+  #endif
     io->WriteMaskedBits(row_address.raw, row_mask.raw);  // Set row address
 
     // Rows can't be switched very quickly without ghosting, so we do the
