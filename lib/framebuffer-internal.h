@@ -67,19 +67,18 @@ private:
   const int double_rows_;
   const uint8_t row_mask_;
 
-#ifdef ADAFRUIT_RGBMATRIX_HAT // assumes 40 pins (A+/B+/Pi2)
+#ifdef ADAFRUIT_RGBMATRIX_HAT
+  // Adafruit made a HAT to work with this library, but it has a slightly
+  // different GPIO mapping. This is this mapping. See #else for regular mapping.
   union IoBits {
     struct {
       // This bitset reflects the GPIO mapping. The naming of the
       // pins of type 'p0_r1' means 'first parallel chain, red-bit one'
-      unsigned int output_enable_rev1 : 1;  // 0      (RPi 1, Revision 1)
-      unsigned int clock_rev1         : 1;  // 1      (RPi 1, Revision 1)
-      unsigned int output_enable_rev2 : 1;  // 2      (Pi1.Rev2; masks: I2C SDA)
-      unsigned int clock_rev2         : 1;  // 3      (Pi1.Rev2; masks: I2C SCL)
+      unsigned int unused_0_3         : 4;  // 0..3
       unsigned int output_enable      : 1;  // 4
       unsigned int p0_r1              : 1;  // 5
       unsigned int p0_b1              : 1;  // 6
-      unsigned int unused_7_11        : 5;  // 7-11
+      unsigned int unused_7_11        : 5;  // 7..11
       unsigned int p0_r2              : 1;  // 12
       unsigned int p0_g1              : 1;  // 13
       unsigned int unused_14_15       : 2;  // 14,15

@@ -35,14 +35,15 @@ enum {
 
 static const long kBaseTimeNanos = 200;
 
-// Only if SUPPORT_MULTI_PARALLEL is not defined, we allow classic wiring.
-// This is just the negative of SUPPORT_MULTI_PARALLEL, but conceptually
-// it is something different as it means some 'classic' GPIO pins have a
-// different function. So make it a separate #define for readability.
-#ifdef ADAFRUIT_RGBMATRIX_HAT
+// The Adafruit HAT only supports one chain.
+#if defined(ADAFRUIT_RGBMATRIX_HAT) && defined(SUPPORT_MULTI_PARALLEL)
+#  warning "Adafruit HAT doesn't map parallel chains. Disabling parallel chains."
 #  undef SUPPORT_MULTI_PARALLEL
 #endif
-#if   defined(SUPPORT_MULTI_PARALLEL) || defined(ADAFRUIT_RGBMATRIX_HAT)
+
+// Only if SUPPORT_MULTI_PARALLEL is not defined, we allow classic wiring.
+// Also, the Adafruit HAT does not do classic wiring either.
+#if defined(SUPPORT_MULTI_PARALLEL) || defined(ADAFRUIT_RGBMATRIX_HAT)
 #  undef SUPPORT_CLASSIC_LED_GPIO_WIRING_
 #else
 #  define SUPPORT_CLASSIC_LED_GPIO_WIRING_
