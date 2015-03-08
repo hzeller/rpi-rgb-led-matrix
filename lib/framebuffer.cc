@@ -103,7 +103,7 @@ Framebuffer::~Framebuffer() {
 #ifdef ADAFRUIT_RGBMATRIX_HAT
   b.bits.a = b.bits.b = b.bits.c = b.bits.d = 1;
 #else
-   b.bits.row = 0x0f;		  
+  b.bits.row = 0x0f;
 #endif
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io->InitOutputs(b.raw);
@@ -325,14 +325,14 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
 
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
-  #ifdef ADAFRUIT_RGBMATRIX_HAT
+#ifdef ADAFRUIT_RGBMATRIX_HAT
     row_address.bits.a = d_row;
     row_address.bits.b = d_row >> 1;
     row_address.bits.c = d_row >> 2;
     row_address.bits.d = d_row >> 3;
-  #else
-     row_address.bits.row = d_row;
-  #endif
+#else
+    row_address.bits.row = d_row;
+#endif
     io->WriteMaskedBits(row_address.raw, row_mask.raw);  // Set row address
 
     // Rows can't be switched very quickly without ghosting, so we do the
