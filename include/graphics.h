@@ -65,6 +65,9 @@ private:
 // Returns how far we advance on the screen.
 int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color,
              const char *utf8_text);
+void DrawCircle(Canvas *c, int32_t x0, int32_t y0, int32_t radius, uint8_t red, uint8_t green, uint8_t blue);
+void DrawLine(Canvas *c, int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint8_t r, uint8_t g, uint8_t b);
+
 
 // lines, circles and stuff.
 
