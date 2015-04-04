@@ -12,6 +12,12 @@ Adapter PCB to support up to 2 panels
      [Active-3](../active-3/) board (it won't support the serial intefaces
      though).
 
+For multiple parallel boards to work and using the I2C and serial interface you have to uncomment
+
+     #DEFINES+=-DSUPPORT_MULTI_PARALLEL   # remove the '#' in the begging
+
+in [lib/Makefile](../../lib/Makefile).
+
 ![Preview][rendering]
 
 [rendering]: ../../img/active2-pcb.png

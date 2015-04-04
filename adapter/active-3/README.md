@@ -8,6 +8,12 @@ Adapter PCB to support up to 3 panels
    * Open source KiCAD PCB EDA format.
    * (not very pretty layout, was just lazy and let the auto-router do it).
 
+For multiple parallel boards to work, you have to uncomment
+
+     #DEFINES+=-DSUPPORT_MULTI_PARALLEL   # remove the '#' in the begging
+
+in [lib/Makefile](../../lib/Makefile).
+
 ![Preview][rendering]
 
 [rendering]: ../../img/active3-pcb.png

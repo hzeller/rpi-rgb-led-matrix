@@ -23,6 +23,18 @@ use the demo binary provided here which provides some useful examples.
 Check out the [minimal-example.cc](./minimal-example.cc) to get started using
 this library.
 
+All Raspberry Pi versions supported
+-----------------------------------
+
+This supports the old Raspberry Pi's, that only have 26 GPIO pins and also the newer B models,
+Plus models and Raspberry Pi 2 with 40 GPIO pins.
+The 26 GPIO models can drive one chain of RGB panels, the 40 pin GPIO models **up to three** chains
+in parallel (each chain 6-8 panels long).
+
+The Raspberry Pi 2 is faster than older models and sometimes the cabeling can't keep up with the
+speed; check out this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
+what to do.
+
 Connection
 ----------
 You need a separate power supply for the panel. There is a connector for that
@@ -36,7 +48,8 @@ The connector on the RGB panels is called a Hub75 interface. Each panel typicall
 ports, one is the input and the other is the output to chain additional panels. Usually an
 arrow shows which of the connectors is the input.
 
-Here you see a Hub75 connector to be seen at the bottom of the RGB panel board:
+Here you see a Hub75 connector to be seen at the bottom of the RGB panel board including
+the arrow indicating the input direction:
 ![Hub 75 interface][hub75-arrow]
 
 Other boards are very similar, but instead of zero-indexed color bits
@@ -44,13 +57,15 @@ Other boards are very similar, but instead of zero-indexed color bits
 `R1`, `G1`, `B1`, `R2`, `G2`, `B2`; the functionality is identical.
 ![Hub 75 interface][hub75]
 
-Throughout this document, we will use the one-index base.
+Throughout this document, we will use the one-index base, so we will call these signals
+`R1`, `G1`, `B1`, `R2`, `G2`, `B2` below.
 
-If you plug in a flat cable into your RGB panel, this is how the signals are on the other end
-of the cable; note the notch on the right side:
+If you plug an IDC-cable into your RGB panel, this is how the signals are on the other end
+of the cable (imagine the LED panels somewhere outside the picture on the left); note the notch
+on the right side of the connector:
 ![Hub 75 IDC connector][hub75-idc]
 
-The RPi has 3.3V logic output level, but a display operated at 5V interprets
+The RPi only has 3.3V logic output level, but the display operated at 5V interprets
 these logic levels fine, just make sure to run a very short cable to the board.
 If you do run into glitches or erratic pixels, consider some line-buffering,
 e.g. using the [active adapter PCB](./adapter/).
