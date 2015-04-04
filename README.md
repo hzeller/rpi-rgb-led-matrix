@@ -32,6 +32,24 @@ on the board is correct - I once got boards with supplied cables that had red
 (suggesting `+`) and black (suggesting `GND`) reversed!). This power supply is
 used to light the LEDs; plan for ~3.5 Ampere per 32x32 panel.
 
+The connector on the RGB panels is called a Hub75 interface. Each panel typically has two
+ports, one is the input and the other is the output to chain additional panels. Usually an
+arrow shows which of the connectors is the input.
+
+Here you see a Hub75 connector to be seen at the bottom of the RGB panel board:
+![Hub 75 interface][hub75-arrow]
+
+Other boards are very similar, but instead of zero-indexed color bits
+`R0`, `G0`, `B0`, `R1`, `G1`, `B1`, they start the index with one and name these
+`R1`, `G1`, `B1`, `R2`, `G2`, `B2`; the functionality is identical.
+![Hub 75 interface][hub75]
+
+Throughout this document, we will use the one-index base.
+
+If you plug in a flat cable into your RGB panel, this is how the signals are on the other end
+of the cable; note the notch on the right side:
+![Hub 75 IDC connector][hub75-idc]
+
 The RPi has 3.3V logic output level, but a display operated at 5V interprets
 these logic levels fine, just make sure to run a very short cable to the board.
 If you do run into glitches or erratic pixels, consider some line-buffering,
@@ -68,8 +86,6 @@ If you are using only 1 bit pwm (`-p 1` flag), then this can be a very long
 chain. Though full color pwm (color images), the refresh rate goes down
 considerably after 6-8 boards.
 
-Here a typical pinout on these LED panels, found on the circuit board:
-![Hub 75 interface][hub75]
 
 ### Up to 3 Panels with newer Raspberry Pis with 40 GPIO pins! ###
 If you have one of the newer plus models of the Raspberry Pi 1 or the
@@ -495,6 +511,8 @@ However, we just ignore this 'black' time, and switch the row on and off after
 the clocking with the needed time-period; that way we get down to 200ns.
 
 [hub75]: ./img/hub75.jpg
+[hub75-arrow]: ./img/hub75-other.jpg
+[hub75-idc]: ./img/idc-hub75-connector.jpg
 [matrix64]: ./img/chained-64x64.jpg
 [coordinates]: ./img/coordinates.png
 [time]: ./img/time-display.jpg
