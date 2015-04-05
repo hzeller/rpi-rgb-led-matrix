@@ -93,7 +93,7 @@ LED-Panel to GPIO:
    * STR (Strobe row data) : GPIO 4 (Pin 7 on RPi header)
 
 Here is an illustration of the different Raspberry Pi headers for reference
-![Rasbperry Pi GPIO][rpi-gpio | width=600px]
+<a href="img/raspberry-gpio.jpg><img src="img/raspberry-gpio.jpg" width="400px"></a>
 
 Or check <http://elinux.org/RPi_Low-level_peripherals> for details of available
 GPIOs and pin-header.
@@ -531,7 +531,6 @@ the clocking with the needed time-period; that way we get down to 200ns.
 [hub75]: ./img/hub75.jpg
 [hub75-arrow]: ./img/hub75-other.jpg
 [hub75-idc]: ./img/idc-hub75-connector.jpg
-[rpi-gpio]: ./img/raspberry-gpio.jpg
 [matrix64]: ./img/chained-64x64.jpg
 [coordinates]: ./img/coordinates.png
 [time]: ./img/time-display.jpg
