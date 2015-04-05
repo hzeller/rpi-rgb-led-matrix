@@ -1,7 +1,7 @@
 CXXFLAGS=-Wall -O3 -g
 OBJECTS=demo-main.o minimal-example.o text-example.o led-image-viewer.o
 BINARIES=led-matrix minimal-example text-example
-ALL_BINARIES="$(BINARIES) led-image-viewer"
+ALL_BINARIES=$(BINARIES) led-image-viewer
 
 # Where our library resides. It is split between includes and the binary
 # library in lib
