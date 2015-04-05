@@ -26,8 +26,8 @@ this library.
 All Raspberry Pi versions supported
 -----------------------------------
 
-This supports the old Raspberry Pi's, that only have 26 GPIO pins and also the newer B models,
-Plus models and Raspberry Pi 2 with 40 GPIO pins.
+This supports the old Raspberry Pi's Version 1 with 26 GPIO pins and also the newer B+ models,
+and Raspberry Pi 2 with 40 GPIO pins.
 The 26 GPIO models can drive one chain of RGB panels, the 40 pin GPIO models **up to three** chains
 in parallel (each chain 6-8 panels long).
 
@@ -92,8 +92,9 @@ LED-Panel to GPIO:
    * CLK (Serial clock)    : GPIO 11 (Pin 23 on RPi header) **(Note, this changed from previous versions of this library)**
    * STR (Strobe row data) : GPIO 4 (Pin 7 on RPi header)
 
-Here is an illustration of the different Raspberry Pi headers for reference
+Here is an illustration of the different Raspberry Pi headers for reference.
 <a href="img/raspberry-gpio.jpg"><img src="img/raspberry-gpio.jpg" width="600px"></a>
+Left: Raspberry Pi 1, on the right Raspberry Pi 1 B+ or Raspberry Pi 2.
 
 Or check <http://elinux.org/RPi_Low-level_peripherals> for details of available
 GPIOs and pin-header.
@@ -275,6 +276,8 @@ furthest away from the Pi. The following picture gives an overview of various
 parameters and the coordinate system.
 
 ![Coordinate overview][coordinates]
+
+<a href="adapter/"><img src="img/three-parallel-panels.jpg" width="300px"></a>
 
 ## Remapping coordinates ##
 You can as well chain multiple boards together and then arrange them in a
