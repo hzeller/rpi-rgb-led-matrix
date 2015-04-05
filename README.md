@@ -93,7 +93,7 @@ LED-Panel to GPIO:
    * STR (Strobe row data) : GPIO 4 (Pin 7 on RPi header)
 
 Here is an illustration of the different Raspberry Pi headers for reference
-<a href="img/raspberry-gpio.jpg"><img src="img/raspberry-gpio.jpg" width="400px"></a>
+<a href="img/raspberry-gpio.jpg"><img src="img/raspberry-gpio.jpg" width="600px"></a>
 
 Or check <http://elinux.org/RPi_Low-level_peripherals> for details of available
 GPIOs and pin-header.
