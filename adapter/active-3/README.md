@@ -14,7 +14,7 @@ For multiple parallel boards to work, you have to uncomment
 
 in [lib/Makefile](../../lib/Makefile).
 
-You can [buy the boards from OSH Park][osh-active3].
+You can [buy the board from OSH Park][osh-active3].
 
 ![Preview][rendering]
 
