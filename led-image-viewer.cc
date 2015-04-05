@@ -56,7 +56,7 @@ public:
         const Magick::Color &c = img.pixelColor(x, y);
         int drawX, drawY;
         CoordinateMapping(x, y, &drawX, &drawY);
-        if (c.alphaQuantum() == 0) {
+        if (c.alphaQuantum() < 256) {
           output->SetPixel(drawX, drawY,
                            ScaleQuantumToChar(c.redQuantum()),
                            ScaleQuantumToChar(c.greenQuantum()),
