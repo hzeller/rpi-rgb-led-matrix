@@ -75,9 +75,6 @@ conversion back.
 For a single chain of LED-panels, we need 13 IO pins. It will work on all
 Rasperry Pis, including the first board revision of the Raspberry Pi 1.
 
-Check <http://elinux.org/RPi_Low-level_peripherals> for details of available
-GPIOs and pin-header.
-
 LED-Panel to GPIO:
    * GND (Ground, '-') to ground of your Raspberry Pi (Pin 25 on RPi-header)
    * R1 (Red 1st bank)   : GPIO 17 (Pin 11 on RPi header)
@@ -94,6 +91,12 @@ LED-Panel to GPIO:
      On a Raspberry Pi 1 Revision 1 (really old), this is on GPIO 0, Pin 3.
    * CLK (Serial clock)    : GPIO 11 (Pin 23 on RPi header) **(Note, this changed from previous versions of this library)**
    * STR (Strobe row data) : GPIO 4 (Pin 7 on RPi header)
+
+Here is an illustration of the different Raspberry Pi headers for reference
+![Rasbperry Pi GPIO][rpi-gpio | width=600px]
+
+Or check <http://elinux.org/RPi_Low-level_peripherals> for details of available
+GPIOs and pin-header.
 
 Note, each panel has an output that allows you to daisy-chain it to the next
 board (see section about chaining below).
@@ -528,6 +531,7 @@ the clocking with the needed time-period; that way we get down to 200ns.
 [hub75]: ./img/hub75.jpg
 [hub75-arrow]: ./img/hub75-other.jpg
 [hub75-idc]: ./img/idc-hub75-connector.jpg
+[rpi-gpio]: ./img/raspberry-gpio.jpg
 [matrix64]: ./img/chained-64x64.jpg
 [coordinates]: ./img/coordinates.png
 [time]: ./img/time-display.jpg
