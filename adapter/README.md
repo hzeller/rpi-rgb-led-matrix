@@ -14,4 +14,6 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
       chains with level shifting. Due to the additional amount of GPIO pins
       needed, I²C and serial can't be used (work in progress).
 
-<a href="../img/three-parallel-panels.jpg"><img src="../img/three-parallel-panels.jpg" width="600px"></a>
+![Three Panels connected][three-panels]
+
+[three-panels]: ../img/three-parallel-panels.jpg
