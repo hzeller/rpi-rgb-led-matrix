@@ -448,6 +448,8 @@ For GPIO slow-down, uncomment the following line in [lib/Makefile](lib/Makefile)
 
      #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
      
+Then `make clean` and `make` again.
+
 Inverted Colors ?
 -----------------
 There are some displays out there that use inverse logic for the colors. You
