@@ -65,10 +65,12 @@ private:
 // Returns how far we advance on the screen.
 int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color,
              const char *utf8_text);
-// Draw a circle centered at "x0", "y0", with a radius of "radius" and with "color"
-void DrawCircle(Canvas *c, int32_t x0, int32_t y0, int32_t radius, const Color &color);
+
+// Draw a circle centered at "x", "y", with a radius of "radius" and with "color"
+void DrawCircle(Canvas *c, int xx, int y, int radius, const Color &color);
+
 // Draw a line from "x0", "y0" to "x1", "y1" and with "color"
-void DrawLine(Canvas *c, int32_t x0, int32_t y0, int32_t x1, int32_t y1, const Color &color);
+void DrawLine(Canvas *c, int x0, int y0, int x1, int y1, const Color &color);
 
 }  // namespace rgb_matrix
 

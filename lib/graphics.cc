@@ -31,11 +31,11 @@ int DrawText(Canvas *c, const Font &font,
 }
     
     
-void DrawCircle(Canvas *c, int32_t x0, int32_t y0, int32_t radius, const Color &color){
-int32_t x = radius, y = 0;
-int32_t radiusError = 1 - x;
+void DrawCircle(Canvas *c, int x0, int y0, int radius, const Color &color) {
+  int x = radius, y = 0;
+  int radiusError = 1 - x;
         
-  while (y <= x){
+  while (y <= x) {
     c->SetPixel(x + x0, y + y0, color.r, color.g, color.b);
     c->SetPixel(y + x0, x + y0, color.r, color.g, color.b);
     c->SetPixel(-x + x0, y + y0, color.r, color.g, color.b);
@@ -54,8 +54,8 @@ int32_t radiusError = 1 - x;
   }
 }
     
-void DrawLine(Canvas *c, int32_t x0, int32_t y0, int32_t x1, int32_t y1, const Color &color){
-  int32_t dy = y1 - y0, dx = x1 - x0, gradient, x, y, shift = 0x10;
+void DrawLine(Canvas *c, int x0, int y0, int x1, int y1, const Color &color) {
+  int dy = y1 - y0, dx = x1 - x0, gradient, x, y, shift = 0x10;
     
   if (abs(dx) > abs(dy)) {
     // x variation is bigger than y variation
