@@ -68,7 +68,7 @@ void DrawLine(Canvas *c, int x0, int y0, int x1, int y1, const Color &color) {
     for (x = x0 , y = 0x8000 + (y0 << shift); x <= x1; ++x, y += gradient) {
       c->SetPixel(x, y >> shift, color.r, color.g, color.b);
     }
-  } else {
+  } else if (dy != 0) {
     // y variation is bigger than x variation
     if (y1 < y0) {
       std::swap(x0, x1);
@@ -78,6 +78,8 @@ void DrawLine(Canvas *c, int x0, int y0, int x1, int y1, const Color &color) {
     for (y = y0 , x = 0x8000 + (x0 << shift); y <= y1; ++y, x += gradient) {
       c->SetPixel(x >> shift, y, color.r, color.g, color.b);
     }
+  } else {
+    c->SetPixel(x0, y0, color.r, color.g, color.b);
   }
 }
 
