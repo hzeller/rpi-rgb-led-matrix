@@ -26,10 +26,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
-
+#include <inttypes.h>
 #define REGISTER_BLOCK_SIZE (4*1024)
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) or SET_GPIO_ALT(x,y)
@@ -40,7 +41,8 @@
 #define GPIO_SET *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
 
-/*static*/ const uint32_t ::rgb_matrix::GPIO::kValidBits 
+namespace rgb_matrix {
+/*static*/ const uint32_t GPIO::kValidBits 
 = ((1 <<  0) | (1 <<  1) | // RPi 1 - Revision 1 accessible
    (1 <<  2) | (1 <<  3) | // RPi 1 - Revision 2 accessible
    (1 <<  4) | (1 <<  7) | (1 << 8) | (1 <<  9) |
@@ -51,7 +53,8 @@
    (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26)
 );
 
-namespace rgb_matrix {
+
+		
 GPIO::GPIO() : output_bits_(0), gpio_port_(NULL) {
 }
    
@@ -81,7 +84,7 @@ static bool IsRaspberryPi2() {
   const char *mem_size_key;
   off_t mem_size;
   if ((mem_size_key = strstr(buffer, "mem_size=")) != NULL
-      && (sscanf(mem_size_key + strlen("mem_size="), "%lx", &mem_size) == 1)
+      && (sscanf(mem_size_key + strlen("mem_size="), "%llx", &mem_size) == 1)
       && (mem_size == 0x3F000000)) {
     return true;
   }
