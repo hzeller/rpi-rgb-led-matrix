@@ -120,9 +120,7 @@ bool GPIO::Init() {
   if (gpio_port_ == NULL) {
     return false;
   }
-
-  // To be compatible with old code, make sure to initialize this here.
-  return Timers::Init();
+  return true;
 }
 
 void GPIO::SetBits(uint32_t value) {
@@ -138,6 +136,35 @@ void GPIO::ClearBits(uint32_t value) {
   gpio_port_[0x28 / sizeof(uint32_t)] = value;
 #endif
 }
+
+// --- PinPulser. Private implementation parts.
+namespace {
+// Manual timers.
+class Timers {
+public:
+  static bool Init();
+  static void sleep_nanos(long t);
+};
+
+// Simplest of PinPulsers. Uses somewhat jittery and manual timers
+// to get the timing, but not optimal.
+class TimerBasedPinPulser : public PinPulser {
+public:
+  TimerBasedPinPulser(GPIO *io, uint32_t bits,
+                      const std::vector<int> &nano_specs)
+    : io_(io), bits_(bits), nano_specs_(nano_specs) {}
+
+  virtual void SendPulse(int time_spec_number) {
+    io_->ClearBits(bits_);
+    Timers::sleep_nanos(nano_specs_[time_spec_number]);
+    io_->SetBits(bits_);
+  }
+
+private:
+  GPIO *const io_;
+  const uint32_t bits_;
+  const std::vector<int> nano_specs_;
+};
 
 // ----------
 // TODO: timing needs to be improved. It is jittery due to the nature of running
@@ -206,6 +233,15 @@ static void sleep_nanos_rpi_2(long nanos) {
   for (uint32_t i = (nanos - 20) * 100 / 110; i != 0; --i) {
     asm("");
   }
+}
+} // end anonymous namespace
+
+// Public PinPulser factory
+PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
+                             const std::vector<int> &nano_wait_spec) {
+  // The only implementation so far.
+  if (!Timers::Init()) return NULL;
+  return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
 }
 
 } // namespace rgb_matrix

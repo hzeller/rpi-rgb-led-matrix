@@ -19,6 +19,7 @@
 
 namespace rgb_matrix {
 class GPIO;
+class PinPulser;
 namespace internal {
 // Internal representation of the frame-buffer that as well can
 // write itself to GPIO.
@@ -29,7 +30,7 @@ public:
   Framebuffer(int rows, int columns, int parallel);
   ~Framebuffer();
 
-  // Initialize GPIO bits for output.
+  // Initialize GPIO bits for output. Only call once.
   void InitGPIO(GPIO *io);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
@@ -66,6 +67,8 @@ private:
 
   const int double_rows_;
   const uint8_t row_mask_;
+
+  PinPulser *output_enable_pulser_;
 
 #ifdef ADAFRUIT_RGBMATRIX_HAT
   // Adafruit made a HAT to work with this library, but it has a slightly

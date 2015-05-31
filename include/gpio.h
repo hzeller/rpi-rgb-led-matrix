@@ -18,17 +18,11 @@
 
 #include <stdint.h>
 
+#include <vector>
+
 // Putting this in our namespace to not collide with other things called like
 // this.
 namespace rgb_matrix {
-
-// More precise than default OS provided timing.
-class Timers {
-public:
-  static bool Init();
-  static void sleep_nanos(long t);
-};
-
 // For now, everything is initialized as output.
 class GPIO {
  public:
@@ -65,5 +59,25 @@ class GPIO {
   uint32_t output_bits_;
   volatile uint32_t *gpio_port_;
 };
+
+// A PinPulser is a utility class that pulses a GPIO pin. There can be various
+// implementations.
+class PinPulser {
+public:
+  // Factory for a PinPulser. Chooses the right implementation depending
+  // on the context (CPU and which pins are affected).
+  // "gpio_mask" is the mask that should be output (since we only
+  //   need negative pulses, this is what it does)
+  // "nano_wait_spec" contains a list of time periods we'd like
+  //   invoke later. This can be used to pre-process timings if needed.
+  static PinPulser *Create(GPIO *io, uint32_t gpio_mask,
+                           const std::vector<int> &nano_wait_spec);
+
+  virtual ~PinPulser() {}
+
+  // Send a pulse with a given length (index into nano_wait_spec array).
+  virtual void SendPulse(int time_spec_number) = 0;
+};
+
 }  // end namespace rgb_matrix
 #endif  // RPI_GPIO_H

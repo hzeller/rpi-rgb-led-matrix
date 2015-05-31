@@ -53,7 +53,8 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
   : rows_(rows), parallel_(parallel), height_(rows * parallel),
     columns_(columns),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true),
-    double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
+    double_rows_(rows / 2), row_mask_(double_rows_ - 1),
+    output_enable_pulser_(NULL) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
   assert(rows_ <= 32);
@@ -69,6 +70,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
 
 Framebuffer::~Framebuffer() {
   delete [] bitplane_buffer_;
+  delete output_enable_pulser_;
 }
 
 /* static */ void Framebuffer::InitGPIO(GPIO *io) {
@@ -105,6 +107,21 @@ Framebuffer::~Framebuffer() {
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io->InitOutputs(b.raw);
   assert(result == b.raw);
+
+  // Now, set up the PinPulser for output enable.
+  IoBits output_enable_bits;
+#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
+  output_enable_bits.bits.output_enable_rev1
+    = output_enable_bits.bits.output_enable_rev2 = 1;
+#endif
+  output_enable_bits.bits.output_enable = 1;
+
+  std::vector<int> bitplane_timings;
+  for (int b = 0; b < kBitPlanes; ++b) {
+    bitplane_timings.push_back(kBaseTimeNanos << b);
+  }
+  output_enable_pulser_ = PinPulser::Create(io, output_enable_bits.raw,
+                                            bitplane_timings);
 }
 
 bool Framebuffer::SetPWMBits(uint8_t value) {
@@ -306,14 +323,11 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   IoBits row_mask;
   row_mask.bits.a = row_mask.bits.b = row_mask.bits.c = row_mask.bits.d = 1;
 
-  IoBits clock, output_enable, strobe, row_address;
+  IoBits clock, strobe, row_address;
 #ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
   clock.bits.clock_rev1 = clock.bits.clock_rev2 = 1;
-  output_enable.bits.output_enable_rev1
-    = output_enable.bits.output_enable_rev2 = 1;
 #endif
   clock.bits.clock = 1;
-  output_enable.bits.output_enable = 1;
   strobe.bits.strobe = 1;
 
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
@@ -342,9 +356,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       io->ClearBits(strobe.raw);
 
       // Now switch on for the sleep time necessary for that bit-plane.
-      io->ClearBits(output_enable.raw);
-      Timers::sleep_nanos(kBaseTimeNanos << b);
-      io->SetBits(output_enable.raw);
+      output_enable_pulser_->SendPulse(b);
     }
   }
 }
