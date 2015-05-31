@@ -40,7 +40,7 @@
 #define GPIO_SET *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
 
-/*static*/ const uint32_t ::rgb_matrix::GPIO::kValidBits 
+/*static*/ const uint32_t ::rgb_matrix::GPIO::kValidBits
 = ((1 <<  0) | (1 <<  1) | // RPi 1 - Revision 1 accessible
    (1 <<  2) | (1 <<  3) | // RPi 1 - Revision 2 accessible
    (1 <<  4) | (1 <<  7) | (1 << 8) | (1 <<  9) |
@@ -54,7 +54,7 @@
 namespace rgb_matrix {
 GPIO::GPIO() : output_bits_(0), gpio_port_(NULL) {
 }
-   
+
 uint32_t GPIO::InitOutputs(uint32_t outputs) {
   if (gpio_port_ == NULL) {
     fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
@@ -88,9 +88,8 @@ static bool IsRaspberryPi2() {
   return false;
 }
 
-static char *mmap_bcm_register(off_t register_offset) {
-  const bool isRPI2 = IsRaspberryPi2();
-  const off_t base = (isRPI2 ? BCM2709_PERI_BASE : BCM2708_PERI_BASE);
+static uint32_t *mmap_bcm_register(bool isRPi2, off_t register_offset) {
+  const off_t base = (isRPi2 ? BCM2709_PERI_BASE : BCM2708_PERI_BASE);
 
   int mem_fd;
   if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
@@ -98,30 +97,29 @@ static char *mmap_bcm_register(off_t register_offset) {
     return NULL;
   }
 
-  char *result =
-    (char*) mmap(NULL,                  // Any adddress in our space will do
-                 REGISTER_BLOCK_SIZE,   // Map length
-                 PROT_READ|PROT_WRITE,  // Enable r/w on GPIO registers.
-                 MAP_SHARED,
-                 mem_fd,                // File to map
-                 base + register_offset // Offset to bcm register
-                 );
+  uint32_t *result =
+    (uint32_t*) mmap(NULL,                  // Any adddress in our space will do
+                     REGISTER_BLOCK_SIZE,   // Map length
+                     PROT_READ|PROT_WRITE,  // Enable r/w on GPIO registers.
+                     MAP_SHARED,
+                     mem_fd,                // File to map
+                     base + register_offset // Offset to bcm register
+                     );
   close(mem_fd);
 
   if (result == MAP_FAILED) {
     fprintf(stderr, "mmap error %p\n", result);
+    return NULL;
   }
-  return (char*) result;
+  return result;
 }
 
 // Based on code example found in http://elinux.org/RPi_Low-level_peripherals
 bool GPIO::Init() {
-  char *gpio_map = mmap_bcm_register(GPIO_REGISTER_OFFSET);
-  if (gpio_map == NULL) {
+  gpio_port_ = mmap_bcm_register(IsRaspberryPi2(), GPIO_REGISTER_OFFSET);
+  if (gpio_port_ == NULL) {
     return false;
   }
-
-  gpio_port_ = (volatile uint32_t *)gpio_map;
 
   // To be compatible with old code, make sure to initialize this here.
   return Timers::Init();
@@ -154,14 +152,14 @@ static void sleep_nanos_rpi_2(long nanos);
 static void (*busy_sleep_impl)(long) = sleep_nanos_rpi_1;
 
 bool Timers::Init() {
-  char *timer_map = mmap_bcm_register(COUNTER_1Mhz_REGISTER_OFFSET);
-  if (timer_map == NULL) {
+  const bool isRPi2 = IsRaspberryPi2();
+  uint32_t *timereg = mmap_bcm_register(isRPi2, COUNTER_1Mhz_REGISTER_OFFSET);
+  if (timereg == NULL) {
     return false;
   }
-  timer1Mhz = &((volatile uint32_t *)timer_map)[1];
+  timer1Mhz = &timereg[1];
 
-  const bool isRPI2 = IsRaspberryPi2();
-  busy_sleep_impl = isRPI2 ? sleep_nanos_rpi_2 : sleep_nanos_rpi_1;
+  busy_sleep_impl = isRPi2 ? sleep_nanos_rpi_2 : sleep_nanos_rpi_1;
   return true;
 }
 
