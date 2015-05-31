@@ -119,8 +119,13 @@ private:
       unsigned int strobe             : 1;  // 4
       unsigned int p1_g1              : 1;  // 5      (only on A+/B+/Pi2)
       unsigned int p1_b1              : 1;  // 6      (only on A+/B+/Pi2)
-      unsigned int row                : 4;  // 7..10  (masks: some of SPI_0)
-      unsigned int clock              : 1;  // 11     (masks: SCKL of SPI_0)
+      // row: 7..10, but separated as seprate bits to make it easier to shuffle
+      // bits if needed.
+      unsigned int a                  : 1;  // 7      (masks: SPI0_CE1)
+      unsigned int b                  : 1;  // 8      (masks: SPI0_CE0)
+      unsigned int c                  : 1;  // 9      (masks: SPI0_MISO)
+      unsigned int d                  : 1;  // 10     (masks: SPI0_MOSI)
+      unsigned int clock              : 1;  // 11     (masks: SPI0_SCKL)
       unsigned int p1_r1              : 1;  // 12     (only on A+/B+/Pi2)
       unsigned int p1_g2              : 1;  // 13     (only on A+/B+/Pi2)
       unsigned int p2_r1              : 1;  // 14     (masks TxD when parallel=3)
