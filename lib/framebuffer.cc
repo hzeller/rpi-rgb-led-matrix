@@ -43,7 +43,8 @@ static const long kBaseTimeNanos = 200;
 
 // Only if SUPPORT_MULTI_PARALLEL is not defined, we allow classic wiring.
 // Also, the Adafruit HAT does not do classic wiring either.
-#if defined(SUPPORT_MULTI_PARALLEL) || defined(ADAFRUIT_RGBMATRIX_HAT)
+#if defined(SUPPORT_MULTI_PARALLEL) || defined(ADAFRUIT_RGBMATRIX_HAT) \
+  || defined(EXPERIMENTAL_NEW_PINOUT)
 #  undef SUPPORT_CLASSIC_LED_GPIO_WIRING_
 #else
 #  define SUPPORT_CLASSIC_LED_GPIO_WIRING_

@@ -46,6 +46,9 @@ TARGET=librgbmatrix.a
 # Uncomment the following line for Adafruit Matrix HAT gpio mappings
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
+# while working on the new pinout.
+DEFINES+=-DEXPERIMENTAL_NEW_PINOUT
+
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g $(DEFINES)
 
