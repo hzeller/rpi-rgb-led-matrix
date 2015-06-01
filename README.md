@@ -235,7 +235,7 @@ Then, you can run it with any common image format:
 
 It also supports the standard options to specify the connected
 displays (`-r`, `-c`, `-P`).
- 
+
 Chaining, parallel chains and coordinate system
 ------------------------------------------------
 
@@ -447,7 +447,7 @@ If you encounter this, try these things
 For GPIO slow-down, uncomment the following line in [lib/Makefile](lib/Makefile)
 
      #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
-     
+
 Then `make clean` and `make` again.
 
 Inverted Colors ?

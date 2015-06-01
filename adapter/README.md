@@ -1,6 +1,9 @@
 PCB adapter for Raspberry Pi to Hub75 RGB Matrixes
 ==================================================
 
+**(Note: I am working on a change in the pinout to better accomodate various constraints.
+Please contact me if you intend to build and adapter, maybe it makes sense to wait a week).**
+
 Since hand-wiring can be a little tedious, here are some PCBs that help
 with the wiring when using the `rpi-rgb-led-matrix` code.
 
@@ -13,10 +16,7 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
    * [Active3](./active-3) Like the active board, but supports three parallel
       chains with level shifting. Due to the additional amount of GPIO pins
       needed, I²C and serial can't be used when all three ports are used.
-      ([Buy the boards from OSH Park][osh-active3]).
-      
+
 ![Three Panels connected][three-panels]
-[Get board at OSH-Park][osh-active3]
 
 [three-panels]: ../img/three-parallel-panels.jpg
-[osh-active3]: https://oshpark.com/shared_projects/D2hXjnYT
