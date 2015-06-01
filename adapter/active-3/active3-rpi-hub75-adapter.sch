@@ -50,7 +50,7 @@ U 1 1 54ECAC85
 P 5650 1750
 F 0 "U1" H 5750 2325 60  0000 L BNN
 F 1 "74HC245" H 5700 1175 60  0000 L TNN
-F 2 "Housings_SSOP:TSSOP-20_4.4x6.5mm_Pitch0.65mm" H 5650 1750 60  0001 C CNN
+F 2 "Housings_SOIC:SOIC-20_7.5x12.8mm_Pitch1.27mm" H 5650 1750 60  0001 C CNN
 F 3 "" H 5650 1750 60  0000 C CNN
 	1    5650 1750
 	1    0    0    -1  
@@ -61,7 +61,7 @@ U 1 1 54ECB18C
 P 5650 3100
 F 0 "U2" H 5750 3675 60  0000 L BNN
 F 1 "74HC245" H 5700 2525 60  0000 L TNN
-F 2 "Housings_SSOP:TSSOP-20_4.4x6.5mm_Pitch0.65mm" H 5650 3100 60  0001 C CNN
+F 2 "Housings_SOIC:SOIC-20_7.5x12.8mm_Pitch1.27mm" H 5650 3100 60  0001 C CNN
 F 3 "" H 5650 3100 60  0000 C CNN
 	1    5650 3100
 	1    0    0    -1  
@@ -72,7 +72,7 @@ U 1 1 54ECB1EA
 P 5650 4450
 F 0 "U3" H 5750 5025 60  0000 L BNN
 F 1 "74HC245" H 5700 3875 60  0000 L TNN
-F 2 "Housings_SSOP:TSSOP-20_4.4x6.5mm_Pitch0.65mm" H 5650 4450 60  0001 C CNN
+F 2 "Housings_SOIC:SOIC-20_7.5x12.8mm_Pitch1.27mm" H 5650 4450 60  0001 C CNN
 F 3 "" H 5650 4450 60  0000 C CNN
 	1    5650 4450
 	1    0    0    -1  
@@ -198,29 +198,29 @@ Text GLabel 3000 4300 0    51   Output ~ 0
 p1_g2
 Text GLabel 3500 4500 2    51   Output ~ 0
 p1_b2
-Text GLabel 3500 3900 2    51   Output ~ 0
-row_A
-Text GLabel 3500 3800 2    51   Output ~ 0
-row_B
-Text GLabel 3000 3700 0    51   Output ~ 0
-row_C
-Text GLabel 3000 3600 0    51   Output ~ 0
-row_D
-Text GLabel 3000 3800 0    51   Output ~ 0
-clock
-Text GLabel 3000 3200 0    51   Output ~ 0
-p0_r1
-Text GLabel 3500 3200 2    51   Output ~ 0
-p0_g1
 Text GLabel 3000 3400 0    51   Output ~ 0
-p0_b1
+row_A
 Text GLabel 3500 3400 2    51   Output ~ 0
-p0_r2
+row_B
 Text GLabel 3500 3500 2    51   Output ~ 0
-p0_g2
+row_C
 Text GLabel 3500 3700 2    51   Output ~ 0
-p0_b2
+row_D
+Text GLabel 3000 3200 0    51   Output ~ 0
+clock
+Text GLabel 3000 3800 0    51   Output ~ 0
+p0_r1
 Text GLabel 3000 3300 0    51   Output ~ 0
+p0_g1
+Text GLabel 3500 3900 2    51   Output ~ 0
+p0_b1
+Text GLabel 3500 3800 2    51   Output ~ 0
+p0_r2
+Text GLabel 3000 3700 0    51   Output ~ 0
+p0_g2
+Text GLabel 3000 3600 0    51   Output ~ 0
+p0_b2
+Text GLabel 3500 3200 2    51   Output ~ 0
 OE
 Text GLabel 4950 1950 0    51   Input ~ 0
 p0_g1
@@ -251,13 +251,13 @@ Wire Wire Line
 	8750 2900 9300 2900
 Wire Wire Line
 	8750 2300 9300 2300
-Text GLabel 4950 2900 0    51   Input ~ 0
-row_A
-Text GLabel 4950 3000 0    51   Input ~ 0
-row_B
 Text GLabel 4950 3100 0    51   Input ~ 0
-row_C
+row_A
 Text GLabel 4950 3200 0    51   Input ~ 0
+row_B
+Text GLabel 4950 3000 0    51   Input ~ 0
+row_C
+Text GLabel 4950 2900 0    51   Input ~ 0
 row_D
 Text GLabel 4950 3300 0    51   Input ~ 0
 strobe
@@ -448,11 +448,11 @@ Text GLabel 6350 1950 2    51   Output ~ 0
 p0_g1_buff
 Text GLabel 8750 2200 2    51   Input ~ 0
 p0_g1_buff
-Text GLabel 6350 3200 2    51   Output ~ 0
+Text GLabel 6350 2900 2    51   Output ~ 0
 row_D_buff
 Text GLabel 8750 2700 2    51   Input ~ 0
 row_D_buff
-Text GLabel 6350 3000 2    51   Output ~ 0
+Text GLabel 6350 3200 2    51   Output ~ 0
 row_B_buff
 Text GLabel 8750 2600 2    51   Input ~ 0
 row_B_buff
@@ -555,9 +555,9 @@ Text GLabel 3000 2800 0    51   Output ~ 0
 p2_g1
 Text GLabel 3000 2900 0    51   Output ~ 0
 p2_b1
-Text GLabel 3500 3100 2    51   Output ~ 0
-p2_r2
 Text GLabel 3000 4500 0    51   Output ~ 0
+p2_r2
+Text GLabel 3500 4400 2    51   Output ~ 0
 p2_g2
 Text GLabel 3500 4600 2    51   Output ~ 0
 p2_b2
@@ -574,9 +574,9 @@ F 3 "" H 3550 5650 60  0000 C CNN
 $EndComp
 Connection ~ 3300 5450
 Connection ~ 3300 5850
-Text GLabel 6350 3100 2    51   Output ~ 0
+Text GLabel 6350 3000 2    51   Output ~ 0
 row_C_buff
-Text GLabel 6350 2900 2    51   Output ~ 0
+Text GLabel 6350 3100 2    51   Output ~ 0
 row_A_buff
 Text GLabel 6350 3300 2    51   Output ~ 0
 strobe_buff_0
@@ -658,7 +658,7 @@ U 1 1 54F3F4A2
 P 5650 5950
 F 0 "U4" H 5750 6525 60  0000 L BNN
 F 1 "74HC245" H 5700 5375 60  0000 L TNN
-F 2 "Housings_SSOP:TSSOP-20_4.4x6.5mm_Pitch0.65mm" H 5650 5950 60  0001 C CNN
+F 2 "Housings_SOIC:SOIC-20_7.5x12.8mm_Pitch1.27mm" H 5650 5950 60  0001 C CNN
 F 3 "" H 5650 5950 60  0000 C CNN
 	1    5650 5950
 	1    0    0    -1  

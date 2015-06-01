@@ -128,8 +128,8 @@ private:
       unsigned int p1_r1          : 1;  // 12 P1-32 (only on A+/B+/Pi2)
       unsigned int p1_g2          : 1;  // 13 P1-33 (only on A+/B+/Pi2)
       unsigned int p2_r1          : 1;  // 14 P1-08 (masks TxD when parallel=3)
-      unsigned int p2_r2          : 1;  // 15 P1-10 (masks RxD when parallel=3)
-      unsigned int unused_16      : 1;  // 16 P1-36 (only on A+/B+/Pi2)
+      unsigned int unused_15      : 1;  // 15 P1-10 (RxD)
+      unsigned int p2_g2          : 1;  // 16 P1-36 (only on A+/B+/Pi2)
 
       unsigned int clock          : 1;  // 17 P1-11
 
@@ -143,7 +143,7 @@ private:
       unsigned int c              : 1;  // 24 P1-18
       unsigned int d              : 1;  // 25 P1-22
 
-      unsigned int p2_g2          : 1;  // 26 P1-37 (only on A+/B+/Pi2)
+      unsigned int p2_r2          : 1;  // 26 P1-37 (only on A+/B+/Pi2)
       unsigned int p0_g1          : 1;  // 27 P1-13 (Not on RPi1, Rev1)
     } bits;
     uint32_t raw;
