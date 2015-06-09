@@ -6,7 +6,6 @@
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
 
-#include <iostream>
 #include <assert.h>
 #include <getopt.h>
 #include <limits.h>
