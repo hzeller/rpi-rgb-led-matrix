@@ -6,15 +6,14 @@
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
 
+#include <iostream>
 #include <assert.h>
 #include <getopt.h>
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
-
 #include <algorithm>
 
 using std::min;
@@ -354,7 +353,7 @@ public:
     : ThreadedCanvasManipulator(m), delay_ms_(delay_ms) {
     width_ = canvas()->width() - 1; // We need an odd width
     height_ = canvas()->height() - 1; // We need an odd height
-    
+
     // Allocate memory
     values_ = new int*[width_];
     for (int x=0; x<width_; ++x) {
@@ -364,7 +363,7 @@ public:
     for (int x=0; x<width_; ++x) {
       newValues_[x] = new int[height_];
     }
-    
+
     // Init values
     srand(time(NULL));
     for (int x=0; x<width_; ++x) {
@@ -390,7 +389,7 @@ public:
       // Drop a sand grain in the centre
       values_[width_/2][height_/2]++;
       updateValues();
-      
+
       for (int x=0; x<width_; ++x) {
         for (int y=0; y<height_; ++y) {
           switch (values_[x][y]) {
@@ -465,7 +464,7 @@ public:
     : ThreadedCanvasManipulator(m), delay_ms_(delay_ms), torus_(torus) {
     width_ = canvas()->width();
     height_ = canvas()->height();
-    
+
     // Allocate memory
     values_ = new int*[width_];
     for (int x=0; x<width_; ++x) {
@@ -475,7 +474,7 @@ public:
     for (int x=0; x<width_; ++x) {
       newValues_[x] = new int[height_];
     }
-    
+
     // Init values randomly
     srand(time(NULL));
     for (int x=0; x<width_; ++x) {
@@ -486,7 +485,7 @@ public:
     r_ = rand()%255;
     g_ = rand()%255;
     b_ = rand()%255;
-    
+
     if (r_<150 && g_<150 && b_<150) {
       int c = rand()%3;
       switch (c) {
@@ -516,9 +515,9 @@ public:
 
   void Run() {
     while (running()) {
-      
+
       updateValues();
-      
+
       for (int x=0; x<width_; ++x) {
         for (int y=0; y<height_; ++y) {
           if (values_[x][y])
@@ -568,7 +567,7 @@ private:
     }
     return num;
   }
-  
+
   void updateValues() {
     // Copy values to newValues
     for (int x=0; x<width_; ++x) {
@@ -643,8 +642,8 @@ public:
         updatePixel(x, y);
       }
     }
-    
-    while (running()) {      
+
+    while (running()) {
       // LLRR
       switch (values_[antX_][antY_]) {
         case 0:
@@ -656,7 +655,7 @@ public:
           antDir_ = (antDir_-1+4) % 4;
           break;
       }
-      
+
       values_[antX_][antY_] = (values_[antX_][antY_] + 1) % numColors_;
       int oldX = antX_;
       int oldY = antY_;
@@ -741,7 +740,7 @@ public:
     heightYellow_ = height_*8/12;
     heightOrange_ = height_*10/12;
     heightRed_    = height_*12/12;
-    
+
     // Array of possible bar means
     int numMeans = 10;
     int means[10] = {1,2,3,4,5,6,7,8,16,32};
@@ -754,7 +753,7 @@ public:
       barMeans_[i] = rand()%numMeans;
       barFreqs_[i] = 1<<(rand()%3);
     }
-    
+
     // Start the loop
     while (running()) {
       if (t_ % 8 == 0) {
@@ -767,7 +766,7 @@ public:
             barMeans_[i] = 0;
         }
       }
-      
+
       // Update bar heights
       t_++;
       for (int i=0; i<numBars_; ++i) {
@@ -776,7 +775,7 @@ public:
         if (barHeights_[i] < height_/8)
           barHeights_[i] = rand() % (height_/8) + 1;
       }
-      
+
       for (int i=0; i<numBars_; ++i) {
         int y;
         for (y=0; y<barHeights_[i]; ++y) {
@@ -823,6 +822,182 @@ private:
   int t_;
 };
 
+/// Genetic Colors
+/// A genetic algorithm to evolve colors
+/// by bbhsu2 + anonymous
+class GeneticColors : public ThreadedCanvasManipulator {
+public:
+  GeneticColors(Canvas *m, int delay_ms = 200)
+    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms) {
+    width_ = canvas()->width();
+    height_ = canvas()->height();
+    popSize_ = width_ * height_;
+
+    // Allocate memory
+    children_ = new citizen[popSize_];
+    parents_ = new citizen[popSize_];
+    srand(time(NULL));
+  }
+
+  ~GeneticColors() {
+    delete [] children_;
+    delete [] parents_;
+  }
+
+  static int rnd (int i) { return rand() % i; }
+
+  void Run() {
+    // Set a random target_
+    target_ = rand() & 0xFFFFFF;
+
+    // Create the first generation of random children_
+    for (int i = 0; i < popSize_; ++i) {
+      children_[i].dna = rand() & 0xFFFFFF;
+    }
+
+    while(running()) {
+      swap();
+      sort();
+      mate();
+      std::random_shuffle (children_, children_ + popSize_, rnd);
+
+      // Draw citizens to canvas
+      for(int i=0; i < popSize_; i++) {
+        int c = children_[i].dna;
+        int x = i % width_;
+        int y = (int)(i / width_);
+        canvas()->SetPixel(x, y, R(c), G(c), B(c));
+      }
+
+      // When we reach the 85% fitness threshold...
+      if(is85PercentFit()) {
+        // ...set a new random target_
+        target_ = rand() & 0xFFFFFF;
+
+        // Randomly mutate everyone for sake of new colors
+        for (int i = 0; i < popSize_; ++i) {
+          mutate(children_[i]);
+        }
+      }
+      usleep(delay_ms_ * 1000);
+    }
+  }
+
+private:
+  /// citizen will hold dna information, a 24-bit color value.
+  struct citizen {
+    citizen() { }
+
+    citizen(int chrom)
+      : dna(chrom) {
+    }
+
+    int dna;
+  };
+
+  /// for sorting by fitness
+  class comparer {
+  public:
+    comparer(int t)
+      : target_(t) { }
+
+    inline bool operator() (const citizen& c1, const citizen& c2) {
+      return (calcFitness(c1.dna, target_) < calcFitness(c2.dna, target_));
+    }
+
+  private:
+    const int target_;
+  };
+
+  static int R(const int cit) { return at(cit, 16); }
+  static int G(const int cit) { return at(cit, 8); }
+  static int B(const int cit) { return at(cit, 0); }
+  static int at(const int v, const  int offset) { return (v >> offset) & 0xFF; }
+
+  /// fitness here is how "similar" the color is to the target
+  static int calcFitness(const int value, const int target) {
+    // Count the number of differing bits
+    int diffBits = 0;
+    for (unsigned int diff = value ^ target; diff; diff &= diff - 1) {
+      ++diffBits;
+    }
+    return diffBits;
+  }
+
+  /// sort by fitness so the most fit citizens are at the top of parents_
+  /// this is to establish an elite population of greatest fitness
+  /// the most fit members and some others are allowed to reproduce
+  /// to the next generation
+  void sort() {
+    std::sort(parents_, parents_ + popSize_, comparer(target_));
+  }
+
+  /// let the elites continue to the next generation children
+  /// randomly select 2 parents of (near)elite fitness and determine
+  /// how they will mate. after mating, randomly mutate citizens
+  void mate() {
+    // Adjust these for fun and profit
+    const float eliteRate = 0.30f;
+    const float mutationRate = 0.20f;
+
+    const int numElite = popSize_ * eliteRate;
+    for (int i = 0; i < numElite; ++i) {
+      children_[i] = parents_[i];
+    }
+
+    for (int i = numElite; i < popSize_; ++i) {
+      //select the parents randomly
+      const float sexuallyActive = 1.0 - eliteRate;
+      const int p1 = rand() % (int)(popSize_ * sexuallyActive);
+      const int p2 = rand() % (int)(popSize_ * sexuallyActive);
+      const int matingMask = (~0) << (rand() % bitsPerPixel);
+
+      // Make a baby
+      int baby = (parents_[p1].dna & matingMask)
+        | (parents_[p2].dna & ~matingMask);
+      children_[i].dna = baby;
+
+      // Mutate randomly based on mutation rate
+      if ((rand() / (float)RAND_MAX) < mutationRate) {
+        mutate(children_[i]);
+      }
+    }
+  }
+
+  /// parents make children,
+  /// children become parents,
+  /// and they make children...
+  void swap() {
+    citizen* temp = parents_;
+    parents_ = children_;
+    children_ = temp;
+  }
+
+  void mutate(citizen& c) {
+    // Flip a random bit
+    c.dna ^= 1 << (rand() % bitsPerPixel);
+  }
+
+  /// can adjust this threshold to make transition to new target seamless
+  bool is85PercentFit() {
+    int numFit = 0;
+    for (int i = 0; i < popSize_; ++i) {
+        if (calcFitness(children_[i].dna, target_) < 1) {
+            ++numFit;
+        }
+    }
+    return ((numFit / (float)popSize_) > 0.85f);
+  }
+
+  static const int bitsPerPixel = 24;
+  int popSize_;
+  int width_, height_;
+  int delay_ms_;
+  int target_;
+  citizen* children_;
+  citizen* parents_;
+};
+
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
           progname);
@@ -852,7 +1027,8 @@ static int usage(const char *progname) {
           "\t6  - Abelian sandpile model (-m <time-step-ms>)\n"
           "\t7  - Conway's game of life (-m <time-step-ms>)\n"
           "\t8  - Langton's ant (-m <time-step-ms>)\n"
-          "\t9  - Volume bars (-m <time-step-ms>)\n");
+          "\t9  - Volume bars (-m <time-step-ms>)\n"
+          "\t10 - Evolution of color (-m <time-step-ms>)\n");
   fprintf(stderr, "Example:\n\t%s -t 10 -D 1 runtext.ppm\n"
           "Scrolls the runtext for 10 seconds\n", progname);
   return 1;
@@ -1033,6 +1209,10 @@ int main(int argc, char *argv[]) {
 
   case 9:
     image_gen = new VolumeBars(canvas, scroll_ms, canvas->width()/2);
+    break;
+
+  case 10:
+    image_gen = new GeneticColors(canvas);
     break;
   }
 
