@@ -1212,7 +1212,7 @@ int main(int argc, char *argv[]) {
     break;
 
   case 10:
-    image_gen = new GeneticColors(canvas);
+    image_gen = new GeneticColors(canvas, scroll_ms);
     break;
   }
 
