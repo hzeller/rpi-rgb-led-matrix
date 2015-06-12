@@ -10,7 +10,6 @@ LIBS:cmos4000
 LIBS:adc-dac
 LIBS:memory
 LIBS:xilinx
-LIBS:special
 LIBS:microcontrollers
 LIBS:dsp
 LIBS:microchip
@@ -52,7 +51,7 @@ F 1 "CONN_02X08" V 6950 2550 50  0000 C CNN
 F 2 "Pin_Headers:Pin_Header_Straight_2x08" H 6950 1350 60  0001 C CNN
 F 3 "" H 6950 1350 60  0000 C CNN
 	1    6950 2550
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 $Comp
 L CONN_02X20 P1
@@ -63,12 +62,12 @@ F 1 "CONN_02X20" V 4500 3700 50  0000 C CNN
 F 2 "Pin_Headers:Pin_Header_Straight_2x20" H 4500 2750 60  0001 C CNN
 F 3 "" H 4500 2750 60  0000 C CNN
 	1    4500 3700
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	4800 2700 4800 2850
 Wire Wire Line
-	4800 2750 4750 2750
+	4750 2750 4950 2750
 Wire Wire Line
 	4800 2850 4750 2850
 Connection ~ 4800 2750
@@ -81,7 +80,7 @@ F 1 "GND" H 4850 3280 30  0001 C CNN
 F 2 "" H 4850 3350 60  0000 C CNN
 F 3 "" H 4850 3350 60  0000 C CNN
 	1    4850 3350
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	4750 3350 4850 3350
@@ -94,7 +93,7 @@ F 1 "GND" H 4850 3580 30  0001 C CNN
 F 2 "" H 4850 3650 60  0000 C CNN
 F 3 "" H 4850 3650 60  0000 C CNN
 	1    4850 3650
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	4750 3650 4850 3650
@@ -107,7 +106,7 @@ F 1 "GND" H 4850 2880 30  0001 C CNN
 F 2 "" H 4850 2950 60  0000 C CNN
 F 3 "" H 4850 2950 60  0000 C CNN
 	1    4850 2950
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	4750 2950 4850 2950
@@ -120,7 +119,7 @@ F 1 "GND" H 4150 4580 30  0001 C CNN
 F 2 "" H 4150 4650 60  0000 C CNN
 F 3 "" H 4150 4650 60  0000 C CNN
 	1    4150 4650
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 Wire Wire Line
 	4150 4650 4250 4650
@@ -133,7 +132,7 @@ F 1 "GND" H 4850 4280 30  0001 C CNN
 F 2 "" H 4850 4350 60  0000 C CNN
 F 3 "" H 4850 4350 60  0000 C CNN
 	1    4850 4350
-	0    -1   -1   0
+	0    -1   -1   0   
 $EndComp
 Wire Wire Line
 	4750 4350 4850 4350
@@ -146,7 +145,7 @@ F 1 "GND" H 4150 3880 30  0001 C CNN
 F 2 "" H 4150 3950 60  0000 C CNN
 F 3 "" H 4150 3950 60  0000 C CNN
 	1    4150 3950
-	0    1    1    0
+	0    1    1    0   
 $EndComp
 Wire Wire Line
 	4150 3950 4250 3950
@@ -199,7 +198,7 @@ F 1 "GND" H 7750 2880 30  0001 C CNN
 F 2 "" H 7750 2950 60  0000 C CNN
 F 3 "" H 7750 2950 60  0000 C CNN
 	1    7750 2950
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	7200 2900 7750 2900
@@ -214,7 +213,7 @@ F 1 "CONN_02X08" V 6950 3800 50  0000 C CNN
 F 2 "Pin_Headers:Pin_Header_Straight_2x08" H 6950 2600 60  0001 C CNN
 F 3 "" H 6950 2600 60  0000 C CNN
 	1    6950 3800
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	7200 3750 7750 3750
@@ -227,25 +226,25 @@ F 1 "GND" H 7750 4130 30  0001 C CNN
 F 2 "" H 7750 4200 60  0000 C CNN
 F 3 "" H 7750 4200 60  0000 C CNN
 	1    7750 4200
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	7200 4150 7750 4150
 Wire Wire Line
 	7200 3550 7750 3550
 $Comp
-L VCC #PWR011
+L VCC #PWR09
 U 1 1 54ECD3DE
 P 4800 2700
-F 0 "#PWR011" H 4800 2800 30  0001 C CNN
+F 0 "#PWR09" H 4800 2800 30  0001 C CNN
 F 1 "VCC" H 4800 2800 30  0000 C CNN
 F 2 "" H 4800 2700 60  0000 C CNN
 F 3 "" H 4800 2700 60  0000 C CNN
 	1    4800 2700
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Text GLabel 7200 3650 2    51   Input ~ 0
-p1_g2_buf
+p1_g2
 Wire Wire Line
 	7750 3550 7750 4200
 Connection ~ 7750 4150
@@ -325,27 +324,27 @@ F 1 "CONN_02X08" V 6950 5250 50  0000 C CNN
 F 2 "Pin_Headers:Pin_Header_Straight_2x08" H 6950 4050 60  0001 C CNN
 F 3 "" H 6950 4050 60  0000 C CNN
 	1    6950 5250
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	7200 5200 7750 5200
 $Comp
-L GND #PWR018
+L GND #PWR010
 U 1 1 54F3E6DC
 P 7750 5650
-F 0 "#PWR018" H 7750 5650 30  0001 C CNN
+F 0 "#PWR010" H 7750 5650 30  0001 C CNN
 F 1 "GND" H 7750 5580 30  0001 C CNN
 F 2 "" H 7750 5650 60  0000 C CNN
 F 3 "" H 7750 5650 60  0000 C CNN
 	1    7750 5650
-	1    0    0    -1
+	1    0    0    -1  
 $EndComp
 Wire Wire Line
 	7200 5600 7750 5600
 Wire Wire Line
 	7200 5000 7750 5000
 Text GLabel 7200 5100 2    51   Input ~ 0
-p2_g2_buf
+p2_g2
 Wire Wire Line
 	7750 5000 7750 5650
 Connection ~ 7750 5600
@@ -374,28 +373,36 @@ Text GLabel 6700 5400 0    51   Input ~ 0
 row_C
 Text GLabel 7200 5500 2    51   Input ~ 0
 strobe
+NoConn ~ 4250 2750
+NoConn ~ 4250 3150
+NoConn ~ 4250 3550
+NoConn ~ 4250 4050
+NoConn ~ 4750 4050
+NoConn ~ 4750 4150
+NoConn ~ 4750 3150
 $Comp
-L CONN_01X01 P2
-U 1 1 54F43868
-P 2750 6400
-F 0 "P2" H 2750 6500 50  0000 C CNN
-F 1 "CONN_01X01" V 2850 6400 50  0000 C CNN
-F 2 "Connect:1pin" H 2750 6400 60  0001 C CNN
-F 3 "" H 2750 6400 60  0000 C CNN
-	1    2750 6400
-	1    0    0    -1
+L PWR_FLAG #FLG011
+U 1 1 557B29FD
+P 4950 2750
+F 0 "#FLG011" H 4950 2845 50  0001 C CNN
+F 1 "PWR_FLAG" H 4950 2930 50  0000 C CNN
+F 2 "" H 4950 2750 60  0000 C CNN
+F 3 "" H 4950 2750 60  0000 C CNN
+	1    4950 2750
+	1    0    0    -1  
 $EndComp
 $Comp
-L CONN_01X01 P3
-U 1 1 54F43A29
-P 3150 6400
-F 0 "P3" H 3150 6500 50  0000 C CNN
-F 1 "CONN_01X01" V 3250 6400 50  0000 C CNN
-F 2 "Connect:1pin" H 3150 6400 60  0001 C CNN
-F 3 "" H 3150 6400 60  0000 C CNN
-	1    3150 6400
-	1    0    0    -1
+L PWR_FLAG #FLG012
+U 1 1 557B2BFC
+P 4200 4700
+F 0 "#FLG012" H 4200 4795 50  0001 C CNN
+F 1 "PWR_FLAG" H 4200 4880 50  0000 C CNN
+F 2 "" H 4200 4700 60  0000 C CNN
+F 3 "" H 4200 4700 60  0000 C CNN
+	1    4200 4700
+	-1   0    0    1   
 $EndComp
-Text Notes 2650 6750 0    60   ~ 0
-Mounting holes\n
+Wire Wire Line
+	4200 4650 4200 4700
+Connection ~ 4200 4650
 $EndSCHEMATC
