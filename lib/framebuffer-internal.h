@@ -31,7 +31,7 @@ public:
   ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
-  void InitGPIO(GPIO *io);
+  static void InitGPIO(GPIO *io, int parallel);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.
@@ -67,8 +67,6 @@ private:
 
   const int double_rows_;
   const uint8_t row_mask_;
-
-  PinPulser *output_enable_pulser_;
 
 #ifdef ADAFRUIT_RGBMATRIX_HAT
   // Adafruit made a HAT to work with this library, but it has a slightly

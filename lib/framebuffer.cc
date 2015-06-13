@@ -35,6 +35,10 @@ enum {
 
 static const long kBaseTimeNanos = 200;
 
+// We need one global instance of a timing correct pulser. There are different
+// implementations depending on the context.
+static PinPulser *sOutputEnablePulser = NULL;
+
 // The Adafruit HAT only supports one chain.
 #if defined(ADAFRUIT_RGBMATRIX_HAT) && defined(SUPPORT_MULTI_PARALLEL)
 #  warning "Adafruit HAT doesn't map parallel chains. Disabling parallel chains."
@@ -54,8 +58,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
   : rows_(rows), parallel_(parallel), height_(rows * parallel),
     columns_(columns),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true),
-    double_rows_(rows / 2), row_mask_(double_rows_ - 1),
-    output_enable_pulser_(NULL) {
+    double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
   assert(rows_ <= 32);
@@ -71,10 +74,12 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
 
 Framebuffer::~Framebuffer() {
   delete [] bitplane_buffer_;
-  delete output_enable_pulser_;
 }
 
-/* static */ void Framebuffer::InitGPIO(GPIO *io) {
+/* static */ void Framebuffer::InitGPIO(GPIO *io, int parallel) {
+  if (sOutputEnablePulser != NULL)
+    return;  // already initialized.
+
   // Tell GPIO about all bits we intend to use.
   IoBits b;
   b.raw = 0;
@@ -92,12 +97,12 @@ Framebuffer::~Framebuffer() {
   b.bits.p0_r2 = b.bits.p0_g2 = b.bits.p0_b2 = 1;
 
 #ifdef SUPPORT_MULTI_PARALLEL
-  if (parallel_ >= 2) {
+  if (parallel >= 2) {
     b.bits.p1_r1 = b.bits.p1_g1 = b.bits.p1_b1 = 1;
     b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
   }
 
-  if (parallel_ >= 3) {
+  if (parallel >= 3) {
     b.bits.p2_r1 = b.bits.p2_g1 = b.bits.p2_b1 = 1;
     b.bits.p2_r2 = b.bits.p2_g2 = b.bits.p2_b2 = 1;
   }
@@ -121,8 +126,8 @@ Framebuffer::~Framebuffer() {
   for (int b = 0; b < kBitPlanes; ++b) {
     bitplane_timings.push_back(kBaseTimeNanos << b);
   }
-  output_enable_pulser_ = PinPulser::Create(io, output_enable_bits.raw,
-                                            bitplane_timings);
+  sOutputEnablePulser = PinPulser::Create(io, output_enable_bits.raw,
+                                          bitplane_timings);
 }
 
 bool Framebuffer::SetPWMBits(uint8_t value) {
@@ -357,7 +362,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       io->ClearBits(strobe.raw);
 
       // Now switch on for the sleep time necessary for that bit-plane.
-      output_enable_pulser_->SendPulse(b);
+      sOutputEnablePulser->SendPulse(b);
     }
   }
 }
