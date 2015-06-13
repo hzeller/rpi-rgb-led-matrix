@@ -1,5 +1,4 @@
 EESchema Schematic File Version 2
-LIBS:active3-rpi-hub75-adapter-rescue
 LIBS:power
 LIBS:device
 LIBS:transistors
