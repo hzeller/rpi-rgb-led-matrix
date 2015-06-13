@@ -1,4 +1,5 @@
 EESchema Schematic File Version 2
+LIBS:active3-rpi-hub75-adapter-rescue
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -28,6 +29,7 @@ LIBS:opto
 LIBS:atmel
 LIBS:contrib
 LIBS:valves
+LIBS:active3-rpi-hub75-adapter-cache
 EELAYER 25 0
 EELAYER END
 $Descr A4 11693 8268
@@ -304,7 +306,7 @@ L C C1
 U 1 1 54ECBE4F
 P 2700 5600
 F 0 "C1" H 2700 5700 40  0000 L CNN
-F 1 "C" H 2706 5515 40  0000 L CNN
+F 1 "100n" H 2706 5515 40  0000 L CNN
 F 2 "Capacitors_SMD:C_0805_HandSoldering" H 2738 5450 30  0001 C CNN
 F 3 "" H 2700 5600 60  0000 C CNN
 	1    2700 5600
@@ -315,7 +317,7 @@ L C C2
 U 1 1 54ECBEE4
 P 3000 5600
 F 0 "C2" H 3000 5700 40  0000 L CNN
-F 1 "C" H 3006 5515 40  0000 L CNN
+F 1 "100n" H 3006 5515 40  0000 L CNN
 F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3038 5450 30  0001 C CNN
 F 3 "" H 3000 5600 60  0000 C CNN
 	1    3000 5600
@@ -326,7 +328,7 @@ L C C3
 U 1 1 54ECBF0A
 P 3300 5600
 F 0 "C3" H 3300 5700 40  0000 L CNN
-F 1 "C" H 3306 5515 40  0000 L CNN
+F 1 "100n" H 3306 5515 40  0000 L CNN
 F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3338 5450 30  0001 C CNN
 F 3 "" H 3300 5600 60  0000 C CNN
 	1    3300 5600
@@ -564,7 +566,7 @@ L C C4
 U 1 1 54F3B6F5
 P 3550 5600
 F 0 "C4" H 3550 5700 40  0000 L CNN
-F 1 "C" H 3556 5515 40  0000 L CNN
+F 1 "100n" H 3556 5515 40  0000 L CNN
 F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3588 5450 30  0001 C CNN
 F 3 "" H 3550 5600 60  0000 C CNN
 	1    3550 5600
@@ -723,8 +725,6 @@ Text GLabel 6350 2700 2    51   Output ~ 0
 strobe_buff_2
 Text GLabel 4950 2700 0    51   Input ~ 0
 strobe
-Text Notes 2650 6750 0    60   ~ 0
-Mounting holes\n
 NoConn ~ 3000 4000
 NoConn ~ 3500 4000
 NoConn ~ 3500 4100
