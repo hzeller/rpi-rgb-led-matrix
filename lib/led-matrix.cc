@@ -129,7 +129,7 @@ void RGBMatrix::SetGPIO(GPIO *io) {
   if (io == NULL) return;  // nothing to set.
   if (io_ != NULL) return;  // already set.
   io_ = io;
-  active_->framebuffer()->InitGPIO(io_);
+  internal::Framebuffer::InitGPIO(io_, parallel_displays_);
   updater_ = new UpdateThread(io_, active_);
   updater_->Start(99);  // Whatever we get :)
 }
@@ -145,7 +145,6 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
   } else {
     result->framebuffer()->SetPWMBits(pwm_bits_);
     result->framebuffer()->set_luminance_correct(do_luminance_correct_);
-    result->framebuffer()->InitGPIO(io_);
   }
   created_frames_.push_back(result);
   return result;
