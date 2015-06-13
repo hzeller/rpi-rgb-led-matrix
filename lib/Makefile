@@ -46,6 +46,9 @@ TARGET=librgbmatrix.a
 # Uncomment the following line for Adafruit Matrix HAT gpio mappings
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
+# For curiosity reasons: uncomment to see refresh rate in terminal.
+#DEFINES+=-DSHOW_REFRESH_RATE
+
 # while working on the new pinout.
 DEFINES+=-DEXPERIMENTAL_NEW_PINOUT
 

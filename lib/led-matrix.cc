@@ -23,9 +23,7 @@
 #include <math.h>
 #include <pthread.h>
 
-#define SHOW_REFRESH_RATE 0
-
-#if SHOW_REFRESH_RATE
+#ifdef SHOW_REFRESH_RATE
 # include <stdio.h>
 # include <sys/time.h>
 #endif
@@ -52,7 +50,7 @@ public:
 
   virtual void Run() {
     while (running()) {
-#if SHOW_REFRESH_RATE
+#ifdef SHOW_REFRESH_RATE
       struct timeval start, end;
       gettimeofday(&start, NULL);
 #endif
@@ -68,7 +66,7 @@ public:
         pthread_cond_signal(&frame_done_);
       }
 
-#if SHOW_REFRESH_RATE
+#ifdef SHOW_REFRESH_RATE
       gettimeofday(&end, NULL);
       int64_t usec = ((uint64_t)end.tv_sec * 1000000 + end.tv_usec)
         - ((int64_t)start.tv_sec * 1000000 + start.tv_usec);
