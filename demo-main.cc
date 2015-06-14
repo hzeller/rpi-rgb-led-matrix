@@ -71,7 +71,9 @@ private:
 // Simple generator that pulses through RGB and White.
 class ColorPulseGenerator : public ThreadedCanvasManipulator {
 public:
-  ColorPulseGenerator(Canvas *m) : ThreadedCanvasManipulator(m) {}
+  ColorPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {
+    off_screen_canvas_ = m->CreateFrameCanvas();
+  }
   void Run() {
     uint32_t continuum = 0;
     while (running()) {
@@ -92,9 +94,13 @@ public:
         g = 255 - c;
         b = c;
       }
-      canvas()->Fill(r, g, b);
+      off_screen_canvas_->Fill(r, g, b);
+      off_screen_canvas_ = matrix_->SwapOnVSync(off_screen_canvas_);
     }
   }
+private:
+  RGBMatrix *const matrix_;
+  FrameCanvas *off_screen_canvas_;
 };
 
 class SimpleSquare : public ThreadedCanvasManipulator {
@@ -881,15 +887,10 @@ int main(int argc, char *argv[]) {
   uint32_t pulsed_pin = 1 << 18;
   io.InitOutputs(pulsed_pin);
   std::vector<int> spec;
-  spec.push_back(10);  // 0
-  spec.push_back(50);  // 1
-  spec.push_back(100); // 2
-  spec.push_back(200); // 3
-  spec.push_back(400); // 4
-  spec.push_back(800); // 5
-  spec.push_back(1344); // 5
-  spec.push_back(8192); // 5
-  spec.push_back(409600); // 6
+  int base = 200;
+  for (int i = 0; i < 11; ++i) {
+    spec.push_back(base << i);
+  }
   int chosen = atoi(argv[1]);
   if (chosen >= (int) spec.size())
     chosen = spec.size() - 1;
@@ -897,10 +898,7 @@ int main(int argc, char *argv[]) {
   PinPulser *pulser = PinPulser::Create(&io, pulsed_pin, spec);
   for (;;) {
     pulser->SendPulse(chosen);
-    //io.SetBits(pulsed_pin);
-    usleep(1);
-    //io.ClearBits(pulsed_pin);
-    //usleep(1);
+    pulser->WaitPulseFinished();
   }
 
   return 0;
@@ -1045,7 +1043,7 @@ int main(int argc, char *argv[]) {
     break;
 
   case 4:
-    image_gen = new ColorPulseGenerator(canvas);
+    image_gen = new ColorPulseGenerator(matrix);
     break;
 
   case 5:

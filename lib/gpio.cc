@@ -287,14 +287,19 @@ public:
   static bool CanHandle(uint32_t gpio_mask) { return gpio_mask == (1 << 18); }
 
   HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
-    : any_pulse_sent_(false) {
+    : any_pulse_sent_(false), last_divider_(-1) {
     assert(CanHandle(pins));
-
-    //for (int i = 0; i < 10000; i+=4) CreatePwmFifoConfig(i);
 
     int base = specs[0];
     for (size_t i = 0; i < specs.size(); ++i) {
-      if (specs[i] < MAX_PWM_BIT_USE * base) {
+#if 0
+      // Experimental. Exact pulses, but due to higher divider high
+      // recovery time and low refresh-rate.
+      if (specs[i] > MAX_PWM_BIT_USE * base) {
+        base <<= 5;
+      }
+#endif
+      if (specs[i] <= MAX_PWM_BIT_USE * base) {
         pwm_configs_.push_back(CreatePwmFifoConfig(base / PWM_BASE_TIME_NS,
                                                    specs[i] / base, specs[i]));
       } else {
@@ -310,11 +315,13 @@ public:
     assert((clk_reg_ != NULL) && (pwm_reg_ != NULL));  // init error.
 
     SetGPIOMode(gpioReg, 18, 2); // set GPIO 18 to PWM0 mode (Alternative 5)
+    SetPWMDivider(5);
   }
 
   virtual void SendPulse(int c) {
     SetPWMDivider(pwm_configs_[c].clk_div);
-    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
+    //pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
+    //pwm_reg_[PWM_STA] = -1;   // clear status bits.
     for (uint32_t *pattern = pwm_configs_[c].pwm_pattern; *pattern; ++pattern) {
       pwm_reg_[PWM_FIFO] = *pattern;
     }
@@ -327,7 +334,7 @@ public:
     // Wait until FIFO is empty.
     pwm_reg_[PWM_FIFO] = 0;
     while ((pwm_reg_[PWM_STA] & PWM_STA_EMPT1) == 0) {
-      //usleep(1);
+      usleep(1);
     }
   }
 
@@ -344,6 +351,9 @@ private:
   }
 
   void SetPWMDivider(uint32_t divider) {
+    if (divider == last_divider_)
+      return;
+
     // reset PWM clock
     clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_KILL;
 
@@ -356,10 +366,13 @@ private:
     // enable PWM clock
     clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_ENAB | CLK_CTL_SRC(CLK_CTL_SRC_PLLD);
 
-    // reset PWM
-    pwm_reg_[PWM_CTL] = PWM_CTL_POLA1;  // negative pulse.
+    // set our mode
+    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
     pwm_reg_[PWM_STA] = -1;   // clear status bits.
-    usleep(1);
+
+    usleep(1);  // TODO: what is a good time here ?
+    //for (int i = 0; i < 300; ++i) { asm(""); }  // Registers need a while to settle.
+    last_divider_ = divider;
   }
 
   pwm_fifo_config CreatePwmFifoConfig(int divider, int bit_count, int fyi_nanos) {
@@ -396,20 +409,13 @@ private:
 
   pwm_fifo_config ConfigFromNanos(int nano_seconds) {
     const int clock_loops = nano_seconds / PWM_BASE_TIME_NS;
-    int divider;
-    int bit_count;
-    if (clock_loops > 1 && clock_loops < (1<<12)) {
-      divider = clock_loops;   // let the hardware divider do the work.
-      bit_count = 1;
-    } else {
-      // Find the smallest divider (=high time resolution) that fits
-      // in maximum allowed bits.
-      // (TODO: this is not optimal yet, higher dividers can yield
-      // exact results).
-      divider = (clock_loops / MAX_PWM_BIT_USE)+1;
-      if (divider < 2) divider = 2;   // Can't be 1
-      bit_count = clock_loops / divider;
-    }
+    // Find the smallest divider (=high time resolution) that fits
+    // in maximum allowed bits.
+    // We can sometimes get more exact values with higher dividers,
+    // however, they seem to impose a higher recovery rate.
+    int divider = (clock_loops / MAX_PWM_BIT_USE)+1;
+    if (divider < 2) divider = 2;   // Can't be 1
+    int bit_count = clock_loops / divider;
     return CreatePwmFifoConfig(divider, bit_count, nano_seconds);
   }
 
@@ -418,6 +424,7 @@ private:
   volatile uint32_t *pwm_reg_;
   volatile uint32_t *clk_reg_;
   bool any_pulse_sent_;
+  uint32_t last_divider_;
 };
 
 } // end anonymous namespace
