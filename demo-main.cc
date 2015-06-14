@@ -71,7 +71,9 @@ private:
 // Simple generator that pulses through RGB and White.
 class ColorPulseGenerator : public ThreadedCanvasManipulator {
 public:
-  ColorPulseGenerator(Canvas *m) : ThreadedCanvasManipulator(m) {}
+  ColorPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {
+    off_screen_canvas_ = m->CreateFrameCanvas();
+  }
   void Run() {
     uint32_t continuum = 0;
     while (running()) {
@@ -92,9 +94,13 @@ public:
         g = 255 - c;
         b = c;
       }
-      canvas()->Fill(r, g, b);
+      off_screen_canvas_->Fill(r, g, b);
+      off_screen_canvas_ = matrix_->SwapOnVSync(off_screen_canvas_);
     }
   }
+private:
+  RGBMatrix *const matrix_;
+  FrameCanvas *off_screen_canvas_;
 };
 
 class SimpleSquare : public ThreadedCanvasManipulator {
@@ -1012,7 +1018,7 @@ int main(int argc, char *argv[]) {
     break;
 
   case 4:
-    image_gen = new ColorPulseGenerator(canvas);
+    image_gen = new ColorPulseGenerator(matrix);
     break;
 
   case 5:
