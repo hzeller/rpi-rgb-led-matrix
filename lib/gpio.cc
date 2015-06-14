@@ -272,6 +272,12 @@ static void sleep_nanos_rpi_2(long nanos) {
   }
 }
 
+/*
+ TODO hardware timing: more CPU use and less refresh rate than 'regular'
+   - darker, i.e more setup time in-between (= more dark time) (less current use)
+   - lower refresh rate
+*/
+
 // A PinPulser that uses the PWM hardware to create accurate pulses.
 // It only works on GPIO-18 though.
 // Based in part on discussion found on
@@ -280,7 +286,8 @@ class HardwarePinPulser : public PinPulser {
 public:
   static bool CanHandle(uint32_t gpio_mask) { return gpio_mask == (1 << 18); }
 
-  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs) {
+  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
+    : any_pulse_sent_(false) {
     assert(CanHandle(pins));
 
     //for (int i = 0; i < 10000; i+=4) CreatePwmFifoConfig(i);
@@ -307,18 +314,20 @@ public:
 
   virtual void SendPulse(int c) {
     SetPWMDivider(pwm_configs_[c].clk_div);
+    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
     for (uint32_t *pattern = pwm_configs_[c].pwm_pattern; *pattern; ++pattern) {
       pwm_reg_[PWM_FIFO] = *pattern;
     }
     pwm_reg_[PWM_FIFO] = 0;
+    any_pulse_sent_ = true;
+  }
 
-    // Ok, fire it off:
-    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
-
+  virtual void WaitPulseFinished() {
+    if (!any_pulse_sent_) return;
     // Wait until FIFO is empty.
-    for (int i = 0; i < 50 ; i++) {
-      if (pwm_reg_[PWM_STA] & PWM_STA_EMPT1) break;
-      usleep(1);
+    pwm_reg_[PWM_FIFO] = 0;
+    while ((pwm_reg_[PWM_STA] & PWM_STA_EMPT1) == 0) {
+      //usleep(1);
     }
   }
 
@@ -408,6 +417,7 @@ private:
   std::vector<pwm_fifo_config> pwm_configs_;
   volatile uint32_t *pwm_reg_;
   volatile uint32_t *clk_reg_;
+  bool any_pulse_sent_;
 };
 
 } // end anonymous namespace

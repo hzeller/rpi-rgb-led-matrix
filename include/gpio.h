@@ -77,6 +77,9 @@ public:
 
   // Send a pulse with a given length (index into nano_wait_spec array).
   virtual void SendPulse(int time_spec_number) = 0;
+
+  // If SendPulse() is asynchronously implemented, wait for pulse to finish.
+  virtual void WaitPulseFinished() {}
 };
 
 }  // end namespace rgb_matrix

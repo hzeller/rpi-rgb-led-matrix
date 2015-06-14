@@ -349,8 +349,8 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
     // full PWM of one row before switching rows.
     for (int b = kBitPlanes - pwm_to_show; b < kBitPlanes; ++b) {
       IoBits *row_data = ValueAt(d_row, 0, b);
-      // We clock these in while we are dark. This actually increases the
-      // dark time, but we ignore that a bit.
+      // While the output enable is still on, we can already clock in the next
+      // data.
       for (int col = 0; col < columns_; ++col) {
         const IoBits &out = *row_data++;
         io->WriteMaskedBits(out.raw, color_clk_mask.raw);  // col + reset clock
@@ -358,12 +358,16 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       }
       io->ClearBits(color_clk_mask.raw);    // clock back to normal.
 
+      // OE of the previous row-data must be finished before strobe.
+      sOutputEnablePulser->WaitPulseFinished();
+
       io->SetBits(strobe.raw);   // Strobe in the previously clocked in row.
       io->ClearBits(strobe.raw);
 
       // Now switch on for the sleep time necessary for that bit-plane.
       sOutputEnablePulser->SendPulse(b);
     }
+    sOutputEnablePulser->WaitPulseFinished();
   }
 }
 }  // namespace internal
