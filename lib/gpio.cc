@@ -15,13 +15,6 @@
 
 #include "gpio.h"
 
-// Raspberry 1 and 2 have different base addresses for the periphery
-#define BCM2708_PERI_BASE        0x20000000
-#define BCM2709_PERI_BASE        0x3F000000
-
-#define GPIO_REGISTER_OFFSET         0x200000
-#define COUNTER_1Mhz_REGISTER_OFFSET   0x3000
-
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,13 +22,57 @@
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
+#include <assert.h>
+
+// Raspberry 1 and 2 have different base addresses for the periphery
+#define BCM2708_PERI_BASE        0x20000000
+#define BCM2709_PERI_BASE        0x3F000000
+
+#define GPIO_REGISTER_OFFSET         0x200000
+#define COUNTER_1Mhz_REGISTER_OFFSET   0x3000
+
+#define GPIO_PWM_BASE_OFFSET	(GPIO_REGISTER_OFFSET + 0xC000)
+#define GPIO_CLK_BASE_OFFSET	0x101000
 
 #define REGISTER_BLOCK_SIZE (4*1024)
 
-// GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) or SET_GPIO_ALT(x,y)
+#define PWM_CTL      0
+#define PWM_STA      1
+#define PWM_FIFO     6
+
+#define PWM_CTL_CLRF1 (1<<6)	// CH1 Clear Fifo (1 Clears FIFO 0 has no effect)
+#define PWM_CTL_USEF1 (1<<5)	// CH1 Use Fifo (0=data reg transmit 1=Fifo used for transmission)
+#define PWM_CTL_POLA1 (1<<4)	// CH1 Polarity (0=(0=low 1=high) 1=(1=low 0=high)
+#define PWM_CTL_SBIT1 (1<<3)	// CH1 Silence Bit (state of output when 0 transmission takes place)
+#define PWM_CTL_MODE1 (1<<1)	// CH1 Mode (0=pwm 1=serialiser mode)
+#define PWM_CTL_PWEN1 (1<<0)	// CH1 Enable (0=disable 1=enable)
+
+#define PWM_STA_EMPT1 (1<<1)
+#define PWM_STA_FULL1 (1<<0)
+
+#define CLK_PASSWD  (0x5A<<24)
+
+#define CLK_CTL_MASH(x)((x)<<9)
+#define CLK_CTL_BUSY    (1 <<7)
+#define CLK_CTL_KILL    (1 <<5)
+#define CLK_CTL_ENAB    (1 <<4)
+#define CLK_CTL_SRC(x) ((x)<<0)
+
+#define CLK_CTL_SRC_PLLD 6  /* 500.0 MHz */
+
+#define CLK_DIV_DIVI(x) ((x)<<12)
+#define CLK_DIV_DIVF(x) ((x)<< 0)
+
+#define CLK_PWMCTL 40
+#define CLK_PWMDIV 41
+
+// We want to have the last word in the fifo free
+#define MAX_PWM_BIT_USE 224
+#define PWM_BASE_TIME_NS 2
+
+// GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x).
 #define INP_GPIO(g) *(gpio_port_+((g)/10)) &= ~(7<<(((g)%10)*3))
 #define OUT_GPIO(g) *(gpio_port_+((g)/10)) |=  (1<<(((g)%10)*3))
-#define SET_GPIO_ALT(g,a) *(gpio+(((g)/10))) |= (((a)<=3?(a)+4:(a)==4?3:2)<<(((g)%10)*3))
 
 #define GPIO_SET *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
@@ -234,6 +271,145 @@ static void sleep_nanos_rpi_2(long nanos) {
     asm("");
   }
 }
+
+// A PinPulser that uses the PWM hardware to create accurate pulses.
+// It only works on GPIO-18 though.
+// Based in part on discussion found on
+// https://www.raspberrypi.org/forums/viewtopic.php?t=67741&p=494768
+class HardwarePinPulser : public PinPulser {
+public:
+  static bool CanHandle(uint32_t gpio_mask) { return gpio_mask == (1 << 18); }
+
+  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs) {
+    assert(CanHandle(pins));
+
+    //for (int i = 0; i < 10000; i+=4) CreatePwmFifoConfig(i);
+
+    int base = specs[0];
+    for (size_t i = 0; i < specs.size(); ++i) {
+      if (specs[i] < MAX_PWM_BIT_USE * base) {
+        pwm_configs_.push_back(CreatePwmFifoConfig(base / PWM_BASE_TIME_NS,
+                                                   specs[i] / base, specs[i]));
+      } else {
+        pwm_configs_.push_back(ConfigFromNanos(specs[i]));
+      }
+    }
+
+    // Get relevant registers
+    const bool isPI2 = IsRaspberryPi2();
+    volatile uint32_t *gpioReg = mmap_bcm_register(isPI2, GPIO_REGISTER_OFFSET);
+    pwm_reg_  = mmap_bcm_register(isPI2, GPIO_PWM_BASE_OFFSET);
+    clk_reg_  = mmap_bcm_register(isPI2, GPIO_CLK_BASE_OFFSET);
+    assert((clk_reg_ != NULL) && (pwm_reg_ != NULL));  // init error.
+
+    SetGPIOMode(gpioReg, 18, 2); // set GPIO 18 to PWM0 mode (Alternative 5)
+  }
+
+  virtual void SendPulse(int c) {
+    SetPWMDivider(pwm_configs_[c].clk_div);
+    for (uint32_t *pattern = pwm_configs_[c].pwm_pattern; *pattern; ++pattern) {
+      pwm_reg_[PWM_FIFO] = *pattern;
+    }
+    pwm_reg_[PWM_FIFO] = 0;
+
+    // Ok, fire it off:
+    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
+
+    // Wait until FIFO is empty.
+    for (int i = 0; i < 50 ; i++) {
+      if (pwm_reg_[PWM_STA] & PWM_STA_EMPT1) break;
+      usleep(1);
+    }
+  }
+
+private:
+  struct pwm_fifo_config {
+    uint32_t clk_div;
+    uint32_t pwm_pattern[8];  // fifo length. We only fill up to the first 7
+  };
+
+  void SetGPIOMode(volatile uint32_t *gpioReg, unsigned gpio, unsigned mode) {
+    const int reg = gpio / 10;
+    const int mode_pos = (gpio % 10) * 3;
+    gpioReg[reg] = (gpioReg[reg] & ~(7 << mode_pos)) | (mode << mode_pos);
+  }
+
+  void SetPWMDivider(uint32_t divider) {
+    // reset PWM clock
+    clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_KILL;
+
+    // set PWM clock source as 500 MHz PLLD
+    clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_SRC(CLK_CTL_SRC_PLLD);
+
+    // set PWM clock divider
+    clk_reg_[CLK_PWMDIV] = CLK_PASSWD | CLK_DIV_DIVI(divider) | CLK_DIV_DIVF(0);
+
+    // enable PWM clock
+    clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_ENAB | CLK_CTL_SRC(CLK_CTL_SRC_PLLD);
+
+    // reset PWM
+    pwm_reg_[PWM_CTL] = PWM_CTL_POLA1;  // negative pulse.
+    pwm_reg_[PWM_STA] = -1;   // clear status bits.
+    usleep(1);
+  }
+
+  pwm_fifo_config CreatePwmFifoConfig(int divider, int bit_count, int fyi_nanos) {
+    pwm_fifo_config result;
+    bzero(&result, sizeof(result));
+
+    fprintf(stderr, "%7dns div:%3d bits:%4d = %6dns (Δ%3d) ",
+            fyi_nanos, divider, bit_count,
+            divider * PWM_BASE_TIME_NS * bit_count,
+            divider * PWM_BASE_TIME_NS * bit_count - fyi_nanos);
+
+    assert(bit_count <= MAX_PWM_BIT_USE);
+    assert(divider < (1<<12));   // we only have 12 bits
+
+    result.clk_div = divider;
+    for (int i = 0; i < 8 && bit_count > 0; ++i) {
+      if (bit_count >= 32) {
+        result.pwm_pattern[i] = ~0;
+        bit_count -= 32;
+      } else {
+        // Remaining bits.
+        result.pwm_pattern[i] = ~((1u<<(32-bit_count))-1);  // fill from top
+        break;
+      }
+    }
+
+    for (int i = 0; i < 8; ++i) {
+      fprintf(stderr, "%08x ", result.pwm_pattern[i]);
+    }
+    fprintf(stderr, "\n");
+
+    return result;
+  }
+
+  pwm_fifo_config ConfigFromNanos(int nano_seconds) {
+    const int clock_loops = nano_seconds / PWM_BASE_TIME_NS;
+    int divider;
+    int bit_count;
+    if (clock_loops > 1 && clock_loops < (1<<12)) {
+      divider = clock_loops;   // let the hardware divider do the work.
+      bit_count = 1;
+    } else {
+      // Find the smallest divider (=high time resolution) that fits
+      // in maximum allowed bits.
+      // (TODO: this is not optimal yet, higher dividers can yield
+      // exact results).
+      divider = (clock_loops / MAX_PWM_BIT_USE)+1;
+      if (divider < 2) divider = 2;   // Can't be 1
+      bit_count = clock_loops / divider;
+    }
+    return CreatePwmFifoConfig(divider, bit_count, nano_seconds);
+  }
+
+private:
+  std::vector<pwm_fifo_config> pwm_configs_;
+  volatile uint32_t *pwm_reg_;
+  volatile uint32_t *clk_reg_;
+};
+
 } // end anonymous namespace
 
 // Public PinPulser factory
@@ -241,7 +417,12 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
                              const std::vector<int> &nano_wait_spec) {
   // The only implementation so far.
   if (!Timers::Init()) return NULL;
-  return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
+  if (HardwarePinPulser::CanHandle(gpio_mask)) {
+    fprintf(stderr, "Using hardware pulser\n");
+    return new HardwarePinPulser(gpio_mask, nano_wait_spec);
+  } else {
+    return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
+  }
 }
 
 } // namespace rgb_matrix

@@ -354,7 +354,7 @@ public:
     : ThreadedCanvasManipulator(m), delay_ms_(delay_ms) {
     width_ = canvas()->width() - 1; // We need an odd width
     height_ = canvas()->height() - 1; // We need an odd height
-    
+
     // Allocate memory
     values_ = new int*[width_];
     for (int x=0; x<width_; ++x) {
@@ -364,7 +364,7 @@ public:
     for (int x=0; x<width_; ++x) {
       newValues_[x] = new int[height_];
     }
-    
+
     // Init values
     srand(time(NULL));
     for (int x=0; x<width_; ++x) {
@@ -390,7 +390,7 @@ public:
       // Drop a sand grain in the centre
       values_[width_/2][height_/2]++;
       updateValues();
-      
+
       for (int x=0; x<width_; ++x) {
         for (int y=0; y<height_; ++y) {
           switch (values_[x][y]) {
@@ -465,7 +465,7 @@ public:
     : ThreadedCanvasManipulator(m), delay_ms_(delay_ms), torus_(torus) {
     width_ = canvas()->width();
     height_ = canvas()->height();
-    
+
     // Allocate memory
     values_ = new int*[width_];
     for (int x=0; x<width_; ++x) {
@@ -475,7 +475,7 @@ public:
     for (int x=0; x<width_; ++x) {
       newValues_[x] = new int[height_];
     }
-    
+
     // Init values randomly
     srand(time(NULL));
     for (int x=0; x<width_; ++x) {
@@ -486,7 +486,7 @@ public:
     r_ = rand()%255;
     g_ = rand()%255;
     b_ = rand()%255;
-    
+
     if (r_<150 && g_<150 && b_<150) {
       int c = rand()%3;
       switch (c) {
@@ -516,9 +516,9 @@ public:
 
   void Run() {
     while (running()) {
-      
+
       updateValues();
-      
+
       for (int x=0; x<width_; ++x) {
         for (int y=0; y<height_; ++y) {
           if (values_[x][y])
@@ -568,7 +568,7 @@ private:
     }
     return num;
   }
-  
+
   void updateValues() {
     // Copy values to newValues
     for (int x=0; x<width_; ++x) {
@@ -643,8 +643,8 @@ public:
         updatePixel(x, y);
       }
     }
-    
-    while (running()) {      
+
+    while (running()) {
       // LLRR
       switch (values_[antX_][antY_]) {
         case 0:
@@ -656,7 +656,7 @@ public:
           antDir_ = (antDir_-1+4) % 4;
           break;
       }
-      
+
       values_[antX_][antY_] = (values_[antX_][antY_] + 1) % numColors_;
       int oldX = antX_;
       int oldY = antY_;
@@ -741,7 +741,7 @@ public:
     heightYellow_ = height_*8/12;
     heightOrange_ = height_*10/12;
     heightRed_    = height_*12/12;
-    
+
     // Array of possible bar means
     int numMeans = 10;
     int means[10] = {1,2,3,4,5,6,7,8,16,32};
@@ -754,7 +754,7 @@ public:
       barMeans_[i] = rand()%numMeans;
       barFreqs_[i] = 1<<(rand()%3);
     }
-    
+
     // Start the loop
     while (running()) {
       if (t_ % 8 == 0) {
@@ -767,7 +767,7 @@ public:
             barMeans_[i] = 0;
         }
       }
-      
+
       // Update bar heights
       t_++;
       for (int i=0; i<numBars_; ++i) {
@@ -776,7 +776,7 @@ public:
         if (barHeights_[i] < height_/8)
           barHeights_[i] = rand() % (height_/8) + 1;
       }
-      
+
       for (int i=0; i<numBars_; ++i) {
         int y;
         for (y=0; y<barHeights_[i]; ++y) {
@@ -859,6 +859,7 @@ static int usage(const char *progname) {
 }
 
 int main(int argc, char *argv[]) {
+  GPIO io;
   bool as_daemon = false;
   int runtime_seconds = -1;
   int demo = -1;
@@ -871,6 +872,39 @@ int main(int argc, char *argv[]) {
   bool do_luminance_correct = true;
 
   const char *demo_parameter = NULL;
+
+#if 0
+  /** testing **/
+  if (!io.Init())
+    return 1;
+
+  uint32_t pulsed_pin = 1 << 18;
+  io.InitOutputs(pulsed_pin);
+  std::vector<int> spec;
+  spec.push_back(10);  // 0
+  spec.push_back(50);  // 1
+  spec.push_back(100); // 2
+  spec.push_back(200); // 3
+  spec.push_back(400); // 4
+  spec.push_back(800); // 5
+  spec.push_back(1344); // 5
+  spec.push_back(8192); // 5
+  spec.push_back(409600); // 6
+  int chosen = atoi(argv[1]);
+  if (chosen >= (int) spec.size())
+    chosen = spec.size() - 1;
+  fprintf(stderr, "Choosing %dns\n", spec[chosen]);
+  PinPulser *pulser = PinPulser::Create(&io, pulsed_pin, spec);
+  for (;;) {
+    pulser->SendPulse(chosen);
+    //io.SetBits(pulsed_pin);
+    usleep(1);
+    //io.ClearBits(pulsed_pin);
+    //usleep(1);
+  }
+
+  return 0;
+#endif
 
   int opt;
   while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:m:L")) != -1) {
@@ -956,7 +990,6 @@ int main(int argc, char *argv[]) {
   }
 
   // Initialize GPIO pins. This might fail when we don't have permissions.
-  GPIO io;
   if (!io.Init())
     return 1;
 
