@@ -1,9 +1,6 @@
 PCB adapter for Raspberry Pi to Hub75 RGB Matrixes
 ==================================================
 
-**(Note: I am working on a change in the pinout to better accomodate various constraints.
-Please contact me if you intend to build and adapter, maybe it makes sense to wait a week).**
-
 Since hand-wiring can be a little tedious, here are some PCBs that help
 with the wiring when using the `rpi-rgb-led-matrix` code.
 
