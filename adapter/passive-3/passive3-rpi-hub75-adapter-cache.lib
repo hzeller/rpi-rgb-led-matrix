@@ -1,6 +1,7 @@
 EESchema-LIBRARY Version 2.3
 #encoding utf-8
 #
+<<<<<<< HEAD
 # CONN_01X01
 #
 DEF CONN_01X01 P 0 40 Y N 1 F N
@@ -21,6 +22,8 @@ X P1 1 -200 0 150 R 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
+=======
+>>>>>>> d9ecea532afc911de3244f458589b6eadd051949
 # CONN_02X08
 #
 DEF CONN_02X08 P 0 1 Y N 1 F N
@@ -182,6 +185,22 @@ X GND 1 0 0 0 D 50 50 1 1 W N
 ENDDRAW
 ENDDEF
 #
+<<<<<<< HEAD
+=======
+# PWR_FLAG
+#
+DEF PWR_FLAG #FLG 0 0 N N 1 F P
+F0 "#FLG" 0 95 50 H I C CNN
+F1 "PWR_FLAG" 0 180 50 H V C CNN
+F2 "" 0 0 60 H V C CNN
+F3 "" 0 0 60 H V C CNN
+DRAW
+X pwr 1 0 0 0 U 20 20 0 0 w
+P 6 0 1 0  0 0  0 50  -75 100  0 150  75 100  0 50 N
+ENDDRAW
+ENDDEF
+#
+>>>>>>> d9ecea532afc911de3244f458589b6eadd051949
 # VCC
 #
 DEF VCC #PWR 0 0 Y Y 1 F P
