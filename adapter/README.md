@@ -4,7 +4,7 @@ PCB adapter for Raspberry Pi to Hub75 RGB Matrixes
 Since hand-wiring can be a little tedious, here are some PCBs that help
 with the wiring when using the `rpi-rgb-led-matrix` code.
 
-   * [Passive-3](./active-3) Supports three parallel chains, directly connected
+   * [Passive-3](./passive-3) Supports three parallel chains, directly connected
      to the output of a Rapsberry Pi with 40 GPIO pins. Works, but usually it is better to
      buffer the outputs using the ...
    * [Active-3](./active-3) board. Supports three parallel chains with active buffering
