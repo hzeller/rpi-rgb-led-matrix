@@ -322,7 +322,7 @@
       (net 10 OE))
     (pad 16 thru_hole oval (at 2.54 17.78 90) (size 1.7272 1.7272) (drill 1.016) (layers *.Cu *.Mask F.SilkS)
       (net 2 GND))
-    (model Pin_Headers/Pin_Header_Straight_2x08.wrl
+    (model Pin_Headers.3dshapes/Pin_Header_Straight_2x08.wrl
       (at (xyz 0.05 -0.35 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 90))
@@ -384,7 +384,7 @@
       (net 10 OE))
     (pad 16 thru_hole oval (at 2.54 17.78 90) (size 1.7272 1.7272) (drill 1.016) (layers *.Cu *.Mask F.SilkS)
       (net 2 GND))
-    (model Pin_Headers/Pin_Header_Straight_2x08.wrl
+    (model Pin_Headers.3dshapes/Pin_Header_Straight_2x08.wrl
       (at (xyz 0.05 -0.35 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 90))
@@ -446,7 +446,7 @@
       (net 10 OE))
     (pad 16 thru_hole oval (at 2.54 17.78 90) (size 1.7272 1.7272) (drill 1.016) (layers *.Cu *.Mask F.SilkS)
       (net 2 GND))
-    (model Pin_Headers/Pin_Header_Straight_2x08.wrl
+    (model Pin_Headers.3dshapes/Pin_Header_Straight_2x08.wrl
       (at (xyz 0.05 -0.35 0))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 90))
@@ -483,7 +483,7 @@
     (pad 1 thru_hole circle (at 0 0) (size 4.064 4.064) (drill 3.048) (layers *.Cu *.Mask F.SilkS))
   )
 
-  (gr_text "github.com/hzeller/rpi-rgb-led-matrix (v2)" (at 126 37.5) (layer F.SilkS)
+  (gr_text github.com/hzeller/rpi-rgb-led-matrix (at 126 37.5) (layer F.SilkS)
     (effects (font (size 2.2 2.2) (thickness 0.3)))
   )
   (gr_text "USB-ports ->" (at 165.1 45.72) (layer F.SilkS)
