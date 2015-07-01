@@ -54,7 +54,11 @@ static PinPulser *sOutputEnablePulser = NULL;
 #endif
 
 Framebuffer::Framebuffer(int rows, int columns, int parallel)
-  : rows_(rows), parallel_(parallel), height_(rows * parallel),
+  : rows_(rows),
+#ifdef SUPPORT_MULTI_PARALLEL
+    parallel_(parallel),
+#endif
+    height_(rows * parallel),
     columns_(columns),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true),
     double_rows_(rows / 2), row_mask_(double_rows_ - 1) {

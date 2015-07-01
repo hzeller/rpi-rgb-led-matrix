@@ -40,7 +40,8 @@
 #define GPIO_SET *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
 
-/*static*/ const uint32_t ::rgb_matrix::GPIO::kValidBits
+namespace rgb_matrix {
+/*static*/ const uint32_t GPIO::kValidBits
 = ((1 <<  0) | (1 <<  1) | // RPi 1 - Revision 1 accessible
    (1 <<  2) | (1 <<  3) | // RPi 1 - Revision 2 accessible
    (1 <<  4) | (1 <<  7) | (1 << 8) | (1 <<  9) |
@@ -51,7 +52,6 @@
    (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26)
 );
 
-namespace rgb_matrix {
 GPIO::GPIO() : output_bits_(0), gpio_port_(NULL) {
 }
 

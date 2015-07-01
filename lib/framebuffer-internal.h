@@ -58,7 +58,9 @@ private:
   inline uint16_t MapColor(uint8_t c);
 
   const int rows_;     // Number of rows. 16 or 32.
+#ifdef SUPPORT_MULTI_PARALLEL
   const int parallel_; // Parallel rows of chains. 1 or 2.
+#endif
   const int height_;   // rows * parallel
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
