@@ -30,7 +30,11 @@
 namespace rgb_matrix {
 namespace internal {
 enum {
+#if defined(EXPERIMENTAL_NEW_PINOUT) && defined(EXPERIMENTAL_BITPLANES)
+  kBitPlanes = EXPERIMENTAL_BITPLANES  // maximum usable bitplanes.
+#else
   kBitPlanes = 11  // maximum usable bitplanes.
+#endif
 };
 
 static const long kBaseTimeNanos = 200;
