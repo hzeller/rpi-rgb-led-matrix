@@ -56,13 +56,6 @@ DEFINES+=-DEXPERIMENTAL_NEW_PINOUT
 # If the new pinout is used we should be able to set the maximum available
 # PWM bits. Lower available PMW bits will result in better refresh rate.
 # Little sideffect: the smaller the value the darker the LEDs will be.
-# 
-# Testing commandline:
-#    ./led-matrix -r 32 -P 1 -c 1 -p 4 -D 4
-#
-# Results with EXPERIMENTAL_BITPLANES 4
-# Results with EXPERIMENTAL_BITPLANES 8
-# Results with EXPERIMENTAL_BITPLANES 11
 DEFINES+=-DEXPERIMENTAL_BITPLANES=4
 
 INCDIR=../include
