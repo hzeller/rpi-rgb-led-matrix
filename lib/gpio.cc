@@ -81,7 +81,7 @@ static bool IsRaspberryPi2() {
   const char *mem_size_key;
   off_t mem_size;
   if ((mem_size_key = strstr(buffer, "mem_size=")) != NULL
-      && (sscanf(mem_size_key + strlen("mem_size="), "%tx", &mem_size) == 1)
+      && (sscanf(mem_size_key + strlen("mem_size="), "%lx", &mem_size) == 1)
       && (mem_size == 0x3F000000)) {
     return true;
   }
