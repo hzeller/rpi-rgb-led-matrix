@@ -47,7 +47,7 @@ TARGET=librgbmatrix.a
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
 INCDIR=../include
-CXXFLAGS=-Wall -O3 -g $(DEFINES)
+CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
 
 $(TARGET) : $(OBJECTS)
 	ar rcs $@ $^
