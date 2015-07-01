@@ -53,7 +53,7 @@ TARGET=librgbmatrix.a
 DEFINES+=-DEXPERIMENTAL_NEW_PINOUT
 
 INCDIR=../include
-CXXFLAGS=-Wall -O3 -g $(DEFINES)
+CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
 
 $(TARGET) : $(OBJECTS)
 	ar rcs $@ $^

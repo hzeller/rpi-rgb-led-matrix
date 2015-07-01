@@ -234,10 +234,9 @@ public:
   bool LoadPPM(const char *filename) {
     FILE *f = fopen(filename, "r");
     // check if file exists
-    if(access( filename, F_OK ) == -1 ) {
-       fprintf(stderr, "File \"%s\" doesn't exist\n", filename);
-
-       return false;
+    if (f == NULL && access(filename, F_OK) == -1) {
+      fprintf(stderr, "File \"%s\" doesn't exist\n", filename);
+      return false;
     }
     if (f == NULL) return false;
     char header_buf[256];
