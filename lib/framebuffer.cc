@@ -63,7 +63,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
     columns_(columns),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true),
     double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
-  bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
+  bitplane_buffer_ = new uint32_t [double_rows_ * columns_ * kBitPlanes];
   Clear();
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
@@ -85,52 +85,27 @@ Framebuffer::~Framebuffer() {
     return;  // already initialized.
 
   // Tell GPIO about all bits we intend to use.
-  IoBits b;
-  b.raw = 0;
+  uint32_t b = 0;
+  b |= (1<<OUTPUT_ENABLE) | (1<<CLOCK) | (1<<STROBE);
 
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
-  b.bits.output_enable_rev1 = b.bits.output_enable_rev2 = 1;
-  b.bits.clock_rev1 = b.bits.clock_rev2 = 1;
-#endif
+  b |= (1<<P0_R1)|(1<<P0_G1)|(1<<P0_B1)|(1<<P0_R2)|(1<<P0_G2)|(1<<P0_B2);
+  // TODO(hzeller): make individual switch.
+  b |= (1<<P1_R1)|(1<<P1_G1)|(1<<P1_B1)|(1<<P1_R2)|(1<<P1_G2)|(1<<P1_B2);
+  b |= (1<<P2_R1)|(1<<P2_G1)|(1<<P2_B1)|(1<<P2_R2)|(1<<P2_G2)|(1<<P2_B2);
 
-  b.bits.output_enable = 1;
-  b.bits.clock = 1;
-  b.bits.strobe = 1;
-
-  b.bits.p0_r1 = b.bits.p0_g1 = b.bits.p0_b1 = 1;
-  b.bits.p0_r2 = b.bits.p0_g2 = b.bits.p0_b2 = 1;
-
-#ifdef SUPPORT_MULTI_PARALLEL
-  if (parallel >= 2) {
-    b.bits.p1_r1 = b.bits.p1_g1 = b.bits.p1_b1 = 1;
-    b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
-  }
-
-  if (parallel >= 3) {
-    b.bits.p2_r1 = b.bits.p2_g1 = b.bits.p2_b1 = 1;
-    b.bits.p2_r2 = b.bits.p2_g2 = b.bits.p2_b2 = 1;
-  }
-#endif
-
-  b.bits.a = b.bits.b = b.bits.c = b.bits.d = 1;
+  b |= (1<<ROW_A)|(1<<ROW_B)|(1<<ROW_C)|(1<<ROW_D);
 
   // Initialize outputs, make sure that all of these are supported bits.
-  const uint32_t result = io->InitOutputs(b.raw);
-  assert(result == b.raw);
+  const uint32_t result = io->InitOutputs(b);
+  assert(result == b);
 
   // Now, set up the PinPulser for output enable.
-  IoBits output_enable_bits;
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
-  output_enable_bits.bits.output_enable_rev1
-    = output_enable_bits.bits.output_enable_rev2 = 1;
-#endif
-  output_enable_bits.bits.output_enable = 1;
-
+  uint32_t output_enable_bits = (1<<OUTPUT_ENABLE);
   std::vector<int> bitplane_timings;
   for (int b = 0; b < kBitPlanes; ++b) {
     bitplane_timings.push_back(kBaseTimeNanos << b);
   }
-  sOutputEnablePulser = PinPulser::Create(io, output_enable_bits.raw,
+  sOutputEnablePulser = PinPulser::Create(io, output_enable_bits,
                                           bitplane_timings);
 }
 
@@ -141,8 +116,7 @@ bool Framebuffer::SetPWMBits(uint8_t value) {
   return true;
 }
 
-inline Framebuffer::IoBits *Framebuffer::ValueAt(int double_row,
-                                                 int column, int bit) {
+inline uint32_t *Framebuffer::ValueAt(int double_row, int column, int bit) {
   return &bitplane_buffer_[ double_row * (columns_ * kBitPlanes)
                             + bit * columns_
                             + column ];
@@ -197,31 +171,32 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
 
   for (int b = kBitPlanes - pwm_bits_; b < kBitPlanes; ++b) {
     uint16_t mask = 1 << b;
-    IoBits plane_bits;
-    plane_bits.raw = 0;
-    plane_bits.bits.p0_r1 = plane_bits.bits.p0_r2 = (red & mask) == mask;
-    plane_bits.bits.p0_g1 = plane_bits.bits.p0_g2 = (green & mask) == mask;
-    plane_bits.bits.p0_b1 = plane_bits.bits.p0_b2 = (blue & mask) == mask;
-
-#ifdef SUPPORT_MULTI_PARALLEL
-    plane_bits.bits.p1_r1 = plane_bits.bits.p1_r2 =
-      plane_bits.bits.p2_r1 = plane_bits.bits.p2_r2 = (red & mask) == mask;
-    plane_bits.bits.p1_g1 = plane_bits.bits.p1_g2 =
-      plane_bits.bits.p2_g1 = plane_bits.bits.p2_g2 = (green & mask) == mask;
-    plane_bits.bits.p1_b1 = plane_bits.bits.p1_b2 =
-      plane_bits.bits.p2_b1 = plane_bits.bits.p2_b2 = (blue & mask) == mask;
-#endif
+    uint32_t plane_bits = 0;
+    if ((red & mask) == mask) {
+      plane_bits |= (1<<P0_R1) | (1<<P0_R2);
+      plane_bits |= (1<<P1_R1) | (1<<P1_R2);
+      plane_bits |= (1<<P2_R1) | (1<<P2_R2);
+    }
+    if ((green & mask) == mask) {
+      plane_bits |= (1<<P0_G1) | (1<<P0_G2);
+      plane_bits |= (1<<P1_G1) | (1<<P1_G2);
+      plane_bits |= (1<<P2_G1) | (1<<P2_G2);
+    }
+    if ((blue & mask) == mask) {
+      plane_bits |= (1<<P0_B1) | (1<<P0_B2);
+      plane_bits |= (1<<P1_B1) | (1<<P1_B2);
+      plane_bits |= (1<<P2_B1) | (1<<P2_B2);
+    }
     for (int row = 0; row < double_rows_; ++row) {
-      IoBits *row_data = ValueAt(row, 0, b);
+      uint32_t *row_data = ValueAt(row, 0, b);
       for (int col = 0; col < columns_; ++col) {
-        (row_data++)->raw = plane_bits.raw;
+        *(row_data++) = plane_bits;
       }
     }
   }
 }
 
-void Framebuffer::SetPixel(int x, int y,
-                                      uint8_t r, uint8_t g, uint8_t b) {
+void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   if (x < 0 || x >= columns_ || y < 0 || y >= height_) return;
 
   const uint16_t red   = MapColor(r);
@@ -229,7 +204,7 @@ void Framebuffer::SetPixel(int x, int y,
   const uint16_t blue  = MapColor(b);
 
   const int min_bit_plane = kBitPlanes - pwm_bits_;
-  IoBits *bits = ValueAt(y & row_mask_, x, min_bit_plane);
+  uint32_t *bits = ValueAt(y & row_mask_, x, min_bit_plane);
 
   // Manually expand the three cases for better performance.
   // TODO(hzeller): This is a bit repetetive. Test if it pays off to just
@@ -238,38 +213,37 @@ void Framebuffer::SetPixel(int x, int y,
     // Parallel chain #1
     if (y < double_rows_) {   // Upper sub-panel.
       for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p0_r1 = (red & mask) == mask;
-        bits->bits.p0_g1 = (green & mask) == mask;
-        bits->bits.p0_b1 = (blue & mask) == mask;
+        const uint16_t m = 1 << b;
+        if ((red & m) == m)   *bits |= (1<<P0_R1); else *bits &= ~(1<<P0_R1);
+        if ((green & m) == m) *bits |= (1<<P0_G1); else *bits &= ~(1<<P0_G1);
+        if ((blue & m) == m)  *bits |= (1<<P0_B1); else *bits &= ~(1<<P0_B1);
         bits += columns_;
       }
     } else {
       for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p0_r2 = (red & mask) == mask;
-        bits->bits.p0_g2 = (green & mask) == mask;
-        bits->bits.p0_b2 = (blue & mask) == mask;
+        const uint16_t m = 1 << b;
+        if ((red & m) == m)   *bits |= (1<<P0_R2); else *bits &= ~(1<<P0_R2);
+        if ((green & m) == m) *bits |= (1<<P0_G2); else *bits &= ~(1<<P0_G2);
+        if ((blue & m) == m)  *bits |= (1<<P0_B2); else *bits &= ~(1<<P0_B2);
         bits += columns_;
       }
     }
-#ifdef SUPPORT_MULTI_PARALLEL
   } else if (y >= rows_ && y < 2 * rows_) {
     // Parallel chain #2
     if (y - rows_ < double_rows_) {   // Upper sub-panel.
       for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p1_r1 = (red & mask) == mask;
-        bits->bits.p1_g1 = (green & mask) == mask;
-        bits->bits.p1_b1 = (blue & mask) == mask;
+        const uint16_t m = 1 << b;
+        if ((red & m) == m)   *bits |= (1<<P1_R1); else *bits &= ~(1<<P1_R1);
+        if ((green & m) == m) *bits |= (1<<P1_G1); else *bits &= ~(1<<P1_G1);
+        if ((blue & m) == m)  *bits |= (1<<P1_B1); else *bits &= ~(1<<P1_B1);
         bits += columns_;
       }
     } else {
       for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p1_r2 = (red & mask) == mask;
-        bits->bits.p1_g2 = (green & mask) == mask;
-        bits->bits.p1_b2 = (blue & mask) == mask;
+        const uint16_t m = 1 << b;
+        if ((red & m) == m)   *bits |= (1<<P1_R2); else *bits &= ~(1<<P1_R2);
+        if ((green & m) == m) *bits |= (1<<P1_G2); else *bits &= ~(1<<P1_G2);
+        if ((blue & m) == m)  *bits |= (1<<P1_B2); else *bits &= ~(1<<P1_B2);
         bits += columns_;
       }
     }
@@ -277,96 +251,66 @@ void Framebuffer::SetPixel(int x, int y,
     // Parallel chain #3
     if (y - 2*rows_ < double_rows_) {   // Upper sub-panel.
       for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p2_r1 = (red & mask) == mask;
-        bits->bits.p2_g1 = (green & mask) == mask;
-        bits->bits.p2_b1 = (blue & mask) == mask;
+        const uint16_t m = 1 << b;
+        if ((red & m) == m)   *bits |= (1<<P2_R1); else *bits &= ~(1<<P2_R1);
+        if ((green & m) == m) *bits |= (1<<P2_G1); else *bits &= ~(1<<P2_G1);
+        if ((blue & m) == m)  *bits |= (1<<P2_B1); else *bits &= ~(1<<P2_B1);
         bits += columns_;
       }
     } else {
       for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p2_r2 = (red & mask) == mask;
-        bits->bits.p2_g2 = (green & mask) == mask;
-        bits->bits.p2_b2 = (blue & mask) == mask;
+        const uint16_t m = 1 << b;
+        if ((red & m) == m)   *bits |= (1<<P2_R2); else *bits &= ~(1<<P2_R2);
+        if ((green & m) == m) *bits |= (1<<P2_G2); else *bits &= ~(1<<P2_G2);
+        if ((blue & m) == m)  *bits |= (1<<P2_B2); else *bits &= ~(1<<P2_B2);
         bits += columns_;
       }
     }
-#endif
   }
 }
 
 void Framebuffer::DumpToMatrix(GPIO *io) {
-  IoBits color_clk_mask;   // Mask of bits we need to set while clocking in.
-  color_clk_mask.bits.p0_r1
-    = color_clk_mask.bits.p0_g1
-    = color_clk_mask.bits.p0_b1
-    = color_clk_mask.bits.p0_r2
-    = color_clk_mask.bits.p0_g2
-    = color_clk_mask.bits.p0_b2 = 1;
+  // Mask of bits we need to set while clocking in.
+  const uint32_t color_clk_mask =
+    (1<<P0_R1)|(1<<P0_G1)|(1<<P0_B1)|(1<<P0_R2)|(1<<P0_G2)|(1<<P0_B2)|
+    (1<<P1_R1)|(1<<P1_G1)|(1<<P1_B1)|(1<<P1_R2)|(1<<P1_G2)|(1<<P1_B2)|
+    (1<<P2_R1)|(1<<P2_G1)|(1<<P2_B1)|(1<<P2_R2)|(1<<P2_G2)|(1<<P2_B2)|
+    (1<<CLOCK);
 
-#ifdef SUPPORT_MULTI_PARALLEL
-  if (parallel_ >= 2) {
-    color_clk_mask.bits.p1_r1
-      = color_clk_mask.bits.p1_g1
-      = color_clk_mask.bits.p1_b1
-      = color_clk_mask.bits.p1_r2
-      = color_clk_mask.bits.p1_g2
-      = color_clk_mask.bits.p1_b2 = 1;
-  }
+  const uint32_t row_mask =
+    (1<<ROW_A)|(1<<ROW_B)|(1<<ROW_C)|(1<<ROW_D);
 
-  if (parallel_ >= 3) {
-    color_clk_mask.bits.p2_r1
-      = color_clk_mask.bits.p2_g1
-      = color_clk_mask.bits.p2_b1
-      = color_clk_mask.bits.p2_r2
-      = color_clk_mask.bits.p2_g2
-      = color_clk_mask.bits.p2_b2 = 1;
-  }
-#endif
-
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
-  color_clk_mask.bits.clock_rev1 = color_clk_mask.bits.clock_rev2 = 1;
-#endif
-  color_clk_mask.bits.clock = 1;
-
-  IoBits row_mask;
-  row_mask.bits.a = row_mask.bits.b = row_mask.bits.c = row_mask.bits.d = 1;
-
-  IoBits clock, strobe, row_address;
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
-  clock.bits.clock_rev1 = clock.bits.clock_rev2 = 1;
-#endif
-  clock.bits.clock = 1;
-  strobe.bits.strobe = 1;
+  const uint32_t clock = (1<<CLOCK);
+  const uint32_t strobe = (1<<STROBE);
 
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
-    row_address.bits.a = d_row;
-    row_address.bits.b = d_row >> 1;
-    row_address.bits.c = d_row >> 2;
-    row_address.bits.d = d_row >> 3;
+    const uint32_t row_address =
+      ((d_row & 0x1) ? (1<<ROW_A) : 0) |
+      ((d_row & 0x2) ? (1<<ROW_B) : 0) |
+      ((d_row & 0x4) ? (1<<ROW_C) : 0) |
+      ((d_row & 0x8) ? (1<<ROW_D) : 0);
 
-    io->WriteMaskedBits(row_address.raw, row_mask.raw);  // Set row address
+    io->WriteMaskedBits(row_address, row_mask);  // Set row address
 
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
     for (int b = kBitPlanes - pwm_to_show; b < kBitPlanes; ++b) {
-      IoBits *row_data = ValueAt(d_row, 0, b);
+      const uint32_t *row_data = ValueAt(d_row, 0, b);
       // While the output enable is still on, we can already clock in the next
       // data.
       for (int col = 0; col < columns_; ++col) {
-        const IoBits &out = *row_data++;
-        io->WriteMaskedBits(out.raw, color_clk_mask.raw);  // col + reset clock
-        io->SetBits(clock.raw);               // Rising edge: clock color in.
+        const uint32_t &out = *row_data++;
+        io->WriteMaskedBits(out, color_clk_mask);  // col + reset clock
+        io->SetBits(clock);               // Rising edge: clock color in.
       }
-      io->ClearBits(color_clk_mask.raw);    // clock back to normal.
+      io->ClearBits(color_clk_mask);    // clock back to normal.
 
       // OE of the previous row-data must be finished before strobe.
       sOutputEnablePulser->WaitPulseFinished();
 
-      io->SetBits(strobe.raw);   // Strobe in the previously clocked in row.
-      io->ClearBits(strobe.raw);
+      io->SetBits(strobe);   // Strobe in the previously clocked in row.
+      io->ClearBits(strobe);
 
       // Now switch on for the sleep time necessary for that bit-plane.
       sOutputEnablePulser->SendPulse(b);
