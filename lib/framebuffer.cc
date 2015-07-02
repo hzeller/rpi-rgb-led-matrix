@@ -33,7 +33,7 @@ enum {
   kBitPlanes = 11  // maximum usable bitplanes.
 };
 
-static const long kBaseTimeNanos = 200;
+static const long kBaseTimeNanos = 100;
 
 // We need one global instance of a timing correct pulser. There are different
 // implementations depending on the context.
