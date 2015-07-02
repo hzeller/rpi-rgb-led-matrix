@@ -69,6 +69,7 @@ private:
 
   const int double_rows_;
   const uint8_t row_mask_;
+  uint32_t color_mask_;
 
   // Currently experimental new layout. Reshuffling completely to better meet
   // constraints:
@@ -79,8 +80,9 @@ private:
   //      o Only on 40Pin: if chain=0 is left out, SPI bus can be re-used.
   //   - current problem: can't use Rev1, as we use 27 for a parallel0 thing.
   enum IoBits {
-    unused_0_1, //  0..1  (only on RPi 1, Revision 1)
-    P2_G1 = 2,  //  2 P1-03 (masks SDA when parallel=3)
+    unused_0,   //  0  (only on RPi 1, Revision 1)
+    unused_1,   //  1  (only on RPi 1, Revision 1)
+    P2_G1,      //  2 P1-03 (masks SDA when parallel=3)
     P2_B1,      //  3 P1-05 (masks SCL when parallel=3)
     STROBE,     //  4 P1-07
     P1_G1,      //  5 P1-29 (only on A+/B+/Pi2)
@@ -95,7 +97,7 @@ private:
     P1_R1,      // 12 P1-32 (only on A+/B+/Pi2)
     P1_G2,      // 13 P1-33 (only on A+/B+/Pi2)
     P2_R1,      // 14 P1-08 (masks TxD when parallel=3)
-    unused_15,  // 15 P1-10 (RxD)
+    unused_15,  // 15 P1-10 (RxD) - free to maybe use to receive data.
     P2_G2,      // 16 P1-36 (only on A+/B+/Pi2)
 
     CLOCK,      // 17 P1-11
@@ -114,14 +116,25 @@ private:
     P0_G1,      // 27 P1-13 (Not on RPi1, Rev1)
   };
 
+  // GPIO has separate operations for setting and clearing bits.
+  struct GPIOBits {
+    uint32_t set_bits;
+    uint32_t clear_bits;
+
+    inline void SetMasked(uint32_t value, uint32_t mask) {
+      set_bits   = (set_bits   & ~mask) | ( value & mask);
+      clear_bits = (clear_bits & ~mask) | (~value & mask);
+    }
+  };
+
   // The frame-buffer is organized in bitplanes.
   // Highest level (slowest to cycle through) are double rows.
   // For each double-row, we store pwm-bits columns of a bitplane.
   // Each bitplane-column is pre-filled IoBits, of which the colors are set.
   // Of course, that means that we store unrelated bits in the frame-buffer,
   // but it allows easy access in the critical section.
-  uint32_t *bitplane_buffer_;
-  inline uint32_t *ValueAt(int double_row, int column, int bit);
+  GPIOBits *bitplane_buffer_;
+  inline GPIOBits *ValueAt(int double_row, int column, int bit_plane);
 };
 }  // namespace internal
 }  // namespace rgb_matrix
