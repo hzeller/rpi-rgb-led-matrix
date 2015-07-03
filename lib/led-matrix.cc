@@ -144,6 +144,7 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
     result->framebuffer()->SetPWMBits(pwm_bits_);
     result->framebuffer()->set_luminance_correct(do_luminance_correct_);
   }
+  result->framebuffer()->InitializeScript(io_);
   created_frames_.push_back(result);
   return result;
 }

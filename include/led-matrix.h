@@ -65,10 +65,6 @@ public:
             int parallel_displays = 1);
   virtual ~RGBMatrix();
 
-  // Set GPIO output if it was not set already in constructor (otherwise: NoOp).
-  // Starts display refresh thread if this is the first setting.
-  void SetGPIO(GPIO *io);
-
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // limited comic-colors, 1 might be sufficient. Lower require less CPU and
   // increases refresh-rate.
@@ -117,6 +113,10 @@ public:
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
 private:
+  // Set GPIO output if it was not set already in constructor (otherwise: NoOp).
+  // Starts display refresh thread if this is the first setting.
+  void SetGPIO(GPIO *io);
+
   class UpdateThread;
   friend class UpdateThread;
 

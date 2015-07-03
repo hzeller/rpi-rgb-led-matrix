@@ -442,4 +442,55 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
   }
 }
 
+class HardwareScript::ScriptElement {
+public:
+  ~ScriptElement() {}
+  virtual void Run() = 0;
+};
+
+class HardwareScript::DataElement : public HardwareScript::ScriptElement {
+public:
+  DataElement(GPIO *io, const GPIO::Data *data) : io_(io), data_(data) {}
+  virtual void Run() { io_->Write(*data_); }
+
+private:
+  GPIO *const io_;
+  const GPIO::Data *const data_;
+};
+
+class HardwareScript::PulseElement : public HardwareScript::ScriptElement {
+public:
+  PulseElement(PinPulser *pulser, int spec) : pulser_(pulser), spec_(spec) {}
+  virtual void Run() {
+    pulser_->SendPulse(spec_);
+    pulser_->WaitPulseFinished();  // todo: make that a separate element.
+  }
+
+private:
+  PinPulser *const pulser_;
+  const int spec_;
+};
+
+HardwareScript::~HardwareScript() { Clear(); }
+void HardwareScript::Clear() {
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    delete elements_[i];
+  }
+  elements_.clear();
+}
+
+void HardwareScript::AppendGPIO(const GPIO::Data *data) {
+  elements_.push_back(new DataElement(io_, data));
+}
+void HardwareScript::AppendPinPulse(int spec) {
+  elements_.push_back(new PulseElement(pulser_, spec));
+}
+
+void HardwareScript::RunOnce() {
+  // foreground running.
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    elements_[i]->Run();
+  }
+}
+
 } // namespace rgb_matrix

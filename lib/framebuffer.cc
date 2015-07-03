@@ -47,7 +47,8 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
     height_(rows * parallel),
     columns_(columns),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true),
-    double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
+    double_rows_(rows / 2), row_mask_(double_rows_ - 1),
+    script_(NULL) {
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
   bitplane_buffer_ = new GPIO::Data [double_rows_ * columns_ * kBitPlanes];
@@ -140,6 +141,7 @@ bool Framebuffer::SetPWMBits(uint8_t value) {
   if (value < 1 || value > kBitPlanes)
     return false;
   pwm_bits_ = value;
+  // TODO(hzeller): if different, create new hardware script.
   return true;
 }
 
@@ -300,9 +302,18 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void Framebuffer::DumpToMatrix(GPIO *io) {
+  if (!script_) InitializeScript(io);
+  script_->RunOnce();
+}
+
+void Framebuffer::InitializeScript(GPIO *io) {
+  if (!io) return;  // can't do that yet.
+  assert(!script_);
+  script_ = new HardwareScript(io, sOutputEnablePulser);
+
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
-    io->Write(row_address_[d_row]);
+    script_->AppendGPIO(&row_address_[d_row]);
 
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
@@ -312,21 +323,20 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       // data.
       for (int col = 0; col < columns_; ++col) {
         const GPIO::Data &out = *row_data++;
-
-        io->Write(out);         // col + reset clock
-        io->Write(clock_in_);   // Rising edge: clock color in.
+        script_->AppendGPIO(&out);         // col + reset clock
+        script_->AppendGPIO(&clock_in_);   // Rising edge: clock color in.
       }
-      io->Write(clock_reset_);  // clock falling edge.
+      script_->AppendGPIO(&clock_reset_);  // clock falling edge.
 
       // OE of the previous row-data must be finished before strobe.
-      sOutputEnablePulser->WaitPulseFinished();
+      //sOutputEnablePulser->WaitPulseFinished();
 
-      io->Write(strobe_);     // set/reset in one go.
+      script_->AppendGPIO(&strobe_);     // set/reset in one go.
 
       // Now switch on for the sleep time necessary for that bit-plane.
-      sOutputEnablePulser->SendPulse(b);
+      script_->AppendPinPulse(b);
     }
-    sOutputEnablePulser->WaitPulseFinished();
+    //sOutputEnablePulser->WaitPulseFinished();
   }
 }
 }  // namespace internal

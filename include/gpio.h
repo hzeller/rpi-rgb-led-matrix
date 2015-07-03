@@ -17,7 +17,6 @@
 #define RPI_GPIO_H
 
 #include <stdint.h>
-
 #include <vector>
 
 // Putting this in our namespace to not collide with other things called like
@@ -96,5 +95,39 @@ public:
   virtual void WaitPulseFinished() {}
 };
 
+// Scratch API thought area for DMA. To abstract it from the actual DMA, we
+// consider it a "HardwareScript", but it is close enough so that it can be
+// implemented straight-forward.
+// (playground right now to figure out a good API that makes things readable)
+class HardwareScript {
+public:
+  // Does  not take ownership of io and pulser.
+  HardwareScript(GPIO *io, PinPulser *pulser) : io_(io), pulser_(pulser) {}
+  ~HardwareScript();
+
+  // Clear script.
+  void Clear();
+
+  // Append a GPIO datum to be written. Ownership is not taken, but the
+  // pointer must survive.
+  void AppendGPIO(const GPIO::Data *data);
+
+  // Append pulsing a pin (negative logic) for given spec
+  // (TODO: this should be pin+nano-seconds, for now just spec from pulser
+  // definition)
+  void AppendPinPulse(int spec);
+
+  // Run this script once.
+  void RunOnce();
+
+private:
+  class ScriptElement;
+  class DataElement;
+  class PulseElement;
+
+  GPIO *const io_;
+  PinPulser *const pulser_;
+  std::vector<ScriptElement*> elements_;
+};
 }  // end namespace rgb_matrix
 #endif  // RPI_GPIO_H

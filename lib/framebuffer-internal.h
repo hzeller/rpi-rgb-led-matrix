@@ -45,6 +45,7 @@ public:
   bool luminance_correct() const { return do_luminance_correct_; }
 
   void DumpToMatrix(GPIO *io);
+  void InitializeScript(GPIO *io);
 
   // Canvas-inspired methods, but we're not implementing this interface to not
   // have an unnecessary vtable.
@@ -131,6 +132,8 @@ private:
   GPIO::Data clock_reset_;
   GPIO::Data strobe_;
   GPIO::Data row_address_[16];
+
+  HardwareScript *script_;
 
   inline GPIO::Data *ValueAt(int double_row, int column, int bit_plane);
 };
