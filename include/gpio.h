@@ -53,9 +53,12 @@ class GPIO {
   // (e.g. due to a permission problem).
   bool Init();
 
-  // Initialize outputs.
+  // Initialize pins that should act as outputs.
   // Returns the bits that are actually set.
+  // Only these bits should be set in the SetMasked(), otherwise you
+  // might lock-up your Pi.
   uint32_t InitOutputs(uint32_t outputs);
+  uint32_t output_bits() const { return output_bits_; }
 
   inline void Write(const Data& data) {
     SetBits(data.set_bits);

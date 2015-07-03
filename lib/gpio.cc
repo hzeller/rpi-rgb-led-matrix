@@ -480,6 +480,10 @@ void HardwareScript::Clear() {
 }
 
 void HardwareScript::AppendGPIO(const GPIO::Data *data) {
+  // Make sure that we don't mess with bits we haven't configured.
+  assert((data->set_bits & io_->output_bits()) == data->set_bits);
+  assert((data->clear_bits & io_->output_bits()) == data->clear_bits);
+
   elements_.push_back(new DataElement(io_, data));
 }
 void HardwareScript::AppendPinPulse(int spec) {
