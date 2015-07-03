@@ -118,10 +118,10 @@ private:
 
   // GPIO has separate operations for setting and clearing bits.
   struct GPIOBits {
-    uint32_t set_bits;
-    uint32_t clear_bits;
+    uint64_t set_bits;
+    uint64_t clear_bits;
 
-    inline void SetMasked(uint32_t value, uint32_t mask) {
+    inline void SetMasked(uint64_t value, uint64_t mask) {
       set_bits   = (set_bits   & ~mask) | ( value & mask);
       clear_bits = (clear_bits & ~mask) | (~value & mask);
     }
