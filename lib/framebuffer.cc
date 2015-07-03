@@ -39,21 +39,6 @@ static const long kBaseTimeNanos = 100;
 // implementations depending on the context.
 static PinPulser *sOutputEnablePulser = NULL;
 
-// The Adafruit HAT only supports one chain.
-#if defined(ADAFRUIT_RGBMATRIX_HAT) && defined(SUPPORT_MULTI_PARALLEL)
-#  warning "Adafruit HAT doesn't map parallel chains. Disabling parallel chains."
-#  undef SUPPORT_MULTI_PARALLEL
-#endif
-
-// Only if SUPPORT_MULTI_PARALLEL is not defined, we allow classic wiring.
-// Also, the Adafruit HAT does not do classic wiring either.
-#if defined(SUPPORT_MULTI_PARALLEL) || defined(ADAFRUIT_RGBMATRIX_HAT) \
-  || defined(EXPERIMENTAL_NEW_PINOUT)
-#  undef SUPPORT_CLASSIC_LED_GPIO_WIRING_
-#else
-#  define SUPPORT_CLASSIC_LED_GPIO_WIRING_
-#endif
-
 Framebuffer::Framebuffer(int rows, int columns, int parallel)
   : rows_(rows),
 #ifdef SUPPORT_MULTI_PARALLEL
@@ -65,7 +50,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
     double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
-  bitplane_buffer_ = new GPIOBits [double_rows_ * columns_ * kBitPlanes];
+  bitplane_buffer_ = new GPIO::Data [double_rows_ * columns_ * kBitPlanes];
   // When we clock in colors, we always want to clear the clock bit as well.
   // Let's prepare that already here; that bit will never be touched later.
   for (int i = 0; i < double_rows_ * columns_ * kBitPlanes; ++i) {
@@ -89,6 +74,29 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
     assert(parallel == 1);
   }
 #endif
+
+  // Pre-calculate some GPIO operations.
+  clock_in_.set_bits = (1<<CLOCK);
+  clock_in_.clear_bits = 0;
+
+  clock_reset_.set_bits = 0;
+  clock_reset_.clear_bits = (1<<CLOCK);
+
+  // We use the fact that set/reset happen in that sequence
+  strobe_.set_bits = (1<<STROBE);
+  strobe_.clear_bits = (1<<STROBE);
+
+  memset(row_address_, 0, sizeof(row_address_));
+  const uint32_t row_mask = (1<<ROW_A)|(1<<ROW_B)|(1<<ROW_C)|(1<<ROW_D);
+  for (uint8_t d_row = 0; d_row < 16; ++d_row) {
+    const uint32_t row_address =
+      ((d_row & 0x1) ? (1<<ROW_A) : 0) |
+      ((d_row & 0x2) ? (1<<ROW_B) : 0) |
+      ((d_row & 0x4) ? (1<<ROW_C) : 0) |
+      ((d_row & 0x8) ? (1<<ROW_D) : 0);
+    row_address_[d_row].SetMasked(row_address, row_mask);
+  }
+
   Clear();
 }
 
@@ -135,8 +143,8 @@ bool Framebuffer::SetPWMBits(uint8_t value) {
   return true;
 }
 
-inline Framebuffer::GPIOBits *Framebuffer::ValueAt(int double_row, int column,
-                                                   int bit_plane) {
+inline GPIO::Data *Framebuffer::ValueAt(int double_row, int column,
+                                        int bit_plane) {
   return &bitplane_buffer_[ double_row * (columns_ * kBitPlanes)
                             + bit_plane * columns_
                             + column ];
@@ -197,7 +205,7 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
       bits |= (1<<P0_B1)|(1<<P0_B2)|(1<<P1_B1)|(1<<P1_B2)|(1<<P2_B1)|(1<<P2_B2);
     }
     for (int row = 0; row < double_rows_; ++row) {
-      GPIOBits *row_data = ValueAt(row, 0, b);
+      GPIO::Data *row_data = ValueAt(row, 0, b);
       for (int col = 0; col < columns_; ++col) {
         (row_data++)->SetMasked(bits, color_mask_);
       }
@@ -213,7 +221,7 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   const uint16_t blue  = MapColor(b);
 
   const int min_bit_plane = kBitPlanes - pwm_bits_;
-  GPIOBits *bits = ValueAt(y & row_mask_, x, min_bit_plane);
+  GPIO::Data *bits = ValueAt(y & row_mask_, x, min_bit_plane);
   uint32_t col = 0;
 
   // Manually expand the three cases for better performance.
@@ -292,40 +300,28 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void Framebuffer::DumpToMatrix(GPIO *io) {
-  const uint32_t row_mask = (1<<ROW_A)|(1<<ROW_B)|(1<<ROW_C)|(1<<ROW_D);
-  const uint32_t clock = (1<<CLOCK);
-  const uint32_t strobe = (1<<STROBE);
-
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
-    const uint32_t row_address =
-      ((d_row & 0x1) ? (1<<ROW_A) : 0) |
-      ((d_row & 0x2) ? (1<<ROW_B) : 0) |
-      ((d_row & 0x4) ? (1<<ROW_C) : 0) |
-      ((d_row & 0x8) ? (1<<ROW_D) : 0);
-
-    io->WriteMaskedBits(row_address, row_mask);  // Set row address
+    io->Write(row_address_[d_row]);
 
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
     for (int b = kBitPlanes - pwm_to_show; b < kBitPlanes; ++b) {
-      const GPIOBits *row_data = ValueAt(d_row, 0, b);
+      const GPIO::Data *row_data = ValueAt(d_row, 0, b);
       // While the output enable is still on, we can already clock in the next
       // data.
       for (int col = 0; col < columns_; ++col) {
-        const GPIOBits &out = *row_data++;
-        // col + reset clock
-        io->SetBits(out.set_bits);
-        io->ClearBits(out.clear_bits);
-        io->SetBits(clock);               // Rising edge: clock color in.
+        const GPIO::Data &out = *row_data++;
+
+        io->Write(out);         // col + reset clock
+        io->Write(clock_in_);   // Rising edge: clock color in.
       }
-      io->ClearBits(clock);               // clock back to normal.
+      io->Write(clock_reset_);  // clock falling edge.
 
       // OE of the previous row-data must be finished before strobe.
       sOutputEnablePulser->WaitPulseFinished();
 
-      io->SetBits(strobe);   // Strobe in the previously clocked in row.
-      io->ClearBits(strobe);
+      io->Write(strobe_);     // set/reset in one go.
 
       // Now switch on for the sleep time necessary for that bit-plane.
       sOutputEnablePulser->SendPulse(b);

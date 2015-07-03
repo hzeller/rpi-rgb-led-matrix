@@ -16,6 +16,7 @@
 #define RPI_RGBMATRIX_FRAMEBUFFER_INTERNAL_H
 
 #include <stdint.h>
+#include "gpio.h"
 
 namespace rgb_matrix {
 class GPIO;
@@ -116,25 +117,22 @@ private:
     P0_G1,      // 27 P1-13 (Not on RPi1, Rev1)
   };
 
-  // GPIO has separate operations for setting and clearing bits.
-  struct GPIOBits {
-    uint64_t set_bits;
-    uint64_t clear_bits;
-
-    inline void SetMasked(uint64_t value, uint64_t mask) {
-      set_bits   = (set_bits   & ~mask) | ( value & mask);
-      clear_bits = (clear_bits & ~mask) | (~value & mask);
-    }
-  };
-
   // The frame-buffer is organized in bitplanes.
   // Highest level (slowest to cycle through) are double rows.
   // For each double-row, we store pwm-bits columns of a bitplane.
-  // Each bitplane-column is pre-filled IoBits, of which the colors are set.
+  // Each bitplane-column is pre-filled GPIO::Data, of which the colors are set.
   // Of course, that means that we store unrelated bits in the frame-buffer,
   // but it allows easy access in the critical section.
-  GPIOBits *bitplane_buffer_;
-  inline GPIOBits *ValueAt(int double_row, int column, int bit_plane);
+  GPIO::Data *bitplane_buffer_;
+
+  // Pre-calculated bits to send out to GPIO. Stored here, as their address is
+  // referenced by DMA.
+  GPIO::Data clock_in_;
+  GPIO::Data clock_reset_;
+  GPIO::Data strobe_;
+  GPIO::Data row_address_[16];
+
+  inline GPIO::Data *ValueAt(int double_row, int column, int bit_plane);
 };
 }  // namespace internal
 }  // namespace rgb_matrix

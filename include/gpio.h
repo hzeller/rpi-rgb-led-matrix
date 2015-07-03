@@ -29,6 +29,25 @@ class GPIO {
   // Available bits that actually have pins.
   static const uint32_t kValidBits;
 
+  // GPIO has separate operations for setting and clearing bits, so
+  // one datum contains information about setting and clearing.
+  //
+  // Even though we only use 32 bits for the usual Raspberry Pi
+  // (might be different when we try the compute module), we use
+  // 64 bits, as this is the width of the GPIO register.
+  // This is important if used in DMA operations.
+  //
+  // Operations are done in the sequence set/clear.
+  struct Data {
+    uint64_t set_bits;
+    uint64_t clear_bits;
+
+    inline void SetMasked(uint64_t value, uint64_t mask) {
+      set_bits   = (set_bits   & ~mask) | ( value & mask);
+      clear_bits = (clear_bits & ~mask) | (~value & mask);
+    }
+  };
+
   GPIO();
 
   // Initialize before use. Returns 'true' if successful, 'false' otherwise
@@ -39,21 +58,16 @@ class GPIO {
   // Returns the bits that are actually set.
   uint32_t InitOutputs(uint32_t outputs);
 
+  inline void Write(const Data& data) {
+    SetBits(data.set_bits);
+    ClearBits(data.clear_bits);
+  }
+
   // Set the bits that are '1' in the output. Leave the rest untouched.
   void SetBits(uint32_t value);
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   void ClearBits(uint32_t value);
-
-  // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
-  inline void WriteMaskedBits(uint32_t value, uint32_t mask) {
-    // Writing a word is two operations. The IO is actually pretty slow, so
-    // this should probably  be unnoticable.
-    ClearBits(~value & mask);
-    SetBits(value & mask);
-  }
-
-  inline void Write(uint32_t value) { WriteMaskedBits(value, output_bits_); }
 
  private:
   uint32_t output_bits_;
