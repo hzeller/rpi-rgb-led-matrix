@@ -115,6 +115,7 @@ public:
                         uint8_t red, uint8_t green, uint8_t blue);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  virtual void SetBrightness(float brightness);
 
 private:
   class UpdateThread;
@@ -151,6 +152,7 @@ public:
                         uint8_t red, uint8_t green, uint8_t blue);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  virtual void SetBrightness(float brightness);
 
 private:
   friend class RGBMatrix;

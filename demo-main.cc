@@ -44,6 +44,9 @@ public:
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) {
     delegatee_->Fill(red, green, blue);
   }
+  virtual void SetBrightness(float brightness) {
+    delegatee_->SetBrightness(brightness);
+  }
   virtual int width() const { return 64; }
   virtual int height() const { return 64; }
   virtual void SetPixel(int x, int y,

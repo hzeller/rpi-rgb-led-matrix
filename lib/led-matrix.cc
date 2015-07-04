@@ -182,6 +182,10 @@ void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   active_->framebuffer()->Fill(red, green, blue);
 }
 
+void RGBMatrix::SetBrightness(float brightness) {
+  active_->framebuffer()->SetBrightness(brightness);
+}
+
 // FrameCanvas implementation of Canvas
 FrameCanvas::~FrameCanvas() { delete frame_; }
 int FrameCanvas::width() const { return frame_->width(); }
@@ -193,6 +197,9 @@ void FrameCanvas::SetPixel(int x, int y,
 void FrameCanvas::Clear() { return frame_->Clear(); }
 void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   frame_->Fill(red, green, blue);
+}
+void FrameCanvas::SetBrightness(float brightness) {
+  frame_->SetBrightness(brightness);
 }
 bool FrameCanvas::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
 uint8_t FrameCanvas::pwmbits() { return frame_->pwmbits(); }

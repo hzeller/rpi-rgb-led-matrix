@@ -52,6 +52,7 @@ public:
   void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  void SetBrightness(float brightness);
 
 private:
   // Map color
@@ -66,6 +67,7 @@ private:
 
   uint8_t pwm_bits_;   // PWM bits to display.
   bool do_luminance_correct_;
+  float brightness_;
 
   const int double_rows_;
   const uint8_t row_mask_;

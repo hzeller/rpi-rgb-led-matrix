@@ -61,7 +61,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
 #endif
     height_(rows * parallel),
     columns_(columns),
-    pwm_bits_(kBitPlanes), do_luminance_correct_(true),
+    pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(1),
     double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
@@ -218,6 +218,11 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
       }
     }
   }
+}
+
+void Framebuffer::SetBrightness(float brightness) {
+  assert(brightness >= 0 && brightness <= 1);
+  brightness_ = brightness;
 }
 
 void Framebuffer::SetPixel(int x, int y,
