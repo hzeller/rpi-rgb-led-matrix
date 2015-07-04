@@ -46,9 +46,6 @@ public:
 
   // Fill screen with given 24bpp color.
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) = 0;
-
-  // Set brightness level
-  virtual void SetBrightness(float brightness) = 0;
 };
 
 }  // namespace rgb_matrix

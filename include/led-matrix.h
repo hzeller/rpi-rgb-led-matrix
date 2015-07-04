@@ -84,6 +84,9 @@ public:
   void set_luminance_correct(bool on);
   bool luminance_correct() const;
 
+  void SetBrightness(float brightness);
+  float brightness();
+
   //-- Double- and Multibuffering.
 
   // Create a new buffer to be used for multi-buffering. The returned new
@@ -115,7 +118,6 @@ public:
                         uint8_t red, uint8_t green, uint8_t blue);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-  virtual void SetBrightness(float brightness);
 
 private:
   class UpdateThread;
@@ -127,6 +129,7 @@ private:
 
   uint8_t pwm_bits_;
   bool do_luminance_correct_;
+  float brightness_;
 
   FrameCanvas *active_;
 
@@ -152,7 +155,6 @@ public:
                         uint8_t red, uint8_t green, uint8_t blue);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-  virtual void SetBrightness(float brightness);
 
 private:
   friend class RGBMatrix;

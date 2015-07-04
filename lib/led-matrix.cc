@@ -140,9 +140,11 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
     // First time. Get defaults from initial Framebuffer.
     pwm_bits_ = result->framebuffer()->pwmbits();
     do_luminance_correct_ = result->framebuffer()->luminance_correct();
+    brightness_ = result->framebuffer()->brightness();
   } else {
     result->framebuffer()->SetPWMBits(pwm_bits_);
     result->framebuffer()->set_luminance_correct(do_luminance_correct_);
+    result->framebuffer()->SetBrightness(brightness_);
   }
   created_frames_.push_back(result);
   return result;
@@ -170,6 +172,15 @@ bool RGBMatrix::luminance_correct() const {
   return active_->framebuffer()->luminance_correct();
 }
 
+void RGBMatrix::SetBrightness(float brightness) {
+  active_->framebuffer()->SetBrightness(brightness);
+  brightness_ = brightness;
+}
+
+float RGBMatrix::brightness() {
+  return active_->framebuffer()->brightness();
+}
+
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
 int RGBMatrix::width() const { return active_->framebuffer()->width(); }
 int RGBMatrix::height() const { return active_->framebuffer()->height(); }
@@ -180,10 +191,6 @@ void RGBMatrix::SetPixel(int x, int y,
 void RGBMatrix::Clear() { return active_->framebuffer()->Clear(); }
 void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   active_->framebuffer()->Fill(red, green, blue);
-}
-
-void RGBMatrix::SetBrightness(float brightness) {
-  active_->framebuffer()->SetBrightness(brightness);
 }
 
 // FrameCanvas implementation of Canvas
@@ -197,9 +204,6 @@ void FrameCanvas::SetPixel(int x, int y,
 void FrameCanvas::Clear() { return frame_->Clear(); }
 void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   frame_->Fill(red, green, blue);
-}
-void FrameCanvas::SetBrightness(float brightness) {
-  frame_->SetBrightness(brightness);
 }
 bool FrameCanvas::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
 uint8_t FrameCanvas::pwmbits() { return frame_->pwmbits(); }

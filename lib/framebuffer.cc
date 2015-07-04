@@ -220,11 +220,6 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   }
 }
 
-void Framebuffer::SetBrightness(float brightness) {
-  assert(brightness >= 0 && brightness <= 1);
-  brightness_ = brightness;
-}
-
 void Framebuffer::SetPixel(int x, int y,
                                       uint8_t r, uint8_t g, uint8_t b) {
   if (x < 0 || x >= columns_ || y < 0 || y >= height_) return;

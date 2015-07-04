@@ -43,6 +43,9 @@ public:
   void set_luminance_correct(bool on) { do_luminance_correct_ = on; }
   bool luminance_correct() const { return do_luminance_correct_; }
 
+  void SetBrightness(float brightness) {  brightness_ = brightness; }
+  float brightness() { return brightness_; }
+
   void DumpToMatrix(GPIO *io);
 
   // Canvas-inspired methods, but we're not implementing this interface to not
@@ -52,7 +55,6 @@ public:
   void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
-  void SetBrightness(float brightness);
 
 private:
   // Map color
