@@ -140,9 +140,11 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
     // First time. Get defaults from initial Framebuffer.
     pwm_bits_ = result->framebuffer()->pwmbits();
     do_luminance_correct_ = result->framebuffer()->luminance_correct();
+    brightness_ = result->framebuffer()->brightness();
   } else {
     result->framebuffer()->SetPWMBits(pwm_bits_);
     result->framebuffer()->set_luminance_correct(do_luminance_correct_);
+    result->framebuffer()->SetBrightness(brightness_);
   }
   created_frames_.push_back(result);
   return result;
@@ -168,6 +170,15 @@ void RGBMatrix::set_luminance_correct(bool on) {
 }
 bool RGBMatrix::luminance_correct() const {
   return active_->framebuffer()->luminance_correct();
+}
+
+void RGBMatrix::SetBrightness(uint8_t brightness) {
+  active_->framebuffer()->SetBrightness(brightness);
+  brightness_ = brightness;
+}
+
+uint8_t RGBMatrix::brightness() {
+  return active_->framebuffer()->brightness();
 }
 
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
