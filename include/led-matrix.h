@@ -129,7 +129,7 @@ private:
 
   uint8_t pwm_bits_;
   bool do_luminance_correct_;
-  float brightness_;
+  uint8_t brightness_;
 
   FrameCanvas *active_;
 

@@ -161,7 +161,7 @@ bool RGBMatrix::SetPWMBits(uint8_t value) {
   }
   return success;
 }
-uint8_t RGBMatrix::pwmbits() { return active_->framebuffer()->pwmbits(); }
+uint8_t RGBMatrix::pwmbits() { return pwm_bits_; }
 
 // Map brightness of output linearly to input with CIE1931 profile.
 void RGBMatrix::set_luminance_correct(bool on) {
@@ -169,7 +169,7 @@ void RGBMatrix::set_luminance_correct(bool on) {
   do_luminance_correct_ = on;
 }
 bool RGBMatrix::luminance_correct() const {
-  return active_->framebuffer()->luminance_correct();
+  return do_luminance_correct_;
 }
 
 void RGBMatrix::SetBrightness(uint8_t brightness) {
@@ -178,7 +178,7 @@ void RGBMatrix::SetBrightness(uint8_t brightness) {
 }
 
 uint8_t RGBMatrix::brightness() {
-  return active_->framebuffer()->brightness();
+  return brightness_;
 }
 
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
