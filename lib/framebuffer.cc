@@ -61,7 +61,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
 #endif
     height_(rows * parallel),
     columns_(columns),
-    pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(1),
+    pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
@@ -149,25 +149,18 @@ inline Framebuffer::IoBits *Framebuffer::ValueAt(int double_row,
 }
 
 // Do CIE1931 luminance correction and scale to output bitplanes
-
-static uint16_t **luminance_lookup_table = new uint16_t*[100];
-
 static uint16_t luminance_cie1931(uint8_t c, uint8_t brigtness) {
   float out_factor = ((1 << kBitPlanes) - 1);
   float v = c * (float)brigtness / 255.0;
   return out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3));
 }
 
-static uint16_t *CreateLuminanceCIE1931LookupTable(uint8_t brigtness) {
-  if (luminance_lookup_table[brigtness]) {
-    return luminance_lookup_table[brigtness];
-  }
-
-  uint16_t *result = new uint16_t[256];
+static uint16_t *CreateLuminanceCIE1931LookupTable() {
+  uint16_t *result = new uint16_t[256 * 100];
   for (int i = 0; i < 256; ++i)
-    result[i] = luminance_cie1931(i, brigtness);
+    for (int j = 0; j < 100; ++j)
+      result[i * 256 + j] = luminance_cie1931(i, j + 1);
 
-  luminance_lookup_table[brigtness] = result;
   return result;
 }
 
@@ -178,11 +171,9 @@ inline uint16_t Framebuffer::MapColor(uint8_t c) {
 #  define COLOR_OUT_BITS(x) (x)
 #endif
 
-  c = c * brightness_;
-  
   if (do_luminance_correct_) {
-    uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable(brightness_);
-    return COLOR_OUT_BITS(luminance_lookup[c]);
+    static uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable();
+    return COLOR_OUT_BITS(luminance_lookup[c * 256 + brightness_ - 1]);
   } else {
     // simple scale down the color value
     c *= (brightness_ / 100);
