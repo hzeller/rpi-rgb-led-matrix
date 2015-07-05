@@ -176,7 +176,7 @@ inline uint16_t Framebuffer::MapColor(uint8_t c) {
     return COLOR_OUT_BITS(luminance_lookup[c * 256 + brightness_ - 1]);
   } else {
     // simple scale down the color value
-    c *= (brightness_ / 100);
+    c = c * brightness_ / 100;
 
     enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
     return COLOR_OUT_BITS((shift > 0) ? (c << shift) : (c >> -shift));
