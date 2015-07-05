@@ -1,4 +1,5 @@
 PYTHON     ?= python
+CYTHON     ?= cython
 SETUP      := setup.py
 BUILD_ARGS := build
 INST_ARGS  := install
@@ -66,6 +67,12 @@ install-python:
 clean-python:
 	$(PYTHON) $(SETUP) $(CLEAN_ARGS)
 endif
+
+# For updating the generated code (not a direct dependency of build-python
+# as the generated file is included in the distribution)
+rgbmatrix.cpp : rgbmatrix.pyx
+%.cpp : %.pyx
+	$(CYTHON) --cplus -o $@ $^
 
 build-man: $(MANPAGES:%=build-man-%)
 build-man-%: %.txt
