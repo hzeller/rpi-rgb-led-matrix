@@ -44,9 +44,6 @@ public:
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) {
     delegatee_->Fill(red, green, blue);
   }
-  virtual void SetBrightness(float brightness) {
-    delegatee_->SetBrightness(brightness);
-  }
   virtual int width() const { return 64; }
   virtual int height() const { return 64; }
   virtual void SetPixel(int x, int y,
@@ -102,6 +99,37 @@ public:
 private:
   RGBMatrix *const matrix_;
   FrameCanvas *off_screen_canvas_;
+};
+
+// Simple generator that pulses through brightness on red, green, blue and white 
+class BrightnessPulseGenerator : public ThreadedCanvasManipulator {
+public:
+  BrightnessPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {}
+  void Run() {
+    uint8_t max_brightness = matrix_->brightness();
+    uint8_t count = 0;
+    uint8_t c = 255;
+
+    while (running()) {
+      if (matrix_->brightness() < 1) {
+        matrix_->SetBrightness(max_brightness);
+        count++;
+      } else {
+        matrix_->SetBrightness(matrix_->brightness() - 1);
+      }
+
+      switch (count % 4) {
+        case 0: matrix_->Fill(c, 0, 0); break;
+        case 1: matrix_->Fill(0, c, 0); break;
+        case 2: matrix_->Fill(0, 0, c); break;
+        case 3: matrix_->Fill(c, c, c); break;
+      }
+
+      usleep(20 * 1000);
+    }
+  }
+private:
+  RGBMatrix *const matrix_;
 };
 
 class SimpleSquare : public ThreadedCanvasManipulator {
@@ -1019,16 +1047,17 @@ static int usage(const char *progname) {
           "Default: 32\n"
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
-          "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
-          "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
-          "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
-          "\t-l            : Don't do luminance correction (CIE1931)\n"
-          "\t-D <demo-nr>  : Always needs to be set\n"
-          "\t-d            : run as daemon. Use this when starting in\n"
-          "\t                /etc/init.d, but also when running without\n"
-          "\t                terminal (e.g. cron).\n"
-          "\t-t <seconds>  : Run for these number of seconds, then exit.\n"
-          "\t       (if neither -d nor -t are supplied, waits for <RETURN>)\n");
+          "\t-c <chained>     : Daisy-chained boards. Default: 1.\n"
+          "\t-L               : 'Large' display, composed out of 4 times 32x32\n"
+          "\t-p <pwm-bits>    : Bits used for PWM. Something between 1..11\n"
+          "\t-l               : Don't do luminance correction (CIE1931)\n"
+          "\t-D <demo-nr>     : Always needs to be set\n"
+          "\t-d               : run as daemon. Use this when starting in\n"
+          "\t                   /etc/init.d, but also when running without\n"
+          "\t                   terminal (e.g. cron).\n"
+          "\t-t <seconds>     : Run for these number of seconds, then exit.\n"
+          "\t                   (if neither -d nor -t are supplied, waits for <RETURN>)\n"
+          "\t-b <brightness>  : Sets brightness level. Default: 1. Range: 1..100\n");
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
@@ -1040,7 +1069,8 @@ static int usage(const char *progname) {
           "\t7  - Conway's game of life (-m <time-step-ms>)\n"
           "\t8  - Langton's ant (-m <time-step-ms>)\n"
           "\t9  - Volume bars (-m <time-step-ms>)\n"
-          "\t10 - Evolution of color (-m <time-step-ms>)\n");
+          "\t10 - Evolution of color (-m <time-step-ms>)\n"
+          "\t11 - Brightness pulse generator\n");
   fprintf(stderr, "Example:\n\t%s -t 10 -D 1 runtext.ppm\n"
           "Scrolls the runtext for 10 seconds\n", progname);
   return 1;
@@ -1056,6 +1086,7 @@ int main(int argc, char *argv[]) {
   int parallel = 1;
   int scroll_ms = 30;
   int pwm_bits = -1;
+  int brightness = 100;
   bool large_display = false;
   bool do_luminance_correct = true;
 
@@ -1087,7 +1118,7 @@ int main(int argc, char *argv[]) {
 #endif
 
   int opt;
-  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:m:L")) != -1) {
+  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:L")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -1119,6 +1150,10 @@ int main(int argc, char *argv[]) {
 
     case 'p':
       pwm_bits = atoi(optarg);
+      break;
+
+    case 'b':
+      brightness = atoi(optarg);
       break;
 
     case 'l':
@@ -1169,6 +1204,11 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  if (brightness < 1 || brightness > 100) {
+    fprintf(stderr, "Brightness is oudside usable range.\n");
+    return 1;
+  }
+
   // Initialize GPIO pins. This might fail when we don't have permissions.
   if (!io.Init())
     return 1;
@@ -1185,6 +1225,7 @@ int main(int argc, char *argv[]) {
   // The matrix, our 'frame buffer' and display updater.
   RGBMatrix *matrix = new RGBMatrix(&io, rows, chain, parallel);
   matrix->set_luminance_correct(do_luminance_correct);
+  matrix->SetBrightness(brightness);
   if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
     fprintf(stderr, "Invalid range of pwm-bits\n");
     return 1;
@@ -1250,6 +1291,10 @@ int main(int argc, char *argv[]) {
 
   case 10:
     image_gen = new GeneticColors(canvas, scroll_ms);
+    break;
+
+  case 11:
+    image_gen = new BrightnessPulseGenerator(matrix);
     break;
   }
 

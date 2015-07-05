@@ -84,8 +84,8 @@ public:
   void set_luminance_correct(bool on);
   bool luminance_correct() const;
 
-  void SetBrightness(float brightness);
-  float brightness();
+  void SetBrightness(uint8_t brightness);
+  uint8_t brightness();
 
   //-- Double- and Multibuffering.
 

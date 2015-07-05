@@ -172,12 +172,12 @@ bool RGBMatrix::luminance_correct() const {
   return active_->framebuffer()->luminance_correct();
 }
 
-void RGBMatrix::SetBrightness(float brightness) {
+void RGBMatrix::SetBrightness(uint8_t brightness) {
   active_->framebuffer()->SetBrightness(brightness);
   brightness_ = brightness;
 }
 
-float RGBMatrix::brightness() {
+uint8_t RGBMatrix::brightness() {
   return active_->framebuffer()->brightness();
 }
 

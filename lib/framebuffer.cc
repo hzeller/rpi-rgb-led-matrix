@@ -149,16 +149,25 @@ inline Framebuffer::IoBits *Framebuffer::ValueAt(int double_row,
 }
 
 // Do CIE1931 luminance correction and scale to output bitplanes
-static uint16_t luminance_cie1931(uint8_t c) {
+
+static uint16_t **luminance_lookup_table = new uint16_t*[100];
+
+static uint16_t luminance_cie1931(uint8_t c, uint8_t brigtness) {
   float out_factor = ((1 << kBitPlanes) - 1);
-  float v = c * 100.0 / 255.0;
+  float v = c * (float)brigtness / 255.0;
   return out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3));
 }
 
-static uint16_t *CreateLuminanceCIE1931LookupTable() {
-  uint16_t *result = new uint16_t [ 256 ];
+static uint16_t *CreateLuminanceCIE1931LookupTable(uint8_t brigtness) {
+  if (luminance_lookup_table[brigtness]) {
+    return luminance_lookup_table[brigtness];
+  }
+
+  uint16_t *result = new uint16_t[256];
   for (int i = 0; i < 256; ++i)
-    result[i] = luminance_cie1931(i);
+    result[i] = luminance_cie1931(i, brigtness);
+
+  luminance_lookup_table[brigtness] = result;
   return result;
 }
 
@@ -169,11 +178,15 @@ inline uint16_t Framebuffer::MapColor(uint8_t c) {
 #  define COLOR_OUT_BITS(x) (x)
 #endif
 
+  c = c * brightness_;
+  
   if (do_luminance_correct_) {
-    // We're leaking this table. So be it :)
-    static uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable();
+    uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable(brightness_);
     return COLOR_OUT_BITS(luminance_lookup[c]);
   } else {
+    // simple scale down the color value
+    c *= (brightness_ / 100);
+
     enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
     return COLOR_OUT_BITS((shift > 0) ? (c << shift) : (c >> -shift));
   }
