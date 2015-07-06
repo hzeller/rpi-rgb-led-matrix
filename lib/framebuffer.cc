@@ -148,9 +148,9 @@ inline Framebuffer::IoBits *Framebuffer::ValueAt(int double_row,
 }
 
 // Do CIE1931 luminance correction and scale to output bitplanes
-static uint16_t luminance_cie1931(uint8_t c, uint8_t brigtness) {
+static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
   float out_factor = ((1 << kBitPlanes) - 1);
-  float v = c * brigtness / 255.0;
+  float v = c * brightness / 255.0;
   return out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3));
 }
 
