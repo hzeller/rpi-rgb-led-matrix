@@ -96,6 +96,7 @@ public:
       off_screen_canvas_ = matrix_->SwapOnVSync(off_screen_canvas_);
     }
   }
+
 private:
   RGBMatrix *const matrix_;
   FrameCanvas *off_screen_canvas_;
@@ -106,7 +107,7 @@ class BrightnessPulseGenerator : public ThreadedCanvasManipulator {
 public:
   BrightnessPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {}
   void Run() {
-    uint8_t max_brightness = matrix_->brightness();
+    const uint8_t max_brightness = matrix_->brightness();
     uint8_t count = 0;
     uint8_t c = 255;
 
@@ -128,6 +129,7 @@ public:
       usleep(20 * 1000);
     }
   }
+
 private:
   RGBMatrix *const matrix_;
 };
@@ -1057,7 +1059,7 @@ static int usage(const char *progname) {
           "\t                   terminal (e.g. cron).\n"
           "\t-t <seconds>     : Run for these number of seconds, then exit.\n"
           "\t                   (if neither -d nor -t are supplied, waits for <RETURN>)\n"
-          "\t-b <brightness>  : Sets brightness level. Default: 1. Range: 1..100\n");
+          "\t-b <brightness>  : Sets brightness level. Default: 100. Range: 1..100\n");
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
