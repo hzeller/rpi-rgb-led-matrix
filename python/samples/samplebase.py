@@ -10,6 +10,7 @@ class SampleBase(argparse.ArgumentParser):
         self.add_argument("-c", "--chain", action = "store", help = "Daisy-chained boards. Default: 1.", default = 1, type = int)
         self.add_argument("-p", "--pwmbits", action = "store", help = "Bits used for PWM. Something between 1..11. Default: 11", default = 11, type = int)
         self.add_argument("-l", "--luminance", action = "store_true", help = "Don't do luminance correction (CIE1931)")
+        self.add_argument("-b", "--brightness", action = "store", help = "Sets brightness level. Default: 1. Range: 1..100", default = 100, type = int)
 
         self.args = {}
 
@@ -39,6 +40,7 @@ class SampleBase(argparse.ArgumentParser):
 
         self.matrix = RGBMatrix(self.args["rows"], self.args["chain"], self.args["parallel"])
         self.matrix.pwmBits = self.args["pwmbits"]
+        self.matrix.brightness = self.args["brightness"]
 
         if self.args["luminance"]:
             self.matrix.luminanceCorrect = False

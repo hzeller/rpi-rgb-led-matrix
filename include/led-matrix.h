@@ -77,6 +77,9 @@ public:
   void set_luminance_correct(bool on);
   bool luminance_correct() const;
 
+  void SetBrightness(uint8_t brightness);
+  uint8_t brightness();
+
   //-- Double- and Multibuffering.
 
   // Create a new buffer to be used for multi-buffering. The returned new
@@ -119,6 +122,7 @@ private:
 
   uint8_t pwm_bits_;
   bool do_luminance_correct_;
+  uint8_t brightness_;
 
   FrameCanvas *active_;
 
