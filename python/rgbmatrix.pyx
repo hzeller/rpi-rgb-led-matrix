@@ -30,6 +30,8 @@ cdef extern from "led-matrix.h" namespace "rgb_matrix":
         void SetPixel(int, int, uint8_t, uint8_t, uint8_t)
         void Clear()
         void Fill(uint8_t, uint8_t, uint8_t)
+        void SetBrightness(uint8_t)
+        uint8_t brightness()
         CPPFrameCanvas *CreateFrameCanvas()
         CPPFrameCanvas *SwapOnVSync(CPPFrameCanvas*)
 
@@ -121,6 +123,10 @@ cdef class RGBMatrix:
     property pwmBits:
         def __get__(self): return self.__matrix.pwmbits()
         def __set__(self, pwmBits): self.__matrix.SetPWMBits(pwmBits)
+
+    property brightness:
+        def __get__(self): return self.__matrix.brightness()
+        def __set__(self, brightness): self.__matrix.SetBrightness(brightness)
 
     property height:
         def __get__(self): return self.__matrix.height()
