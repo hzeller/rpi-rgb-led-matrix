@@ -443,10 +443,21 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
   }
 }
 
+struct dma_cb {
+    uint32_t info;   // transfer information.
+    uint32_t src;    // physical source address.
+    uint32_t dst;    // physical destination address.
+    uint32_t length; // transfer length.
+    uint32_t stride; // stride mode.
+    uint32_t next;   // next control block.
+    uint32_t pad[2];
+};
+
 class HardwareScript::ScriptElement {
 public:
   ~ScriptElement() {}
   virtual void Run() = 0;
+  virtual void FillDMABlock(dma_cb *control){}  // todo: implement.
 };
 
 class HardwareScript::DataElement : public HardwareScript::ScriptElement {
@@ -517,21 +528,28 @@ LockedAllocator::MemBlock LockedAllocator::Calloc(size_t size) {
            MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE | MAP_LOCKED,
            -1, 0);
   if (result.mem == MAP_FAILED) {
-    printf("Calloc() failed\n");
+    fprintf(stderr, "Calloc() failed\n");
     exit(1);
   }
   memset(result.mem, 0x00, size); // 0-fill and force phys. manifestation
   mlock(result.mem, size);
 
+  // Get some contiguous chunk of virtual address space that we then
+  // re-map to the uncached area.
   result.mem_uncached
     = mmap(NULL, size,
            PROT_READ | PROT_WRITE,
            MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE | MAP_LOCKED,
            -1, 0);
+  if (result.mem_uncached == MAP_FAILED) {
+    fprintf(stderr, "Creating uncached space failed\n");
+    exit(1);
+  }
   for (size_t offset = 0; offset < size; offset += PAGE_SIZE) {
     void* remap = (char*)result.mem_uncached + offset;
     // Up at 0x40000000 is the address of RAM, passing L1. DMA can't deal
     // with L1 cache, so we need to go one level deeper.
+    // TODO(hzeller): this is probably different RPi 1 vs. RPi 2
     void* m = mmap(remap, PAGE_SIZE, PROT_READ|PROT_WRITE,
                    MAP_SHARED | MAP_FIXED | MAP_NORESERVE | MAP_LOCKED,
                    memfd_,
@@ -561,17 +579,19 @@ uint32_t LockedAllocator::ToPhysical(void *p) {
   return pinfo * PAGE_SIZE + virt_p % PAGE_SIZE;
 }
 
-struct dma_cb {
-    uint32_t info;   // transfer information.
-    uint32_t src;    // physical source address.
-    uint32_t dst;    // physical destination address.
-    uint32_t length; // transfer length.
-    uint32_t stride; // stride mode.
-    uint32_t next;   // next control block.
-    uint32_t pad[2];
-};
-
 void HardwareScript::FinishScript() {
+  if (elements_.empty()) return;
+  LockedAllocator allocator;
+  LockedAllocator::MemBlock block = allocator.Calloc(sizeof(dma_cb) * elements_.size());
+  // We want to write through.
+  dma_cb *control_blocks = (dma_cb*) block.mem_uncached;
+  dma_cb *cb = 0;
+  for (size_t i = 0; i < elements_.size(); ++i) {
+    cb = control_blocks + i;
+    elements_[i]->FillDMABlock(cb);
+    cb->next = allocator.ToPhysical((dma_cb*)block.mem + i);
+  }
+  cb->next = 0;
 }
 
 void HardwareScript::RunOnce() {
