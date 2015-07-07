@@ -149,12 +149,13 @@ static void DisplayAnimation(const std::vector<PreprocessedFrame*> &frames,
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <image>\n", progname);
   fprintf(stderr, "Options:\n"
-          "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
+          "\t-r <rows>      : Display rows. 16 for 16x32, 32 for 32x32. "
           "Default: 32\n"
-          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
+          "\t-P <parallel>  : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
-          "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
-          "\t-d            : Run as daemon.\n");
+          "\t-c <chained>   : Daisy-chained boards. Default: 1.\n"
+          "\t-b <brightness>: Sets brightness percent. Default: 100.\n"
+          "\t-d             : Run as daemon.\n");
   return 1;
 }
 
@@ -165,15 +166,17 @@ int main(int argc, char *argv[]) {
   int chain = 1;
   int parallel = 1;
   int pwm_bits = -1;
+  int brightness = 100;
   bool as_daemon = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:p:d")) != -1) {
+  while ((opt = getopt(argc, argv, "r:P:c:p:b:d")) != -1) {
     switch (opt) {
     case 'r': rows = atoi(optarg); break;
     case 'P': parallel = atoi(optarg); break;
     case 'c': chain = atoi(optarg); break;
     case 'p': pwm_bits = atoi(optarg); break;
+    case 'b': brightness = atoi(optarg); break;
     case 'd': as_daemon = true; break;
     default:
       return usage(argv[0]);
@@ -183,6 +186,11 @@ int main(int argc, char *argv[]) {
   if (rows != 16 && rows != 32) {
     fprintf(stderr, "Rows can either be 16 or 32\n");
     return usage(argv[0]);
+  }
+
+  if (brightness < 1 || brightness > 100) {
+    fprintf(stderr, "Brightness is outside usable range.\n");
+    return 1;
   }
 
   if (chain < 1) {
@@ -219,8 +227,9 @@ int main(int argc, char *argv[]) {
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
   }
-    
+
   RGBMatrix *const matrix = new RGBMatrix(&io, rows, chain, parallel);
+  matrix->SetBrightness(brightness);
   if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
     fprintf(stderr, "Invalid range of pwm-bits\n");
     return 1;
