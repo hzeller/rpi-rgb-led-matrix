@@ -96,13 +96,13 @@ public:
       off_screen_canvas_ = matrix_->SwapOnVSync(off_screen_canvas_);
     }
   }
-  
+
 private:
   RGBMatrix *const matrix_;
   FrameCanvas *off_screen_canvas_;
 };
 
-// Simple generator that pulses through brightness on red, green, blue and white 
+// Simple generator that pulses through brightness on red, green, blue and white
 class BrightnessPulseGenerator : public ThreadedCanvasManipulator {
 public:
   BrightnessPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {}
