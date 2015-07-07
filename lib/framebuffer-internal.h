@@ -137,6 +137,10 @@ private:
   GPIO::Data strobe_;
   GPIO::Data row_address_[16];
 
+  // Temporary until we have something that does timing.
+  GPIO::Data oe_start_;
+  GPIO::Data oe_end_;
+
   HardwareScript *script_;
 
   inline GPIO::Data *ValueAt(int double_row, int column, int bit_plane);

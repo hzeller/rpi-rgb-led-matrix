@@ -18,6 +18,7 @@
 
 #include <stdint.h>
 #include <vector>
+#include <stdlib.h>
 
 // Putting this in our namespace to not collide with other things called like
 // this.
@@ -98,6 +99,33 @@ public:
   virtual void WaitPulseFinished() {}
 };
 
+// Allocator that hands out physical memory that can be used by DMA.
+class LockedAllocator {
+public:
+  struct MemBlock {
+    void *mem;             // Virtual memory pointer.
+    void *mem_uncached;    // Virtual memory pointer, skipping L1 cache
+
+    size_t size;
+  };
+
+  LockedAllocator();
+  ~LockedAllocator();
+
+  // Allocate block of given size, memory locked.
+  MemBlock Calloc(size_t bytes);
+
+  // Free block.
+  void Free(MemBlock *block);
+
+  // Get physical address of given pointer.
+  uint32_t ToPhysical(void *p);
+
+private:
+  const int memfd_;
+  const int pagemapfd_;
+};
+
 // Scratch API thought area for DMA. To abstract it from the actual DMA, we
 // consider it a "HardwareScript", but it is close enough so that it can be
 // implemented straight-forward.
@@ -119,6 +147,8 @@ public:
   // (TODO: this should be pin+nano-seconds, for now just spec from pulser
   // definition)
   void AppendPinPulse(int spec);
+
+  void FinishScript();
 
   // Run this script once.
   void RunOnce();

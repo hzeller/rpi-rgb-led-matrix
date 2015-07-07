@@ -52,6 +52,8 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
   bitplane_buffer_ = new GPIO::Data [double_rows_ * columns_ * kBitPlanes];
+  // TODO(hzeller): Calloc() these.
+
   // When we clock in colors, we always want to clear the clock bit as well.
   // Let's prepare that already here; that bit will never be touched later.
   for (int i = 0; i < double_rows_ * columns_ * kBitPlanes; ++i) {
@@ -82,6 +84,12 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
 
   clock_reset_.set_bits = 0;
   clock_reset_.clear_bits = (1<<CLOCK);
+
+  oe_start_.set_bits = 0;
+  oe_start_.clear_bits = (1<<OUTPUT_ENABLE);
+
+  oe_end_.set_bits = (1<<OUTPUT_ENABLE);
+  oe_end_.clear_bits = 0;
 
   // We use the fact that set/reset happen in that sequence
   strobe_.set_bits = (1<<STROBE);
@@ -334,14 +342,17 @@ void Framebuffer::InitializeScript(GPIO *io) {
 
       // OE of the previous row-data must be finished before strobe.
       //sOutputEnablePulser->WaitPulseFinished();
+      script_->AppendGPIO(&oe_end_);
 
       script_->AppendGPIO(&strobe_);     // set/reset in one go.
 
       // Now switch on for the sleep time necessary for that bit-plane.
-      script_->AppendPinPulse(b);
+      //script_->AppendPinPulse(b);
+      script_->AppendGPIO(&oe_start_);
     }
     //sOutputEnablePulser->WaitPulseFinished();
   }
+  script_->FinishScript();
 }
 }  // namespace internal
 }  // namespace rgb_matrix

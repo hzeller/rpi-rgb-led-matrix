@@ -34,6 +34,7 @@
 #define GPIO_PWM_BASE_OFFSET	(GPIO_REGISTER_OFFSET + 0xC000)
 #define GPIO_CLK_BASE_OFFSET	0x101000
 
+#define PAGE_SIZE 4096
 #define REGISTER_BLOCK_SIZE (4*1024)
 
 #define PWM_CTL      0
@@ -434,7 +435,7 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
                              const std::vector<int> &nano_wait_spec) {
   // The only implementation so far.
   if (!Timers::Init()) return NULL;
-  if (HardwarePinPulser::CanHandle(gpio_mask)) {
+  if (HardwarePinPulser::CanHandle(gpio_mask) && false) {  // disabled for now.
     fprintf(stderr, "Using hardware pulser\n");
     return new HardwarePinPulser(gpio_mask, nano_wait_spec);
   } else {
@@ -488,6 +489,89 @@ void HardwareScript::AppendGPIO(const GPIO::Data *data) {
 }
 void HardwareScript::AppendPinPulse(int spec) {
   elements_.push_back(new PulseElement(pulser_, spec));
+}
+
+// See https://github.com/Wallacoloo/Raspberry-Pi-DMA-Example
+// for DMA examples, physical memory mapping and more.
+
+LockedAllocator::LockedAllocator()
+  : memfd_(open("/dev/mem", O_RDWR|O_SYNC)),
+    pagemapfd_(open("/proc/self/pagemap", O_RDONLY)) {
+  assert(memfd_ >= 0);
+  assert(pagemapfd_ >= 0);
+}
+
+LockedAllocator::~LockedAllocator() {
+  close(memfd_);
+  close(pagemapfd_);
+}
+
+LockedAllocator::MemBlock LockedAllocator::Calloc(size_t size) {
+  // Round up to next full page.
+  size = size % PAGE_SIZE == 0 ? size : (size + PAGE_SIZE) & ~(PAGE_SIZE - 1);
+  MemBlock result;
+  result.size = size;
+  result.mem
+    = mmap(NULL, size,
+           PROT_READ | PROT_WRITE,
+           MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE | MAP_LOCKED,
+           -1, 0);
+  if (result.mem == MAP_FAILED) {
+    printf("Calloc() failed\n");
+    exit(1);
+  }
+  memset(result.mem, 0x00, size); // 0-fill and force phys. manifestation
+  mlock(result.mem, size);
+
+  result.mem_uncached
+    = mmap(NULL, size,
+           PROT_READ | PROT_WRITE,
+           MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE | MAP_LOCKED,
+           -1, 0);
+  for (size_t offset = 0; offset < size; offset += PAGE_SIZE) {
+    void* remap = (char*)result.mem_uncached + offset;
+    // Up at 0x40000000 is the address of RAM, passing L1. DMA can't deal
+    // with L1 cache, so we need to go one level deeper.
+    void* m = mmap(remap, PAGE_SIZE, PROT_READ|PROT_WRITE,
+                   MAP_SHARED | MAP_FIXED | MAP_NORESERVE | MAP_LOCKED,
+                   memfd_,
+                   ToPhysical((char*)result.mem + offset) | 0x40000000);
+    assert(m == remap);
+  }
+  memset(result.mem_uncached, 0x00, size); // sync physical.
+  return result;
+}
+
+void LockedAllocator::Free(MemBlock *block) {
+  if (block->size == 0) return;
+  munlock(block->mem, block->size);
+  munmap(block->mem, block->size);
+  munmap(block->mem_uncached, block->size);
+  block->mem = NULL;
+  block->mem_uncached = NULL;
+  block->size = 0;
+}
+
+uint32_t LockedAllocator::ToPhysical(void *p) {
+  const uint32_t virt_p = (uint32_t) p;
+  uint64_t pinfo;
+  lseek(pagemapfd_, sizeof(pinfo) * virt_p / PAGE_SIZE, SEEK_SET);
+  read(pagemapfd_, &pinfo, sizeof(pinfo));
+  pinfo &= 0xFFFFFFFF; // Get rid of flags in upper bits.
+  return pinfo * PAGE_SIZE + virt_p % PAGE_SIZE;
+}
+
+struct dma_cb {
+    uint32_t info;   // transfer information.
+    uint32_t src;    // physical source address.
+    uint32_t dst;    // physical destination address.
+    uint32_t length; // transfer length.
+    uint32_t stride; // stride mode.
+    uint32_t next;   // next control block.
+    uint32_t pad[2];
+};
+
+void HardwareScript::FinishScript() {
 }
 
 void HardwareScript::RunOnce() {
