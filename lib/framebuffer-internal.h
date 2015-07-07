@@ -43,6 +43,9 @@ public:
   void set_luminance_correct(bool on) { do_luminance_correct_ = on; }
   bool luminance_correct() const { return do_luminance_correct_; }
 
+  void SetBrightness(uint8_t brightness) {  brightness_ = brightness; }
+  uint8_t brightness() { return brightness_; }
+
   void DumpToMatrix(GPIO *io);
 
   // Canvas-inspired methods, but we're not implementing this interface to not
@@ -66,6 +69,7 @@ private:
 
   uint8_t pwm_bits_;   // PWM bits to display.
   bool do_luminance_correct_;
+  uint8_t brightness_;
 
   const int double_rows_;
   const uint8_t row_mask_;
