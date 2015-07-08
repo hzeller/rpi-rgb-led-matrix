@@ -323,6 +323,8 @@ void Framebuffer::InitializeScript(GPIO *io) {
   assert(!script_);
   script_ = new HardwareScript(io, sOutputEnablePulser);
 
+#define USE_PWM 1
+
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
     script_->AppendGPIO(&row_address_[d_row]);
@@ -341,14 +343,20 @@ void Framebuffer::InitializeScript(GPIO *io) {
       script_->AppendGPIO(&clock_reset_);  // clock falling edge.
 
       // OE of the previous row-data must be finished before strobe.
+#if USE_PWM
       //sOutputEnablePulser->WaitPulseFinished();
+#else
       script_->AppendGPIO(&oe_end_);
+#endif
 
       script_->AppendGPIO(&strobe_);     // set/reset in one go.
 
       // Now switch on for the sleep time necessary for that bit-plane.
-      //script_->AppendPinPulse(b);
+#if USE_PWM
+      script_->AppendPinPulse(b);
+#else
       script_->AppendGPIO(&oe_start_);
+#endif
     }
     //sOutputEnablePulser->WaitPulseFinished();
   }
