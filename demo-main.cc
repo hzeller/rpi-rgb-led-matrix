@@ -249,10 +249,12 @@ class ImageScroller : public ThreadedCanvasManipulator {
 public:
   // Scroll image with "scroll_jumps" pixels every "scroll_ms" milliseconds.
   // If "scroll_ms" is negative, don't do any scrolling.
-  ImageScroller(Canvas *m, int scroll_jumps, int scroll_ms = 30)
+  ImageScroller(RGBMatrix *m, int scroll_jumps, int scroll_ms = 30)
     : ThreadedCanvasManipulator(m), scroll_jumps_(scroll_jumps),
       scroll_ms_(scroll_ms),
-      horizontal_position_(0) {
+      horizontal_position_(0),
+      matrix_(m) {
+      offscreen_ = matrix_->CreateFrameCanvas();
   }
 
   virtual ~ImageScroller() {
@@ -326,9 +328,10 @@ public:
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = current_image_.getPixel(
                      (horizontal_position_ + x) % current_image_.width, y);
-          canvas()->SetPixel(x, y, p.red, p.green, p.blue);
+          offscreen_->SetPixel(x, y, p.red, p.green, p.blue);
         }
       }
+      offscreen_ = matrix_->SwapOnVSync(offscreen_);
       horizontal_position_ += scroll_jumps_;
       if (horizontal_position_ < 0) horizontal_position_ = current_image_.width;
       if (scroll_ms_ <= 0) {
@@ -385,6 +388,9 @@ private:
   Image new_image_;
 
   int32_t horizontal_position_;
+
+  RGBMatrix* matrix_;
+  FrameCanvas* offscreen_;
 };
 
 
@@ -1226,7 +1232,7 @@ int main(int argc, char *argv[]) {
   case 1:
   case 2:
     if (demo_parameter) {
-      ImageScroller *scroller = new ImageScroller(canvas,
+      ImageScroller *scroller = new ImageScroller(matrix,
                                                   demo == 1 ? 1 : -1,
                                                   scroll_ms);
       if (!scroller->LoadPPM(demo_parameter))
