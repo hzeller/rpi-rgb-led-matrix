@@ -29,7 +29,8 @@
 #define BCM2709_PERI_BASE        0x3F000000
 
 // TODO(hzeller): this might be different RPi 1 vs. RPi 2 ?
-#define UNCACHED_START_MAP       0x40000000
+//#define UNCACHED_START_MAP       0x40000000
+#define UNCACHED_START_MAP       0xC0000000
 
 #define GPIO_REGISTER_OFFSET         0x200000
 #define COUNTER_1Mhz_REGISTER_OFFSET   0x3000
@@ -537,6 +538,8 @@ LockedAllocator::MemBlock LockedAllocator::Calloc(size_t size) {
   memset(result.mem, 0x00, size); // 0-fill and force phys. manifestation
   mlock(result.mem, size);
 
+#if 0
+  // (This is broken.)
   // Get some contiguous chunk of virtual address space that we then
   // re-map to the uncached area.
   result.mem_nocache
@@ -559,6 +562,8 @@ LockedAllocator::MemBlock LockedAllocator::Calloc(size_t size) {
     assert(m == remap);
   }
   memset(result.mem_nocache, 0x00, size); // sync physical.
+#endif
+
   return result;
 }
 
@@ -575,8 +580,8 @@ void LockedAllocator::Free(MemBlock *block) {
 uintptr_t LockedAllocator::ToPhysical(void *p) {
   const uintptr_t virt_p = (uintptr_t) p;
   uint64_t pinfo;
-  lseek(pagemapfd_, sizeof(pinfo) * (virt_p / PAGE_SIZE), SEEK_SET);
-  if (read(pagemapfd_, &pinfo, sizeof(pinfo)) != sizeof(pinfo)) {
+  if (lseek(pagemapfd_, sizeof(pinfo) * (virt_p / PAGE_SIZE), SEEK_SET) < 0 ||
+      read(pagemapfd_, &pinfo, sizeof(pinfo)) != sizeof(pinfo)) {
     fprintf(stderr, "Can't map %p to physical address\n", p);
     exit(1);
   }
@@ -589,7 +594,7 @@ void HardwareScript::FinishScript() {
   LockedAllocator allocator;
   LockedAllocator::MemBlock block = allocator.Calloc(sizeof(dma_cb) * elements_.size());
   // We want to write through.
-  dma_cb *control_blocks = (dma_cb*) block.mem_nocache;
+  dma_cb *const control_blocks = (dma_cb*) block.mem;
   dma_cb *cb = 0;
   for (size_t i = 0; i < elements_.size(); ++i) {
     cb = control_blocks + i;
