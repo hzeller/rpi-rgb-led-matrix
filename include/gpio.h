@@ -103,8 +103,8 @@ public:
 class LockedAllocator {
 public:
   struct MemBlock {
-    void *mem;             // Virtual memory pointer.
-    void *mem_uncached;    // Virtual memory pointer, skipping L1 cache
+    void *mem;          // Virtual memory pointer.
+    void *mem_nocache;  // Virtual memory pointer, remapped to skip L1
 
     size_t size;
   };
@@ -119,7 +119,7 @@ public:
   void Free(MemBlock *block);
 
   // Get physical address of given pointer.
-  uint32_t ToPhysical(void *p);
+  uintptr_t ToPhysical(void *p);
 
 private:
   const int memfd_;

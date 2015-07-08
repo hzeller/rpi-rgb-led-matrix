@@ -28,6 +28,9 @@
 #define BCM2708_PERI_BASE        0x20000000
 #define BCM2709_PERI_BASE        0x3F000000
 
+// TODO(hzeller): this might be different RPi 1 vs. RPi 2 ?
+#define UNCACHED_START_MAP       0x40000000
+
 #define GPIO_REGISTER_OFFSET         0x200000
 #define COUNTER_1Mhz_REGISTER_OFFSET   0x3000
 
@@ -455,7 +458,7 @@ struct dma_cb {
 
 class HardwareScript::ScriptElement {
 public:
-  ~ScriptElement() {}
+  virtual ~ScriptElement() {}
   virtual void Run() = 0;
   virtual void FillDMABlock(dma_cb *control){}  // todo: implement.
 };
@@ -536,27 +539,26 @@ LockedAllocator::MemBlock LockedAllocator::Calloc(size_t size) {
 
   // Get some contiguous chunk of virtual address space that we then
   // re-map to the uncached area.
-  result.mem_uncached
+  result.mem_nocache
     = mmap(NULL, size,
            PROT_READ | PROT_WRITE,
            MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE | MAP_LOCKED,
            -1, 0);
-  if (result.mem_uncached == MAP_FAILED) {
+  if (result.mem_nocache == MAP_FAILED) {
     fprintf(stderr, "Creating uncached space failed\n");
     exit(1);
   }
   for (size_t offset = 0; offset < size; offset += PAGE_SIZE) {
-    void* remap = (char*)result.mem_uncached + offset;
-    // Up at 0x40000000 is the address of RAM, passing L1. DMA can't deal
-    // with L1 cache, so we need to go one level deeper.
-    // TODO(hzeller): this is probably different RPi 1 vs. RPi 2
+    void* remap = (char*)result.mem_nocache + offset;
+    // DMA can't deal with L1 cache, so we need to map the area that
+    // has the same data, but L2 cache mapped (DMA can deal with that).
     void* m = mmap(remap, PAGE_SIZE, PROT_READ|PROT_WRITE,
                    MAP_SHARED | MAP_FIXED | MAP_NORESERVE | MAP_LOCKED,
                    memfd_,
-                   ToPhysical((char*)result.mem + offset) | 0x40000000);
+                   ToPhysical((char*)result.mem + offset) | UNCACHED_START_MAP);
     assert(m == remap);
   }
-  memset(result.mem_uncached, 0x00, size); // sync physical.
+  memset(result.mem_nocache, 0x00, size); // sync physical.
   return result;
 }
 
@@ -564,18 +566,21 @@ void LockedAllocator::Free(MemBlock *block) {
   if (block->size == 0) return;
   munlock(block->mem, block->size);
   munmap(block->mem, block->size);
-  munmap(block->mem_uncached, block->size);
+  munmap(block->mem_nocache, block->size);
   block->mem = NULL;
-  block->mem_uncached = NULL;
+  block->mem_nocache = NULL;
   block->size = 0;
 }
 
-uint32_t LockedAllocator::ToPhysical(void *p) {
-  const uint32_t virt_p = (uint32_t) p;
+uintptr_t LockedAllocator::ToPhysical(void *p) {
+  const uintptr_t virt_p = (uintptr_t) p;
   uint64_t pinfo;
-  lseek(pagemapfd_, sizeof(pinfo) * virt_p / PAGE_SIZE, SEEK_SET);
-  read(pagemapfd_, &pinfo, sizeof(pinfo));
-  pinfo &= 0xFFFFFFFF; // Get rid of flags in upper bits.
+  lseek(pagemapfd_, sizeof(pinfo) * (virt_p / PAGE_SIZE), SEEK_SET);
+  if (read(pagemapfd_, &pinfo, sizeof(pinfo)) != sizeof(pinfo)) {
+    fprintf(stderr, "Can't map %p to physical address\n", p);
+    exit(1);
+  }
+  pinfo &= 0xFFFFFFFF; // Get rid of potential flags in upper bits.
   return pinfo * PAGE_SIZE + virt_p % PAGE_SIZE;
 }
 
@@ -584,7 +589,7 @@ void HardwareScript::FinishScript() {
   LockedAllocator allocator;
   LockedAllocator::MemBlock block = allocator.Calloc(sizeof(dma_cb) * elements_.size());
   // We want to write through.
-  dma_cb *control_blocks = (dma_cb*) block.mem_uncached;
+  dma_cb *control_blocks = (dma_cb*) block.mem_nocache;
   dma_cb *cb = 0;
   for (size_t i = 0; i < elements_.size(); ++i) {
     cb = control_blocks + i;
