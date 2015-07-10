@@ -105,7 +105,8 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
   : rows_(rows), chained_displays_(chained_displays),
     parallel_displays_(parallel_displays),
-    io_(NULL), updater_(NULL) {
+    io_(NULL), updater_(NULL),
+    transformer_(NULL) {
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io);
@@ -183,16 +184,45 @@ uint8_t RGBMatrix::brightness() {
   return brightness_;
 }
 
-// -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
-int RGBMatrix::width() const { return active_->framebuffer()->width(); }
-int RGBMatrix::height() const { return active_->framebuffer()->height(); }
-void RGBMatrix::SetPixel(int x, int y,
-                         uint8_t red, uint8_t green, uint8_t blue) {
-  active_->framebuffer()->SetPixel(x, y, red, green, blue);
+void RGBMatrix::SetTransformer(CanvasTransformer *transformer) {
+  transformer_ = transformer;
 }
-void RGBMatrix::Clear() { return active_->framebuffer()->Clear(); }
+
+CanvasTransformer *RGBMatrix::transformer() {
+  return transformer_;
+}
+
+// -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
+int RGBMatrix::width() const { 
+  return (transformer_ != NULL) ? transformer_->Transform(active_)->width() : active_->framebuffer()->width(); 
+}
+
+int RGBMatrix::height() const { 
+  return (transformer_ != NULL) ? transformer_->Transform(active_)->height() : active_->framebuffer()->height(); 
+}
+
+void RGBMatrix::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+  if (transformer_ != NULL) {
+    transformer_->Transform(active_)->SetPixel(x, y, red, green, blue);
+  } else {
+    active_->framebuffer()->SetPixel(x, y, red, green, blue);
+  }
+}
+
+void RGBMatrix::Clear() { 
+  if (transformer_ != NULL) {
+    transformer_->Transform(active_)->Clear();
+  } else {
+    active_->framebuffer()->Clear();
+  }
+}
+
 void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
-  active_->framebuffer()->Fill(red, green, blue);
+  if (transformer_ != NULL) {
+    transformer_->Transform(active_)->Fill(red, green, blue);
+  } else {
+    active_->framebuffer()->Fill(red, green, blue);
+  }
 }
 
 // FrameCanvas implementation of Canvas
@@ -209,5 +239,12 @@ void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
 }
 bool FrameCanvas::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
 uint8_t FrameCanvas::pwmbits() { return frame_->pwmbits(); }
+
+// Map brightness of output linearly to input with CIE1931 profile.
+void FrameCanvas::set_luminance_correct(bool on) { frame_->set_luminance_correct(on); }
+bool FrameCanvas::luminance_correct() const { return frame_->luminance_correct(); }
+
+void FrameCanvas::SetBrightness(uint8_t brightness) { frame_->SetBrightness(brightness); }
+uint8_t FrameCanvas::brightness() { return frame_->brightness(); }
 
 }  // end namespace rgb_matrix
