@@ -162,18 +162,23 @@ that is now all dynamically configurable).
      $ ./led-matrix
      usage: ./led-matrix <options> -D <demo-nr> [optional parameter]
      Options:
-         -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
-         -P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. Default: 1
-         -c <chained>  : Daisy-chained boards. Default: 1.
-         -L            : 'Large' display, composed out of 4 times 32x32
-         -p <pwm-bits> : Bits used for PWM. Something between 1..11
-         -l            : Don't do luminance correction (CIE1931)
-         -D <demo-nr>  : Always needs to be set
-         -d            : run as daemon. Use this when starting in
-                         /etc/init.d, but also when running without
-                         terminal (e.g. cron)
-         -t <seconds>  : Run for these number of seconds, then exit.
-                (if neither -d nor -t are supplied, waits for <RETURN>)
+         -r <rows>        : Display rows. 16 for 16x32, 32 for 32x32. 
+                            Default: 32
+         -P <parallel>    : For Plus-models or RPi2: parallel chains. 1..3. 
+                            Default: 1
+         -c <chained>     : Daisy-chained boards. Default: 1.
+         -L               : 'Large' display, composed out of 4 times 32x32
+         -p <pwm-bits>    : Bits used for PWM. Something between 1..11
+         -l               : Don't do luminance correction (CIE1931)
+         -D <demo-nr>     : Always needs to be set
+         -d               : run as daemon. Use this when starting in
+                            /etc/init.d, but also when running without
+                            terminal (e.g. cron)
+         -t <seconds>     : Run for these number of seconds, then exit.
+                        (if neither -d nor -t are supplied, waits for <RETURN>)
+         -b <brightness>  : Sets brightness percent. Default: 100.
+         -R <rotation>    : Sets the rotation of matrix. 
+                            Allowed: 0, 90, 180, 270. Default: 0.
      Demos, choosen with -D
          0  - some rotating square
          1  - forward scrolling an image
