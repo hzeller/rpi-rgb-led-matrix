@@ -106,7 +106,7 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
   : rows_(rows), chained_displays_(chained_displays),
     parallel_displays_(parallel_displays),
     io_(NULL), updater_(NULL),
-    transformer_(NULL) {
+    transformer_(new NullTransformer()) {
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io);

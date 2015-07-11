@@ -104,8 +104,8 @@ public:
   // animation.
   FrameCanvas *SwapOnVSync(FrameCanvas *other);
 
-  void SetTransformer(CanvasTransformer *transformer);
-  CanvasTransformer *transformer();
+  inline void SetTransformer(CanvasTransformer *transformer);
+  inline CanvasTransformer *transformer();
 
   // -- Canvas interface. These write to the active FrameCanvas
   // (see documentation in canvas.h)
