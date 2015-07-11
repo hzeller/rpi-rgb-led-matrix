@@ -184,16 +184,6 @@ uint8_t RGBMatrix::brightness() {
   return brightness_;
 }
 
-void RGBMatrix::SetTransformer(CanvasTransformer *transformer) {
-  if (transformer == NULL)
-    transformer = new RGBMatrix::NullTransformer();
-  transformer_ = transformer;
-}
-
-CanvasTransformer *RGBMatrix::transformer() {
-  return transformer_;
-}
-
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
 int RGBMatrix::width() const { 
   return (transformer_ != NULL) ? transformer_->Transform(active_)->width() : active_->framebuffer()->width(); 
