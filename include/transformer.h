@@ -28,7 +28,6 @@ namespace rgb_matrix {
 class RotateTransformer : public CanvasTransformer {
 public:
   RotateTransformer(int angle);
-  virtual ~RotateTransformer() { delete canvas_; }
 
   void SetAngle(int angle);
   int angle();
@@ -71,7 +70,7 @@ public:
   typedef std::vector<CanvasTransformer*> List;
   
   LinkedTransformer() {}
-  LinkedTransformer(List transformer_list) : transformer_list_(transformer_list) {}
+  LinkedTransformer(List transformer_list) : list_(transformer_list) {}
 
   void AddTransformer(CanvasTransformer *transformer);
   void AddTransformer(List transformer_list);
@@ -80,13 +79,12 @@ public:
   virtual Canvas *Transform(Canvas *output);
 
 private:
-  List transformer_list_;
+  List list_;
 };
 
 class LargeSquare64x64Transformer : public CanvasTransformer {
 public:
   LargeSquare64x64Transformer();
-  virtual ~LargeSquare64x64Transformer() { delete canvas_; }
 
   virtual Canvas *Transform(Canvas *output);
 

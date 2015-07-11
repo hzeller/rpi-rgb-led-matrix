@@ -103,19 +103,19 @@ int RotateTransformer::angle() {
 }
 
 void LinkedTransformer::AddTransformer(CanvasTransformer *transformer) {
-  transformer_list_.push_back(transformer);
+  list_.push_back(transformer);
 }
 
 void LinkedTransformer::AddTransformer(List transformer_list) {
-  transformer_list_.insert(transformer_list_.end(), transformer_list.begin(), transformer_list.end());
+  list_.insert(list_.end(), transformer_list.begin(), transformer_list.end());
 }
 void LinkedTransformer::SetTransformer(List transformer_list) {
-  transformer_list_ = transformer_list;
+  list_ = transformer_list;
 }
 
 Canvas *LinkedTransformer::Transform(Canvas *output) {
-  for (size_t i = 0; i < transformer_list_.size(); ++i) {
-    output = transformer_list_[i]->Transform(output);
+  for (size_t i = 0; i < list_.size(); ++i) {
+    output = list_[i]->Transform(output);
   }
 
   return output;
