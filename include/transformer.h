@@ -28,6 +28,7 @@ namespace rgb_matrix {
 class RotateTransformer : public CanvasTransformer {
 public:
   RotateTransformer(int angle);
+  virtual ~RotateTransformer() { delete canvas_; }
 
   void SetAngle(int angle);
   int angle();
@@ -38,9 +39,7 @@ private:
   // Transformer canvas to rotate the input canvas in 90° steps
   class RotateCanvas : public Canvas {
   public:
-    // This class takes over ownership of the delegatee.
-    RotateCanvas(int angle);
-    virtual ~RotateCanvas() { delete delegatee_; }
+    RotateCanvas(int angle) : delegatee_(NULL), angle_(angle) {}
 
     void SetDelegatee(Canvas* delegatee);
     void SetAngle(int angle);
@@ -85,6 +84,7 @@ private:
 class LargeSquare64x64Transformer : public CanvasTransformer {
 public:
   LargeSquare64x64Transformer();
+  virtual ~LargeSquare64x64Transformer() { delete canvas_; };
 
   virtual Canvas *Transform(Canvas *output);
 
@@ -92,7 +92,6 @@ private:
   class LargeSquare64x64Canvas : public Canvas {
   public:
     LargeSquare64x64Canvas() : delegatee_(NULL) {}
-    virtual ~LargeSquare64x64Canvas() { delete delegatee_; }
 
     void SetDelegatee(Canvas* delegatee);
 
