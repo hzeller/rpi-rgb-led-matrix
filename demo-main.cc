@@ -269,8 +269,8 @@ public:
   }
 
   void Run() {
-    const int screen_height = canvas()->height();
-    const int screen_width = canvas()->width();
+    const int screen_height = matrix_->transformer()->Transform(offscreen_)->height();
+    const int screen_width = matrix_->transformer()->Transform(offscreen_)->width();
     while (running()) {
       {
         MutexLock l(&mutex_new_image_);
