@@ -135,6 +135,14 @@ private:
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
   CanvasTransformer *transformer_;
+
+  class NullTransformer : public CanvasTransformer {
+  public:
+    NullTransformer() {}
+    virtual ~NullTransformer() {}
+
+    virtual Canvas *Transform(Canvas *output);
+  };
 };
 
 class FrameCanvas : public Canvas {

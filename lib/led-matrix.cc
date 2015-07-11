@@ -185,6 +185,8 @@ uint8_t RGBMatrix::brightness() {
 }
 
 void RGBMatrix::SetTransformer(CanvasTransformer *transformer) {
+  if (transformer == NULL)
+    transformer = new RGBMatrix::NullTransformer();
   transformer_ = transformer;
 }
 
@@ -223,6 +225,10 @@ void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   } else {
     active_->framebuffer()->Fill(red, green, blue);
   }
+}
+
+Canvas *RGBMatrix::NullTransformer::Transform(Canvas *output) {
+  return output;
 }
 
 // FrameCanvas implementation of Canvas
