@@ -1185,16 +1185,16 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  LinkedTransformerCanvasTransformer *transformer = new LinkedTransformerCanvasTransformer();
+  LinkedTransformer *transformer = new LinkedTransformer();
   matrix->SetTransformer(transformer);
 
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    transformer->AddTransformer(new LargeSquare64x64CanvasTransformer());
+    transformer->AddTransformer(new LargeSquare64x64Transformer());
   }
 
   if (rotation > 0) {
-    transformer->AddTransformer(new RotateCanvasTransformer(rotation));
+    transformer->AddTransformer(new RotateTransformer(rotation));
   }
 
   Canvas *canvas = matrix;
