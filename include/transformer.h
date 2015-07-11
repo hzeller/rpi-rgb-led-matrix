@@ -24,31 +24,6 @@
 
 namespace rgb_matrix {
 
-// Transformer canvas to rotate the input canvas in 90° steps
-class RotateCanvas : public Canvas {
-public:
-  // This class takes over ownership of the delegatee.
-  RotateCanvas(int angle);
-  virtual ~RotateCanvas() { delete delegatee_; }
-
-  void SetDelegatee(Canvas* delegatee);
-
-  void SetAngle(int angle);
-  int angle();
-
-  virtual int width() const;
-  virtual int height() const;
-  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
-  virtual void Clear();
-  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-
-private:
-  Canvas *delegatee_;
-  int angle_;
-  float pivot_x_;
-  float pivot_y_;
-};
-
 // Transformer for RotateCanvas
 class RotateCanvasTransformer : public CanvasTransformer {
 public:
@@ -61,6 +36,29 @@ public:
   virtual Canvas *Transform(Canvas *output);
 
 private:
+  // Transformer canvas to rotate the input canvas in 90° steps
+  class RotateCanvas : public Canvas {
+  public:
+    // This class takes over ownership of the delegatee.
+    RotateCanvas(int angle);
+    virtual ~RotateCanvas() { delete delegatee_; }
+
+    void SetDelegatee(Canvas* delegatee);
+    void SetAngle(int angle);
+
+    virtual int width() const;
+    virtual int height() const;
+    virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+    virtual void Clear();
+    virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+
+  private:
+    Canvas *delegatee_;
+    int angle_;
+    float pivot_x_;
+    float pivot_y_;
+  };
+
   RotateCanvas *canvas_;
   int angle_;
 };
@@ -85,23 +83,6 @@ private:
   List transformer_list_;
 };
 
-class LargeSquare64x64Canvas : public Canvas {
-public:
-  LargeSquare64x64Canvas() : delegatee_(NULL) {}
-  virtual ~LargeSquare64x64Canvas() { delete delegatee_; }
-
-  void SetDelegatee(Canvas* delegatee);
-
-  virtual void Clear();
-  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-  virtual int width() const;
-  virtual int height() const;
-  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
-
-private:
-  Canvas *delegatee_;
-};
-
 class LargeSquare64x64CanvasTransformer : public CanvasTransformer {
 public:
   LargeSquare64x64CanvasTransformer();
@@ -110,6 +91,23 @@ public:
   virtual Canvas *Transform(Canvas *output);
 
 private:
+  class LargeSquare64x64Canvas : public Canvas {
+  public:
+    LargeSquare64x64Canvas() : delegatee_(NULL) {}
+    virtual ~LargeSquare64x64Canvas() { delete delegatee_; }
+
+    void SetDelegatee(Canvas* delegatee);
+
+    virtual void Clear();
+    virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+    virtual int width() const;
+    virtual int height() const;
+    virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+
+  private:
+    Canvas *delegatee_;
+  };
+
   LargeSquare64x64Canvas *canvas_;
 };
 

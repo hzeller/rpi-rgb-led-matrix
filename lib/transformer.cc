@@ -20,12 +20,12 @@
 
 namespace rgb_matrix {
 
-RotateCanvas::RotateCanvas(int angle) : delegatee_(NULL), angle_(angle) {
+RotateCanvasTransformer::RotateCanvas::RotateCanvas(int angle) : delegatee_(NULL), angle_(angle) {
   // Only allow angles in 90° steps
   assert(angle % 90 == 0);
 }
 
-void RotateCanvas::SetDelegatee(Canvas* delegatee) {
+void RotateCanvasTransformer::RotateCanvas::SetDelegatee(Canvas* delegatee) {
   assert(delegatee != NULL);
 
   pivot_x_ = (delegatee->width() - 1) / 2;
@@ -33,7 +33,7 @@ void RotateCanvas::SetDelegatee(Canvas* delegatee) {
   delegatee_ = delegatee;
 }
 
-void RotateCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+void RotateCanvasTransformer::RotateCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
   assert(delegatee_ != NULL);
 
   const float s = (angle_ == 90 ? 1 : (angle_ == 270 ? -1 : 0));
@@ -57,33 +57,29 @@ void RotateCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t bl
   delegatee_->SetPixel(x, y, red, green, blue);
 }
 
-int RotateCanvas::width() const { 
+int RotateCanvasTransformer::RotateCanvas::width() const { 
   assert(delegatee_ != NULL);
   return (angle_ % 180 == 0) ? delegatee_->width() : delegatee_->height();
 }
 
-int RotateCanvas::height() const { 
+int RotateCanvasTransformer::RotateCanvas::height() const { 
   assert(delegatee_ != NULL); 
   return (angle_ % 180 == 0) ? delegatee_->height() : delegatee_->width();
 }
 
-void RotateCanvas::Clear() { 
+void RotateCanvasTransformer::RotateCanvas::Clear() { 
   assert(delegatee_ != NULL); 
   delegatee_->Clear(); 
 }
 
-void RotateCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+void RotateCanvasTransformer::RotateCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   assert(delegatee_ != NULL);
   delegatee_->Fill(red, green, blue);
 }
 
-void RotateCanvas::SetAngle(int angle) {
+void RotateCanvasTransformer::RotateCanvas::SetAngle(int angle) {
   assert(angle % 90 == 0);
   angle_ = angle;
-}
-
-int RotateCanvas::angle() {
-  return angle_;
 }
 
 RotateCanvasTransformer::RotateCanvasTransformer(int angle) : angle_(angle) {
@@ -125,7 +121,7 @@ Canvas *LinkedTransformerCanvasTransformer::Transform(Canvas *output) {
   return output;
 }
 
-void LargeSquare64x64Canvas::SetDelegatee(Canvas* delegatee) {
+void LargeSquare64x64CanvasTransformer::LargeSquare64x64Canvas::SetDelegatee(Canvas* delegatee) {
   assert(delegatee != NULL);
   // Our assumptions of the underlying geometry:
   assert(delegatee->height() == 32);
@@ -134,25 +130,25 @@ void LargeSquare64x64Canvas::SetDelegatee(Canvas* delegatee) {
   delegatee_ = delegatee;
 }
 
-void LargeSquare64x64Canvas::Clear() { 
+void LargeSquare64x64CanvasTransformer::LargeSquare64x64Canvas::Clear() { 
   assert(delegatee_ != NULL); 
   delegatee_->Clear(); 
 }
 
-void LargeSquare64x64Canvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+void LargeSquare64x64CanvasTransformer::LargeSquare64x64Canvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   assert(delegatee_ != NULL);
   delegatee_->Fill(red, green, blue);
 }
 
-int LargeSquare64x64Canvas::width() const { 
+int LargeSquare64x64CanvasTransformer::LargeSquare64x64Canvas::width() const { 
   return 64; 
 }
 
-int LargeSquare64x64Canvas::height() const { 
+int LargeSquare64x64CanvasTransformer::LargeSquare64x64Canvas::height() const { 
   return 64; 
 }
 
-void LargeSquare64x64Canvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+void LargeSquare64x64CanvasTransformer::LargeSquare64x64Canvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
   assert(delegatee_ != NULL);
 
   if (x < 0 || x >= width() || y < 0 || y >= height()) return;
