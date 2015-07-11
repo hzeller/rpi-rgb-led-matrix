@@ -68,21 +68,21 @@ private:
 // Transformer for linked transformer objects
 // First transformer added will be considered last
 // (so it would the transformer that gets the original Canvas object)
-typedef std::vector<CanvasTransformer*> CanvasTransformerList;
 class LinkedTransformerCanvasTransformer : public CanvasTransformer {
 public:
+  typedef std::vector<CanvasTransformer*> List;
   
   LinkedTransformerCanvasTransformer() {}
-  LinkedTransformerCanvasTransformer(CanvasTransformerList transformer_list) : transformer_list_(transformer_list) {}
+  LinkedTransformerCanvasTransformer(List transformer_list) : transformer_list_(transformer_list) {}
 
   void AddTransformer(CanvasTransformer *transformer);
-  void AddTransformer(CanvasTransformerList transformer_list);
-  void SetTransformer(CanvasTransformerList transformer_list);
+  void AddTransformer(List transformer_list);
+  void SetTransformer(List transformer_list);
 
   virtual Canvas *Transform(Canvas *output);
 
 private:
-  CanvasTransformerList transformer_list_;
+  List transformer_list_;
 };
 
 class LargeSquare64x64Canvas : public Canvas {

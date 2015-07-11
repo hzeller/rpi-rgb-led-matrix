@@ -110,10 +110,10 @@ void LinkedTransformerCanvasTransformer::AddTransformer(CanvasTransformer *trans
   transformer_list_.push_back(transformer);
 }
 
-void LinkedTransformerCanvasTransformer::AddTransformer(CanvasTransformerList transformer_list) {
+void LinkedTransformerCanvasTransformer::AddTransformer(List transformer_list) {
   transformer_list_.insert(transformer_list_.end(), transformer_list.begin(), transformer_list.end());
 }
-void LinkedTransformerCanvasTransformer::SetTransformer(CanvasTransformerList transformer_list) {
+void LinkedTransformerCanvasTransformer::SetTransformer(List transformer_list) {
   transformer_list_ = transformer_list;
 }
 
