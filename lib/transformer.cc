@@ -20,66 +20,57 @@
 
 namespace rgb_matrix {
 
-RotateTransformer::RotateCanvas::RotateCanvas(int angle) : delegatee_(NULL), angle_(angle) {
-  // Only allow angles in 90° steps
-  assert(angle % 90 == 0);
+RotateTransformer::RotateCanvas::RotateCanvas(int angle) : delegatee_(NULL) {
+  SetAngle(angle_);
 }
 
 void RotateTransformer::RotateCanvas::SetDelegatee(Canvas* delegatee) {
-  assert(delegatee != NULL);
-
   pivot_x_ = (delegatee->width() - 1) / 2;
   pivot_y_ = (delegatee->height() - 1) / 2;
   delegatee_ = delegatee;
 }
 
 void RotateTransformer::RotateCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  assert(delegatee_ != NULL);
-
-  const float s = (angle_ == 90 ? 1 : (angle_ == 270 ? -1 : 0));
-  const float c = (angle_ == 180 ? -1 : (angle_ == 0 ? 1 : 0));
-
-  // Offset needed cause of little precision errors on 180° and 270°
-  const int offset_x = (angle_ == 90 || angle_ == 180 ? 1 : 0);
-  const int offset_y = (angle_ == 180 || angle_ == 270 ? 1 : 0);
-
   // translate point to origin
   x -= pivot_x_;
   y -= pivot_y_;
 
-  float rot_x = x * c - y * s;
-  float rot_y = x * s + y * c;
+  float rot_x = x * cos_ - y * sin_;
+  float rot_y = x * sin_ + y * cos_;
 
   // translate back
-  x = rot_x + pivot_x_ + offset_x;
-  y = rot_y + pivot_y_ + offset_y;
+  x = rot_x + pivot_x_ + offset_x_;
+  y = rot_y + pivot_y_ + offset_y_;
 
   delegatee_->SetPixel(x, y, red, green, blue);
 }
 
 int RotateTransformer::RotateCanvas::width() const { 
-  assert(delegatee_ != NULL);
   return (angle_ % 180 == 0) ? delegatee_->width() : delegatee_->height();
 }
 
 int RotateTransformer::RotateCanvas::height() const { 
-  assert(delegatee_ != NULL); 
   return (angle_ % 180 == 0) ? delegatee_->height() : delegatee_->width();
 }
 
 void RotateTransformer::RotateCanvas::Clear() { 
-  assert(delegatee_ != NULL); 
   delegatee_->Clear(); 
 }
 
 void RotateTransformer::RotateCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
-  assert(delegatee_ != NULL);
   delegatee_->Fill(red, green, blue);
 }
 
 void RotateTransformer::RotateCanvas::SetAngle(int angle) {
   assert(angle % 90 == 0);
   angle_ = angle;
+
+  sin_ = (angle_ == 90 ? 1 : (angle_ == 270 ? -1 : 0));
+  cos_ = (angle_ == 180 ? -1 : (angle_ == 0 ? 1 : 0));
+
+  // Offset needed cause of little precision errors on 180° and 270°
+  offset_x_ = (angle_ == 90 || angle_ == 180 ? 1 : 0);
+  offset_y_ = (angle_ == 180 || angle_ == 270 ? 1 : 0);
 }
 
 RotateTransformer::RotateTransformer(int angle) : angle_(angle) {

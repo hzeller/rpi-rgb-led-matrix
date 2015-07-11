@@ -55,6 +55,10 @@ private:
     int angle_;
     float pivot_x_;
     float pivot_y_;
+    int cos_;
+    int sin_;
+    int offset_x_;
+    int offset_y_;
   };
 
   RotateCanvas *canvas_;
