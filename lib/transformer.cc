@@ -21,7 +21,7 @@
 namespace rgb_matrix {
 
 RotateTransformer::RotateCanvas::RotateCanvas(int angle) : delegatee_(NULL) {
-  SetAngle(angle_);
+  SetAngle(angle);
 }
 
 void RotateTransformer::RotateCanvas::SetDelegatee(Canvas* delegatee) {
