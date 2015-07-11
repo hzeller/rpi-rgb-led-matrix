@@ -39,7 +39,7 @@ private:
   // Transformer canvas to rotate the input canvas in 90° steps
   class RotateCanvas : public Canvas {
   public:
-    RotateCanvas(int angle) : delegatee_(NULL), angle_(angle) {}
+    RotateCanvas(int angle);
 
     void SetDelegatee(Canvas* delegatee);
     void SetAngle(int angle);

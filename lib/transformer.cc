@@ -20,6 +20,11 @@
 
 namespace rgb_matrix {
 
+RotateTransformer::RotateCanvas::RotateCanvas(int angle) : delegatee_(NULL), angle_(angle) {
+  // Only allow angles in 90° steps
+  assert(angle % 90 == 0);
+}
+
 void RotateTransformer::RotateCanvas::SetDelegatee(Canvas* delegatee) {
   assert(delegatee != NULL);
 
