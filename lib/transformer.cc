@@ -79,6 +79,8 @@ RotateTransformer::RotateTransformer(int angle) : angle_(angle) {
 }
 
 Canvas *RotateTransformer::Transform(Canvas *output) {
+  assert(output != NULL);
+
   canvas_->SetDelegatee(output);
   return canvas_;
 }
@@ -113,7 +115,6 @@ Canvas *LinkedTransformer::Transform(Canvas *output) {
 }
 
 void LargeSquare64x64Transformer::LargeSquare64x64Canvas::SetDelegatee(Canvas* delegatee) {
-  assert(delegatee != NULL);
   // Our assumptions of the underlying geometry:
   assert(delegatee->height() == 32);
   assert(delegatee->width() == 128);
@@ -122,12 +123,10 @@ void LargeSquare64x64Transformer::LargeSquare64x64Canvas::SetDelegatee(Canvas* d
 }
 
 void LargeSquare64x64Transformer::LargeSquare64x64Canvas::Clear() { 
-  assert(delegatee_ != NULL); 
   delegatee_->Clear(); 
 }
 
 void LargeSquare64x64Transformer::LargeSquare64x64Canvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
-  assert(delegatee_ != NULL);
   delegatee_->Fill(red, green, blue);
 }
 
@@ -140,8 +139,6 @@ int LargeSquare64x64Transformer::LargeSquare64x64Canvas::height() const {
 }
 
 void LargeSquare64x64Transformer::LargeSquare64x64Canvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  assert(delegatee_ != NULL);
-
   if (x < 0 || x >= width() || y < 0 || y >= height()) return;
   // We have up to column 64 one direction, then folding around. Lets map
   if (y > 31) {
@@ -156,6 +153,8 @@ LargeSquare64x64Transformer::LargeSquare64x64Transformer() {
 }
 
 Canvas *LargeSquare64x64Transformer::Transform(Canvas *output) {
+  assert(output != NULL);
+  
   canvas_->SetDelegatee(output);
   return canvas_;
 }
