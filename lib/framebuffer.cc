@@ -51,8 +51,12 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
     script_(NULL) {
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
-  bitplane_buffer_ = new GPIO::Data [double_rows_ * columns_ * kBitPlanes];
-  // TODO(hzeller): Calloc() these.
+  MlockAllocator allocator;
+  membuffer_ = allocator.Calloc(double_rows_ * columns_ * kBitPlanes
+                                * sizeof(GPIO::Data));
+  bitplane_buffer_ = (volatile GPIO::Data*) membuffer_.mem_nocache;
+
+  // TODO(hzeller): Calloc() the following.
 
   // When we clock in colors, we always want to clear the clock bit as well.
   // Let's prepare that already here; that bit will never be touched later.
@@ -110,7 +114,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
 }
 
 Framebuffer::~Framebuffer() {
-  delete [] bitplane_buffer_;
+  MlockAllocator::Free(&membuffer_);
 }
 
 /* static */ void Framebuffer::InitGPIO(GPIO *io, int parallel) {
@@ -153,8 +157,8 @@ bool Framebuffer::SetPWMBits(uint8_t value) {
   return true;
 }
 
-inline GPIO::Data *Framebuffer::ValueAt(int double_row, int column,
-                                        int bit_plane) {
+inline volatile GPIO::Data *Framebuffer::ValueAt(int double_row, int column,
+                                                 int bit_plane) {
   return &bitplane_buffer_[ double_row * (columns_ * kBitPlanes)
                             + bit_plane * columns_
                             + column ];
@@ -219,7 +223,7 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
       bits |= (1<<P0_B1)|(1<<P0_B2)|(1<<P1_B1)|(1<<P1_B2)|(1<<P2_B1)|(1<<P2_B2);
     }
     for (int row = 0; row < double_rows_; ++row) {
-      GPIO::Data *row_data = ValueAt(row, 0, b);
+      volatile GPIO::Data *row_data = ValueAt(row, 0, b);
       for (int col = 0; col < columns_; ++col) {
         (row_data++)->SetMasked(bits, color_mask_);
       }
@@ -235,7 +239,7 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   const uint16_t blue  = MapColor(b);
 
   const int min_bit_plane = kBitPlanes - pwm_bits_;
-  GPIO::Data *bits = ValueAt(y & row_mask_, x, min_bit_plane);
+  volatile GPIO::Data *bits = ValueAt(y & row_mask_, x, min_bit_plane);
   uint32_t col = 0;
 
   // Manually expand the three cases for better performance.
@@ -332,11 +336,11 @@ void Framebuffer::InitializeScript(GPIO *io) {
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
     for (int b = kBitPlanes - pwm_to_show; b < kBitPlanes; ++b) {
-      const GPIO::Data *row_data = ValueAt(d_row, 0, b);
+      const volatile GPIO::Data *row_data = ValueAt(d_row, 0, b);
       // While the output enable is still on, we can already clock in the next
       // data.
       for (int col = 0; col < columns_; ++col) {
-        const GPIO::Data &out = *row_data++;
+        const volatile GPIO::Data &out = *row_data++;
         script_->AppendGPIO(&out);         // col + reset clock
         script_->AppendGPIO(&clock_in_);   // Rising edge: clock color in.
       }

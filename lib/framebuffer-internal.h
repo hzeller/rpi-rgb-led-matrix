@@ -128,7 +128,8 @@ private:
   // Each bitplane-column is pre-filled GPIO::Data, of which the colors are set.
   // Of course, that means that we store unrelated bits in the frame-buffer,
   // but it allows easy access in the critical section.
-  GPIO::Data *bitplane_buffer_;
+  MlockAllocator::MemBlock membuffer_;
+  volatile GPIO::Data *bitplane_buffer_;
 
   // Pre-calculated bits to send out to GPIO. Stored here, as their address is
   // referenced by DMA.
@@ -143,7 +144,8 @@ private:
 
   HardwareScript *script_;
 
-  inline GPIO::Data *ValueAt(int double_row, int column, int bit_plane);
+  inline volatile GPIO::Data *ValueAt(int double_row, int column,
+                                      int bit_plane);
 };
 }  // namespace internal
 }  // namespace rgb_matrix

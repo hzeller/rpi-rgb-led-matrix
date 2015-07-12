@@ -42,7 +42,7 @@ class GPIO {
     uint64_t set_bits;
     uint64_t clear_bits;
 
-    inline void SetMasked(uint64_t value, uint64_t mask) {
+    inline void SetMasked(uint64_t value, uint64_t mask) volatile {
       set_bits   = (set_bits   & ~mask) | ( value & mask);
       clear_bits = (clear_bits & ~mask) | (~value & mask);
     }
@@ -61,7 +61,7 @@ class GPIO {
   uint32_t InitOutputs(uint32_t outputs);
   uint32_t output_bits() const { return output_bits_; }
 
-  inline void Write(const Data& data) {
+  inline void Write(const volatile Data& data) {
     SetBits(data.set_bits);
     ClearBits(data.clear_bits);
   }
@@ -99,27 +99,29 @@ public:
   virtual void WaitPulseFinished() {}
 };
 
-// Allocator that hands out physical memory that can be used by DMA.
-class LockedAllocator {
+// Allocator that hands out mlocked physical memory that can be used by DMA.
+class MlockAllocator {
 public:
   struct MemBlock {
+    MemBlock() : mem(NULL), mem_nocache(NULL), size(0) {}
     void *mem;          // Virtual memory pointer.
     void *mem_nocache;  // Virtual memory pointer, remapped to skip L1
 
     size_t size;
   };
 
-  LockedAllocator();
-  ~LockedAllocator();
+  MlockAllocator();
+  ~MlockAllocator();
 
   // Allocate block of given size, memory locked.
   MemBlock Calloc(size_t bytes);
 
-  // Free block.
-  void Free(MemBlock *block);
-
-  // Get physical address of given pointer.
+  // Get physical address of given pointer. Needs to be a 'mem' pointer
+  // not a mem_nocache.
   uintptr_t ToPhysical(void *p);
+
+  // Free block.
+  static void Free(MemBlock *block);
 
 private:
   const int memfd_;
@@ -141,7 +143,7 @@ public:
 
   // Append a GPIO datum to be written. Ownership is not taken, but the
   // pointer must survive.
-  void AppendGPIO(const GPIO::Data *data);
+  void AppendGPIO(const volatile GPIO::Data *data);
 
   // Append pulsing a pin (negative logic) for given spec
   // (TODO: this should be pin+nano-seconds, for now just spec from pulser
@@ -161,6 +163,7 @@ private:
   GPIO *const io_;
   PinPulser *const pulser_;
   std::vector<ScriptElement*> elements_;
+  MlockAllocator::MemBlock script_block_;
 };
 }  // end namespace rgb_matrix
 #endif  // RPI_GPIO_H
