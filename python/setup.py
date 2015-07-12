@@ -1,22 +1,23 @@
 #!/usr/bin/python
 from distutils.core import setup, Extension
- 
-matrix_ext = Extension(
-    name                = 'rgbmatrix',
-    sources             = ['cpp/rgbmatrix.cpp'],
+
+core_ext = Extension(
+    name                = 'core',
+    sources             = ['rgbmatrix/core.cpp'],
     include_dirs        = ['../include'],
     library_dirs        = ['../lib'],
     libraries           = ['rgbmatrix'],
+    extra_compile_args  = ["-O3", "-Wall"],
     language            = 'c++'
 )
 
 setup(
-    name                = 'RGBMatrix Python Library',
+    name                = 'rgbmatrix',
     version             = '0.0.1',
     author              = 'Christoph Friedrich',
     author_email        = 'christoph.friedrich@vonaffenfels.de',
     classifiers         = ['Development Status :: 3 - Alpha'],
-    ext_modules         = [
-        matrix_ext
-    ],
+    ext_package         = 'rgbmatrix',
+    ext_modules         = [core_ext],
+    packages            = ['rgbmatrix']
 )

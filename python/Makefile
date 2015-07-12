@@ -11,7 +11,7 @@ CLEAN_ARGS := clean --all
 MANPAGES := $(patsubst %.txt,%,$(wildcard *.txt))
 TXTTOMAN := a2x -f manpage
 
-CPP_SOURCES = cpp/rgbmatrix.cpp
+CPP_SOURCES = rgbmatrix/core.cpp
 
 # Where our library resides. It is split between includes and the binary
 # library in lib
@@ -32,14 +32,13 @@ install: install-python install-man
 clean: clean-python clean-man
 	find . -type f -name \*.pyc -delete
 	$(RM) build-* install-* test-*
-	$(RM) rgbmatrix.so
 
 $(RGB_LIBRARY):
 	$(MAKE) -C $(RGB_LIBDIR)
 
 # For updating the generated code (not a direct dependency of build-python
 # as the generated file is included in the distribution)
-cpp/%.cpp : pyrex/%.pyx
+%.cpp : %.pyx
 	$(CYTHON) --cplus -o $@ $^
 
 test: test-python

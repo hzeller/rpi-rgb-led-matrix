@@ -3,24 +3,10 @@
 from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t
 
-cimport cppinc
-
-######################
-### Module Classes ###
-######################
-
 cdef class FrameCanvas:
-    cdef cppinc.FrameCanvas *__canvas
-
     def __dealloc__(self):
         if <void*>self.__canvas != NULL:
             self.__canvas = NULL
-
-    @staticmethod
-    cdef FrameCanvas __createInternal(cppinc.FrameCanvas* newCanvas):
-        canvas = FrameCanvas()
-        canvas.__canvas = newCanvas
-        return canvas
 
     cdef cppinc.FrameCanvas* __getCanvas(self) except *:
         if <void*>self.__canvas != NULL:
@@ -48,9 +34,6 @@ cdef class FrameCanvas:
 
 
 cdef class RGBMatrix:
-    cdef cppinc.RGBMatrix *__matrix
-    cdef cppinc.GPIO *__gpio
-
     def __cinit__(self, int rows, int chains = 1, int parallel = 1):
         self.__gpio = new cppinc.GPIO()
         if not self.__gpio.Init():
@@ -73,10 +56,10 @@ cdef class RGBMatrix:
         self.__matrix.Clear()
 
     def CreateFrameCanvas(self):
-        return FrameCanvas.__createInternal(self.__matrix.CreateFrameCanvas())
+        return __createFrameCanvas(self.__matrix.CreateFrameCanvas())
 
     def SwapOnVSync(self, FrameCanvas newFrame):
-        return FrameCanvas.__createInternal(self.__matrix.SwapOnVSync(newFrame.__canvas))
+        return __createFrameCanvas(self.__matrix.SwapOnVSync(newFrame.__canvas))
 
     property luminanceCorrect:
         def __get__(self): return self.__matrix.luminance_correct()
@@ -95,3 +78,8 @@ cdef class RGBMatrix:
 
     property width:
         def __get__(self): return self.__matrix.width()
+
+cdef __createFrameCanvas(cppinc.FrameCanvas* newCanvas):
+    canvas = FrameCanvas()
+    canvas.__canvas = newCanvas
+    return canvas
