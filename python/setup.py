@@ -3,7 +3,7 @@ from distutils.core import setup, Extension
  
 matrix_ext = Extension(
     name                = 'rgbmatrix',
-    sources             = ['rgbmatrix.cpp'],
+    sources             = ['cpp/rgbmatrix.cpp'],
     include_dirs        = ['../include'],
     library_dirs        = ['../lib'],
     libraries           = ['rgbmatrix'],
