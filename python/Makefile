@@ -1,7 +1,7 @@
 PYTHON     ?= python
 CYTHON     ?= cython
 SETUP      := setup.py
-BUILD_ARGS := build
+BUILD_ARGS := build --build-lib .
 INST_ARGS  := install
 ifdef DESTDIR
 INST_ARGS  += --root=$(DESTDIR)
@@ -32,6 +32,7 @@ install: install-python install-man
 clean: clean-python clean-man
 	find . -type f -name \*.pyc -delete
 	$(RM) build-* install-* test-*
+	$(RM) rgbmatrix.so
 
 $(RGB_LIBRARY):
 	$(MAKE) -C $(RGB_LIBDIR)
@@ -48,7 +49,6 @@ ifneq "$(wildcard tests/*.py)" ""
 else
 	$(info Test suite is not implemented...)
 endif
-	touch $@
 
 ifneq "$(wildcard debian/control)" ""
 PYVERS := $(shell pyversions -r -v debian/control)
@@ -60,13 +60,11 @@ build-python: $(PYVERS:%=build-python-%)
 build-python-%: $(RGB_LIBRARY) $(CPP_SOURCES)
 	$(info * Doing build for $(PYTHON)$* ...)
 	$(PYTHON)$* $(SETUP) $(BUILD_ARGS)
-	touch $@
 
 install-python: $(PYVERS:%=install-python-%)
 install-python-%:
 	$(info * Doing install for $(PYTHON)$* ...)
 	$(PYTHON)$* $(SETUP) $(INST_ARGS)
-	touch $@
 
 clean-python: $(PYVERS:%=clean-python-%)
 clean-python-%:
@@ -74,11 +72,9 @@ clean-python-%:
 else
 build-python: $(RGB_LIBRARY) $(CPP_SOURCES)
 	$(PYTHON) $(SETUP) $(BUILD_ARGS)
-	touch $@
 
 install-python:
 	$(PYTHON) $(SETUP) $(INST_ARGS)
-	touch $@
 
 clean-python:
 	$(PYTHON) $(SETUP) $(CLEAN_ARGS)
@@ -88,12 +84,10 @@ build-man: $(MANPAGES:%=build-man-%)
 build-man-%: %.txt
 	$(info * Creating $* ...)
 	$(TXTTOMAN) $<
-	touch $@
 
 install-man: $(MANPAGES:%=install-man-%)
 install-man-%:
 	$(info Installation of $* not implemented...)
-	touch $@
 
 clean-man: $(MANPAGES:%=clean-man-%)
 clean-man-%:

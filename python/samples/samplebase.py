@@ -1,4 +1,6 @@
-import argparse, time, sys
+import argparse, time, sys, os
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix
 
 class SampleBase(argparse.ArgumentParser):
