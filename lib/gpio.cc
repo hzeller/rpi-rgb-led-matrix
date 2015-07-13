@@ -24,6 +24,10 @@
 #include <unistd.h>
 #include <assert.h>
 
+extern "C" {
+#include "mailbox.h"
+}
+
 // Raspberry 1 and 2 have different base addresses for the periphery
 #define BCM2708_PERI_BASE        0x20000000
 #define BCM2709_PERI_BASE        0x3F000000
@@ -39,6 +43,8 @@
 
 #define PAGE_SIZE 4096
 #define REGISTER_BLOCK_SIZE (4*1024)
+
+#define BUS_TO_PHYS(x) ((x)&~0xC0000000)
 
 #define PWM_CTL      0
 #define PWM_STA      1
@@ -465,12 +471,12 @@ public:
 
 class HardwareScript::DataElement : public HardwareScript::ScriptElement {
 public:
-  DataElement(GPIO *io, const volatile GPIO::Data *data) : io_(io), data_(data) {}
+  DataElement(GPIO *io, const GPIO::Data *data) : io_(io), data_(data) {}
   virtual void Run() { io_->Write(*data_); }
 
 private:
   GPIO *const io_;
-  const volatile GPIO::Data *const data_;
+  const GPIO::Data *const data_;
 };
 
 class HardwareScript::PulseElement : public HardwareScript::ScriptElement {
@@ -487,7 +493,7 @@ private:
 };
 
 HardwareScript::~HardwareScript() {
-  MlockAllocator::Free(&script_block_);
+  io_->allocator().Free(&script_block_);
   Clear();
 }
 
@@ -498,7 +504,7 @@ void HardwareScript::Clear() {
   elements_.clear();
 }
 
-void HardwareScript::AppendGPIO(const volatile GPIO::Data *data) {
+void HardwareScript::AppendGPIO(const GPIO::Data *data) {
   // Make sure that we don't mess with bits we haven't configured.
   assert((data->set_bits & io_->output_bits()) == data->set_bits);
   assert((data->clear_bits & io_->output_bits()) == data->clear_bits);
@@ -512,104 +518,55 @@ void HardwareScript::AppendPinPulse(int spec) {
 // See https://github.com/Wallacoloo/Raspberry-Pi-DMA-Example
 // for DMA examples, physical memory mapping and more.
 
-MlockAllocator::MlockAllocator()
-  : memfd_(open("/dev/mem", O_RDWR|O_SYNC)),
-    pagemapfd_(open("/proc/self/pagemap", O_RDONLY)) {
-  assert(memfd_ >= 0);
-  assert(pagemapfd_ >= 0);
+MlockAllocator::MlockAllocator() : mbox_(mbox_open()) {
+  assert(mbox_ >= 0);  // If not, does /dev/vcio exist ?
 }
 
 MlockAllocator::~MlockAllocator() {
-  close(memfd_);
-  close(pagemapfd_);
+  mbox_close(mbox_);
 }
-
-// Doesn't work yet.
-#define WITH_CACHE_THROUGH 0
 
 MlockAllocator::MemBlock MlockAllocator::Calloc(size_t size) {
   // Round up to next full page.
   size = size % PAGE_SIZE == 0 ? size : (size + PAGE_SIZE) & ~(PAGE_SIZE - 1);
   MemBlock result;
   result.size = size;
-  result.mem
-    = mmap(NULL, size,
-           PROT_READ | PROT_WRITE,
-           MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE | MAP_LOCKED,
-           -1, 0);
-  if (result.mem == MAP_FAILED) {
-    fprintf(stderr, "Calloc() failed\n");
-    exit(1);
-  }
-  memset(result.mem, 0x00, size); // 0-fill and force phys. manifestation
-  mlock(result.mem, size);
-
-#if WITH_CACHE_THROUGH
-  // (This is broken.)
-  // Get some contiguous chunk of virtual address space that we then
-  // re-map to the uncached area.
-  result.mem_nocache
-    = mmap(NULL, size,
-           PROT_READ | PROT_WRITE,
-           MAP_SHARED | MAP_ANONYMOUS | MAP_NORESERVE | MAP_LOCKED,
-           -1, 0);
-  if (result.mem_nocache == MAP_FAILED) {
-    fprintf(stderr, "Creating uncached space failed\n");
-    exit(1);
-  }
-  //munmap(result.mem_nocache, size);  // we're going to remap that below.
-  for (size_t offset = 0; offset < size; offset += PAGE_SIZE) {
-    void* remap = (char*)result.mem_nocache + offset;
-    // DMA can't deal with L1 cache, so we need to map the area that
-    // has the same data, but L2 cache mapped (DMA can deal with that).
-    void* m = mmap(remap, PAGE_SIZE, PROT_READ|PROT_WRITE,
-                   MAP_SHARED | MAP_FIXED | MAP_NORESERVE | MAP_LOCKED,
-                   memfd_, ToPhysical((char*)result.mem + offset));
-    assert(m == remap);
-  }
-  memset(result.mem_nocache, 0x00, size); // sync physical.
+#if 1
+  int mem_flag = 0x0c;
+  result.mem_handle_internal = mem_alloc(mbox_, size / PAGE_SIZE, PAGE_SIZE, mem_flag);
+  result.bus_addr = mem_lock(mbox_, result.mem_handle_internal);
+  result.mem = mapmem(BUS_TO_PHYS(result.bus_addr), size);
+  fprintf(stderr, "Alloc: %d bytes;  %p (bus=0x%08x, phys=0x%08x)\n",
+          result.size, result.mem, result.bus_addr, BUS_TO_PHYS(result.bus_addr));
 #else
-  result.mem_nocache = result.mem;  // For now.
+  result.mem = malloc(size);
 #endif
-
+  memset(result.mem, 0x00, size);
   return result;
 }
 
 void MlockAllocator::Free(MemBlock *block) {
-  if (block->size == 0) return;
-  munlock(block->mem, block->size);
-  munmap(block->mem, block->size);
-#if WITH_CACHE_THROUGH
-  munmap(block->mem_nocache, block->size);
+  if (block->mem == NULL) return;
+#if 1
+  unmapmem(block->mem, block->size);
+  mem_unlock(mbox_, block->mem_handle_internal);
+  mem_free(mbox_, block->mem_handle_internal);
+#else
+  free(block->mem);
 #endif
   block->mem = NULL;
-  block->mem_nocache = NULL;
   block->size = 0;
 }
 
-uintptr_t MlockAllocator::ToPhysical(void *p) {
-  const uintptr_t virt_p = (uintptr_t) p;
-  uint64_t pinfo;
-  if (lseek(pagemapfd_, sizeof(pinfo) * (virt_p / PAGE_SIZE), SEEK_SET) < 0 ||
-      read(pagemapfd_, &pinfo, sizeof(pinfo)) != sizeof(pinfo)) {
-    fprintf(stderr, "Can't map %p to physical address\n", p);
-    exit(1);
-  }
-  pinfo &= 0xFFFFFFFF; // Get rid of potential flags in upper bits.
-  return (pinfo * PAGE_SIZE + virt_p % PAGE_SIZE) | UNCACHED_START_MAP;
-}
-
 void HardwareScript::FinishScript() {
-  MlockAllocator allocator;
-  script_block_ = allocator.Calloc(sizeof(dma_cb) * elements_.size());
-  // We want to write through.
-  dma_cb *const raw_blocks = (dma_cb*) script_block_.mem_nocache;
+  return;
+  script_block_ = io_->allocator().Calloc(sizeof(dma_cb) * elements_.size());
   dma_cb *const control_blocks = (dma_cb*) script_block_.mem;
   dma_cb *cb = 0;
   for (size_t i = 0; i < elements_.size(); ++i) {
-    cb = raw_blocks + i;
+    cb = control_blocks + i;
     elements_[i]->FillDMABlock(cb);
-    cb->next = allocator.ToPhysical(control_blocks + (i+1));
+    cb->next = script_block_.ToPhysical(cb + 1);
   }
   cb->next = 0;
 }

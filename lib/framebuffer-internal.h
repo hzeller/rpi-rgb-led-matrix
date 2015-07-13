@@ -28,7 +28,7 @@ namespace internal {
 // written out.
 class Framebuffer {
 public:
-  Framebuffer(int rows, int columns, int parallel);
+  Framebuffer(GPIO *io, int rows, int columns, int parallel);
   ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
@@ -61,7 +61,7 @@ public:
 private:
   // Map color
   inline uint16_t MapColor(uint8_t c);
-
+  GPIO *const io_;
   const int rows_;     // Number of rows. 16 or 32.
 #ifdef SUPPORT_MULTI_PARALLEL
   const int parallel_; // Parallel rows of chains. 1 or 2.
@@ -76,6 +76,7 @@ private:
   const int double_rows_;
   const uint8_t row_mask_;
   uint32_t color_mask_;
+
 
   // Currently experimental new layout. Reshuffling completely to better meet
   // constraints:
@@ -129,7 +130,7 @@ private:
   // Of course, that means that we store unrelated bits in the frame-buffer,
   // but it allows easy access in the critical section.
   MlockAllocator::MemBlock membuffer_;
-  volatile GPIO::Data *bitplane_buffer_;
+  GPIO::Data *bitplane_buffer_;
 
   // Pre-calculated bits to send out to GPIO. Stored here, as their address is
   // referenced by DMA.
@@ -144,8 +145,7 @@ private:
 
   HardwareScript *script_;
 
-  inline volatile GPIO::Data *ValueAt(int double_row, int column,
-                                      int bit_plane);
+  inline GPIO::Data *ValueAt(int double_row, int column, int bit_plane);
 };
 }  // namespace internal
 }  // namespace rgb_matrix

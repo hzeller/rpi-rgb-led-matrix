@@ -104,8 +104,7 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
   : rows_(rows), chained_displays_(chained_displays),
     parallel_displays_(parallel_displays),
     io_(NULL), updater_(NULL) {
-  active_ = CreateFrameCanvas();
-  Clear();
+  assert(io);  // Always expect it to be set.
   SetGPIO(io);
 }
 
@@ -128,13 +127,16 @@ void RGBMatrix::SetGPIO(GPIO *io) {
   if (io_ != NULL) return;  // already set.
   io_ = io;
   internal::Framebuffer::InitGPIO(io_, parallel_displays_);
+  active_ = CreateFrameCanvas();
+  Clear();
   updater_ = new UpdateThread(io_, active_);
   updater_->Start(99);  // Whatever we get :)
 }
 
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {
   FrameCanvas *result =
-    new FrameCanvas(new internal::Framebuffer(rows_, 32 * chained_displays_,
+    new FrameCanvas(new internal::Framebuffer(io_,
+                                              rows_, 32 * chained_displays_,
                                               parallel_displays_));
   if (created_frames_.empty()) {
     // First time. Get defaults from initial Framebuffer.

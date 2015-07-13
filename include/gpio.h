@@ -19,10 +19,45 @@
 #include <stdint.h>
 #include <vector>
 #include <stdlib.h>
+#include <assert.h>
 
 // Putting this in our namespace to not collide with other things called like
 // this.
 namespace rgb_matrix {
+// Allocator that hands out mlocked physical memory that can be used by DMA.
+class MlockAllocator {
+public:
+  struct MemBlock {
+    MemBlock() : mem(NULL), size(0) {}
+
+    // Get physical address of given pointer. Must be in the range of
+    // memory allocated by this block.
+    inline uint32_t ToPhysical(void *m) {
+      uint32_t offset = (uint8_t*)m - (uint8_t*)mem;
+      assert(offset < size);
+      return bus_addr + offset;
+    }
+
+    unsigned mem_handle_internal;
+    uint32_t bus_addr;
+    void *mem;
+    size_t size;
+  };
+
+  // Allocate block of given size, memory locked.
+  MemBlock Calloc(size_t bytes);
+
+  // Free block.
+  void Free(MemBlock *block);
+
+private:
+  friend class GPIO;
+  MlockAllocator();
+  ~MlockAllocator();
+
+  const int mbox_;
+};
+
 // For now, everything is initialized as output.
 class GPIO {
  public:
@@ -42,7 +77,7 @@ class GPIO {
     uint64_t set_bits;
     uint64_t clear_bits;
 
-    inline void SetMasked(uint64_t value, uint64_t mask) volatile {
+    inline void SetMasked(uint64_t value, uint64_t mask) {
       set_bits   = (set_bits   & ~mask) | ( value & mask);
       clear_bits = (clear_bits & ~mask) | (~value & mask);
     }
@@ -72,9 +107,12 @@ class GPIO {
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   void ClearBits(uint32_t value);
 
+  MlockAllocator& allocator() { return allocator_; }
+
  private:
   uint32_t output_bits_;
   volatile uint32_t *gpio_port_;
+  MlockAllocator allocator_;
 };
 
 // A PinPulser is a utility class that pulses a GPIO pin. There can be various
@@ -99,35 +137,6 @@ public:
   virtual void WaitPulseFinished() {}
 };
 
-// Allocator that hands out mlocked physical memory that can be used by DMA.
-class MlockAllocator {
-public:
-  struct MemBlock {
-    MemBlock() : mem(NULL), mem_nocache(NULL), size(0) {}
-    void *mem;          // Virtual memory pointer.
-    void *mem_nocache;  // Virtual memory pointer, remapped to skip L1
-
-    size_t size;
-  };
-
-  MlockAllocator();
-  ~MlockAllocator();
-
-  // Allocate block of given size, memory locked.
-  MemBlock Calloc(size_t bytes);
-
-  // Get physical address of given pointer. Needs to be a 'mem' pointer
-  // not a mem_nocache.
-  uintptr_t ToPhysical(void *p);
-
-  // Free block.
-  static void Free(MemBlock *block);
-
-private:
-  const int memfd_;
-  const int pagemapfd_;
-};
-
 // Scratch API thought area for DMA. To abstract it from the actual DMA, we
 // consider it a "HardwareScript", but it is close enough so that it can be
 // implemented straight-forward.
@@ -143,7 +152,7 @@ public:
 
   // Append a GPIO datum to be written. Ownership is not taken, but the
   // pointer must survive.
-  void AppendGPIO(const volatile GPIO::Data *data);
+  void AppendGPIO(const GPIO::Data *data);
 
   // Append pulsing a pin (negative logic) for given spec
   // (TODO: this should be pin+nano-seconds, for now just spec from pulser
