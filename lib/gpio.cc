@@ -76,6 +76,19 @@ extern "C" {
 #define CLK_PWMCTL 40
 #define CLK_PWMDIV 41
 
+#define DMA_CB_TI_NO_WIDE_BURSTS (1<<26)
+#define DMA_CB_TI_SRC_INC     (1<<8)
+#define DMA_CB_TI_DEST_INC    (1<<4)
+#define DMA_CB_TI_TDMODE      (1<<1)
+
+// Same for Pi1 and Pi2
+#define GPIO_BASE_BUS 0x7E200000 // Physical GPIO bus GPIO address.
+#define GPSET_START   0x0000001C     // first set register. next word: set1, next 2 words: clear.
+#define DMA_CB_TXFR_LEN_YLENGTH(y) (((y-1)&0x4fff) << 16)
+#define DMA_CB_TXFR_LEN_XLENGTH(x) ((x)&0xffff)
+#define DMA_CB_STRIDE_D_STRIDE(x)  (((x)&0xffff) << 16)
+#define DMA_CB_STRIDE_S_STRIDE(x)  ((x)&0xffff)
+
 // We want to have the last word in the fifo free
 #define MAX_PWM_BIT_USE 224
 #define PWM_BASE_TIME_NS 2
@@ -452,31 +465,56 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
   }
 }
 
-struct dma_cb {
-    uint32_t info;   // transfer information.
-    uint32_t src;    // physical source address.
-    uint32_t dst;    // physical destination address.
-    uint32_t length; // transfer length.
-    uint32_t stride; // stride mode.
-    uint32_t next;   // next control block.
-    uint32_t pad[2];
+struct dma_chan {
+  // 4.2.1.2 RegisterMap. p 41.
+  uint32_t cs;        // control and status.
+  uint32_t cb;        // control block address.
+  // -- (what do we do with these ?)
+  uint32_t info;      // transfer information.
+  uint32_t src;       // physical source address.
+  uint32_t dst;       // physical destination address.
+  uint32_t length;    // transfer length.
+  uint32_t stride;    // stride mode.
+  uint32_t next_cb;   // physical address next control block (cache-line=32byte-aligned)
+  // --
+  uint32_t debug;     // control debug settings.
+};
+
+struct dma_cb {  // 32 bytes.
+  uint32_t info;   // transfer information.
+  uint32_t src;    // physical source address.
+  uint32_t dst;    // physical destination address.
+  uint32_t length; // transfer length.
+  uint32_t stride; // stride mode.
+  uint32_t next;   // next control block.
+  uint32_t pad[2];
 };
 
 class HardwareScript::ScriptElement {
 public:
   virtual ~ScriptElement() {}
   virtual void Run() = 0;
-  virtual void FillDMABlock(dma_cb *control){}  // todo: implement.
+  virtual void FillDMABlock(dma_cb *control) {}
 };
 
 class HardwareScript::DataElement : public HardwareScript::ScriptElement {
 public:
-  DataElement(GPIO *io, const GPIO::Data *data) : io_(io), data_(data) {}
+  DataElement(GPIO *io, uintptr_t physical_addr, const GPIO::Data *data)
+    : io_(io), data_physical_(physical_addr), data_(data) {}
   virtual void Run() { io_->Write(*data_); }
+  virtual void FillDMABlock(dma_cb *cb) {
+    cb->info   = (DMA_CB_TI_SRC_INC | DMA_CB_TI_DEST_INC |
+                  DMA_CB_TI_NO_WIDE_BURSTS | DMA_CB_TI_TDMODE);
+    cb->src    = data_physical_;
+    cb->dst    = GPIO_BASE_BUS + GPSET_START;
+    cb->length = DMA_CB_TXFR_LEN_YLENGTH(2) | DMA_CB_TXFR_LEN_XLENGTH(8);
+    cb->stride = DMA_CB_STRIDE_D_STRIDE(4) | DMA_CB_STRIDE_S_STRIDE(0);
+  }
 
 private:
   GPIO *const io_;
-  const GPIO::Data *const data_;
+  uintptr_t data_physical_;
+  const GPIO::Data *data_;
 };
 
 class HardwareScript::PulseElement : public HardwareScript::ScriptElement {
@@ -486,7 +524,9 @@ public:
     pulser_->SendPulse(spec_);
     pulser_->WaitPulseFinished();  // todo: make that a separate element.
   }
-
+  virtual void FillDMABlock(dma_cb *control) {
+    assert(0);  // can't deal with this yet.
+  }
 private:
   PinPulser *const pulser_;
   const int spec_;
@@ -504,12 +544,12 @@ void HardwareScript::Clear() {
   elements_.clear();
 }
 
-void HardwareScript::AppendGPIO(const GPIO::Data *data) {
+void HardwareScript::AppendGPIO(const MemBlock& block, const GPIO::Data *data) {
   // Make sure that we don't mess with bits we haven't configured.
   assert((data->set_bits & io_->output_bits()) == data->set_bits);
   assert((data->clear_bits & io_->output_bits()) == data->clear_bits);
 
-  elements_.push_back(new DataElement(io_, data));
+  elements_.push_back(new DataElement(io_, block.ToPhysical(data), data));
 }
 void HardwareScript::AppendPinPulse(int spec) {
   elements_.push_back(new PulseElement(pulser_, spec));
@@ -534,7 +574,7 @@ MemBlock::MemBlock(size_t size) {
   memset(mem_, 0x00, size);
 }
 
-uint32_t MemBlock::ToPhysical(void *m) {
+uintptr_t MemBlock::ToPhysical(const void *m) const {
     uint32_t offset = (uint8_t*)m - (uint8_t*)mem_;
     assert(offset < size_);
     return bus_addr_ + offset;

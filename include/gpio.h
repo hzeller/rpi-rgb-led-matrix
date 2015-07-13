@@ -33,7 +33,7 @@ public:
 
   // Get physical address of given pointer. Must be in the range of
   // memory allocated by this block.
-  uint32_t ToPhysical(void *m);
+  uintptr_t ToPhysical(const void *m) const;
 
 private:
   static int mbox_;
@@ -135,7 +135,7 @@ public:
 
   // Append a GPIO datum to be written. Ownership is not taken, but the
   // pointer must survive.
-  void AppendGPIO(const GPIO::Data *data);
+  void AppendGPIO(const MemBlock &block, const GPIO::Data *data);
 
   // Append pulsing a pin (negative logic) for given spec
   // (TODO: this should be pin+nano-seconds, for now just spec from pulser

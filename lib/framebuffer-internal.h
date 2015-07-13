@@ -123,6 +123,19 @@ private:
     P0_G1,      // 27 P1-13 (Not on RPi1, Rev1)
   };
 
+  struct BasicOpsGPIO {
+    // Pre-calculated bits to send out to GPIO. Stored here, as their address is
+    // referenced by DMA.
+    GPIO::Data clock_in;
+    GPIO::Data clock_reset;
+    GPIO::Data strobe;
+    GPIO::Data row_address[16];
+
+    // Temporary until we have something that does timing.
+    GPIO::Data oe_start;
+    GPIO::Data oe_end;
+  };
+
   // The frame-buffer is organized in bitplanes.
   // Highest level (slowest to cycle through) are double rows.
   // For each double-row, we store pwm-bits columns of a bitplane.
@@ -131,17 +144,7 @@ private:
   // but it allows easy access in the critical section.
   MemBlock *membuffer_;
   GPIO::Data *bitplane_buffer_;
-
-  // Pre-calculated bits to send out to GPIO. Stored here, as their address is
-  // referenced by DMA.
-  GPIO::Data clock_in_;
-  GPIO::Data clock_reset_;
-  GPIO::Data strobe_;
-  GPIO::Data row_address_[16];
-
-  // Temporary until we have something that does timing.
-  GPIO::Data oe_start_;
-  GPIO::Data oe_end_;
+  BasicOpsGPIO *ops_;
 
   HardwareScript *script_;
 

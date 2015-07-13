@@ -52,9 +52,11 @@ Framebuffer::Framebuffer(GPIO *io, int rows, int columns, int parallel)
   assert(io_);
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
-  membuffer_ = new MemBlock(double_rows_ * columns_ * kBitPlanes
+  membuffer_ = new MemBlock(sizeof(*ops_) +
+                            double_rows_ * columns_ * kBitPlanes
                             * sizeof(GPIO::Data));
-  bitplane_buffer_ = (GPIO::Data*) membuffer_->mem();
+  ops_ = (BasicOpsGPIO*) membuffer_->mem();
+  bitplane_buffer_ = (GPIO::Data*) ((uint8_t*)membuffer_->mem() + sizeof(*ops_));
 
   // When we clock in colors, we always want to clear the clock bit as well.
   // Let's prepare that already here; that bit will never be touched later.
@@ -81,23 +83,23 @@ Framebuffer::Framebuffer(GPIO *io, int rows, int columns, int parallel)
 #endif
 
   // Pre-calculate some GPIO operations.
-  clock_in_.set_bits = (1<<CLOCK);
-  clock_in_.clear_bits = 0;
+  ops_->clock_in.set_bits = (1<<CLOCK);
+  ops_->clock_in.clear_bits = 0;
 
-  clock_reset_.set_bits = 0;
-  clock_reset_.clear_bits = (1<<CLOCK);
+  ops_->clock_reset.set_bits = 0;
+  ops_->clock_reset.clear_bits = (1<<CLOCK);
 
-  oe_start_.set_bits = 0;
-  oe_start_.clear_bits = (1<<OUTPUT_ENABLE);
+  ops_->oe_start.set_bits = 0;
+  ops_->oe_start.clear_bits = (1<<OUTPUT_ENABLE);
 
-  oe_end_.set_bits = (1<<OUTPUT_ENABLE);
-  oe_end_.clear_bits = 0;
+  ops_->oe_end.set_bits = (1<<OUTPUT_ENABLE);
+  ops_->oe_end.clear_bits = 0;
 
   // We use the fact that set/reset happen in that sequence
-  strobe_.set_bits = (1<<STROBE);
-  strobe_.clear_bits = (1<<STROBE);
+  ops_->strobe.set_bits = (1<<STROBE);
+  ops_->strobe.clear_bits = (1<<STROBE);
 
-  memset(row_address_, 0, sizeof(row_address_));
+  memset(&ops_->row_address, 0, sizeof(ops_->row_address));
   const uint32_t row_mask = (1<<ROW_A)|(1<<ROW_B)|(1<<ROW_C)|(1<<ROW_D);
   for (uint8_t d_row = 0; d_row < 16; ++d_row) {
     const uint32_t row_address =
@@ -105,7 +107,7 @@ Framebuffer::Framebuffer(GPIO *io, int rows, int columns, int parallel)
       ((d_row & 0x2) ? (1<<ROW_B) : 0) |
       ((d_row & 0x4) ? (1<<ROW_C) : 0) |
       ((d_row & 0x8) ? (1<<ROW_D) : 0);
-    row_address_[d_row].SetMasked(row_address, row_mask);
+    ops_->row_address[d_row].SetMasked(row_address, row_mask);
   }
 
   Clear();
@@ -325,11 +327,11 @@ void Framebuffer::InitializeScript(GPIO *io) {
   assert(!script_);
   script_ = new HardwareScript(io, sOutputEnablePulser);
 
-#define USE_PWM 1
+#define USE_PWM 0
 
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
-    script_->AppendGPIO(&row_address_[d_row]);
+    script_->AppendGPIO(*membuffer_, &ops_->row_address[d_row]);
 
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
@@ -339,25 +341,25 @@ void Framebuffer::InitializeScript(GPIO *io) {
       // data.
       for (int col = 0; col < columns_; ++col) {
         const GPIO::Data &out = *row_data++;
-        script_->AppendGPIO(&out);         // col + reset clock
-        script_->AppendGPIO(&clock_in_);   // Rising edge: clock color in.
+        script_->AppendGPIO(*membuffer_, &out);         // col + reset clock
+        script_->AppendGPIO(*membuffer_, &ops_->clock_in);   // Rising edge: clock color in.
       }
-      script_->AppendGPIO(&clock_reset_);  // clock falling edge.
+      script_->AppendGPIO(*membuffer_, &ops_->clock_reset);  // clock falling edge.
 
       // OE of the previous row-data must be finished before strobe.
 #if USE_PWM
       //sOutputEnablePulser->WaitPulseFinished();
 #else
-      script_->AppendGPIO(&oe_end_);
+      script_->AppendGPIO(*membuffer_, &ops_->oe_end);
 #endif
 
-      script_->AppendGPIO(&strobe_);     // set/reset in one go.
+      script_->AppendGPIO(*membuffer_, &ops_->strobe);     // set/reset in one go.
 
       // Now switch on for the sleep time necessary for that bit-plane.
 #if USE_PWM
       script_->AppendPinPulse(b);
 #else
-      script_->AppendGPIO(&oe_start_);
+      script_->AppendGPIO(*membuffer_, &ops_->oe_start);
 #endif
     }
     //sOutputEnablePulser->WaitPulseFinished();
