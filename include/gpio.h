@@ -24,38 +24,23 @@
 // Putting this in our namespace to not collide with other things called like
 // this.
 namespace rgb_matrix {
-// Allocator that hands out mlocked physical memory that can be used by DMA.
-class MlockAllocator {
+class MemBlock {
 public:
-  struct MemBlock {
-    MemBlock() : mem(NULL), size(0) {}
+  MemBlock(size_t size);
+  ~MemBlock();
 
-    // Get physical address of given pointer. Must be in the range of
-    // memory allocated by this block.
-    inline uint32_t ToPhysical(void *m) {
-      uint32_t offset = (uint8_t*)m - (uint8_t*)mem;
-      assert(offset < size);
-      return bus_addr + offset;
-    }
+  inline void* mem() { return mem_; }
 
-    unsigned mem_handle_internal;
-    uint32_t bus_addr;
-    void *mem;
-    size_t size;
-  };
-
-  // Allocate block of given size, memory locked.
-  MemBlock Calloc(size_t bytes);
-
-  // Free block.
-  void Free(MemBlock *block);
+  // Get physical address of given pointer. Must be in the range of
+  // memory allocated by this block.
+  uint32_t ToPhysical(void *m);
 
 private:
-  friend class GPIO;
-  MlockAllocator();
-  ~MlockAllocator();
-
-  const int mbox_;
+  static int mbox_;
+  unsigned mem_handle_;
+  uint32_t bus_addr_;
+  void *mem_;
+  size_t size_;
 };
 
 // For now, everything is initialized as output.
@@ -107,12 +92,9 @@ class GPIO {
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   void ClearBits(uint32_t value);
 
-  MlockAllocator& allocator() { return allocator_; }
-
  private:
   uint32_t output_bits_;
   volatile uint32_t *gpio_port_;
-  MlockAllocator allocator_;
 };
 
 // A PinPulser is a utility class that pulses a GPIO pin. There can be various
@@ -144,7 +126,8 @@ public:
 class HardwareScript {
 public:
   // Does  not take ownership of io and pulser.
-  HardwareScript(GPIO *io, PinPulser *pulser) : io_(io), pulser_(pulser) {}
+  HardwareScript(GPIO *io, PinPulser *pulser) : io_(io), pulser_(pulser),
+                                                script_block_(NULL) {}
   ~HardwareScript();
 
   // Clear script.
@@ -172,7 +155,7 @@ private:
   GPIO *const io_;
   PinPulser *const pulser_;
   std::vector<ScriptElement*> elements_;
-  MlockAllocator::MemBlock script_block_;
+  MemBlock *script_block_;
 };
 }  // end namespace rgb_matrix
 #endif  // RPI_GPIO_H

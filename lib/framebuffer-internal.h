@@ -129,7 +129,7 @@ private:
   // Each bitplane-column is pre-filled GPIO::Data, of which the colors are set.
   // Of course, that means that we store unrelated bits in the frame-buffer,
   // but it allows easy access in the critical section.
-  MlockAllocator::MemBlock membuffer_;
+  MemBlock *membuffer_;
   GPIO::Data *bitplane_buffer_;
 
   // Pre-calculated bits to send out to GPIO. Stored here, as their address is

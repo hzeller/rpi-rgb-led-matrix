@@ -40,7 +40,7 @@ static const long kBaseTimeNanos = 100;
 static PinPulser *sOutputEnablePulser = NULL;
 
 Framebuffer::Framebuffer(GPIO *io, int rows, int columns, int parallel)
-  : io_(io), rows_(rows),
+  : io_(io), rows_(rows),   // TODO: io not needed anymore.
 #ifdef SUPPORT_MULTI_PARALLEL
     parallel_(parallel),
 #endif
@@ -52,9 +52,9 @@ Framebuffer::Framebuffer(GPIO *io, int rows, int columns, int parallel)
   assert(io_);
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
-  membuffer_ = io_->allocator().Calloc(double_rows_ * columns_ * kBitPlanes
-                                       * sizeof(GPIO::Data));
-  bitplane_buffer_ = (GPIO::Data*) membuffer_.mem;
+  membuffer_ = new MemBlock(double_rows_ * columns_ * kBitPlanes
+                            * sizeof(GPIO::Data));
+  bitplane_buffer_ = (GPIO::Data*) membuffer_->mem();
 
   // When we clock in colors, we always want to clear the clock bit as well.
   // Let's prepare that already here; that bit will never be touched later.
@@ -112,7 +112,7 @@ Framebuffer::Framebuffer(GPIO *io, int rows, int columns, int parallel)
 }
 
 Framebuffer::~Framebuffer() {
-  io_->allocator().Free(&membuffer_);
+  delete membuffer_;
 }
 
 /* static */ void Framebuffer::InitGPIO(GPIO *io, int parallel) {

@@ -493,7 +493,7 @@ private:
 };
 
 HardwareScript::~HardwareScript() {
-  io_->allocator().Free(&script_block_);
+  delete script_block_;
   Clear();
 }
 
@@ -515,58 +515,45 @@ void HardwareScript::AppendPinPulse(int spec) {
   elements_.push_back(new PulseElement(pulser_, spec));
 }
 
-// See https://github.com/Wallacoloo/Raspberry-Pi-DMA-Example
-// for DMA examples, physical memory mapping and more.
+int MemBlock::mbox_ = -1;
 
-MlockAllocator::MlockAllocator() : mbox_(mbox_open()) {
-  assert(mbox_ >= 0);  // If not, does /dev/vcio exist ?
-}
-
-MlockAllocator::~MlockAllocator() {
-  mbox_close(mbox_);
-}
-
-MlockAllocator::MemBlock MlockAllocator::Calloc(size_t size) {
+MemBlock::MemBlock(size_t size) {
+  if (mbox_ < 0) {
+    mbox_ = mbox_open();
+  }
   // Round up to next full page.
   size = size % PAGE_SIZE == 0 ? size : (size + PAGE_SIZE) & ~(PAGE_SIZE - 1);
-  MemBlock result;
-  result.size = size;
-#if 1
+
+  size_ = size;
   int mem_flag = 0x0c;
-  result.mem_handle_internal = mem_alloc(mbox_, size / PAGE_SIZE, PAGE_SIZE, mem_flag);
-  result.bus_addr = mem_lock(mbox_, result.mem_handle_internal);
-  result.mem = mapmem(BUS_TO_PHYS(result.bus_addr), size);
-  fprintf(stderr, "Alloc: %d bytes;  %p (bus=0x%08x, phys=0x%08x)\n",
-          result.size, result.mem, result.bus_addr, BUS_TO_PHYS(result.bus_addr));
-#else
-  result.mem = malloc(size);
-#endif
-  memset(result.mem, 0x00, size);
-  return result;
+  mem_handle_ = mem_alloc(mbox_, size, PAGE_SIZE, mem_flag);
+  bus_addr_ = mem_lock(mbox_, mem_handle_);
+  mem_ = mapmem(BUS_TO_PHYS(bus_addr_), size);
+  fprintf(stderr, "Alloc: %6d bytes;  %p (bus=0x%08x, phys=0x%08x)\n",
+          size, mem_, bus_addr_, BUS_TO_PHYS(bus_addr_));
+  memset(mem_, 0x00, size);
 }
 
-void MlockAllocator::Free(MemBlock *block) {
-  if (block->mem == NULL) return;
-#if 1
-  unmapmem(block->mem, block->size);
-  mem_unlock(mbox_, block->mem_handle_internal);
-  mem_free(mbox_, block->mem_handle_internal);
-#else
-  free(block->mem);
-#endif
-  block->mem = NULL;
-  block->size = 0;
+uint32_t MemBlock::ToPhysical(void *m) {
+    uint32_t offset = (uint8_t*)m - (uint8_t*)mem_;
+    assert(offset < size_);
+    return bus_addr_ + offset;
+  }
+
+MemBlock::~MemBlock() {
+  unmapmem(mem_, size_);
+  mem_unlock(mbox_, mem_handle_);
+  mem_free(mbox_, mem_handle_);
 }
 
 void HardwareScript::FinishScript() {
-  return;
-  script_block_ = io_->allocator().Calloc(sizeof(dma_cb) * elements_.size());
-  dma_cb *const control_blocks = (dma_cb*) script_block_.mem;
+  script_block_ = new MemBlock(sizeof(dma_cb) * elements_.size());
+  dma_cb *const control_blocks = (dma_cb*) script_block_->mem();
   dma_cb *cb = 0;
   for (size_t i = 0; i < elements_.size(); ++i) {
     cb = control_blocks + i;
     elements_[i]->FillDMABlock(cb);
-    cb->next = script_block_.ToPhysical(cb + 1);
+    cb->next = script_block_->ToPhysical(cb + 1);
   }
   cb->next = 0;
 }
