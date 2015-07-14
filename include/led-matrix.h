@@ -120,9 +120,6 @@ private:
   // Starts display refresh thread if this is the first setting.
   void SetGPIO(GPIO *io);
 
-  class UpdateThread;
-  friend class UpdateThread;
-
   const int rows_;
   const int chained_displays_;
   const int parallel_displays_;
@@ -135,7 +132,6 @@ private:
 
   GPIO *io_;
   Mutex active_frame_sync_;
-  UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
 };
 

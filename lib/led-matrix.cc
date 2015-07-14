@@ -22,97 +22,23 @@
 #include <time.h>
 #include <math.h>
 #include <pthread.h>
-
-#ifdef SHOW_REFRESH_RATE
-# include <stdio.h>
-# include <sys/time.h>
-#endif
+#include <stdio.h>
 
 #include "gpio.h"
-#include "thread.h"
 #include "framebuffer-internal.h"
 
 namespace rgb_matrix {
-
-// Pump pixels to screen. Needs to be high priority real-time because jitter
-class RGBMatrix::UpdateThread : public Thread {
-public:
-  UpdateThread(GPIO *io, FrameCanvas *initial_frame)
-    : io_(io), running_(true),
-      current_frame_(initial_frame), next_frame_(NULL) {
-    pthread_cond_init(&frame_done_, NULL);
-  }
-
-  void Stop() {
-    MutexLock l(&running_mutex_);
-    running_ = false;
-  }
-
-  virtual void Run() {
-    while (running()) {
-#ifdef SHOW_REFRESH_RATE
-      struct timeval start, end;
-      gettimeofday(&start, NULL);
-#endif
-
-      current_frame_->framebuffer()->DumpToMatrix(io_);
-
-      {
-        MutexLock l(&frame_sync_);
-        if (next_frame_ != NULL) {
-          current_frame_ = next_frame_;
-          next_frame_ = NULL;
-        }
-        pthread_cond_signal(&frame_done_);
-      }
-
-#ifdef SHOW_REFRESH_RATE
-      gettimeofday(&end, NULL);
-      int64_t usec = ((uint64_t)end.tv_sec * 1000000 + end.tv_usec)
-        - ((int64_t)start.tv_sec * 1000000 + start.tv_usec);
-      printf("\b\b\b\b\b\b\b\b%6.1fHz", 1e6 / usec);
-#endif
-    }
-  }
-
-  FrameCanvas *SwapOnVSync(FrameCanvas *other) {
-    MutexLock l(&frame_sync_);
-    FrameCanvas *previous = current_frame_;
-    next_frame_ = other;
-    frame_sync_.WaitOn(&frame_done_);
-    return previous;
-  }
-
-private:
-  inline bool running() {
-    MutexLock l(&running_mutex_);
-    return running_;
-  }
-
-  GPIO *const io_;
-  Mutex running_mutex_;
-  bool running_;
-
-  Mutex frame_sync_;
-  pthread_cond_t frame_done_;
-  FrameCanvas *current_frame_;
-  FrameCanvas *next_frame_;
-};
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
   : rows_(rows), chained_displays_(chained_displays),
     parallel_displays_(parallel_displays),
-    io_(NULL), updater_(NULL) {
+    io_(NULL) {
   assert(io);  // Always expect it to be set.
   SetGPIO(io);
 }
 
 RGBMatrix::~RGBMatrix() {
-  updater_->Stop();
-  updater_->WaitStopped();
-  delete updater_;
-
   // Make sure LEDs are off.
   active_->Clear();
   active_->framebuffer()->DumpToMatrix(io_);
@@ -129,8 +55,7 @@ void RGBMatrix::SetGPIO(GPIO *io) {
   internal::Framebuffer::InitGPIO(io_, parallel_displays_);
   active_ = CreateFrameCanvas();
   Clear();
-  updater_ = new UpdateThread(io_, active_);
-  updater_->Start(99);  // Whatever we get :)
+  active_->framebuffer()->DumpToMatrix(io_);
 }
 
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {
@@ -154,7 +79,8 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
 }
 
 FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other) {
-  return updater_->SwapOnVSync(other);
+  fprintf(stderr, "SwapOnVSync() currently disabled\n");
+  assert(0);
 }
 
 bool RGBMatrix::SetPWMBits(uint8_t value) {

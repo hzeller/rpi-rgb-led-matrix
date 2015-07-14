@@ -126,8 +126,7 @@ public:
 class HardwareScript {
 public:
   // Does  not take ownership of io and pulser.
-  HardwareScript(GPIO *io, PinPulser *pulser) : io_(io), pulser_(pulser),
-                                                script_block_(NULL) {}
+  HardwareScript(GPIO *io, PinPulser *pulser);
   ~HardwareScript();
 
   // Clear script.
@@ -144,16 +143,19 @@ public:
 
   void FinishScript();
 
-  // Run this script once.
-  void RunOnce();
+  // Run this script.
+  void Run();
 
 private:
   class ScriptElement;
   class DataElement;
   class PulseElement;
+  struct dma_cb;
+  struct dma_chan;
 
   GPIO *const io_;
   PinPulser *const pulser_;
+  volatile dma_chan *dma_channel_;
   std::vector<ScriptElement*> elements_;
   MemBlock *script_block_;
 };

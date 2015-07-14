@@ -114,6 +114,7 @@ Framebuffer::Framebuffer(GPIO *io, int rows, int columns, int parallel)
 }
 
 Framebuffer::~Framebuffer() {
+  delete script_;
   delete membuffer_;
 }
 
@@ -319,7 +320,7 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 
 void Framebuffer::DumpToMatrix(GPIO *io) {
   if (!script_) InitializeScript(io);
-  script_->RunOnce();
+  script_->Run();
 }
 
 void Framebuffer::InitializeScript(GPIO *io) {

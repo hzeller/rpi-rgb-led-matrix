@@ -35,11 +35,12 @@ extern "C" {
 //#define UNCACHED_START_MAP     0x40000000
 #define UNCACHED_START_MAP       0xC0000000
 
-#define GPIO_REGISTER_OFFSET         0x200000
-#define COUNTER_1Mhz_REGISTER_OFFSET   0x3000
 
-#define GPIO_PWM_BASE_OFFSET	(GPIO_REGISTER_OFFSET + 0xC000)
-#define GPIO_CLK_BASE_OFFSET	0x101000
+#define COUNTER_1Mhz_REGISTER_OFFSET   0x3000
+#define GPIO_REGISTER_OFFSET     0x200000
+#define DMA_BASE_OFFSET          0x007000
+#define GPIO_PWM_BASE_OFFSET	 (GPIO_REGISTER_OFFSET + 0xC000)
+#define GPIO_CLK_BASE_OFFSET	 0x101000
 
 #define PAGE_SIZE 4096
 #define REGISTER_BLOCK_SIZE (4*1024)
@@ -76,10 +77,26 @@ extern "C" {
 #define CLK_PWMCTL 40
 #define CLK_PWMDIV 41
 
+#define DMA_ENABLE 0xff0   // Set bit n to enable channel n.
+
 #define DMA_CB_TI_NO_WIDE_BURSTS (1<<26)
 #define DMA_CB_TI_SRC_INC     (1<<8)
 #define DMA_CB_TI_DEST_INC    (1<<4)
 #define DMA_CB_TI_TDMODE      (1<<1)
+
+#define DMA_CS_RESET (1<<31)
+#define DMA_CS_ABORT (1<<30)
+#define DMA_CS_END (1<<1)
+#define DMA_CS_ACTIVE (1<<0)
+#define DMA_CS_PRIORITY(x) ((x)&0xf << 16) //higher priority DMA transfers are serviced first, it would appear
+#define DMA_CS_PRIORITY_MAX DMA_CS_PRIORITY(7)
+#define DMA_CS_PANIC_PRIORITY(x) ((x)&0xf << 20)
+#define DMA_CS_PANIC_PRIORITY_MAX DMA_CS_PANIC_PRIORITY(7)
+#define DMA_CS_DISDEBUG (1<<28) //DMA will not stop when debug signal is asserted
+
+#define DMA_DEBUG_READ_ERROR (1<<2)
+#define DMA_DEBUG_FIFO_ERROR (1<<1)
+#define DMA_DEBUG_READ_LAST_NOT_SET_ERROR (1<<0)
 
 // Same for Pi1 and Pi2
 #define GPIO_DMA_BASE_BUS 0x7E200000 // Physical GPIO bus GPIO address.
@@ -465,11 +482,11 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
   }
 }
 
-struct dma_chan {
+struct HardwareScript::dma_chan {
   // 4.2.1.2 RegisterMap. p 41.
   uint32_t cs;        // control and status.
-  uint32_t cb;        // control block address.
-  // -- (what do we do with these ?)
+  uint32_t cblock;    // control block address.
+  // -- A copy of the currently active control block.
   uint32_t info;      // transfer information.
   uint32_t src;       // physical source address.
   uint32_t dst;       // physical destination address.
@@ -480,7 +497,7 @@ struct dma_chan {
   uint32_t debug;     // control debug settings.
 };
 
-struct dma_cb {  // 32 bytes.
+struct HardwareScript::dma_cb {  // 32 bytes.
   uint32_t info;   // transfer information.
   uint32_t src;    // physical source address.
   uint32_t dst;    // physical destination address.
@@ -532,8 +549,24 @@ private:
   const int spec_;
 };
 
+
+HardwareScript::HardwareScript(GPIO *io, PinPulser *pulser)
+  : io_(io), pulser_(pulser), script_block_(NULL) {
+  const int channel_num = 5;
+  char *dmaBase = (char*)mmap_bcm_register(IsRaspberryPi2(),
+                                               DMA_BASE_OFFSET);
+  dma_channel_ = (dma_chan*)(dmaBase + 0x100 * channel_num);  // 4.2.1.2
+  *(uint32_t*)(dmaBase + DMA_ENABLE) |= (1 << channel_num);
+}
+
 HardwareScript::~HardwareScript() {
-  // TODO: disable dma channel.
+  fprintf(stderr, "Shutting down script.\n");
+  dma_channel_->cs |= DMA_CS_ABORT;
+  usleep(100);
+  dma_channel_->cs &= ~DMA_CS_ACTIVE;
+  dma_channel_->cs |= DMA_CS_RESET;
+  usleep(100);
+
   delete script_block_;
   Clear();
 }
@@ -572,6 +605,7 @@ MemBlock::MemBlock(size_t size) {
   mem_ = mapmem(BUS_TO_PHYS(bus_addr_), size);
   fprintf(stderr, "Alloc: %6d bytes;  %p (bus=0x%08x, phys=0x%08x)\n",
           size, mem_, bus_addr_, BUS_TO_PHYS(bus_addr_));
+  assert(bus_addr_);  // otherwise: couldn't allocate contiguous.
   memset(mem_, 0x00, size);
 }
 
@@ -596,14 +630,26 @@ void HardwareScript::FinishScript() {
     elements_[i]->FillDMABlock(cb);
     cb->next = script_block_->ToPhysical(cb + 1);
   }
-  cb->next = 0;
+  cb->next = script_block_->ToPhysical(script_block_->mem());
 }
 
-void HardwareScript::RunOnce() {
+void HardwareScript::Run() {
+#if 1
+  dma_channel_->cs = DMA_CS_RESET;
+  usleep(100);
+  dma_channel_->cs |= DMA_CS_END;
+  dma_channel_->debug = (DMA_DEBUG_READ_ERROR | DMA_DEBUG_FIFO_ERROR
+                         | DMA_DEBUG_READ_LAST_NOT_SET_ERROR);
+  dma_channel_->cblock = script_block_->ToPhysical(script_block_->mem());
+  dma_channel_->cs = DMA_CS_PRIORITY_MAX | DMA_CS_PANIC_PRIORITY_MAX | DMA_CS_DISDEBUG;
+  dma_channel_->cs = (DMA_CS_PRIORITY_MAX | DMA_CS_PANIC_PRIORITY_MAX | DMA_CS_DISDEBUG
+                      | DMA_CS_ACTIVE);  // Aaaand action.
+#else
   // foreground running.
   for (size_t i = 0; i < elements_.size(); ++i) {
     elements_[i]->Run();
   }
+#endif
 }
 
 } // namespace rgb_matrix
