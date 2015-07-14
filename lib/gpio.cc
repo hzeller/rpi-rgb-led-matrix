@@ -82,7 +82,7 @@ extern "C" {
 #define DMA_CB_TI_TDMODE      (1<<1)
 
 // Same for Pi1 and Pi2
-#define GPIO_BASE_BUS 0x7E200000 // Physical GPIO bus GPIO address.
+#define GPIO_DMA_BASE_BUS 0x7E200000 // Physical GPIO bus GPIO address.
 #define GPSET_START   0x0000001C     // first set register. next word: set1, next 2 words: clear.
 #define DMA_CB_TXFR_LEN_YLENGTH(y) (((y-1)&0x4fff) << 16)
 #define DMA_CB_TXFR_LEN_XLENGTH(x) ((x)&0xffff)
@@ -506,7 +506,7 @@ public:
     cb->info   = (DMA_CB_TI_SRC_INC | DMA_CB_TI_DEST_INC |
                   DMA_CB_TI_NO_WIDE_BURSTS | DMA_CB_TI_TDMODE);
     cb->src    = data_physical_;
-    cb->dst    = GPIO_BASE_BUS + GPSET_START;
+    cb->dst    = GPIO_DMA_BASE_BUS + GPSET_START;
     cb->length = DMA_CB_TXFR_LEN_YLENGTH(2) | DMA_CB_TXFR_LEN_XLENGTH(8);
     cb->stride = DMA_CB_STRIDE_D_STRIDE(4) | DMA_CB_STRIDE_S_STRIDE(0);
   }
@@ -533,6 +533,7 @@ private:
 };
 
 HardwareScript::~HardwareScript() {
+  // TODO: disable dma channel.
   delete script_block_;
   Clear();
 }
