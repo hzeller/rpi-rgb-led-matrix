@@ -11,6 +11,13 @@ TARGET=librgbmatrix.a
 # and make again
 ###
 
+# If you see that your display is inverse, you might have a matrix variant
+# has uses inverse logic for the RGB bits. In that case: uncomment this.
+#DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS
+
+# For curiosity reasons: uncomment to see refresh rate in terminal.
+#DEFINES+=-DSHOW_REFRESH_RATE
+
 # The signal can be too fast for some LED panels, in particular with newer
 # (faster) Raspberry Pi 2s.
 # In these cases, you want to make sure that
@@ -25,6 +32,16 @@ TARGET=librgbmatrix.a
 # the frame-rate.
 #DEFINES+=-DRGB_SLOWDOWN_GPIO
 
+# ------------ Pinout options; usually no change needed here --------------
+
+# If you have used this library before July 2015 and have wired it up, then
+# you need to define RGB_CLASSIC_PINOUT for your panel to work. The standard
+# pinout changed so that we can make use of the PWM pin for much more stable
+# timing. So even if you have the classic pinout, you might consider wiring
+# up the new one (sorry for the inconvenience).
+#DEFINES+=-DRGB_CLASSIC_PINOUT
+
+# -- The following only works with with RGB_CLASSIC_PINOUT
 # Uncomment to allow to use up to three parallel boards.
 # This will only work on the plus models or RPi2 with 40 GPIO pins.
 #
@@ -39,18 +56,8 @@ TARGET=librgbmatrix.a
 # Hence we leave this off for now for the least amount of surprise.
 #DEFINES+=-DSUPPORT_MULTI_PARALLEL
 
-# If you see that your display is inverse, you might have a matrix variant
-# has uses inverse logic for the RGB bits. In that case: uncomment this.
-#DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS
-
 # Uncomment the following line for Adafruit Matrix HAT gpio mappings
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
-
-# For curiosity reasons: uncomment to see refresh rate in terminal.
-#DEFINES+=-DSHOW_REFRESH_RATE
-
-# while working on the new pinout.
-DEFINES+=-DEXPERIMENTAL_NEW_PINOUT
 
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)

@@ -45,14 +45,13 @@ static PinPulser *sOutputEnablePulser = NULL;
 #  undef SUPPORT_MULTI_PARALLEL
 #endif
 
-// Only if SUPPORT_MULTI_PARALLEL is not defined, we allow classic wiring.
-// Also, the Adafruit HAT does not do classic wiring either.
-#if defined(SUPPORT_MULTI_PARALLEL) || defined(ADAFRUIT_RGBMATRIX_HAT) \
-  || defined(EXPERIMENTAL_NEW_PINOUT)
-#  undef SUPPORT_CLASSIC_LED_GPIO_WIRING_
+// in our classic pinout, when not multi parallel, we had a different pinout.
+#if defined(RGB_CLASSIC_PINOUT) && !defined(SUPPORT_MULTI_PARALLEL)
+#  define SUPPORT_OLD_NON_PARALLEL_WIRING_
 #else
-#  define SUPPORT_CLASSIC_LED_GPIO_WIRING_
+#  undef SUPPORT_OLD_NON_PARALLEL_WIRING_
 #endif
+
 
 Framebuffer::Framebuffer(int rows, int columns, int parallel)
   : rows_(rows),
@@ -88,7 +87,7 @@ Framebuffer::~Framebuffer() {
   IoBits b;
   b.raw = 0;
 
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
+#ifdef SUPPORT_OLD_NON_PARALLEL_WIRING_
   b.bits.output_enable_rev1 = b.bits.output_enable_rev2 = 1;
   b.bits.clock_rev1 = b.bits.clock_rev2 = 1;
 #endif
@@ -120,7 +119,7 @@ Framebuffer::~Framebuffer() {
 
   // Now, set up the PinPulser for output enable.
   IoBits output_enable_bits;
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
+#ifdef SUPPORT_OLD_NON_PARALLEL_WIRING_
   output_enable_bits.bits.output_enable_rev1
     = output_enable_bits.bits.output_enable_rev2 = 1;
 #endif
@@ -329,7 +328,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   }
 #endif
 
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
+#ifdef SUPPORT_OLD_NON_PARALLEL_WIRING_
   color_clk_mask.bits.clock_rev1 = color_clk_mask.bits.clock_rev2 = 1;
 #endif
   color_clk_mask.bits.clock = 1;
@@ -338,7 +337,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   row_mask.bits.a = row_mask.bits.b = row_mask.bits.c = row_mask.bits.d = 1;
 
   IoBits clock, strobe, row_address;
-#ifdef SUPPORT_CLASSIC_LED_GPIO_WIRING_
+#ifdef SUPPORT_OLD_NON_PARALLEL_WIRING_
   clock.bits.clock_rev1 = clock.bits.clock_rev2 = 1;
 #endif
   clock.bits.clock = 1;
