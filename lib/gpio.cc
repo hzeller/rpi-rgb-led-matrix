@@ -378,12 +378,13 @@ private:
   pwm_fifo_config CreatePwmFifoConfig(int divider, int bit_count, int fyi_nanos) {
     pwm_fifo_config result;
     bzero(&result, sizeof(result));
-
+#define PWM_DEBUG_PRINT 0
+#if PWM_DEBUG_PRINT
     fprintf(stderr, "%7dns div:%3d bits:%4d = %6dns (Δ%3d) ",
             fyi_nanos, divider, bit_count,
             divider * PWM_BASE_TIME_NS * bit_count,
             divider * PWM_BASE_TIME_NS * bit_count - fyi_nanos);
-
+#endif
     assert(bit_count <= MAX_PWM_BIT_USE);
     assert(divider < (1<<12));   // we only have 12 bits
 
@@ -399,10 +400,13 @@ private:
       }
     }
 
+#if PWM_DEBUG_PRINT
     for (int i = 0; i < 8; ++i) {
       fprintf(stderr, "%08x ", result.pwm_pattern[i]);
     }
     fprintf(stderr, "\n");
+#endif
+#undef PWM_DEBUG_PRINT
 
     return result;
   }
