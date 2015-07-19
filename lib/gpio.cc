@@ -157,21 +157,9 @@ bool GPIO::Init() {
   if (gpio_port_ == NULL) {
     return false;
   }
+  gpio_set_bits_ = gpio_port_ + (0x1C / sizeof(uint32_t));
+  gpio_clr_bits_ = gpio_port_ + (0x28 / sizeof(uint32_t));
   return true;
-}
-
-void GPIO::SetBits(uint32_t value) {
-  gpio_port_[0x1C / sizeof(uint32_t)] = value;
-#ifdef RGB_SLOWDOWN_GPIO
-  gpio_port_[0x1C / sizeof(uint32_t)] = value;
-#endif
-}
-
-void GPIO::ClearBits(uint32_t value) {
-  gpio_port_[0x28 / sizeof(uint32_t)] = value;
-#ifdef RGB_SLOWDOWN_GPIO
-  gpio_port_[0x28 / sizeof(uint32_t)] = value;
-#endif
 }
 
 // --- PinPulser. Private implementation parts.
