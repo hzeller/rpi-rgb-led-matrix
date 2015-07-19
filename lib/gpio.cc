@@ -427,7 +427,6 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
   // The only implementation so far.
   if (!Timers::Init()) return NULL;
   if (HardwarePinPulser::CanHandle(gpio_mask)) {
-    fprintf(stderr, "Using hardware pulser\n");
     return new HardwarePinPulser(gpio_mask, nano_wait_spec);
   } else {
     return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
