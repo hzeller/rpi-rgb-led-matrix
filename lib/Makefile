@@ -34,6 +34,9 @@ TARGET=librgbmatrix.a
 
 # ------------ Pinout options; usually no change needed here --------------
 
+# Uncomment the following line for Adafruit Matrix HAT gpio mappings
+#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
+
 # If you have used this library before July 2015 and have wired it up, then
 # you need to define RGB_CLASSIC_PINOUT for your panel to work. The standard
 # pinout changed so that we can make use of the PWM pin for much more stable
@@ -41,23 +44,9 @@ TARGET=librgbmatrix.a
 # up the new one (sorry for the inconvenience).
 #DEFINES+=-DRGB_CLASSIC_PINOUT
 
-# -- The following only works with with RGB_CLASSIC_PINOUT
-# Uncomment to allow to use up to three parallel boards.
-# This will only work on the plus models or RPi2 with 40 GPIO pins.
-#
-# This is useful in any case, _unless_ you have an older installation with
-# classic cabeling of previous versions of this library or a
-# Raspberry Pi 1, Revision 1 (very old).
-#
-# The reason why this is disabled by default is that it is not compatible with
-# GPIO cabelings of previous versions of this software and thus is already
-# wired up 'in the field'. Also it will drop support for the very first
-# Raspberry Pi, Revision 1.
-# Hence we leave this off for now for the least amount of surprise.
-#DEFINES+=-DSUPPORT_MULTI_PARALLEL
-
-# Uncomment the following line for Adafruit Matrix HAT gpio mappings
-#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
+# If you use RGB_CLASSIC_PINOUT and use Raspberry Pi 1, Revision A,
+# this might be useful.
+#DEFINES+=-DONLY_SINGLE_CHAIN
 
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)

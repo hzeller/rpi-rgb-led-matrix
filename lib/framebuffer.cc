@@ -40,22 +40,13 @@ static const long kBaseTimeNanos = 100;
 static PinPulser *sOutputEnablePulser = NULL;
 
 // The Adafruit HAT only supports one chain.
-#if defined(ADAFRUIT_RGBMATRIX_HAT) && defined(SUPPORT_MULTI_PARALLEL)
-#  warning "Adafruit HAT doesn't map parallel chains. Disabling parallel chains."
-#  undef SUPPORT_MULTI_PARALLEL
+#if defined(ADAFRUIT_RGBMATRIX_HAT)
+#  define ONLY_SINGLE_CHAIN 1
 #endif
-
-// in our classic pinout, when not multi parallel, we had a different pinout.
-#if defined(RGB_CLASSIC_PINOUT) && !defined(SUPPORT_MULTI_PARALLEL)
-#  define SUPPORT_OLD_NON_PARALLEL_WIRING_
-#else
-#  undef SUPPORT_OLD_NON_PARALLEL_WIRING_
-#endif
-
 
 Framebuffer::Framebuffer(int rows, int columns, int parallel)
   : rows_(rows),
-#ifdef SUPPORT_MULTI_PARALLEL
+#ifndef ONLY_SINGLE_CHAIN
     parallel_(parallel),
 #endif
     height_(rows * parallel),
@@ -66,10 +57,9 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
   Clear();
   assert(rows_ <= 32);
   assert(parallel >= 1 && parallel <= 3);
-#ifndef SUPPORT_MULTI_PARALLEL
+#ifdef ONLY_SINGLE_CHAIN
   if (parallel > 1) {
-    fprintf(stderr, "In order for parallel > 1 to work, you need to "
-            "define SUPPORT_MULTI_PARALLEL in lib/Makefile.\n");
+    fprintf(stderr, "ONLY_SINGLE_CHAIN is defined, but parallel > 1 given\n");
     assert(parallel == 1);
   }
 #endif
@@ -87,7 +77,7 @@ Framebuffer::~Framebuffer() {
   IoBits b;
   b.raw = 0;
 
-#ifdef SUPPORT_OLD_NON_PARALLEL_WIRING_
+#ifdef ONLY_SINGLE_CHAIN
   b.bits.output_enable_rev1 = b.bits.output_enable_rev2 = 1;
   b.bits.clock_rev1 = b.bits.clock_rev2 = 1;
 #endif
@@ -99,7 +89,7 @@ Framebuffer::~Framebuffer() {
   b.bits.p0_r1 = b.bits.p0_g1 = b.bits.p0_b1 = 1;
   b.bits.p0_r2 = b.bits.p0_g2 = b.bits.p0_b2 = 1;
 
-#ifdef SUPPORT_MULTI_PARALLEL
+#ifndef ONLY_SINGLE_CHAIN
   if (parallel >= 2) {
     b.bits.p1_r1 = b.bits.p1_g1 = b.bits.p1_b1 = 1;
     b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
@@ -119,7 +109,7 @@ Framebuffer::~Framebuffer() {
 
   // Now, set up the PinPulser for output enable.
   IoBits output_enable_bits;
-#ifdef SUPPORT_OLD_NON_PARALLEL_WIRING_
+#ifdef ONLY_SINGLE_CHAIN
   output_enable_bits.bits.output_enable_rev1
     = output_enable_bits.bits.output_enable_rev2 = 1;
 #endif
@@ -206,7 +196,7 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
     plane_bits.bits.p0_g1 = plane_bits.bits.p0_g2 = (green & mask) == mask;
     plane_bits.bits.p0_b1 = plane_bits.bits.p0_b2 = (blue & mask) == mask;
 
-#ifdef SUPPORT_MULTI_PARALLEL
+#ifndef ONLY_SINGLE_CHAIN
     plane_bits.bits.p1_r1 = plane_bits.bits.p1_r2 =
       plane_bits.bits.p2_r1 = plane_bits.bits.p2_r2 = (red & mask) == mask;
     plane_bits.bits.p1_g1 = plane_bits.bits.p1_g2 =
@@ -256,7 +246,7 @@ void Framebuffer::SetPixel(int x, int y,
         bits += columns_;
       }
     }
-#ifdef SUPPORT_MULTI_PARALLEL
+#ifndef ONLY_SINGLE_CHAIN
   } else if (y >= rows_ && y < 2 * rows_) {
     // Parallel chain #2
     if (y - rows_ < double_rows_) {   // Upper sub-panel.
@@ -308,7 +298,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
     = color_clk_mask.bits.p0_g2
     = color_clk_mask.bits.p0_b2 = 1;
 
-#ifdef SUPPORT_MULTI_PARALLEL
+#ifndef ONLY_SINGLE_CHAIN
   if (parallel_ >= 2) {
     color_clk_mask.bits.p1_r1
       = color_clk_mask.bits.p1_g1
@@ -328,7 +318,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   }
 #endif
 
-#ifdef SUPPORT_OLD_NON_PARALLEL_WIRING_
+#ifdef ONLY_SINGLE_CHAIN
   color_clk_mask.bits.clock_rev1 = color_clk_mask.bits.clock_rev2 = 1;
 #endif
   color_clk_mask.bits.clock = 1;
@@ -337,7 +327,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   row_mask.bits.a = row_mask.bits.b = row_mask.bits.c = row_mask.bits.d = 1;
 
   IoBits clock, strobe, row_address;
-#ifdef SUPPORT_OLD_NON_PARALLEL_WIRING_
+#ifdef ONLY_SINGLE_CHAIN
   clock.bits.clock_rev1 = clock.bits.clock_rev2 = 1;
 #endif
   clock.bits.clock = 1;
