@@ -10,6 +10,8 @@ GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
 
 The example code using this library is released in the public domain.
 
+## [PSA: the pinout changed on 2015-07-19 to provide more glitch-free output. If you have an existing wiring, provide -DRGB_CLASSIC_PINOUT to the compilation; better yet, consider changing the wiring as it provides a much more stable image.]
+
 Overview
 --------
 The 32x32 or 16x32 RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
@@ -34,6 +36,9 @@ in parallel (each chain 6-8 panels long).
 The Raspberry Pi 2 is faster than older models and sometimes the cabeling can't keep up with the
 speed; check out this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
 what to do.
+
+It is recommended to install an image with a realtime kernel (for instance [this one][emlid-rt])
+to minimize a loaded system having an influence on the image quality.
 
 Connection
 ----------
@@ -72,84 +77,54 @@ e.g. using the [active adapter PCB](./adapter/).
 Since we only need output pins on the RPi, we don't need to worry about level
 conversion back.
 
-For a single chain of LED-panels, we need 13 IO pins. It will work on all
-Rasperry Pis, including the first board revision of the Raspberry Pi 1.
+For a single chain of LED-panels, we need 13 IO pins, which fit all in the
+header of the old Raspberry Pis. Newer Raspberry Pis have 40 GPIO pins which allows
+us to connect three parallel chains of RGB panels.
 
-LED-Panel to GPIO:
-   * GND (Ground, '-') to ground of your Raspberry Pi (Pin 25 on RPi-header)
-   * R1 (Red 1st bank)   : GPIO 17 (Pin 11 on RPi header)
-   * G1 (Green 1st bank) : GPIO 18 (Pin 12 on RPi header)
-   * B1 (Blue 1st bank)  : GPIO 22 (Pin 15 on RPi header)
-   * R2 (Red 2nd bank)   : GPIO 23 (Pin 16 on RPi header)
-   * G2 (Green 2nd bank) : GPIO 24 (Pin 18 on RPi header)
-   * B2 (Blue 2nd bank)  : GPIO 25 (Pin 22 on RPi header)
-   * A, B, C, D (Row address) : GPIO 7, 8, 9, 10 (Pins 26, 24, 21, 19
-     on RPi-header)
-     (Note: there is no need for `D` needed if you have a display with 16 rows
-      with 1:8 multiplexing)
-   * OE- (neg. Output enable) : GPIO 27 (Pin 13 on RPi header) **(Note, this changed from previous versions of this library)**.
-     On a Raspberry Pi 1 Revision 1 (really old), this is on GPIO 0, Pin 3.
-   * CLK (Serial clock)    : GPIO 11 (Pin 23 on RPi header) **(Note, this changed from previous versions of this library)**
-   * STR (Strobe row data) : GPIO 4 (Pin 7 on RPi header)
-
-Here is an illustration of the different Raspberry Pi headers for reference.
+For reference, this is how the numbering on the Raspberry Pi looks like:
 <a href="img/raspberry-gpio.jpg"><img src="img/raspberry-gpio.jpg" width="600px"></a>
-Left: Raspberry Pi 1, on the right Raspberry Pi 1 B+ or Raspberry Pi 2.
 
-Or check <http://elinux.org/RPi_Low-level_peripherals> for details of available
-GPIOs and pin-header.
+This is the same representation as in the table below, which allows nice visual inspection.
 
-Note, each panel has an output that allows you to daisy-chain it to the next
-board (see section about chaining below).
-If you are using only 1 bit pwm (`-p 1` flag), then this can be a very long
-chain. Though full color pwm (color images), the refresh rate goes down
-considerably after 6-8 boards.
+### Wiring diagram
 
+For each of the up to three chains, you have to connect `GND`, `strobe`,
+`clock`, `OE-`, `A`, `B`, `C`, `D` to all of these; you find the positions
+below (note there are more GND pins on the Raspberry Pi, but for simplicity
+(we only need one), they are left out).
 
-### Up to 3 Panels with newer Raspberry Pis with 40 GPIO pins! ###
-If you have one of the newer plus models of the Raspberry Pi 1 or the
-Raspberry Pi2, you can control **up to three chains** in parallel. This does not
-cost more CPU, so is essentially coming for free (except that your code
-needs to generate more pixels of course). For the same number of panels,
-always prefer parallel chains before daisy chaining more panels, as it will
-keep the refresh-rate higher.
+Then for each panel, there is a set of (R1, G1, B1, R2, G2, B2) that you have
+to connect to the corresponding pins that are marked `[1]`, `[2]` and `[3]` for
+chain 1, 2, and 3 below.
+To make things quicker to see visually, I've marked each chain with a separate
+icon `[1]`=:smile:, `[2]`=:boom: and `[3]`=:droplet:; signals that go to all chains
+are marked with all icons.
 
-For multiple parallel boards to work, you have to uncomment
+Connection                        | Pin | Pin |  Connection
+---------------------------------:|:---:|:---:|:-----------------------------
+                             -    |   1 |   2 | -
+             :droplet: **[3] G1** |   3 |   4 | -
+             :droplet: **[3] B1** |   5 |   6 | **GND** :smile::boom::droplet:
+:smile::boom::droplet: **strobe** |   7 |   8 | **[3] R1** :droplet:
+                              -   |   9 |  10 | -
+:smile::boom::droplet: **clock**  |  11 |  12 | **OE-**  :smile::boom::droplet:
+              :smile:  **[1] G1** |  13 |  14 | -
+:smile::boom::droplet:      **A** |  15 |  16 | **B**    :smile::boom::droplet:
+                             -    |  17 |  18 | **C**    :smile::boom::droplet:
+              :smile:  **[1] B2** |  19 |  20 | -
+              :smile:  **[1] G2** |  21 |  22 | **D**    :smile::boom::droplet:
+              :smile:  **[1] R1** |  23 |  24 | **[1] R2** :smile:
+                             -    |  25 |  26 | **[1] B1** :smile:
+                             -    |  27 |  28 | -
+              :boom:   **[2] G1** |  29 |  30 | -
+              :boom:   **[2] B1** |  31 |  32 | **[2] R1** :boom:
+              :boom:   **[2] G2** |  33 |  34 | -
+              :boom:   **[2] R2** |  35 |  36 | **[3] G2** :droplet:
+              :droplet:**[3] R2** |  37 |  38 | **[2] B2** :boom:
+                              -   |  39 |  40 | **[3] B2** :droplet:
 
-     #DEFINES+=-DSUPPORT_MULTI_PARALLEL   # remove the '#' in the begging
-
-in [lib/Makefile](./lib/Makefile).
-If you only use two panels, you will be able to use I²C and the serial line
-connectors on the Raspberry Pi. With three panels, these pins will be used up
-as well.
-
-The second and third panel chain share some of the wires of the first panel:
-connect **GND, A, B, C, D, OE, CLK** and **STR** to the same pins you already
-connected the first panel.
-
-Then connect the following
-
-### Second panel ###
-
-   * R1 (Red 1st bank)   : GPIO 12 (Pin 32 on RPi header)
-   * G1 (Green 1st bank) : GPIO 5 (Pin 29 on RPi header)
-   * B1 (Blue 1st bank)  : GPIO 6 (Pin 31 on RPi header)
-   * R2 (Red 2nd bank)   : GPIO 19 (Pin 35 on RPi header)
-   * G2 (Green 2nd bank) : GPIO 13 (Pin 33 on RPi header)
-   * B2 (Blue 2nd bank)  : GPIO 20 (Pin 38 on RPi header)
-
-### Third panel ###
-
-The third panel will use some pins that are otherwise used for I²C and the
-serial interface. If you don't care about these, then we can use these to
-connect a third chain of panels.
-
-   * R1 (Red 1st bank)   : GPIO 14, also TxD  (Pin 8 on RPi header)
-   * G1 (Green 1st bank) : GPIO 2, also SDA (Pin 3 on RPi header)
-   * B1 (Blue 1st bank)  : GPIO 3, also SCL (Pin 5 on RPi header)
-   * R2 (Red 2nd bank)   : GPIO 15, also RxD (Pin 10 on RPi header)
-   * G2 (Green 2nd bank) : GPIO 26 (Pin 37 on RPi header)
-   * B2 (Blue 2nd bank)  : GPIO 21 (Pin 40 on RPi header)
+In the [adapter/](./adapter) directory, there are some boards that make
+the wiring task simpler.
 
 Running
 -------
@@ -162,10 +137,8 @@ that is now all dynamically configurable).
      $ ./led-matrix
      usage: ./led-matrix <options> -D <demo-nr> [optional parameter]
      Options:
-         -r <rows>        : Display rows. 16 for 16x32, 32 for 32x32. 
-                            Default: 32
-         -P <parallel>    : For Plus-models or RPi2: parallel chains. 1..3. 
-                            Default: 1
+         -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
+         -P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. Default: 1
          -c <chained>     : Daisy-chained boards. Default: 1.
          -L               : 'Large' display, composed out of 4 times 32x32
          -p <pwm-bits>    : Bits used for PWM. Something between 1..11
@@ -173,16 +146,14 @@ that is now all dynamically configurable).
          -D <demo-nr>     : Always needs to be set
          -d               : run as daemon. Use this when starting in
                             /etc/init.d, but also when running without
-                            terminal (e.g. cron)
+                            terminal (e.g. cron).
          -t <seconds>     : Run for these number of seconds, then exit.
-                        (if neither -d nor -t are supplied, waits for <RETURN>)
+                            (if neither -d nor -t are supplied, waits for <RETURN>)
          -b <brightness>  : Sets brightness percent. Default: 100.
-         -R <rotation>    : Sets the rotation of matrix. 
-                            Allowed: 0, 90, 180, 270. Default: 0.
      Demos, choosen with -D
          0  - some rotating square
-         1  - forward scrolling an image
-         2  - backward scrolling an image
+         1  - forward scrolling an image (-m <scroll-ms>)
+         2  - backward scrolling an image (-m <scroll-ms>)
          3  - test image: a square
          4  - Pulsing color
          5  - Grayscale Block
@@ -190,8 +161,10 @@ that is now all dynamically configurable).
          7  - Conway's game of life (-m <time-step-ms>)
          8  - Langton's ant (-m <time-step-ms>)
          9  - Volume bars (-m <time-step-ms>)
+         10 - Evolution of color (-m <time-step-ms>)
+         11 - Brightness pulse generator
      Example:
-         ./led-matrix -d -t 10 -D 1 runtext.ppm
+         ./led-matrix -t 10 -D 1 runtext.ppm
      Scrolls the runtext for 10 seconds
 
 To run the actual demos, you need to run this as root so that the
@@ -282,7 +255,7 @@ parameters and the coordinate system.
 
 ![Coordinate overview][coordinates]
 
-<a href="adapter/"><img src="img/three-parallel-panels.jpg" width="300px"></a>
+<a href="adapter/"><img src="img/three-parallel-panels-soic.jpg" width="300px"></a>
 
 ## Remapping coordinates ##
 You can as well chain multiple boards together and then arrange them in a
@@ -364,6 +337,45 @@ Or, if you are lazy, just import the whole namespace:
 Read the [`minimal-example.cc`](./minimal-example.cc) to get started, then
 have a look into [`demo-main.cc`](./demo-main.cc).
 
+Help, some pixels are not displayed properly
+--------------------------------------------
+Some panels don't handle the 3.3V logic level well, in particular with
+faster Raspberry Pis Version 2. This results in artifacts like randomly
+showing up pixels or parts of the panel showing 'static'.
+
+If you encounter this, try these things
+
+   - Make sure to have as short as possible flat-cables connecting your
+     Raspberry Pi with the LED panel.
+
+   - Use an adapter board with a bus-driver that acts as level shifter between
+     3.3V and 5V. You can find [active adapter PCBs](./adapter/) in a
+     subdirectory of this project.
+
+   - If you can't implement the above things, or still have problems, you can
+     slow down the GPIO writing a bit. This will of course reduce the
+     frame-rate, so it comes at a cost.
+
+For GPIO slow-down, uncomment the following line in [lib/Makefile](lib/Makefile)
+
+     #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
+
+Then `make clean` and `make` again.
+
+Inverted Colors ?
+-----------------
+There are some displays out there that use inverse logic for the colors. You
+notice that your image looks like a 'negative'. In that case, uncomment the
+folling `DEFINES` line in [lib/Makefile](./lib/Makefile) by removing the `#`
+at the beginning of the line.
+
+     #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
+
+Then, recompile
+
+     make clean
+     make
+
 A word about power
 ------------------
 
@@ -429,46 +441,6 @@ guidelines:
    - If you still see noise, increase the voltage sligthly above 5V. But note,
      this is typically only a symptom of too thin traces.
 
-Help, some pixels are not displayed properly
---------------------------------------------
-Some panels don't handle the 3.3V logic level well, in particular with
-faster Raspberry Pis Version 2. This results in artifacts like randomly
-showing up pixels or parts of the panel showing 'static'.
-
-If you encounter this, try these things
-
-   - Make sure to have as short as possible flat-cables connecting your
-     Raspberry Pi with the LED panel.
-
-   - Use an adapter board with a bus-driver that acts as level shifter between
-     3.3V and 5V. You can find [active adapter PCBs](./adapter/) in a
-     subdirectory of this project. Also, Adafruit made a HAT that has level
-     shifters.
-
-   - If you can't implement the above things, or still have problems, you can
-     slow down the GPIO writing a bit. This will of course reduce the
-     frame-rate, so it comes at a cost.
-
-For GPIO slow-down, uncomment the following line in [lib/Makefile](lib/Makefile)
-
-     #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
-
-Then `make clean` and `make` again.
-
-Inverted Colors ?
------------------
-There are some displays out there that use inverse logic for the colors. You
-notice that your image looks like a 'negative'. In that case, uncomment the
-folling `DEFINES` line in [lib/Makefile](./lib/Makefile) by removing the `#`
-at the beginning of the line.
-
-     #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
-
-Then, recompile
-
-     make clean
-     make
-
 Technical details
 -----------------
 
@@ -504,39 +476,30 @@ areas of your picture.
 (Even with realtime extensions enabled in Linux, this is still a (smaller)
 problem).
 
+The timing of the Output Enable pin has to be very accurate otherwise you'll
+see brightness glitches. We are using the PWM hardware of the Raspberry Pi to
+provide such accurate timing.
+
 Limitations
 -----------
-If using higher resolution color (This code supports up to 24bpp @3x11 bit PWM),
-you will see dynamic glitches - lines that flicker and randomly look a bit
-brighter. At lower bit PWM between <= 4, this is typically not visible.
+If you are using the RGB_CLASSIC_PINOUT, then we can't make use of the PWM
+hardware (which only outputs to a particular pin), so you'll see random
+brightness glitches. I strongly suggest to change to the now
+default pinout.
 
-This is due to the fact that we have to do the PWM ourselves and for
-high-resolution PWM, the smallest time-period is around 200ns. We would need
-hard real-time requirements of the operating system of << 200ns.
-Even for realtime environments, that is pretty tough.
-We're running this on a general purpose computer with no dedicated
-realtime hardware (such as dedicated, separate realtime core(s) we could use
-on the BeagleBone Black). Linux does provide some support for realtime
-applications, but the latency goals here are in the tens of microseconds at
-best. Even with realtime-patches applied (I tried the
-[RPi wheezy image provided by Emlid][emlid-rt]), this does not make much of
-a dent.
+The system needs constant CPU to update the display. Using the DMA controller
+was considered but after extensive experiments ( https://github.com/hzeller/rpi-gpio-dma-demo )
+dropped due to its slow speed..
 
-According to the paper [How fast is fast enough? Choosing between Xenomai and
-Linux for real-time applications][rt-paper], it might pay off to move the display
-update part to the kernel. Future TODO.
+There seems to be a limit in how fast the GPIO pins can be controlled, which
+limits the frame-rate.
 
-(One experiment already done was to use the DMA controller of the RPi to make
-use of dedicated hardware. However, it turns out that the DMA controller was
-slower writing data than using GPIO directly. But maybe it might be worthwile if
-it turns out to have more stable realtime properties.)
+Fun
+---
+I am always happy to see users successfully using the software for wonderful things, like this
+installation by Dirk in Scharbeutz, Germany:
 
-There seems to be a limit in how fast the GPIO pins can be controlled.
-We get about 10Mhz clock speed out of GPIO clocking. Do do things correctly,
-we would have to take the time it takes to clock a row in as essentially the
-lowest PWM time (~3.4µs).
-However, we just ignore this 'black' time, and switch the row on and off after
-the clocking with the needed time-period; that way we get down to 200ns.
+![](./img/user-action-shot.jpg)
 
 [hub75]: ./img/hub75.jpg
 [hub75-arrow]: ./img/hub75-other.jpg
@@ -550,5 +513,5 @@ the clocking with the needed time-period; that way we get down to 200ns.
 [sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/product/1484
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
-[emlid-rt]: http://www.emlid.com/raspberry-pi-real-time-kernel-available-for-download/
+[emlid-rt]: http://docs.emlid.com/Downloads/Real-time-Linux-RPi2/
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf

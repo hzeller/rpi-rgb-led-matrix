@@ -40,10 +40,22 @@ class GPIO {
   uint32_t InitOutputs(uint32_t outputs);
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
-  void SetBits(uint32_t value);
+  inline void SetBits(uint32_t value) {
+    if (!value) return;
+    *gpio_set_bits_ = value;
+#ifdef RGB_SLOWDOWN_GPIO
+    *gpio_set_bits_ = value;
+#endif
+  }
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
-  void ClearBits(uint32_t value);
+  inline void ClearBits(uint32_t value) {
+    if (!value) return;
+    *gpio_clr_bits_ = value;
+#ifdef RGB_SLOWDOWN_GPIO
+    *gpio_clr_bits_ = value;
+#endif
+  }
 
   // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
   inline void WriteMaskedBits(uint32_t value, uint32_t mask) {
@@ -58,6 +70,8 @@ class GPIO {
  private:
   uint32_t output_bits_;
   volatile uint32_t *gpio_port_;
+  volatile uint32_t *gpio_set_bits_;
+  volatile uint32_t *gpio_clr_bits_;
 };
 
 // A PinPulser is a utility class that pulses a GPIO pin. There can be various
@@ -77,6 +91,9 @@ public:
 
   // Send a pulse with a given length (index into nano_wait_spec array).
   virtual void SendPulse(int time_spec_number) = 0;
+
+  // If SendPulse() is asynchronously implemented, wait for pulse to finish.
+  virtual void WaitPulseFinished() {}
 };
 
 }  // end namespace rgb_matrix

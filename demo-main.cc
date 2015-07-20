@@ -6,6 +6,7 @@
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
 #include "transformer.h"
+#include "graphics.h"
 
 #include <assert.h>
 #include <getopt.h>
@@ -56,13 +57,13 @@ public:
       off_screen_canvas_ = matrix_->SwapOnVSync(off_screen_canvas_);
     }
   }
-  
+
 private:
   RGBMatrix *const matrix_;
   FrameCanvas *off_screen_canvas_;
 };
 
-// Simple generator that pulses through brightness on red, green, blue and white 
+// Simple generator that pulses through brightness on red, green, blue and white
 class BrightnessPulseGenerator : public ThreadedCanvasManipulator {
 public:
   BrightnessPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {}
@@ -98,21 +99,17 @@ class SimpleSquare : public ThreadedCanvasManipulator {
 public:
   SimpleSquare(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
-    const int width = canvas()->width();
-    const int height = canvas()->height();
-    // Diagonal
-    for (int x = 0; x < width; ++x) {
-      canvas()->SetPixel(x, x, 255, 255, 255);           // white
-      canvas()->SetPixel(height -1 - x, x, 255, 0, 255); // magenta
-    }
-    for (int x = 0; x < width; ++x) {
-      canvas()->SetPixel(x, 0, 255, 0, 0);              // top line: red
-      canvas()->SetPixel(x, height - 1, 255, 255, 0);   // bottom line: yellow
-    }
-    for (int y = 0; y < height; ++y) {
-      canvas()->SetPixel(0, y, 0, 0, 255);              // left line: blue
-      canvas()->SetPixel(width - 1, y, 0, 255, 0);      // right line: green
-    }
+    const int width = canvas()->width() - 1;
+    const int height = canvas()->height() - 1;
+    // Borders
+    DrawLine(canvas(), 0, 0,      width, 0,      Color(255, 0, 0));
+    DrawLine(canvas(), 0, height, width, height, Color(255, 255, 0));
+    DrawLine(canvas(), 0, 0,      0,     height, Color(0, 0, 255));
+    DrawLine(canvas(), width, 0,  width, height, Color(0, 255, 0));
+
+    // Diagonals.
+    DrawLine(canvas(), 0, 0,        width, height, Color(255, 255, 255));
+    DrawLine(canvas(), 0, height, width, 0,        Color(255,   0, 255));
   }
 };
 
@@ -1046,6 +1043,7 @@ static int usage(const char *progname) {
 }
 
 int main(int argc, char *argv[]) {
+  GPIO io;
   bool as_daemon = false;
   int runtime_seconds = -1;
   int demo = -1;
@@ -1060,6 +1058,31 @@ int main(int argc, char *argv[]) {
   bool do_luminance_correct = true;
 
   const char *demo_parameter = NULL;
+
+#if 0
+  /** testing **/
+  if (!io.Init())
+    return 1;
+
+  uint32_t pulsed_pin = 1 << 18;
+  io.InitOutputs(pulsed_pin);
+  std::vector<int> spec;
+  int base = 200;
+  for (int i = 0; i < 11; ++i) {
+    spec.push_back(base << i);
+  }
+  int chosen = atoi(argv[1]);
+  if (chosen >= (int) spec.size())
+    chosen = spec.size() - 1;
+  fprintf(stderr, "Choosing %dns\n", spec[chosen]);
+  PinPulser *pulser = PinPulser::Create(&io, pulsed_pin, spec);
+  for (;;) {
+    pulser->SendPulse(chosen);
+    pulser->WaitPulseFinished();
+  }
+
+  return 0;
+#endif
 
   int opt;
   while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:LR:")) != -1) {
@@ -1163,7 +1186,6 @@ int main(int argc, char *argv[]) {
   }
 
   // Initialize GPIO pins. This might fail when we don't have permissions.
-  GPIO io;
   if (!io.Init())
     return 1;
 

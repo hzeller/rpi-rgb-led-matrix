@@ -10,7 +10,6 @@ LIBS:cmos4000
 LIBS:adc-dac
 LIBS:memory
 LIBS:xilinx
-LIBS:special
 LIBS:microcontrollers
 LIBS:dsp
 LIBS:microchip
@@ -50,7 +49,7 @@ U 1 1 54ECAC85
 P 5650 1750
 F 0 "U1" H 5750 2325 60  0000 L BNN
 F 1 "74HC245" H 5700 1175 60  0000 L TNN
-F 2 "Housings_SSOP:TSSOP-20_4.4x6.5mm_Pitch0.65mm" H 5650 1750 60  0001 C CNN
+F 2 "Housings_SOIC:SOIC-20_7.5x12.8mm_Pitch1.27mm" H 5650 1750 60  0001 C CNN
 F 3 "" H 5650 1750 60  0000 C CNN
 	1    5650 1750
 	1    0    0    -1  
@@ -61,7 +60,7 @@ U 1 1 54ECB18C
 P 5650 3100
 F 0 "U2" H 5750 3675 60  0000 L BNN
 F 1 "74HC245" H 5700 2525 60  0000 L TNN
-F 2 "Housings_SSOP:TSSOP-20_4.4x6.5mm_Pitch0.65mm" H 5650 3100 60  0001 C CNN
+F 2 "Housings_SOIC:SOIC-20_7.5x12.8mm_Pitch1.27mm" H 5650 3100 60  0001 C CNN
 F 3 "" H 5650 3100 60  0000 C CNN
 	1    5650 3100
 	1    0    0    -1  
@@ -72,7 +71,7 @@ U 1 1 54ECB1EA
 P 5650 4450
 F 0 "U3" H 5750 5025 60  0000 L BNN
 F 1 "74HC245" H 5700 3875 60  0000 L TNN
-F 2 "Housings_SSOP:TSSOP-20_4.4x6.5mm_Pitch0.65mm" H 5650 4450 60  0001 C CNN
+F 2 "Housings_SOIC:SOIC-20_7.5x12.8mm_Pitch1.27mm" H 5650 4450 60  0001 C CNN
 F 3 "" H 5650 4450 60  0000 C CNN
 	1    5650 4450
 	1    0    0    -1  
@@ -102,7 +101,7 @@ $EndComp
 Wire Wire Line
 	3550 2650 3550 2800
 Wire Wire Line
-	3550 2700 3500 2700
+	3500 2700 3750 2700
 Wire Wire Line
 	3550 2800 3500 2800
 Connection ~ 3550 2700
@@ -198,29 +197,29 @@ Text GLabel 3000 4300 0    51   Output ~ 0
 p1_g2
 Text GLabel 3500 4500 2    51   Output ~ 0
 p1_b2
-Text GLabel 3500 3900 2    51   Output ~ 0
-row_A
-Text GLabel 3500 3800 2    51   Output ~ 0
-row_B
-Text GLabel 3000 3700 0    51   Output ~ 0
-row_C
-Text GLabel 3000 3600 0    51   Output ~ 0
-row_D
-Text GLabel 3000 3800 0    51   Output ~ 0
-clock
-Text GLabel 3000 3200 0    51   Output ~ 0
-p0_r1
-Text GLabel 3500 3200 2    51   Output ~ 0
-p0_g1
 Text GLabel 3000 3400 0    51   Output ~ 0
-p0_b1
+row_A
 Text GLabel 3500 3400 2    51   Output ~ 0
-p0_r2
+row_B
 Text GLabel 3500 3500 2    51   Output ~ 0
-p0_g2
+row_C
 Text GLabel 3500 3700 2    51   Output ~ 0
-p0_b2
+row_D
+Text GLabel 3000 3200 0    51   Output ~ 0
+clock
+Text GLabel 3000 3800 0    51   Output ~ 0
+p0_r1
 Text GLabel 3000 3300 0    51   Output ~ 0
+p0_g1
+Text GLabel 3500 3900 2    51   Output ~ 0
+p0_b1
+Text GLabel 3500 3800 2    51   Output ~ 0
+p0_r2
+Text GLabel 3000 3700 0    51   Output ~ 0
+p0_g2
+Text GLabel 3000 3600 0    51   Output ~ 0
+p0_b2
+Text GLabel 3500 3200 2    51   Output ~ 0
 OE
 Text GLabel 4950 1950 0    51   Input ~ 0
 p0_g1
@@ -251,13 +250,13 @@ Wire Wire Line
 	8750 2900 9300 2900
 Wire Wire Line
 	8750 2300 9300 2300
-Text GLabel 4950 2900 0    51   Input ~ 0
-row_A
-Text GLabel 4950 3000 0    51   Input ~ 0
-row_B
 Text GLabel 4950 3100 0    51   Input ~ 0
-row_C
+row_A
 Text GLabel 4950 3200 0    51   Input ~ 0
+row_B
+Text GLabel 4950 3000 0    51   Input ~ 0
+row_C
+Text GLabel 4950 2900 0    51   Input ~ 0
 row_D
 Text GLabel 4950 3300 0    51   Input ~ 0
 strobe
@@ -304,57 +303,57 @@ Wire Wire Line
 $Comp
 L C C1
 U 1 1 54ECBE4F
-P 2700 5650
-F 0 "C1" H 2700 5750 40  0000 L CNN
-F 1 "C" H 2706 5565 40  0000 L CNN
-F 2 "Capacitors_SMD:C_0805_HandSoldering" H 2738 5500 30  0001 C CNN
-F 3 "" H 2700 5650 60  0000 C CNN
-	1    2700 5650
+P 2700 5600
+F 0 "C1" H 2700 5700 40  0000 L CNN
+F 1 "100n" H 2706 5515 40  0000 L CNN
+F 2 "Capacitors_SMD:C_0805_HandSoldering" H 2738 5450 30  0001 C CNN
+F 3 "" H 2700 5600 60  0000 C CNN
+	1    2700 5600
 	1    0    0    -1  
 $EndComp
 $Comp
 L C C2
 U 1 1 54ECBEE4
-P 3000 5650
-F 0 "C2" H 3000 5750 40  0000 L CNN
-F 1 "C" H 3006 5565 40  0000 L CNN
-F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3038 5500 30  0001 C CNN
-F 3 "" H 3000 5650 60  0000 C CNN
-	1    3000 5650
+P 3000 5600
+F 0 "C2" H 3000 5700 40  0000 L CNN
+F 1 "100n" H 3006 5515 40  0000 L CNN
+F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3038 5450 30  0001 C CNN
+F 3 "" H 3000 5600 60  0000 C CNN
+	1    3000 5600
 	1    0    0    -1  
 $EndComp
 $Comp
 L C C3
 U 1 1 54ECBF0A
-P 3300 5650
-F 0 "C3" H 3300 5750 40  0000 L CNN
-F 1 "C" H 3306 5565 40  0000 L CNN
-F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3338 5500 30  0001 C CNN
-F 3 "" H 3300 5650 60  0000 C CNN
-	1    3300 5650
+P 3300 5600
+F 0 "C3" H 3300 5700 40  0000 L CNN
+F 1 "100n" H 3306 5515 40  0000 L CNN
+F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3338 5450 30  0001 C CNN
+F 3 "" H 3300 5600 60  0000 C CNN
+	1    3300 5600
 	1    0    0    -1  
 $EndComp
 $Comp
 L GND #PWR09
 U 1 1 54ECBF56
-P 3000 5950
-F 0 "#PWR09" H 3000 5950 30  0001 C CNN
-F 1 "GND" H 3000 5880 30  0001 C CNN
-F 2 "" H 3000 5950 60  0000 C CNN
-F 3 "" H 3000 5950 60  0000 C CNN
-	1    3000 5950
+P 3000 5850
+F 0 "#PWR09" H 3000 5850 30  0001 C CNN
+F 1 "GND" H 3000 5780 30  0001 C CNN
+F 2 "" H 3000 5850 60  0000 C CNN
+F 3 "" H 3000 5850 60  0000 C CNN
+	1    3000 5850
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	3000 5850 3000 5950
+	3000 5750 3000 5850
 Wire Wire Line
 	3000 5350 3000 5450
 Wire Wire Line
 	2700 5450 3550 5450
 Connection ~ 3000 5450
 Wire Wire Line
-	2700 5850 3550 5850
-Connection ~ 3000 5850
+	2700 5750 3550 5750
+Connection ~ 3000 5750
 $Comp
 L VCC #PWR010
 U 1 1 54ECD0C1
@@ -448,11 +447,11 @@ Text GLabel 6350 1950 2    51   Output ~ 0
 p0_g1_buff
 Text GLabel 8750 2200 2    51   Input ~ 0
 p0_g1_buff
-Text GLabel 6350 3200 2    51   Output ~ 0
+Text GLabel 6350 2900 2    51   Output ~ 0
 row_D_buff
 Text GLabel 8750 2700 2    51   Input ~ 0
 row_D_buff
-Text GLabel 6350 3000 2    51   Output ~ 0
+Text GLabel 6350 3200 2    51   Output ~ 0
 row_B_buff
 Text GLabel 8750 2600 2    51   Input ~ 0
 row_B_buff
@@ -555,28 +554,28 @@ Text GLabel 3000 2800 0    51   Output ~ 0
 p2_g1
 Text GLabel 3000 2900 0    51   Output ~ 0
 p2_b1
-Text GLabel 3500 3100 2    51   Output ~ 0
-p2_r2
 Text GLabel 3000 4500 0    51   Output ~ 0
+p2_r2
+Text GLabel 3500 4400 2    51   Output ~ 0
 p2_g2
 Text GLabel 3500 4600 2    51   Output ~ 0
 p2_b2
 $Comp
 L C C4
 U 1 1 54F3B6F5
-P 3550 5650
-F 0 "C4" H 3550 5750 40  0000 L CNN
-F 1 "C" H 3556 5565 40  0000 L CNN
-F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3588 5500 30  0001 C CNN
-F 3 "" H 3550 5650 60  0000 C CNN
-	1    3550 5650
+P 3550 5600
+F 0 "C4" H 3550 5700 40  0000 L CNN
+F 1 "100n" H 3556 5515 40  0000 L CNN
+F 2 "Capacitors_SMD:C_0805_HandSoldering" H 3588 5450 30  0001 C CNN
+F 3 "" H 3550 5600 60  0000 C CNN
+	1    3550 5600
 	1    0    0    -1  
 $EndComp
 Connection ~ 3300 5450
-Connection ~ 3300 5850
-Text GLabel 6350 3100 2    51   Output ~ 0
+Connection ~ 3300 5750
+Text GLabel 6350 3000 2    51   Output ~ 0
 row_C_buff
-Text GLabel 6350 2900 2    51   Output ~ 0
+Text GLabel 6350 3100 2    51   Output ~ 0
 row_A_buff
 Text GLabel 6350 3300 2    51   Output ~ 0
 strobe_buff_0
@@ -658,7 +657,7 @@ U 1 1 54F3F4A2
 P 5650 5950
 F 0 "U4" H 5750 6525 60  0000 L BNN
 F 1 "74HC245" H 5700 5375 60  0000 L TNN
-F 2 "Housings_SSOP:TSSOP-20_4.4x6.5mm_Pitch0.65mm" H 5650 5950 60  0001 C CNN
+F 2 "Housings_SOIC:SOIC-20_7.5x12.8mm_Pitch1.27mm" H 5650 5950 60  0001 C CNN
 F 3 "" H 5650 5950 60  0000 C CNN
 	1    5650 5950
 	1    0    0    -1  
@@ -725,41 +724,38 @@ Text GLabel 6350 2700 2    51   Output ~ 0
 strobe_buff_2
 Text GLabel 4950 2700 0    51   Input ~ 0
 strobe
+NoConn ~ 3000 4000
+NoConn ~ 3500 4000
+NoConn ~ 3500 4100
+NoConn ~ 3500 3100
+NoConn ~ 3000 3100
+NoConn ~ 3000 3500
+NoConn ~ 3000 2700
 $Comp
-L GND #PWR021
-U 1 1 54F40772
-P 4800 2600
-F 0 "#PWR021" H 4800 2600 30  0001 C CNN
-F 1 "GND" H 4800 2530 30  0001 C CNN
-F 2 "" H 4800 2600 60  0000 C CNN
-F 3 "" H 4800 2600 60  0000 C CNN
-	1    4800 2600
-	0    1    1    0   
+L PWR_FLAG #FLG021
+U 1 1 557B1FD6
+P 3750 2700
+F 0 "#FLG021" H 3750 2795 50  0001 C CNN
+F 1 "PWR_FLAG" H 3750 2880 50  0000 C CNN
+F 2 "" H 3750 2700 60  0000 C CNN
+F 3 "" H 3750 2700 60  0000 C CNN
+	1    3750 2700
+	1    0    0    -1  
+$EndComp
+$Comp
+L PWR_FLAG #FLG022
+U 1 1 557B23A7
+P 2950 4700
+F 0 "#FLG022" H 2950 4795 50  0001 C CNN
+F 1 "PWR_FLAG" H 2950 4880 50  0000 C CNN
+F 2 "" H 2950 4700 60  0000 C CNN
+F 3 "" H 2950 4700 60  0000 C CNN
+	1    2950 4700
+	-1   0    0    1   
 $EndComp
 Wire Wire Line
-	4950 2600 4800 2600
-$Comp
-L CONN_01X01 P2
-U 1 1 54F43868
-P 2750 6400
-F 0 "P2" H 2750 6500 50  0000 C CNN
-F 1 "CONN_01X01" V 2850 6400 50  0000 C CNN
-F 2 "Connect:1pin" H 2750 6400 60  0001 C CNN
-F 3 "" H 2750 6400 60  0000 C CNN
-	1    2750 6400
-	1    0    0    -1  
-$EndComp
-$Comp
-L CONN_01X01 P3
-U 1 1 54F43A29
-P 3150 6400
-F 0 "P3" H 3150 6500 50  0000 C CNN
-F 1 "CONN_01X01" V 3250 6400 50  0000 C CNN
-F 2 "Connect:1pin" H 3150 6400 60  0001 C CNN
-F 3 "" H 3150 6400 60  0000 C CNN
-	1    3150 6400
-	1    0    0    -1  
-$EndComp
-Text Notes 2650 6750 0    60   ~ 0
-Mounting holes\n
+	2950 4600 2950 4700
+Connection ~ 2950 4600
+NoConn ~ 6350 2600
+NoConn ~ 4950 2600
 $EndSCHEMATC

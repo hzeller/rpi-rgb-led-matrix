@@ -1,4 +1,4 @@
-update=Sat 13 Jun 2015 10:20:45 AM PDT
+update=Wed 17 Jun 2015 07:02:16 PM PDT
 version=1
 last_client=kicad
 [cvpcb]
@@ -11,12 +11,12 @@ version=1
 [pcbnew]
 version=1
 PageLayoutDescrFile=
-LastNetListRead=
-UseCmpFile=1
-PadDrill=0.6
-PadDrillOvalY=0.6
-PadSizeH=1.5
-PadSizeV=1.5
+LastNetListRead=passive3-rpi-hub75-adapter.net
+UseCmpFile=0
+PadDrill=3.048
+PadDrillOvalY=3.048
+PadSizeH=4.064
+PadSizeV=4.064
 PcbTextSizeV=1.5
 PcbTextSizeH=1.5
 PcbTextThickness=0.3

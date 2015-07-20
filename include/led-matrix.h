@@ -34,8 +34,13 @@ namespace internal { class Framebuffer; }
 
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
-// This will provide a Canvas that represents the display with
+//
+// This implement the Canvas interface that represents the display with
 // (32 * chained_displays)x(rows * parallel_displays) pixels.
+//
+// If can do multi-buffering using the CreateFrameCanvas() and SwapOnVSync()
+// methods. This is useful for animations and to prevent tearing.
+//
 // If you arrange the panels in a different way in the physical space, write
 // a delegating Canvas that does coordinate remapping, like the
 // LargeSquare64x64Canvas in demo-main.cc.
@@ -61,12 +66,14 @@ public:
             int parallel_displays = 1);
   virtual ~RGBMatrix();
 
-  // Set GPIO output if it was not set already in constructor (otherwise: no-op).
+  // Set GPIO output if it was not set already in constructor (otherwise: NoOp).
   // Starts display refresh thread if this is the first setting.
   void SetGPIO(GPIO *io);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
-  // simple comic-colors, 1 might be sufficient. Lower require less CPU.
+  // limited comic-colors, 1 might be sufficient. Lower require less CPU and
+  // increases refresh-rate.
+  //
   // Returns boolean to signify if value was within range.
   //
   // This sets the PWM bits for the current active FrameCanvas and future
