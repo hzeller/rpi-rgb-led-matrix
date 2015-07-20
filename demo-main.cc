@@ -5,6 +5,7 @@
 
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
+#include "graphics.h"
 
 #include <assert.h>
 #include <getopt.h>
@@ -96,13 +97,13 @@ public:
       off_screen_canvas_ = matrix_->SwapOnVSync(off_screen_canvas_);
     }
   }
-  
+
 private:
   RGBMatrix *const matrix_;
   FrameCanvas *off_screen_canvas_;
 };
 
-// Simple generator that pulses through brightness on red, green, blue and white 
+// Simple generator that pulses through brightness on red, green, blue and white
 class BrightnessPulseGenerator : public ThreadedCanvasManipulator {
 public:
   BrightnessPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {}
@@ -138,21 +139,17 @@ class SimpleSquare : public ThreadedCanvasManipulator {
 public:
   SimpleSquare(Canvas *m) : ThreadedCanvasManipulator(m) {}
   void Run() {
-    const int width = canvas()->width();
-    const int height = canvas()->height();
-    // Diagonal
-    for (int x = 0; x < width; ++x) {
-      canvas()->SetPixel(x, x, 255, 255, 255);           // white
-      canvas()->SetPixel(height -1 - x, x, 255, 0, 255); // magenta
-    }
-    for (int x = 0; x < width; ++x) {
-      canvas()->SetPixel(x, 0, 255, 0, 0);              // top line: red
-      canvas()->SetPixel(x, height - 1, 255, 255, 0);   // bottom line: yellow
-    }
-    for (int y = 0; y < height; ++y) {
-      canvas()->SetPixel(0, y, 0, 0, 255);              // left line: blue
-      canvas()->SetPixel(width - 1, y, 0, 255, 0);      // right line: green
-    }
+    const int width = canvas()->width() - 1;
+    const int height = canvas()->height() - 1;
+    // Borders
+    DrawLine(canvas(), 0, 0,      width, 0,      Color(255, 0, 0));
+    DrawLine(canvas(), 0, height, width, height, Color(255, 255, 0));
+    DrawLine(canvas(), 0, 0,      0,     height, Color(0, 0, 255));
+    DrawLine(canvas(), width, 0,  width, height, Color(0, 255, 0));
+
+    // Diagonals.
+    DrawLine(canvas(), 0, 0,        width, height, Color(255, 255, 255));
+    DrawLine(canvas(), 0, height, width, 0,        Color(255,   0, 255));
   }
 };
 
