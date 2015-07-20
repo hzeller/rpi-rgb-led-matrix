@@ -15,6 +15,7 @@
 
 #include "gpio.h"
 
+#include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +23,6 @@
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
-#include <assert.h>
 
 // Raspberry 1 and 2 have different base addresses for the periphery
 #define BCM2708_PERI_BASE        0x20000000
@@ -261,15 +261,25 @@ static void sleep_nanos_rpi_2(long nanos) {
 }
 
 /*
- TODO hardware timing: more CPU use and less refresh rate than 'regular'
-   - darker, i.e more setup time in-between (= more dark time) (less current use)
-   - lower refresh rate
+ TODO hardware timing: current observation:
+   - More CPU use and less refresh rate than 'regular' (USE_HARDWARE_PWM_TIMER=0)
+   - Darker, i.e more setup time in-between (= more dark time) (less current use)
+   - Lower refresh rate
+   - The usleep() are annoying. Ideally, we can wait for the pulsing to finish
+     with some interrupt.
+   - usleep() in PWM setup is needed to get the registers settled, but it is not
+     clear what an ideal version would be. Ideally, we never switch the baseline
+     but rather write to the fifo more bits (but: it is too short and we
+     shouldn't wait.
+   - More work needed.
 */
 
 // A PinPulser that uses the PWM hardware to create accurate pulses.
 // It only works on GPIO-18 though.
 // Based in part on discussion found on
 // https://www.raspberrypi.org/forums/viewtopic.php?t=67741&p=494768
+//
+// TODO: - divider switching is very slow.
 class HardwarePinPulser : public PinPulser {
 public:
   static bool CanHandle(uint32_t gpio_mask) { return gpio_mask == (1 << 18); }
@@ -320,6 +330,8 @@ public:
   virtual void WaitPulseFinished() {
     if (!any_pulse_sent_) return;
     // Wait until FIFO is empty.
+    // TODO(hzeller): this is a very crude way to wait for the result.
+    // ideally, we could use the interrupt feature to wait for the result.
     pwm_reg_[PWM_FIFO] = 0;
     while ((pwm_reg_[PWM_STA] & PWM_STA_EMPT1) == 0) {
       usleep(1);
@@ -358,7 +370,7 @@ private:
     pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
     pwm_reg_[PWM_STA] = -1;   // clear status bits.
 
-    usleep(1);  // TODO: what is a good time here ?
+    usleep(1);  // TODO: what is a good time here ? Are there better ways ?
     //for (int i = 0; i < 300; ++i) { asm(""); }  // Registers need a while to settle.
     last_divider_ = divider;
   }

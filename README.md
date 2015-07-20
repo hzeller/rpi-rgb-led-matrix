@@ -10,7 +10,7 @@ GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
 
 The example code using this library is released in the public domain.
 
-## NOTE the pinout changed on 2015-07-19 to provide more glitch-free output. If you have an existing wiring, provide -DRGB_CLASSIC_PINOUT to the compilation or consider changing the wiring as it provides a much more stable image.
+## [PSA: the pinout changed on 2015-07-19 to provide more glitch-free output. If you have an existing wiring, provide -DRGB_CLASSIC_PINOUT to the compilation; better yet, consider changing the wiring as it provides a much more stable image.]
 
 Overview
 --------
@@ -36,6 +36,9 @@ in parallel (each chain 6-8 panels long).
 The Raspberry Pi 2 is faster than older models and sometimes the cabeling can't keep up with the
 speed; check out this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
 what to do.
+
+It is recommended to install an image with a realtime kernel (for instance [this one][emlid-rt])
+to minimize a loaded system having an influence on the image quality.
 
 Connection
 ----------
@@ -83,37 +86,40 @@ For reference, this is how the numbering on the Raspberry Pi looks like:
 
 This is the same representation as in the table below, which allows nice visual inspection.
 
-For each of the up to three chains, you have to connect GND, strobe,
-clock, OE, A, B, C, D to all of these; you find the positions below (note there are more GND
-pins on the Raspberry Pi, but for simplicity, they are left out; The `---` are not connected).
+For each of the up to three chains, you have to connect `GND`, `strobe`,
+`clock`, `OE-`, `A`, `B`, `C`, `D` to all of these; you find the positions
+below (note there are more GND pins on the Raspberry Pi, but for simplicity
+(we only need one), they are left out).
 
 Then for each panel, there is a set of (R1, G1, B1, R2, G2, B2) that you have
-to connect to the places marked `[1]`, `[2]` and `[3]` for chain 1, 2, and 3.
+to connect to the corresponding pins that are marked `[1]`, `[2]` and `[3]` for
+chain 1, 2, and 3 below.
 To make things quicker to see visually, I've marked each chain with a separate
-icon `[1]`=:smile:, `[2]`=:boom: and `[3]`=:droplet:.
+icon `[1]`=:smile:, `[2]`=:boom: and `[3]`=:droplet:; signals that go to all chains
+are marked with all icons.
 
-Connection       | Pin | Pin |  Connection
-----------------:|:---:|:---:|:-----------
-          ---    |   1 |   2 | ---
-:droplet:`[3] G1`|   3 |   4 | ---
-:droplet:`[3] B1`|   5 |   6 | GND
-         strobe  |   7 |   8 | `[3] R1` :droplet:
-          ---    |   9 |  10 | ---
-         clock   |  11 |  12 | OE
-:smile:  `[1] G1`|  13 |  14 | ---
-              A  |  15 |  16 | B
-          ---    |  17 |  18 | C
-:smile:  `[1] B2`|  19 |  20 | ---
-:smile:  `[1] G2`|  21 |  22 | D
-:smile:  `[1] R1`|  23 |  24 | `[1] R2` :smile:
-          ---    |  25 |  26 | `[1] B1` :smile:
-          ---    |  27 |  28 | ---
-:boom:   `[2] G1`|  29 |  30 | ---
-:boom:   `[2] B1`|  31 |  32 | `[2] R1` :boom:
-:boom:   `[2] G2`|  33 |  34 | ---
-:boom:   `[2] R2`|  35 |  36 | `[3] G2` :droplet:
-:droplet:`[3] R2`|  37 |  38 | `[2] B2` :boom:
-           ---   |  39 |  40 | `[3] B2` :droplet:
+Connection                        | Pin | Pin |  Connection
+---------------------------------:|:---:|:---:|:-----------------------------
+                             -    |   1 |   2 | -
+             :droplet: **[3] G1** |   3 |   4 | -
+             :droplet: **[3] B1** |   5 |   6 | **GND** :smile::boom::droplet:
+:smile::boom::droplet: **strobe** |   7 |   8 | **[3] R1** :droplet:
+                              -   |   9 |  10 | -
+:smile::boom::droplet: **clock**  |  11 |  12 | **OE-**  :smile::boom::droplet:
+              :smile:  **[1] G1** |  13 |  14 | -
+:smile::boom::droplet:      **A** |  15 |  16 | **B**    :smile::boom::droplet:
+                             -    |  17 |  18 | **C**    :smile::boom::droplet:
+              :smile:  **[1] B2** |  19 |  20 | -
+              :smile:  **[1] G2** |  21 |  22 | **D**    :smile::boom::droplet:
+              :smile:  **[1] R1** |  23 |  24 | **[1] R2** :smile:
+                             -    |  25 |  26 | **[1] B1** :smile:
+                             -    |  27 |  28 | -
+              :boom:   **[2] G1** |  29 |  30 | -
+              :boom:   **[2] B1** |  31 |  32 | **[2] R1** :boom:
+              :boom:   **[2] G2** |  33 |  34 | -
+              :boom:   **[2] R2** |  35 |  36 | **[3] G2** :droplet:
+              :droplet:**[3] R2** |  37 |  38 | **[2] B2** :boom:
+                              -   |  39 |  40 | **[3] B2** :droplet:
 
 In the [adapter/](./adapter) directory, there are some boards that make
 the wiring task simpler.
@@ -131,20 +137,21 @@ that is now all dynamically configurable).
      Options:
          -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
          -P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. Default: 1
-         -c <chained>  : Daisy-chained boards. Default: 1.
-         -L            : 'Large' display, composed out of 4 times 32x32
-         -p <pwm-bits> : Bits used for PWM. Something between 1..11
-         -l            : Don't do luminance correction (CIE1931)
-         -D <demo-nr>  : Always needs to be set
-         -d            : run as daemon. Use this when starting in
-                         /etc/init.d, but also when running without
-                         terminal (e.g. cron)
-         -t <seconds>  : Run for these number of seconds, then exit.
-                (if neither -d nor -t are supplied, waits for <RETURN>)
+         -c <chained>     : Daisy-chained boards. Default: 1.
+         -L               : 'Large' display, composed out of 4 times 32x32
+         -p <pwm-bits>    : Bits used for PWM. Something between 1..11
+         -l               : Don't do luminance correction (CIE1931)
+         -D <demo-nr>     : Always needs to be set
+         -d               : run as daemon. Use this when starting in
+                            /etc/init.d, but also when running without
+                            terminal (e.g. cron).
+         -t <seconds>     : Run for these number of seconds, then exit.
+                            (if neither -d nor -t are supplied, waits for <RETURN>)
+         -b <brightness>  : Sets brightness percent. Default: 100.
      Demos, choosen with -D
          0  - some rotating square
-         1  - forward scrolling an image
-         2  - backward scrolling an image
+         1  - forward scrolling an image (-m <scroll-ms>)
+         2  - backward scrolling an image (-m <scroll-ms>)
          3  - test image: a square
          4  - Pulsing color
          5  - Grayscale Block
@@ -152,8 +159,10 @@ that is now all dynamically configurable).
          7  - Conway's game of life (-m <time-step-ms>)
          8  - Langton's ant (-m <time-step-ms>)
          9  - Volume bars (-m <time-step-ms>)
+         10 - Evolution of color (-m <time-step-ms>)
+         11 - Brightness pulse generator
      Example:
-         ./led-matrix -d -t 10 -D 1 runtext.ppm
+         ./led-matrix -t 10 -D 1 runtext.ppm
      Scrolls the runtext for 10 seconds
 
 To run the actual demos, you need to run this as root so that the
@@ -483,6 +492,13 @@ dropped due to its slow speed..
 There seems to be a limit in how fast the GPIO pins can be controlled, which
 limits the frame-rate.
 
+Fun
+---
+I am always happy to see users successfully using the software for wonderful things, like this
+installation by Dirk in Scharbeutz, Germany:
+
+![](./img/user-action-shot.jpg)
+
 [hub75]: ./img/hub75.jpg
 [hub75-arrow]: ./img/hub75-other.jpg
 [hub75-idc]: ./img/idc-hub75-connector.jpg
@@ -495,5 +511,5 @@ limits the frame-rate.
 [sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/product/1484
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
-[emlid-rt]: http://www.emlid.com/raspberry-pi-real-time-kernel-available-for-download/
+[emlid-rt]: http://docs.emlid.com/Downloads/Real-time-Linux-RPi2/
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf
