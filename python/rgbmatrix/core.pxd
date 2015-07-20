@@ -1,9 +1,11 @@
 cimport cppinc
 
-cdef class FrameCanvas:
-    cdef cppinc.FrameCanvas *__canvas
-    cdef cppinc.FrameCanvas* __getCanvas(self) except *
+cdef class Canvas:
+    cdef cppinc.Canvas *__getCanvas(self) except +
 
-cdef class RGBMatrix:
+cdef class FrameCanvas(Canvas):
+    cdef cppinc.FrameCanvas *__canvas
+
+cdef class RGBMatrix(Canvas):
     cdef cppinc.RGBMatrix *__matrix
     cdef cppinc.GPIO *__gpio

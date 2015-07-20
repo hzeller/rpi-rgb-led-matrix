@@ -11,7 +11,7 @@ CLEAN_ARGS := clean --all
 MANPAGES := $(patsubst %.txt,%,$(wildcard *.txt))
 TXTTOMAN := a2x -f manpage
 
-CPP_SOURCES = rgbmatrix/core.cpp
+CPP_SOURCES = rgbmatrix/core.cpp rgbmatrix/graphics.cpp
 
 # Where our library resides. It is split between includes and the binary
 # library in lib
