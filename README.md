@@ -86,6 +86,8 @@ For reference, this is how the numbering on the Raspberry Pi looks like:
 
 This is the same representation as in the table below, which allows nice visual inspection.
 
+### Wiring diagram
+
 For each of the up to three chains, you have to connect `GND`, `strobe`,
 `clock`, `OE-`, `A`, `B`, `C`, `D` to all of these; you find the positions
 below (note there are more GND pins on the Raspberry Pi, but for simplicity
