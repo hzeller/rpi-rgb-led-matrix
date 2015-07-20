@@ -30,6 +30,7 @@ all: build
 build: build-python build-man
 install: install-python install-man
 clean: clean-python clean-man
+	find ./rgbmatrix -type f -name \*.so -delete
 	find . -type f -name \*.pyc -delete
 	$(RM) build-* install-* test-*
 
