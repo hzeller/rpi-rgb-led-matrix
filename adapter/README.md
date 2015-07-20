@@ -14,4 +14,4 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
 
 ![Three Panels connected][three-panels]
 
-[three-panels]: ../img/three-parallel-panels.jpg
+[three-panels]: ../img/three-parallel-panels-soic.jpg

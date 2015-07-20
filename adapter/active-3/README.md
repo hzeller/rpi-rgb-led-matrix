@@ -13,11 +13,12 @@ Adapter PCB to support up to 3 panels
      - 4x 100nF ceramic capacitor
      - 3x 16pin IDC (=2x8) male receptible to connect the panels.
      - 1x 40pin female connector to connect to the RPi.
-     
+
 You can [buy the board from OSH Park][osh-active3].
 
 ![Preview][rendering]
+![Real World][real-world]
 
 [rendering]: ../../img/active3-pcb.png
+[real-world]: ../../img/three-parallel-panels-soic.jpg
 [osh-active3]: https://oshpark.com/shared_projects/fIYlJxnA
-

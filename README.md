@@ -255,7 +255,7 @@ parameters and the coordinate system.
 
 ![Coordinate overview][coordinates]
 
-<a href="adapter/"><img src="img/three-parallel-panels.jpg" width="300px"></a>
+<a href="adapter/"><img src="img/three-parallel-panels-soic.jpg" width="300px"></a>
 
 ## Remapping coordinates ##
 You can as well chain multiple boards together and then arrange them in a
