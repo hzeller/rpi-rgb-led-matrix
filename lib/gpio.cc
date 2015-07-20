@@ -24,6 +24,10 @@
 #include <unistd.h>
 #include <assert.h>
 
+#ifndef USE_HARDWARE_PWM_TIMER
+#  define USE_HARDWARE_PWM_TIMER 1
+#endif
+
 // Raspberry 1 and 2 have different base addresses for the periphery
 #define BCM2708_PERI_BASE        0x20000000
 #define BCM2709_PERI_BASE        0x3F000000
@@ -426,9 +430,12 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
                              const std::vector<int> &nano_wait_spec) {
   // The only implementation so far.
   if (!Timers::Init()) return NULL;
+#if USE_HARDWARE_PWM_TIMER
   if (HardwarePinPulser::CanHandle(gpio_mask)) {
     return new HardwarePinPulser(gpio_mask, nano_wait_spec);
-  } else {
+  } else
+#endif
+  {
     return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
   }
 }
