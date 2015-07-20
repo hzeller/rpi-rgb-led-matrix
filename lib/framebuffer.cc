@@ -33,7 +33,9 @@ enum {
   kBitPlanes = 11  // maximum usable bitplanes.
 };
 
-static const long kBaseTimeNanos = 100;
+// Lower values create a higher framerate, but display will be a
+// bit dimmer. Good values are between 100 and 200.
+static const long kBaseTimeNanos = 130;
 
 // We need one global instance of a timing correct pulser. There are different
 // implementations depending on the context.
