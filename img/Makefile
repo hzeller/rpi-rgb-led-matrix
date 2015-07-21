@@ -1,5 +1,5 @@
 
-coordinates.png:
+coordinates.png: coordinates.svg
 
-%.png : %.fig
-	fig2dev -L pdf $^ | pdftoppm | pnmtopng > $@
+%.png : %.svg
+	inkscape --export-png=$@ --export-dpi=160 $^
