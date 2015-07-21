@@ -1097,31 +1097,6 @@ int main(int argc, char *argv[]) {
 
   const char *demo_parameter = NULL;
 
-#if 0
-  /** testing **/
-  if (!io.Init())
-    return 1;
-
-  uint32_t pulsed_pin = 1 << 18;
-  io.InitOutputs(pulsed_pin);
-  std::vector<int> spec;
-  int base = 200;
-  for (int i = 0; i < 11; ++i) {
-    spec.push_back(base << i);
-  }
-  int chosen = atoi(argv[1]);
-  if (chosen >= (int) spec.size())
-    chosen = spec.size() - 1;
-  fprintf(stderr, "Choosing %dns\n", spec[chosen]);
-  PinPulser *pulser = PinPulser::Create(&io, pulsed_pin, spec);
-  for (;;) {
-    pulser->SendPulse(chosen);
-    pulser->WaitPulseFinished();
-  }
-
-  return 0;
-#endif
-
   int opt;
   while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:L")) != -1) {
     switch (opt) {

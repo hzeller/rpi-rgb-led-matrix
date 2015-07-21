@@ -40,9 +40,10 @@
 
 #define REGISTER_BLOCK_SIZE (4*1024)
 
-#define PWM_CTL      0
-#define PWM_STA      1
-#define PWM_FIFO     6
+#define PWM_CTL      (0x00 / 4)
+#define PWM_STA      (0x04 / 4)
+#define PWM_RNG1     (0x10 / 4)
+#define PWM_FIFO     (0x18 / 4)
 
 #define PWM_CTL_CLRF1 (1<<6)	// CH1 Clear Fifo (1 Clears FIFO 0 has no effect)
 #define PWM_CTL_USEF1 (1<<5)	// CH1 Use Fifo (0=data reg transmit 1=Fifo used for transmission)
@@ -316,6 +317,7 @@ public:
     clk_reg_  = mmap_bcm_register(isPI2, GPIO_CLK_BASE_OFFSET);
     assert((clk_reg_ != NULL) && (pwm_reg_ != NULL));  // init error.
 
+    pwm_reg_[PWM_RNG1] = 0x20;   // Default value.
     SetGPIOMode(gpioReg, 18, 2); // set GPIO 18 to PWM0 mode (Alternative 5)
     SetPWMDivider(5);
   }
