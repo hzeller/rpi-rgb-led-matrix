@@ -48,13 +48,103 @@
      inkscape:window-height="712"
      id="namedview122"
      showgrid="false"
-     inkscape:zoom="3.7013985"
-     inkscape:cx="383.32903"
-     inkscape:cy="115.69785"
+     inkscape:zoom="1.8506993"
+     inkscape:cx="247.15083"
+     inkscape:cy="105.30809"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
      inkscape:current-layer="svg2" />
+  <g
+     id="g3400"
+     transform="translate(-947.47011,859.69359)">
+    <polyline
+       points="2787,1653 3118,1653 "
+       style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
+       id="polyline22" />
+    <polyline
+       points="3921,1653 4251,1653 "
+       style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
+       id="polyline24" />
+    <circle
+       cx="3259"
+       cy="1653"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle54" />
+    <circle
+       cx="3496"
+       cy="1653"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle56" />
+    <circle
+       cx="3732"
+       cy="1653"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle58" />
+  </g>
+  <g
+     id="g3407"
+     transform="translate(-947.47012,-851.94861)">
+    <polyline
+       points="2787,2503 3118,2503 "
+       style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
+       id="polyline20" />
+    <polyline
+       points="3921,2503 4251,2503 "
+       style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
+       id="polyline26" />
+    <circle
+       cx="3259"
+       cy="2503"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle60" />
+    <circle
+       cx="3496"
+       cy="2503"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle62" />
+    <circle
+       cx="3732"
+       cy="2503"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle64" />
+  </g>
+  <g
+     id="g3414"
+     transform="translate(-952.63344,-18.071636)">
+    <polyline
+       points="2787,3354 3118,3354 "
+       style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
+       id="polyline18" />
+    <polyline
+       points="3921,3354 4251,3354 "
+       style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
+       id="polyline28" />
+    <circle
+       cx="3307"
+       cy="3354"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle48" />
+    <circle
+       cx="3543"
+       cy="3354"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle50" />
+    <circle
+       cx="3779"
+       cy="3354"
+       r="47"
+       style="fill:#000000;stroke:#000000;stroke-width:8"
+       id="circle52" />
+  </g>
   <rect
      id="rect66"
      style="fill:#008000;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
@@ -78,39 +168,18 @@
   <polyline
      id="polyline12"
      style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="2031,1653 2362,1653 " />
+     points="2031,1653 2362,1653 "
+     transform="translate(1660.009,-7.7449873)" />
   <polyline
      id="polyline14"
      style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="2031,2503 2362,2503 " />
+     points="2031,2503 2362,2503 "
+     transform="translate(1675.4989,-2.5816624)" />
   <polyline
      id="polyline16"
      style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="2031,3354 2362,3354 " />
-  <polyline
-     id="polyline18"
-     style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="2787,3354 3118,3354 " />
-  <polyline
-     id="polyline20"
-     style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="2787,2503 3118,2503 " />
-  <polyline
-     id="polyline22"
-     style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="2787,1653 3118,1653 " />
-  <polyline
-     id="polyline24"
-     style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="3921,1653 4251,1653 " />
-  <polyline
-     id="polyline26"
-     style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="3921,2503 4251,2503 " />
-  <polyline
-     id="polyline28"
-     style="fill:none;stroke:#000000;stroke-width:63;stroke-linecap:butt;stroke-linejoin:bevel"
-     points="3921,3354 4251,3354 " />
+     points="2031,3354 2362,3354 "
+     transform="translate(1657.4273,-12.908312)" />
   <rect
      id="rect30"
      style="fill:#ffffff;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
@@ -126,7 +195,7 @@
      height="661"
      width="708"
      y="1322"
-     x="2314" />
+     x="3073.0088" />
   <rect
      id="rect34"
      style="fill:#ffffff;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
@@ -150,7 +219,7 @@
      height="661"
      width="708"
      y="2173"
-     x="2314" />
+     x="3075.5906" />
   <rect
      id="rect40"
      style="fill:#ffffff;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
@@ -173,8 +242,8 @@
      rx="0"
      height="661"
      width="708"
-     y="3023"
-     x="2314" />
+     y="3020.4185"
+     x="3078.1719" />
   <rect
      id="rect46"
      style="fill:#ffffff;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
@@ -183,60 +252,6 @@
      width="708"
      y="3023"
      x="1370" />
-  <circle
-     id="circle48"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="3354"
-     cx="3307" />
-  <circle
-     id="circle50"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="3354"
-     cx="3543" />
-  <circle
-     id="circle52"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="3354"
-     cx="3779" />
-  <circle
-     id="circle54"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="1653"
-     cx="3259" />
-  <circle
-     id="circle56"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="1653"
-     cx="3496" />
-  <circle
-     id="circle58"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="1653"
-     cx="3732" />
-  <circle
-     id="circle60"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="2503"
-     cx="3259" />
-  <circle
-     id="circle62"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="2503"
-     cx="3496" />
-  <circle
-     id="circle64"
-     style="fill:#000000;stroke:#000000;stroke-width:8"
-     r="47"
-     cy="2503"
-     cx="3732" />
   <rect
      id="rect68"
      style="fill:none;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
@@ -300,15 +315,18 @@
   <polyline
      id="polyline92"
      style="fill:none;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
-     points="2409,1433 2409,1874 " />
+     points="2409,1433 2409,1874 "
+     transform="translate(759.00876,-4.51696e-8)" />
   <polygon
      id="polygon94"
      style="fill:#000000;stroke:#000000;stroke-width:4;stroke-miterlimit:8"
-     points="2425,1881 2393,1881 2393,1881 2409,1944 " />
+     points="2393,1881 2409,1944 2425,1881 2393,1881 "
+     transform="translate(759.00876,-4.51696e-8)" />
   <polygon
      id="polygon96"
      style="fill:#000000;stroke:#000000;stroke-width:4;stroke-miterlimit:8"
-     points="2393,1425 2425,1425 2425,1425 2409,1362 " />
+     points="2425,1425 2409,1362 2393,1425 2425,1425 "
+     transform="translate(759.00876,-4.51696e-8)" />
   <text
      style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-align:end;text-anchor:end;fill:#000000;stroke-width:0.025in"
      id="text98"
@@ -317,7 +335,7 @@
      font-style="normal"
      y="1269.3066"
      x="1357.6876"
-     xml:space="preserve">(x,y)=(0,0)</text>
+     xml:space="preserve">(x, y)=(0, 0)</text>
   <text
      style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-anchor:end;fill:#000000;stroke-width:0.025in"
      id="text100"
@@ -328,13 +346,13 @@
      x="1322"
      xml:space="preserve">(0, rows - 1)</text>
   <text
-     style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-align:end;text-anchor:end;fill:#000000;stroke-width:0.025in;"
+     style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-align:end;text-anchor:end;fill:#000000;stroke-width:0.025in"
      id="text102"
      font-size="152"
      font-weight="normal"
      font-style="normal"
      y="3820.8367"
-     x="1564.6704"
+     x="1761.8256"
      xml:space="preserve">(0, rows * parallel - 1)</text>
   <text
      style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-align:start;text-anchor:start;fill:#000000;stroke-width:0.025in"
@@ -344,16 +362,16 @@
      font-style="normal"
      y="1248.1232"
      x="4682.1636"
-     xml:space="preserve">(32 * chain_length,0)</text>
+     xml:space="preserve">(32 * chain_length, 0)</text>
   <text
      style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-align:start;text-anchor:start;fill:#000000;stroke-width:0.025in"
      id="text106"
      font-size="152"
      font-weight="normal"
      font-style="normal"
-     y="3831.1633"
-     x="4110.0947"
-     xml:space="preserve">(32 * chain - 1, rows * parallel - 1)</text>
+     y="3838.4653"
+     x="3555.1394"
+     xml:space="preserve">(32 * chain_length - 1, rows * parallel - 1)</text>
   <text
      style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-anchor:middle;fill:#000000;stroke-width:0.025in"
      id="text108"
@@ -387,13 +405,13 @@
      x="1700"
      xml:space="preserve">32 pixel</text>
   <text
-     style="font-style:normal;font-weight:normal;font-size:135.13887511px;font-family:Helvetica;text-anchor:start;fill:#000000;stroke-width:0.025in;"
+     style="font-style:normal;font-weight:normal;font-size:135.13887024px;font-family:Helvetica;text-anchor:start;fill:#000000;stroke-width:0.025in"
      id="text116"
      font-size="126"
      font-weight="normal"
      font-style="normal"
      y="1606"
-     x="2503"
+     x="3262.0088"
      xml:space="preserve">rows </text>
   <text
      style="font-style:normal;font-weight:normal;font-size:101.35415649px;font-family:Helvetica;text-anchor:start;fill:#000000;stroke-width:0.025in"
@@ -402,7 +420,7 @@
      font-weight="normal"
      font-style="normal"
      y="1705.1204"
-     x="2440.9326"
+     x="3199.9414"
      xml:space="preserve">(16 or 32)</text>
   <text
      style="font-style:normal;font-weight:bold;font-size:152px;font-family:Helvetica;text-anchor:start;fill:#000000;stroke-width:0.025in"
@@ -461,7 +479,7 @@
      font-weight="normal"
      font-style="normal"
      y="1849.521"
-     x="2501.4807"
+     x="3260.4895"
      xml:space="preserve">(-r flag) </text>
   <g
      style="fill:none;stroke-width:0.025in"
@@ -480,7 +498,7 @@
   <g
      style="fill:none;stroke-width:0.025in"
      id="g110-5-4"
-     transform="matrix(-3.6732199e-6,-0.99999997,0.99999997,-3.6732199e-6,2964.7799,2489.3466)">
+     transform="matrix(-3.6732199e-6,-0.99999997,0.99999997,-3.6732199e-6,3726.3703,2489.3466)">
     <text
        style="font-style:normal;font-weight:normal;font-size:101.35415649px;font-family:Helvetica;text-anchor:middle;fill:#000000"
        id="text112-1-6"
