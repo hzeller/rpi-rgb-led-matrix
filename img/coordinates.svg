@@ -291,15 +291,18 @@
   <polyline
      id="polyline80"
      style="fill:none;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
-     points="2143,1181 3336,1181 " />
+     points="2143,1181 3336,1181 "
+     transform="translate(372.40424,36.510219)" />
   <polyline
      id="polyline82"
      style="fill:none;stroke:#000000;stroke-width:8;stroke-miterlimit:8"
-     points="3226 1212 3352 1181 3226 1149 " />
+     points="3226 1212 3352 1181 3226 1149 "
+     transform="translate(372.40424,36.510219)" />
   <polyline
      id="polyline84"
      style="fill:none;stroke:#000000;stroke-width:8;stroke-miterlimit:8"
-     points="2254 1149 2128 1181 2254 1212 " />
+     points="2254 1149 2128 1181 2254 1212 "
+     transform="translate(372.40424,36.510219)" />
   <polyline
      id="polyline86"
      style="fill:none;stroke:#000000;stroke-width:8;stroke-linecap:butt;stroke-linejoin:miter"
@@ -378,8 +381,8 @@
      font-size="152"
      font-weight="normal"
      font-style="normal"
-     y="1114.9283"
-     x="2766.8682"
+     y="1151.4386"
+     x="3139.2725"
      xml:space="preserve">chain length (-c flag)</text>
   <g
      style="fill:none;stroke-width:0.025in"
