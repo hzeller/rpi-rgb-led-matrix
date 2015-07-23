@@ -214,7 +214,7 @@ bool Timers::Init() {
   if (timereg == NULL) {
     return false;
   }
-  timer1Mhz = &timereg[1];
+  timer1Mhz = timereg + 1;
 
   busy_sleep_impl = isRPi2 ? sleep_nanos_rpi_2 : sleep_nanos_rpi_1;
   return true;
@@ -265,100 +265,103 @@ static void sleep_nanos_rpi_2(long nanos) {
   }
 }
 
-/*
- TODO hardware timing: current observation:
-   - More CPU use and less refresh rate than 'regular' (USE_HARDWARE_PWM_TIMER=0)
-   - Darker, i.e more setup time in-between (= more dark time) (less current use)
-   - Lower refresh rate
-   - The usleep() are annoying. Ideally, we can wait for the pulsing to finish
-     with some interrupt.
-   - usleep() in PWM setup is needed to get the registers settled, but it is not
-     clear what an ideal version would be. Ideally, we never switch the baseline
-     but rather write to the fifo more bits (but: it is too short and we
-     shouldn't wait.
-   - More work needed.
-*/
-
 // A PinPulser that uses the PWM hardware to create accurate pulses.
 // It only works on GPIO-18 though.
-// Based in part on discussion found on
-// https://www.raspberrypi.org/forums/viewtopic.php?t=67741&p=494768
-//
-// TODO: - divider switching is very slow.
 class HardwarePinPulser : public PinPulser {
 public:
   static bool CanHandle(uint32_t gpio_mask) { return gpio_mask == (1 << 18); }
 
-  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
-    : any_pulse_sent_(false), last_divider_(-1) {
+  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs) {
     assert(CanHandle(pins));
 
-    int base = specs[0];
     for (size_t i = 0; i < specs.size(); ++i) {
-#if 0
-      // Experimental. Exact pulses, but due to higher divider high
-      // recovery time and low refresh-rate.
-      if (specs[i] > MAX_PWM_BIT_USE * base) {
-        base <<= 5;
-      }
-#endif
-      if (specs[i] <= MAX_PWM_BIT_USE * base) {
-        pwm_configs_.push_back(CreatePwmFifoConfig(base / PWM_BASE_TIME_NS,
-                                                   specs[i] / base, specs[i]));
-      } else {
-        pwm_configs_.push_back(ConfigFromNanos(specs[i]));
-      }
+      sleep_hints_.push_back(specs[i] / 1000);
     }
-
+    const int base = specs[0];
     // Get relevant registers
     const bool isPI2 = IsRaspberryPi2();
     volatile uint32_t *gpioReg = mmap_bcm_register(isPI2, GPIO_REGISTER_OFFSET);
     pwm_reg_  = mmap_bcm_register(isPI2, GPIO_PWM_BASE_OFFSET);
     clk_reg_  = mmap_bcm_register(isPI2, GPIO_CLK_BASE_OFFSET);
+    fifo_ = pwm_reg_ + PWM_FIFO;
     assert((clk_reg_ != NULL) && (pwm_reg_ != NULL));  // init error.
 
-    pwm_reg_[PWM_RNG1] = 0x20;   // Default value.
     SetGPIOMode(gpioReg, 18, 2); // set GPIO 18 to PWM0 mode (Alternative 5)
-    SetPWMDivider(5);
+    InitPWMDivider((base/2) / PWM_BASE_TIME_NS);
+    for (size_t i = 0; i < specs.size(); ++i) {
+      pwm_range_.push_back(2 * specs[i] / base);
+    }
   }
 
   virtual void SendPulse(int c) {
-    SetPWMDivider(pwm_configs_[c].clk_div);
-    //pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
-    //pwm_reg_[PWM_STA] = -1;   // clear status bits.
-    for (uint32_t *pattern = pwm_configs_[c].pwm_pattern; *pattern; ++pattern) {
-      pwm_reg_[PWM_FIFO] = *pattern;
+    if (pwm_range_[c] < 16) {
+      pwm_reg_[PWM_RNG1] = pwm_range_[c];
+
+      *fifo_ = pwm_range_[c];
+    } else {
+      // Keep the actual interval as short as possible, as we have to
+      // wait for one full period of these in the zero phase.
+      pwm_reg_[PWM_RNG1] = pwm_range_[c] / 8;
+
+      *fifo_ = pwm_range_[c] / 8;
+      *fifo_ = pwm_range_[c] / 8;
+      *fifo_ = pwm_range_[c] / 8;
+      *fifo_ = pwm_range_[c] / 8;
+      *fifo_ = pwm_range_[c] / 8;
+      *fifo_ = pwm_range_[c] / 8;
+      *fifo_ = pwm_range_[c] / 8;
+      *fifo_ = pwm_range_[c] / 8;
     }
-    pwm_reg_[PWM_FIFO] = 0;
-    any_pulse_sent_ = true;
+
+    /*
+     * We need one value at the end to have it go back to
+     * default state (otherwise it just repeats the last
+     * value, so will be constantly 'on').
+     */
+    *fifo_ = 0;   // sentinel.
+
+    /*
+     * For some reason, we need a second empty sentinel in the
+     * fifo, otherwise our way to detect the end of the pulse,
+     * which relies on 'is the queue empty' does not work. It is
+     * not entirely clear why that is from the datasheet,
+     * but probably there is some buffering register in which data
+     * elements are kept after the fifo is emptied.
+     */
+    *fifo_ = 0;
+
+    sleep_hint_ = sleep_hints_[c];
+    start_time_ = *timer1Mhz;
+    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
   }
 
   virtual void WaitPulseFinished() {
-    if (!any_pulse_sent_) return;
-    // Wait until FIFO is empty.
-    // TODO(hzeller): this is a very crude way to wait for the result.
-    // ideally, we could use the interrupt feature to wait for the result.
-    pwm_reg_[PWM_FIFO] = 0;
-    while ((pwm_reg_[PWM_STA] & PWM_STA_EMPT1) == 0) {
-      usleep(1);
+    // Determine how long we already spent and sleep to get close to the
+    // actual end-time of our sleep period.
+    // (substract 25 usec, as this is the OS overhead).
+    const uint32_t elapsed_usec = *timer1Mhz - start_time_;
+    const int to_sleep = sleep_hint_ - elapsed_usec - 25;
+    if (to_sleep > 0) {
+      struct timespec sleep_time = { 0, 1000 * to_sleep };
+      nanosleep(&sleep_time, NULL);
     }
+    while ((pwm_reg_[PWM_STA] & PWM_STA_EMPT1) == 0) {
+      // busy wait until done.
+    }
+    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
   }
 
 private:
-  struct pwm_fifo_config {
-    uint32_t clk_div;
-    uint32_t pwm_pattern[8];  // fifo length. We only fill up to the first 7
-  };
-
   void SetGPIOMode(volatile uint32_t *gpioReg, unsigned gpio, unsigned mode) {
     const int reg = gpio / 10;
     const int mode_pos = (gpio % 10) * 3;
     gpioReg[reg] = (gpioReg[reg] & ~(7 << mode_pos)) | (mode << mode_pos);
   }
 
-  void SetPWMDivider(uint32_t divider) {
-    if (divider == last_divider_)
-      return;
+  void InitPWMDivider(uint32_t divider) {
+    assert(divider < (1<<12));  // we only have 12 bits.
+
+    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
 
     // reset PWM clock
     clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_KILL;
@@ -371,70 +374,16 @@ private:
 
     // enable PWM clock
     clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_ENAB | CLK_CTL_SRC(CLK_CTL_SRC_PLLD);
-
-    // set our mode
-    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_MODE1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
-    pwm_reg_[PWM_STA] = -1;   // clear status bits.
-
-    usleep(1);  // TODO: what is a good time here ? Are there better ways ?
-    //for (int i = 0; i < 300; ++i) { asm(""); }  // Registers need a while to settle.
-    last_divider_ = divider;
-  }
-
-  pwm_fifo_config CreatePwmFifoConfig(int divider, int bit_count, int fyi_nanos) {
-    pwm_fifo_config result;
-    bzero(&result, sizeof(result));
-#define PWM_DEBUG_PRINT 0
-#if PWM_DEBUG_PRINT
-    fprintf(stderr, "%7dns div:%3d bits:%4d = %6dns (Δ%3d) ",
-            fyi_nanos, divider, bit_count,
-            divider * PWM_BASE_TIME_NS * bit_count,
-            divider * PWM_BASE_TIME_NS * bit_count - fyi_nanos);
-#endif
-    assert(bit_count <= MAX_PWM_BIT_USE);
-    assert(divider < (1<<12));   // we only have 12 bits
-
-    result.clk_div = divider;
-    for (int i = 0; i < 8 && bit_count > 0; ++i) {
-      if (bit_count >= 32) {
-        result.pwm_pattern[i] = ~0;
-        bit_count -= 32;
-      } else {
-        // Remaining bits.
-        result.pwm_pattern[i] = ~((1u<<(32-bit_count))-1);  // fill from top
-        break;
-      }
-    }
-
-#if PWM_DEBUG_PRINT
-    for (int i = 0; i < 8; ++i) {
-      fprintf(stderr, "%08x ", result.pwm_pattern[i]);
-    }
-    fprintf(stderr, "\n");
-#endif
-#undef PWM_DEBUG_PRINT
-
-    return result;
-  }
-
-  pwm_fifo_config ConfigFromNanos(int nano_seconds) {
-    const int clock_loops = nano_seconds / PWM_BASE_TIME_NS;
-    // Find the smallest divider (=high time resolution) that fits
-    // in maximum allowed bits.
-    // We can sometimes get more exact values with higher dividers,
-    // however, they seem to impose a higher recovery rate.
-    int divider = (clock_loops / MAX_PWM_BIT_USE)+1;
-    if (divider < 2) divider = 2;   // Can't be 1
-    int bit_count = clock_loops / divider;
-    return CreatePwmFifoConfig(divider, bit_count, nano_seconds);
   }
 
 private:
-  std::vector<pwm_fifo_config> pwm_configs_;
+  std::vector<uint32_t> pwm_range_;
+  std::vector<int> sleep_hints_;
   volatile uint32_t *pwm_reg_;
+  volatile uint32_t *fifo_;
   volatile uint32_t *clk_reg_;
-  bool any_pulse_sent_;
-  uint32_t last_divider_;
+  uint32_t start_time_;
+  int sleep_hint_;
 };
 
 } // end anonymous namespace
