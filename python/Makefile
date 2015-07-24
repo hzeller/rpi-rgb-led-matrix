@@ -1,7 +1,7 @@
 PYTHON     ?= python
 CYTHON     ?= cython
 SETUP      := setup.py
-BUILD_ARGS := build
+BUILD_ARGS := build --build-lib .
 INST_ARGS  := install
 ifdef DESTDIR
 INST_ARGS  += --root=$(DESTDIR)
@@ -10,6 +10,14 @@ CLEAN_ARGS := clean --all
 
 MANPAGES := $(patsubst %.txt,%,$(wildcard *.txt))
 TXTTOMAN := a2x -f manpage
+
+CPP_SOURCES = rgbmatrix/core.cpp rgbmatrix/graphics.cpp
+
+# Where our library resides. It is split between includes and the binary
+# library in lib
+RGB_LIBDIR=../lib
+RGB_LIBRARY_NAME=rgbmatrix
+RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 
 ifneq "$(wildcard debian/changelog)" ""
 PKGNAME := $(shell dpkg-parsechangelog | sed -n 's/^Source: //p')
@@ -22,8 +30,17 @@ all: build
 build: build-python build-man
 install: install-python install-man
 clean: clean-python clean-man
+	find ./rgbmatrix -type f -name \*.so -delete
 	find . -type f -name \*.pyc -delete
 	$(RM) build-* install-* test-*
+
+$(RGB_LIBRARY):
+	$(MAKE) -C $(RGB_LIBDIR)
+
+# For updating the generated code (not a direct dependency of build-python
+# as the generated file is included in the distribution)
+%.cpp : %.pyx
+	$(CYTHON) --cplus -o $@ $^
 
 test: test-python
 test-python:
@@ -32,7 +49,6 @@ ifneq "$(wildcard tests/*.py)" ""
 else
 	$(info Test suite is not implemented...)
 endif
-	touch $@
 
 ifneq "$(wildcard debian/control)" ""
 PYVERS := $(shell pyversions -r -v debian/control)
@@ -41,49 +57,37 @@ BUILD_ARGS += --executable=/usr/bin/$(PYEXEC)
 INST_ARGS  += --no-compile -O0
 
 build-python: $(PYVERS:%=build-python-%)
-build-python-%: $(RGB_LIBRARY)
+build-python-%: $(RGB_LIBRARY) $(CPP_SOURCES)
 	$(info * Doing build for $(PYTHON)$* ...)
 	$(PYTHON)$* $(SETUP) $(BUILD_ARGS)
-	touch $@
 
 install-python: $(PYVERS:%=install-python-%)
 install-python-%:
 	$(info * Doing install for $(PYTHON)$* ...)
 	$(PYTHON)$* $(SETUP) $(INST_ARGS)
-	touch $@
 
 clean-python: $(PYVERS:%=clean-python-%)
 clean-python-%:
 	$(PYTHON)$* $(SETUP) $(CLEAN_ARGS)
 else
-build-python:
+build-python: $(RGB_LIBRARY) $(CPP_SOURCES)
 	$(PYTHON) $(SETUP) $(BUILD_ARGS)
-	touch $@
 
 install-python:
 	$(PYTHON) $(SETUP) $(INST_ARGS)
-	touch $@
 
 clean-python:
 	$(PYTHON) $(SETUP) $(CLEAN_ARGS)
 endif
 
-# For updating the generated code (not a direct dependency of build-python
-# as the generated file is included in the distribution)
-rgbmatrix.cpp : rgbmatrix.pyx
-%.cpp : %.pyx
-	$(CYTHON) --cplus -o $@ $^
-
 build-man: $(MANPAGES:%=build-man-%)
 build-man-%: %.txt
 	$(info * Creating $* ...)
 	$(TXTTOMAN) $<
-	touch $@
 
 install-man: $(MANPAGES:%=install-man-%)
 install-man-%:
 	$(info Installation of $* not implemented...)
-	touch $@
 
 clean-man: $(MANPAGES:%=clean-man-%)
 clean-man-%:
