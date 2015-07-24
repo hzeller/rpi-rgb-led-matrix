@@ -3,12 +3,14 @@ Controlling RGB LED display with Raspberry Pi GPIO
 
 A library to control commonly available 32x32 or 16x32 RGB LED panels with the
 Raspberry Pi. Can support PWM up to 11Bit per channel, providing true 24bpp
-color with CIE1931 profile (but: see Limitations below).
+color with CIE1931 profile. Easily supports 3 chains with 12 32x32-panels each
+(so 36 panels) with refresh-rates > 100Hz.
 
-The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org> with
+The LED-matrix **library** is (c) Henner Zeller <h.zeller@acm.org> with
 GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
 
-The example code using this library is released in the public domain.
+The demo-main.cc **example code** using this library is released to the
+public domain.
 
 ## [PSA: the pinout changed on 2015-07-19 to provide more glitch-free output. If you have an existing wiring, provide -DRGB_CLASSIC_PINOUT to the compilation; better yet, consider changing the wiring as it provides a much more stable image.]
 
@@ -28,17 +30,19 @@ this library.
 All Raspberry Pi versions supported
 -----------------------------------
 
-This supports the old Raspberry Pi's Version 1 with 26 GPIO pins and also the newer B+ models,
-and Raspberry Pi 2 with 40 GPIO pins.
-The 26 GPIO models can drive one chain of RGB panels, the 40 pin GPIO models **up to three** chains
-in parallel (each chain 6-8 panels long).
+This supports the old Raspberry Pi's Version 1 with 26 pin header and also the
+newer B+ models as well as the Raspberry Pi 2 with 40 pins.
+The 26 pin models can drive one chain of RGB panels, the 40 pin models
+**up to three** chains in parallel (each chain 12 or more panels long).
 
-The Raspberry Pi 2 is faster than older models and sometimes the cabeling can't keep up with the
-speed; check out this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
+The Raspberry Pi 2 is faster than older models and sometimes the cabeling
+can't keep up with the speed; check out
+this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
 what to do.
 
-It is recommended to install an image with a realtime kernel (for instance [this one][emlid-rt])
-to minimize a loaded system having an influence on the image quality.
+It is recommended to install an image with a realtime kernel
+(for instance [this one][emlid-rt]) to minimize a loaded system having an
+influence on the image quality.
 
 Connection
 ----------
@@ -49,12 +53,13 @@ on the board is correct - I once got boards with supplied cables that had red
 (suggesting `+`) and black (suggesting `GND`) reversed!). This power supply is
 used to light the LEDs; plan for ~3.5 Ampere per 32x32 panel.
 
-The connector on the RGB panels is called a Hub75 interface. Each panel typically has two
-ports, one is the input and the other is the output to chain additional panels. Usually an
-arrow shows which of the connectors is the input.
+The connector on the RGB panels is called a Hub75 interface. Each panel
+typically has two ports, one is the input and the other is the output to
+chain additional panels. Usually an arrow shows which of the connectors is
+the input.
 
-Here you see a Hub75 connector to be seen at the bottom of the RGB panel board including
-the arrow indicating the input direction:
+Here you see a Hub75 connector to be seen at the bottom of the RGB panel
+board including the arrow indicating the input direction:
 ![Hub 75 interface][hub75-arrow]
 
 Other boards are very similar, but instead of zero-indexed color bits
@@ -62,43 +67,49 @@ Other boards are very similar, but instead of zero-indexed color bits
 `R1`, `G1`, `B1`, `R2`, `G2`, `B2`; the functionality is identical.
 ![Hub 75 interface][hub75]
 
-Throughout this document, we will use the one-index base, so we will call these signals
-`R1`, `G1`, `B1`, `R2`, `G2`, `B2` below.
+Throughout this document, we will use the one-index base, so we will call these
+signals `R1`, `G1`, `B1`, `R2`, `G2`, `B2` below.
 
-If you plug an IDC-cable into your RGB panel, this is how the signals are on the other end
-of the cable (imagine the LED panels somewhere outside the picture on the left); note the notch
-on the right side of the connector:
+If you plug an IDC-cable into your RGB panel to the input connector, this is
+how the signal positions are on the other end of the cable (imagine the LED
+panels somewhere outside the picture on the left); note the notch on the right
+side of the connector:
 ![Hub 75 IDC connector][hub75-idc]
 
-The RPi only has 3.3V logic output level, but the display operated at 5V interprets
-these logic levels fine, just make sure to run a very short cable to the board.
+The RPi only has 3.3V logic output level, but the display operated at 5V
+interprets these logic levels just fine, just make sure to run a short
+cable to the board.
 If you do run into glitches or erratic pixels, consider some line-buffering,
 e.g. using the [active adapter PCB](./adapter/).
 Since we only need output pins on the RPi, we don't need to worry about level
 conversion back.
 
 For a single chain of LED-panels, we need 13 IO pins, which fit all in the
-header of the old Raspberry Pis. Newer Raspberry Pis have 40 GPIO pins which allows
-us to connect three parallel chains of RGB panels.
+header of the old Raspberry Pis. Newer Raspberry Pis have 40 GPIO pins, which
+allows us to connect three parallel chains of RGB panels.
 
 For reference, this is how the numbering on the Raspberry Pi looks like:
 <a href="img/raspberry-gpio.jpg"><img src="img/raspberry-gpio.jpg" width="600px"></a>
 
-This is the same representation as in the table below, which allows nice visual inspection.
+This is the same representation used in the table below, which helps for
+visual inspection.
 
 ### Wiring diagram
 
 For each of the up to three chains, you have to connect `GND`, `strobe`,
-`clock`, `OE-`, `A`, `B`, `C`, `D` to all of these; you find the positions
-below (note there are more GND pins on the Raspberry Pi, but for simplicity
-(we only need one), they are left out).
+`clock`, `OE-`, `A`, `B`, `C`, `D` to all of these (the `D` line is needed
+for 32x32 displays; 32x16 displays don't need it); you find the positions
+below (there are more GND pins on the Raspberry Pi, but they are left out
+for simplicity).
 
 Then for each panel, there is a set of (R1, G1, B1, R2, G2, B2) that you have
 to connect to the corresponding pins that are marked `[1]`, `[2]` and `[3]` for
 chain 1, 2, and 3 below.
-To make things quicker to see visually, I've marked each chain with a separate
-icon `[1]`=:smile:, `[2]`=:boom: and `[3]`=:droplet:; signals that go to all chains
-are marked with all icons.
+To make things quicker to navigate visually, each chain is marked with a separate
+icon:
+
+`[1]`=:smile:, `[2]`=:boom: and `[3]`=:droplet: ; signals that go to all
+chains have all icons.
 
 Connection                        | Pin | Pin |  Connection
 ---------------------------------:|:---:|:---:|:-----------------------------
@@ -112,7 +123,7 @@ Connection                        | Pin | Pin |  Connection
 :smile::boom::droplet:      **A** |  15 |  16 | **B**    :smile::boom::droplet:
                              -    |  17 |  18 | **C**    :smile::boom::droplet:
               :smile:  **[1] B2** |  19 |  20 | -
-              :smile:  **[1] G2** |  21 |  22 | **D**    :smile::boom::droplet:
+              :smile:  **[1] G2** |  21 |  22 | **D**    :smile::boom::droplet: (for 32 row matrix)
               :smile:  **[1] R1** |  23 |  24 | **[1] R2** :smile:
                              -    |  25 |  26 | **[1] B1** :smile:
                              -    |  27 |  28 | -
@@ -128,10 +139,8 @@ the wiring task simpler.
 
 Running
 -------
-The main.cc has some testing demos. Via command line flags, you can choose
+The demo-main.cc has some testing demos. Via command line flags, you can choose
 the display type you have (16x32 or 32x32), and how many you have chained.
-(Previous versions of this software required to do modifications in the source,
-that is now all dynamically configurable).
 
      $ make
      $ ./led-matrix
@@ -207,7 +216,7 @@ by default, as you need to install the GraphicsMagick dependencies first:
      sudo aptitude install libgraphicsmagick++1-dev
      make led-image-viewer
 
-Then, you can run it with any common image format:
+Then, you can run it with any common image format, including animated gifs:
 
     sudo ./led-image-viewer myimage.gif
 
@@ -217,13 +226,14 @@ displays (`-r`, `-c`, `-P`).
 Chaining, parallel chains and coordinate system
 ------------------------------------------------
 
-Displays also have an output port, that you can connect to the next display
-in a daisy-chain manner. There is a parameter in the demo program to give
-number of displays that are chained. You end up with a very wide
+Displays panels have an input connector, but also have an output port, that
+you can connect to the next display in a daisy-chain manner. There is the
+flag `-c` in the demo program to give number of displays that are chained.
+You end up with a very wide
 display (chain * 32 pixels). Longer chains affect the refresh rate negatively,
 so if you want to stay above 100Hz with full color, don't chain more than
-8 panels.
-If you use a PWM depth of 1 bit, the chain can be much longer.
+12 panels.
+If you use a PWM depth of 1 bit (`-p`), the chain can be much longer.
 
 The original Raspberry Pis with 26 GPIO pins just had enough connector pins
 to drive one chain of LED panels. Newer Raspberry Pis have 40 GPIO pins that
@@ -245,9 +255,9 @@ For a single Panel, the chain and parallel parameters are both just one: a singl
 chain (with no else in parallel) with a chain length of 1.
 
 The `RGBMatrix` class constructor has parameters for number of rows,
-chain-length and number of parallel. For the demo programs, there are
-command line options for that: `-r` gives rows, `-c` the chain-length and
-`-P` the number of parallel chains.
+chain-length and number of parallel. For the demo programs and the image view,
+there are command line options for that: `-r` gives rows,
+`-c` the chain-length and `-P` the number of parallel chains.
 
 The coordinate system starts at (0,0) at the top of the first parallel chain,
 furthest away from the Pi. The following picture gives an overview of various
@@ -276,7 +286,7 @@ Here is how the wiring would look like:
 
 Using the API
 -------------
-While there is a demo program, the matrix code can be used independently as
+While there is the demo program, the matrix code can be used independently as
 a library. The includes are in `include/`, the library to link is built
 in `lib/`. So if you are proficient in C++, then use it in your code.
 
@@ -339,9 +349,10 @@ have a look into [`demo-main.cc`](./demo-main.cc).
 
 Help, some pixels are not displayed properly
 --------------------------------------------
-Some panels don't handle the 3.3V logic level well, in particular with
+Some panels don't handle the 3.3V logic level well, or the RPi output drivers
+have trouble driving longer cables, in particular with
 faster Raspberry Pis Version 2. This results in artifacts like randomly
-showing up pixels or parts of the panel showing 'static'.
+showing up pixels, color fringes, or parts of the panel showing 'static'.
 
 If you encounter this, try these things
 
@@ -385,9 +396,9 @@ drive these panels; a 2A USB charger or similar is not enough for a
 32x32 panel; it might be for a 16x32.
 
 If you connect multiple boards together, you needs a power supply that can
-keep up with 3.5A / panel. Good are PC power supplies that often provide > 20A
-on the 5V rail. Also you can get dedicated 5V high current switching power
-supplies for these kind of applications (check eBay).
+keep up with 3.5A / panel. Good are old PC power supplies that often
+provide > 20A on the 5V rail. Also you can get dedicated 5V high current
+switching power supplies for these kind of applications (check eBay).
 
 The current draw is pretty spiky. Due to the PWM of the LEDs, there are very
 short peaks of a couple of 100ns to about 1ms of full current draw.
@@ -441,6 +452,8 @@ guidelines:
    - If you still see noise, increase the voltage sligthly above 5V. But note,
      this is typically only a symptom of too thin traces.
 
+Now welcome your over-engineered power solution :)
+
 Technical details
 -----------------
 
@@ -456,7 +469,10 @@ a positive clock edge to shift them in - 32 pixels for one row are clocked in
 like this (or more: you can chain these displays).
 With 'strobe', the data is transferred to the output buffers for the row.
 There are four bits that select the current row(-pair) to be displayed.
-Also, there is an 'output enable' which switches if LEDs are on at all.
+
+Then, with 'output enable', we switch the LEDs on for the amount of time for
+that bit plane. This is using some hardware support from the Pi to generate
+precise timings (but not if you use an old pinout).
 
 Since LEDs can only be on or off, we have to do our own PWM by constantly
 clocking in pixels.
@@ -464,40 +480,38 @@ clocking in pixels.
 **CPU use**
 
 These displays need to be updated constantly to show an image with PWMed
-LEDs. For one 32x32 display, every second about 500'000 pixels have to be
-updated. We can't use any hardware support to do that - thus the constant
-CPU use on an RPi is roughly 30%. Keep that in mind if you plan to run other
-things on this computer (This is less noticable on Raspberry Pi, Version 2).
+LEDs. This is dependent on the length of the chain: for each chain element,
+about 1'000'000 write operations have to happen every second!
+(chain_length * 32 pixel long * 16 rows * 11 bit planes * 180 Hz refresh rate).
+
+We can't use hardware support for writing these as DMA is too slow,
+thus the constant CPU use on an RPi is roughly 30-40%.
+Keep that in mind if you plan to run other things on this computer (This
+is less noticable on Raspberry Pi, Version 2 that has more cores).
 
 Also, the output quality is suceptible to other heavy tasks running on that
-computer as the precise timing needed might be slipping. Even if the system is
-otherwise idle, you might see occasional brightness variations in the darker
-areas of your picture.
-(Even with realtime extensions enabled in Linux, this is still a (smaller)
-problem).
-
-The timing of the Output Enable pin has to be very accurate otherwise you'll
-see brightness glitches. We are using the PWM hardware of the Raspberry Pi to
-provide such accurate timing.
+computer - there might be changes in the overall brigthness when this affects
+the referesh rate. In general, it is a good idea to use a Linux kernel with
+realtime extensions.
 
 Limitations
 -----------
 If you are using the RGB_CLASSIC_PINOUT, then we can't make use of the PWM
 hardware (which only outputs to a particular pin), so you'll see random
-brightness glitches. I strongly suggest to change to the now
-default pinout.
+brightness glitches. I strongly suggest to change to the now default pinout.
 
 The system needs constant CPU to update the display. Using the DMA controller
-was considered but after extensive experiments ( https://github.com/hzeller/rpi-gpio-dma-demo )
+was considered but after extensive experiments
+( https://github.com/hzeller/rpi-gpio-dma-demo )
 dropped due to its slow speed..
 
-There seems to be a limit in how fast the GPIO pins can be controlled, which
-limits the frame-rate.
+There is an upper limit in how fast the GPIO pins can be controlled, which
+limits the frame-rate. Raspberry Pi 2's are generally faster.
 
 Fun
 ---
-I am always happy to see users successfully using the software for wonderful things, like this
-installation by Dirk in Scharbeutz, Germany:
+I am always happy to see users successfully using the software for wonderful
+things, like this installation by Dirk in Scharbeutz, Germany:
 
 ![](./img/user-action-shot.jpg)
 
