@@ -24,10 +24,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifndef USE_HARDWARE_PWM_TIMER
-#  define USE_HARDWARE_PWM_TIMER 1
-#endif
-
 // Raspberry 1 and 2 have different base addresses for the periphery
 #define BCM2708_PERI_BASE        0x20000000
 #define BCM2709_PERI_BASE        0x3F000000
@@ -167,6 +163,12 @@ bool GPIO::Init() {
   return true;
 }
 
+/*
+ * We support also other pinouts that don't have the OE- on the hardware
+ * PWM output pin, so we need to provide (impefect) 'manual' timing as well.
+ * Hence all various sleep_nano() implementations depending on the hardware.
+ */
+
 // --- PinPulser. Private implementation parts.
 namespace {
 // Manual timers.
@@ -195,12 +197,6 @@ private:
   const uint32_t bits_;
   const std::vector<int> nano_specs_;
 };
-
-// ----------
-// TODO: timing needs to be improved. It is jittery due to the nature of running
-// in a non-realtime operating system, and apparently the nanosleep() does not
-// make any effort to even be close to accurate.
-// ----------
 
 static volatile uint32_t *timer1Mhz = NULL;
 
@@ -299,8 +295,10 @@ public:
 
       *fifo_ = pwm_range_[c];
     } else {
-      // Keep the actual interval as short as possible, as we have to
+      // Keep the actual range as short as possible, as we have to
       // wait for one full period of these in the zero phase.
+      // The hardware can't deal with values < 2, so only do this when
+      // have enough of these.
       pwm_reg_[PWM_RNG1] = pwm_range_[c] / 8;
 
       *fifo_ = pwm_range_[c] / 8;
@@ -393,12 +391,9 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
                              const std::vector<int> &nano_wait_spec) {
   // The only implementation so far.
   if (!Timers::Init()) return NULL;
-#if USE_HARDWARE_PWM_TIMER
   if (HardwarePinPulser::CanHandle(gpio_mask)) {
     return new HardwarePinPulser(gpio_mask, nano_wait_spec);
-  } else
-#endif
-  {
+  } else {
     return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
   }
 }

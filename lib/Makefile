@@ -18,12 +18,6 @@ TARGET=librgbmatrix.a
 # For curiosity reasons: uncomment to see refresh rate in terminal.
 #DEFINES+=-DSHOW_REFRESH_RATE
 
-# The hardeare PWM timer creates very stable timing so that the display
-# is pretty good in displaying a stable output. However, at this point
-# the brighness is a bit lower. In that case, you can disable the use of
-# the PWM timer here. Expect more random flicker.
-#DEFINES+=-DUSE_HARDWARE_PWM_TIMER=0
-
 # The signal can be too fast for some LED panels, in particular with newer
 # (faster) Raspberry Pi 2s.
 # In these cases, you want to make sure that
