@@ -5,6 +5,7 @@
 
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
+#include "transformer.h"
 #include "graphics.h"
 
 #include <assert.h>
@@ -20,47 +21,6 @@ using std::min;
 using std::max;
 
 using namespace rgb_matrix;
-
-// This is an example how to use the Canvas abstraction to map coordinates.
-//
-// This is a Canvas that delegates to some other Canvas (typically, the RGB
-// matrix).
-//
-// Here, we want to address four 32x32 panels as one big 64x64 panel. Physically,
-// we chain them together and do a 180 degree 'curve', somewhat like this:
-// [>] [>]
-//         v
-// [<] [<]
-class LargeSquare64x64Canvas : public Canvas {
-public:
-  // This class takes over ownership of the delegatee.
-  LargeSquare64x64Canvas(Canvas *delegatee) : delegatee_(delegatee) {
-    // Our assumptions of the underlying geometry:
-    assert(delegatee->height() == 32);
-    assert(delegatee->width() == 128);
-  }
-  virtual ~LargeSquare64x64Canvas() { delete delegatee_; }
-
-  virtual void Clear() { delegatee_->Clear(); }
-  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) {
-    delegatee_->Fill(red, green, blue);
-  }
-  virtual int width() const { return 64; }
-  virtual int height() const { return 64; }
-  virtual void SetPixel(int x, int y,
-                        uint8_t red, uint8_t green, uint8_t blue) {
-    if (x < 0 || x >= width() || y < 0 || y >= height()) return;
-    // We have up to column 64 one direction, then folding around. Lets map
-    if (y > 31) {
-      x = 127 - x;
-      y = 63 - y;
-    }
-    delegatee_->SetPixel(x, y, red, green, blue);
-  }
-
-private:
-  Canvas *delegatee_;
-};
 
 /*
  * The following are demo image generators. They all use the utility
@@ -93,7 +53,7 @@ public:
         g = 255 - c;
         b = c;
       }
-      off_screen_canvas_->Fill(r, g, b);
+      matrix_->transformer()->Transform(off_screen_canvas_)->Fill(r, g, b);
       off_screen_canvas_ = matrix_->SwapOnVSync(off_screen_canvas_);
     }
   }
@@ -306,8 +266,8 @@ public:
   }
 
   void Run() {
-    const int screen_height = canvas()->height();
-    const int screen_width = canvas()->width();
+    const int screen_height = matrix_->transformer()->Transform(offscreen_)->height();
+    const int screen_width = matrix_->transformer()->Transform(offscreen_)->width();
     while (running()) {
       {
         MutexLock l(&mutex_new_image_);
@@ -325,7 +285,7 @@ public:
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = current_image_.getPixel(
                      (horizontal_position_ + x) % current_image_.width, y);
-          offscreen_->SetPixel(x, y, p.red, p.green, p.blue);
+          matrix_->transformer()->Transform(offscreen_)->SetPixel(x, y, p.red, p.green, p.blue);
         }
       }
       offscreen_ = matrix_->SwapOnVSync(offscreen_);
@@ -1062,7 +1022,8 @@ static int usage(const char *progname) {
           "\t                   terminal (e.g. cron).\n"
           "\t-t <seconds>     : Run for these number of seconds, then exit.\n"
           "\t                   (if neither -d nor -t are supplied, waits for <RETURN>)\n"
-          "\t-b <brightness>  : Sets brightness percent. Default: 100.\n");
+          "\t-b <brightness>  : Sets brightness percent. Default: 100.\n"
+          "\t-R <rotation>    : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.\n");
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
@@ -1092,13 +1053,14 @@ int main(int argc, char *argv[]) {
   int scroll_ms = 30;
   int pwm_bits = -1;
   int brightness = 100;
+  int rotation = 0;
   bool large_display = false;
   bool do_luminance_correct = true;
 
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:L")) != -1) {
+  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:LR:")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -1147,6 +1109,10 @@ int main(int argc, char *argv[]) {
       large_display = true;
       break;
 
+    case 'R':
+      rotation = atoi(optarg);
+      break;
+
     default: /* '?' */
       return usage(argv[0]);
     }
@@ -1189,6 +1155,11 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  if (rotation % 90 != 0) {
+    fprintf(stderr, "Rotation %d not allowed! Only 0, 90, 180 and 270 are possible.\n", rotation);
+    return 1;
+  }
+
   // Initialize GPIO pins. This might fail when we don't have permissions.
   if (!io.Init())
     return 1;
@@ -1211,12 +1182,19 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  Canvas *canvas = matrix;
+  LinkedTransformer *transformer = new LinkedTransformer();
+  matrix->SetTransformer(transformer);
 
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    canvas = new LargeSquare64x64Canvas(canvas);
+    transformer->AddTransformer(new LargeSquare64x64Transformer());
   }
+
+  if (rotation > 0) {
+    transformer->AddTransformer(new RotateTransformer(rotation));
+  }
+
+  Canvas *canvas = matrix;
 
   // The ThreadedCanvasManipulator objects are filling
   // the matrix continuously.

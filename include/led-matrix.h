@@ -26,6 +26,7 @@
 #include "gpio.h"
 #include "canvas.h"
 #include "thread.h"
+#include "transformer.h"
 
 namespace rgb_matrix {
 class FrameCanvas;   // Canvas for Double- and Multibuffering
@@ -110,6 +111,15 @@ public:
   // animation.
   FrameCanvas *SwapOnVSync(FrameCanvas *other);
 
+  inline void SetTransformer(CanvasTransformer *transformer) {
+    if (transformer == NULL)
+      transformer = new RGBMatrix::NullTransformer();
+    transformer_ = transformer;
+  }
+  inline CanvasTransformer *transformer() {
+    return transformer_;
+  }
+
   // -- Canvas interface. These write to the active FrameCanvas
   // (see documentation in canvas.h)
   virtual int width() const;
@@ -137,6 +147,15 @@ private:
   Mutex active_frame_sync_;
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
+  CanvasTransformer *transformer_;
+
+  class NullTransformer : public CanvasTransformer {
+  public:
+    NullTransformer() {}
+    virtual ~NullTransformer() {}
+
+    virtual Canvas *Transform(Canvas *output);
+  };
 };
 
 class FrameCanvas : public Canvas {
@@ -147,6 +166,13 @@ public:
   // Returns boolean to signify if value was within range.
   bool SetPWMBits(uint8_t value);
   uint8_t pwmbits();
+
+  // Map brightness of output linearly to input with CIE1931 profile.
+  void set_luminance_correct(bool on);
+  bool luminance_correct() const;
+
+  void SetBrightness(uint8_t brightness);
+  uint8_t brightness();
 
   // -- Canvas interface.
   virtual int width() const;
