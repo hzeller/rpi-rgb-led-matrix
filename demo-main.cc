@@ -1008,7 +1008,8 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
           progname);
   fprintf(stderr, "Options:\n"
-          "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
+          "\t-r <rows>     : Display rows. '16' for 16x32 (1:8 multiplexing), "
+	  "'32' for 32x32 (1:16 multiplexing), '8' for 1:4 multiplexing; "
           "Default: 32\n"
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
@@ -1133,8 +1134,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (rows != 16 && rows != 32) {
-    fprintf(stderr, "Rows can either be 16 or 32\n");
+  if (rows != 8 && rows != 16 && rows != 32) {
+    fprintf(stderr, "Rows can one of 8, 16 or 32 "
+            "for 1:4, 1:8 and 1:16 multiplexing respectively.\n");
     return 1;
   }
 
