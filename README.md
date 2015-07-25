@@ -3,8 +3,13 @@ Controlling RGB LED display with Raspberry Pi GPIO
 
 A library to control commonly available 32x32 or 16x32 RGB LED panels with the
 Raspberry Pi. Can support PWM up to 11Bit per channel, providing true 24bpp
-color with CIE1931 profile. Easily supports 3 chains with 12 32x32-panels each
-(so 36 panels) with refresh-rates > 100Hz.
+color with CIE1931 profile.
+
+Supports 3 chains with many 32x32-panels each.
+On a Raspberry Pi 2, you can easily chain 12 panels in that chain (so 36 panels total),
+but you can stretch that to up to 96-ish panels (32 chain length) and still reach
+around 100Hz refresh rate with full 24Bit color!
+With fewer colors you can control even more, faster.
 
 The LED-matrix **library** is (c) Henner Zeller <h.zeller@acm.org> with
 GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
@@ -55,6 +60,9 @@ Type  | Scan Multiplexing | Program Option  | Remark
 32x64 |  1:16             | -r 32 -c 2      | internally two chained 32x32
 16x32 |  1:8              | -r 16           |
 ?     |  1:4              | -r 8            | (not tested myself)
+
+These can be chained by connecting the output of one panel to the input of
+the next panel. You can chain quite a few together.
 
 Connection
 ----------
