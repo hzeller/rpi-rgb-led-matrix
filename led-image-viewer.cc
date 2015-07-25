@@ -149,8 +149,8 @@ static void DisplayAnimation(const std::vector<PreprocessedFrame*> &frames,
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <image>\n", progname);
   fprintf(stderr, "Options:\n"
-          "\t-r <rows>     : Display rows. '16' for 16x32 (1:8 multiplexing), "
-	  "'32' for 32x32 (1:16 multiplexing), '8' for 1:4 multiplexing; "
+          "\t-r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),\n"
+	  "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; "
           "Default: 32\n"
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"

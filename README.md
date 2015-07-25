@@ -44,6 +44,18 @@ It is recommended to install an image with a realtime kernel
 (for instance [this one][emlid-rt]) to minimize a loaded system having an
 influence on the image quality.
 
+Types of Displays
+-----------------
+There are various types of displays that come all with the same Hub75 connector.
+They vary in the way the multiplexing is happening or sometimes they are
+
+Type  | Scan Multiplexing | Program Option  | Remark
+-----:|:-----------------:|:----------------|-------
+32x32 |  1:16             | -r 32           |
+32x64 |  1:16             | -r 32 -c 2      | internally two chained 32x32
+16x32 |  1:8              | -r 16           |
+?     |  1:4              | -r 8            | (not tested myself)
+
 Connection
 ----------
 You need a separate power supply for the panel. There is a connector for that
@@ -69,6 +81,9 @@ Other boards are very similar, but instead of zero-indexed color bits
 
 Throughout this document, we will use the one-index base, so we will call these
 signals `R1`, `G1`, `B1`, `R2`, `G2`, `B2` below.
+
+The `strobe` signals is sometimes also called `latch` or `lat`. We'll call it
+`strobe` here.
 
 If you plug an IDC-cable into your RGB panel to the input connector, this is
 how the signal positions are on the other end of the cable (imagine the LED
@@ -123,7 +138,7 @@ Connection                        | Pin | Pin |  Connection
 :smile::boom::droplet:      **A** |  15 |  16 | **B**    :smile::boom::droplet:
                              -    |  17 |  18 | **C**    :smile::boom::droplet:
               :smile:  **[1] B2** |  19 |  20 | -
-              :smile:  **[1] G2** |  21 |  22 | **D**    :smile::boom::droplet: (for 32 row matrix)
+              :smile:  **[1] G2** |  21 |  22 | **D**    :smile::boom::droplet: (for 32 row matrix, 1:16)
               :smile:  **[1] R1** |  23 |  24 | **[1] R2** :smile:
                              -    |  25 |  26 | **[1] B1** :smile:
                              -    |  27 |  28 | -
@@ -142,39 +157,44 @@ Running
 The demo-main.cc has some testing demos. Via command line flags, you can choose
 the display type you have (16x32 or 32x32), and how many you have chained.
 
-     $ make
-     $ ./led-matrix
-     usage: ./led-matrix <options> -D <demo-nr> [optional parameter]
-     Options:
-         -r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. Default: 32
-         -P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. Default: 1
-         -c <chained>     : Daisy-chained boards. Default: 1.
-         -L               : 'Large' display, composed out of 4 times 32x32
-         -p <pwm-bits>    : Bits used for PWM. Something between 1..11
-         -l               : Don't do luminance correction (CIE1931)
-         -D <demo-nr>     : Always needs to be set
-         -d               : run as daemon. Use this when starting in
-                            /etc/init.d, but also when running without
-                            terminal (e.g. cron).
-         -t <seconds>     : Run for these number of seconds, then exit.
-                            (if neither -d nor -t are supplied, waits for <RETURN>)
-         -b <brightness>  : Sets brightness percent. Default: 100.
-     Demos, choosen with -D
-         0  - some rotating square
-         1  - forward scrolling an image (-m <scroll-ms>)
-         2  - backward scrolling an image (-m <scroll-ms>)
-         3  - test image: a square
-         4  - Pulsing color
-         5  - Grayscale Block
-         6  - Abelian sandpile model (-m <time-step-ms>)
-         7  - Conway's game of life (-m <time-step-ms>)
-         8  - Langton's ant (-m <time-step-ms>)
-         9  - Volume bars (-m <time-step-ms>)
-         10 - Evolution of color (-m <time-step-ms>)
-         11 - Brightness pulse generator
-     Example:
-         ./led-matrix -t 10 -D 1 runtext.ppm
-     Scrolls the runtext for 10 seconds
+```
+$ make
+$ ./led-matrix
+Expected required option -D <demo>
+usage: ./led-matrix <options> -D <demo-nr> [optional parameter]
+Options:
+        -r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),
+                        '32' for 32x32 (1:16), '8' for 1:4 multiplexing; Default: 32
+        -P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. Default: 1
+        -c <chained>  : Daisy-chained boards. Default: 1.
+        -L            : 'Large' display, composed out of 4 times 32x32
+        -p <pwm-bits> : Bits used for PWM. Something between 1..11
+        -l            : Don't do luminance correction (CIE1931)
+        -D <demo-nr>  : Always needs to be set
+        -d            : run as daemon. Use this when starting in
+                        /etc/init.d, but also when running without
+                        terminal (e.g. cron).
+        -t <seconds>  : Run for these number of seconds, then exit.
+                        (if neither -d nor -t are supplied, waits for <RETURN>)
+        -b <brightnes>: Sets brightness percent. Default: 100.
+        -R <rotation> : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.
+Demos, choosen with -D
+        0  - some rotating square
+        1  - forward scrolling an image (-m <scroll-ms>)
+        2  - backward scrolling an image (-m <scroll-ms>)
+        3  - test image: a square
+        4  - Pulsing color
+        5  - Grayscale Block
+        6  - Abelian sandpile model (-m <time-step-ms>)
+        7  - Conway's game of life (-m <time-step-ms>)
+        8  - Langton's ant (-m <time-step-ms>)
+        9  - Volume bars (-m <time-step-ms>)
+        10 - Evolution of color (-m <time-step-ms>)
+        11 - Brightness pulse generator
+Example:
+        ./led-matrix -t 10 -D 1 runtext.ppm
+Scrolls the runtext for 10 seconds
+```
 
 To run the actual demos, you need to run this as root so that the
 GPIO pins can be accessed.
