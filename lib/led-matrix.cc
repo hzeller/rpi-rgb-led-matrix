@@ -34,6 +34,13 @@
 
 namespace rgb_matrix {
 
+namespace {
+class NullTransformer : public CanvasTransformer {
+public:
+  virtual Canvas *Transform(Canvas *output) { return output; }
+};
+}  // anonymous namespace
+
 // Pump pixels to screen. Needs to be high priority real-time because jitter
 class RGBMatrix::UpdateThread : public Thread {
 public:
@@ -103,8 +110,8 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
   : rows_(rows), chained_displays_(chained_displays),
     parallel_displays_(parallel_displays),
-    io_(NULL), updater_(NULL),
-    transformer_(new NullTransformer()) {
+    io_(NULL), updater_(NULL) {
+  SetTransformer(NULL);
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io);
@@ -155,6 +162,15 @@ FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other) {
   return updater_->SwapOnVSync(other);
 }
 
+void RGBMatrix::SetTransformer(CanvasTransformer *transformer) {
+  if (transformer == NULL) {
+    static NullTransformer null_transformer;   // global instance sufficient.
+    transformer_ = &null_transformer;
+  } else {
+    transformer_ = transformer;
+  }
+}
+
 bool RGBMatrix::SetPWMBits(uint8_t value) {
   const bool success = active_->framebuffer()->SetPWMBits(value);
   if (success) {
@@ -184,39 +200,23 @@ uint8_t RGBMatrix::brightness() {
 
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
 int RGBMatrix::width() const { 
-  return (transformer_ != NULL) ? transformer_->Transform(active_)->width() : active_->framebuffer()->width(); 
+  return transformer_->Transform(active_)->width();
 }
 
 int RGBMatrix::height() const { 
-  return (transformer_ != NULL) ? transformer_->Transform(active_)->height() : active_->framebuffer()->height(); 
+  return transformer_->Transform(active_)->height();
 }
 
 void RGBMatrix::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  if (transformer_ != NULL) {
-    transformer_->Transform(active_)->SetPixel(x, y, red, green, blue);
-  } else {
-    active_->framebuffer()->SetPixel(x, y, red, green, blue);
-  }
+  transformer_->Transform(active_)->SetPixel(x, y, red, green, blue);
 }
 
 void RGBMatrix::Clear() { 
-  if (transformer_ != NULL) {
-    transformer_->Transform(active_)->Clear();
-  } else {
-    active_->framebuffer()->Clear();
-  }
+  transformer_->Transform(active_)->Clear();
 }
 
 void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
-  if (transformer_ != NULL) {
-    transformer_->Transform(active_)->Fill(red, green, blue);
-  } else {
-    active_->framebuffer()->Fill(red, green, blue);
-  }
-}
-
-Canvas *RGBMatrix::NullTransformer::Transform(Canvas *output) {
-  return output;
+  transformer_->Transform(active_)->Fill(red, green, blue);
 }
 
 // FrameCanvas implementation of Canvas

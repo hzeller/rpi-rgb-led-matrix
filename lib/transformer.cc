@@ -47,7 +47,8 @@ private:
   int offset_y_;
 };
 
-RotateTransformer::TransformCanvas::TransformCanvas(int angle) : delegatee_(NULL) {
+RotateTransformer::TransformCanvas::TransformCanvas(int angle)
+  : delegatee_(NULL) {
   SetAngle(angle);
 }
 
@@ -89,11 +90,11 @@ void RotateTransformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_
 }
 
 void RotateTransformer::TransformCanvas::SetAngle(int angle) {
-  assert(angle % 90 == 0);
-  angle_ = angle;
+  assert(angle % 90 == 0);  // We currenlty enforce that for more pretty output
+  angle_ = angle % 360;
 
-  sin_ = (angle_ == 90 ? 1 : (angle_ == 270 ? -1 : 0));
-  cos_ = (angle_ == 180 ? -1 : (angle_ == 0 ? 1 : 0));
+  sin_ = (angle_ ==  90 ?  1 : (angle_ == 270 ? -1 : 0));
+  cos_ = (angle_ == 180 ? -1 : (angle_ ==   0 ?  1 : 0));
 
   // Offset needed cause of little precision errors on 180° and 270°
   offset_x_ = (angle_ == 90 || angle_ == 180 ? 1 : 0);
@@ -103,9 +104,8 @@ void RotateTransformer::TransformCanvas::SetAngle(int angle) {
 /**********************/
 /* Rotate Transformer */
 /**********************/
-RotateTransformer::RotateTransformer(int angle) : angle_(angle) {
-  assert(angle % 90 == 0);
-  canvas_ = new TransformCanvas(angle);
+RotateTransformer::RotateTransformer(int angle)
+  : angle_(angle), canvas_(new TransformCanvas(angle)) {
 }
 
 RotateTransformer::~RotateTransformer() {
@@ -120,13 +120,8 @@ Canvas *RotateTransformer::Transform(Canvas *output) {
 }
 
 void RotateTransformer::SetAngle(int angle) {
-  assert(angle % 90 == 0);
   canvas_->SetAngle(angle);
   angle_ = angle;
-}
-
-int RotateTransformer::angle() {
-  return angle_;
 }
 
 /**********************/
@@ -149,6 +144,13 @@ Canvas *LinkedTransformer::Transform(Canvas *output) {
   }
 
   return output;
+}
+
+void LinkedTransformer::DeleteTransformers() {
+  for (size_t i = 0; i < list_.size(); ++i) {
+    delete list_[i];
+  }
+  list_.clear();
 }
 
 /***********************************/
@@ -207,8 +209,8 @@ void LargeSquare64x64Transformer::TransformCanvas::SetPixel(int x, int y, uint8_
 /****************************/
 /* Large Square Transformer */
 /****************************/
-LargeSquare64x64Transformer::LargeSquare64x64Transformer() {
-  canvas_ = new TransformCanvas();
+LargeSquare64x64Transformer::LargeSquare64x64Transformer()
+  : canvas_(new TransformCanvas()) {
 }
 
 LargeSquare64x64Transformer::~LargeSquare64x64Transformer() {

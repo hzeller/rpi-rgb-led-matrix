@@ -111,14 +111,11 @@ public:
   // animation.
   FrameCanvas *SwapOnVSync(FrameCanvas *other);
 
-  inline void SetTransformer(CanvasTransformer *transformer) {
-    if (transformer == NULL)
-      transformer = new RGBMatrix::NullTransformer();
-    transformer_ = transformer;
-  }
-  inline CanvasTransformer *transformer() {
-    return transformer_;
-  }
+  // Set image transformer that maps the logical canvas we provide to the
+  // physical canvas (e.g. panel mapping, rotation ...).
+  // Does _not_ take ownership of the transformer.
+  void SetTransformer(CanvasTransformer *transformer);
+  inline CanvasTransformer *transformer() { return transformer_; }
 
   // -- Canvas interface. These write to the active FrameCanvas
   // (see documentation in canvas.h)
@@ -148,14 +145,6 @@ private:
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
   CanvasTransformer *transformer_;
-
-  class NullTransformer : public CanvasTransformer {
-  public:
-    NullTransformer() {}
-    virtual ~NullTransformer() {}
-
-    virtual Canvas *Transform(Canvas *output);
-  };
 };
 
 class FrameCanvas : public Canvas {

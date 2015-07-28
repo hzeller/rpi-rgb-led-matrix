@@ -27,11 +27,11 @@ namespace rgb_matrix {
 // Transformer for RotateCanvas
 class RotateTransformer : public CanvasTransformer {
 public:
-  RotateTransformer(int angle);
+  RotateTransformer(int angle = 0);
   virtual ~RotateTransformer();
 
   void SetAngle(int angle);
-  int angle();
+  inline int angle() { return angle_; }
   
   virtual Canvas *Transform(Canvas *output);
 
@@ -39,8 +39,8 @@ private:
   // Transformer canvas to rotate the input canvas in 90° steps
   class TransformCanvas;
 
-  TransformCanvas *canvas_;
   int angle_;
+  TransformCanvas *const canvas_;
 };
 
 // Transformer for linked transformer objects
@@ -53,10 +53,16 @@ public:
   LinkedTransformer() {}
   LinkedTransformer(List transformer_list) : list_(transformer_list) {}
 
+  // The ownership of the given transformers is _not_ taken over unless
+  // you explicitly call DeleteTransformers().
   void AddTransformer(CanvasTransformer *transformer);
   void AddTransformer(List transformer_list);
   void SetTransformer(List transformer_list);
 
+  // Delete transformers that have been added or set.
+  void DeleteTransformers();
+
+  // -- CanvasTransformer interface
   virtual Canvas *Transform(Canvas *output);
 
 private:
@@ -73,7 +79,7 @@ public:
 private:
   class TransformCanvas;
 
-  TransformCanvas *canvas_;
+  TransformCanvas *const canvas_;
 };
 
 } // namespace rgb_matrix

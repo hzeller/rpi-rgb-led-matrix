@@ -1279,5 +1279,8 @@ int main(int argc, char *argv[]) {
   delete image_gen;
   delete canvas;
 
+  transformer->DeleteTransformers();
+  delete transformer;
+
   return 0;
 }
