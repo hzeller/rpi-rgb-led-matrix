@@ -10,7 +10,7 @@ Adapter PCB to support up to 3 panels
    * BOM:
      - 4x HCT245 in 20-SOIC (7.5mm package)
      - 4x 100nF ceramic capacitor
-     - 1x 10kOhm capacitor.
+     - 1x 10kOhm resistor.
      - 3x 16pin IDC (=2x8) male receptible to connect the panels.
      - 1x 40pin female connector to connect to the RPi.
    * The FAB files are provided as [active-3-fab.zip](./active-3-fab.zip)
