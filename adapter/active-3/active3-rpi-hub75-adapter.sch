@@ -730,7 +730,6 @@ NoConn ~ 3500 4100
 NoConn ~ 3500 3100
 NoConn ~ 3000 3100
 NoConn ~ 3000 3500
-NoConn ~ 3000 2700
 $Comp
 L PWR_FLAG #FLG021
 U 1 1 557B1FD6
@@ -758,4 +757,21 @@ Wire Wire Line
 Connection ~ 2950 4600
 NoConn ~ 6350 2600
 NoConn ~ 4950 2600
+$Comp
+L R R1
+U 1 1 55B6F717
+P 3000 2450
+F 0 "R1" V 3080 2450 50  0000 C CNN
+F 1 "10k" V 3000 2450 50  0000 C CNN
+F 2 "Resistors_SMD:R_0805_HandSoldering" V 2930 2450 30  0001 C CNN
+F 3 "" H 3000 2450 30  0000 C CNN
+	1    3000 2450
+	1    0    0    -1  
+$EndComp
+Text GLabel 3000 2250 1    51   Input ~ 0
+OE
+Wire Wire Line
+	3000 2600 3000 2700
+Wire Wire Line
+	3000 2300 3000 2250
 $EndSCHEMATC
