@@ -48,9 +48,7 @@ static PinPulser *sOutputEnablePulser = NULL;
 
 Framebuffer::Framebuffer(int rows, int columns, int parallel)
   : rows_(rows),
-#ifndef ONLY_SINGLE_CHAIN
     parallel_(parallel),
-#endif
     height_(rows * parallel),
     columns_(columns),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
@@ -79,7 +77,7 @@ Framebuffer::~Framebuffer() {
   IoBits b;
   b.raw = 0;
 
-#ifdef ONLY_SINGLE_CHAIN
+#ifdef PI_REV1_RGB_PINOUT_
   b.bits.output_enable_rev1 = b.bits.output_enable_rev2 = 1;
   b.bits.clock_rev1 = b.bits.clock_rev2 = 1;
 #endif
@@ -111,7 +109,7 @@ Framebuffer::~Framebuffer() {
 
   // Now, set up the PinPulser for output enable.
   IoBits output_enable_bits;
-#ifdef ONLY_SINGLE_CHAIN
+#ifdef PI_REV1_RGB_PINOUT_
   output_enable_bits.bits.output_enable_rev1
     = output_enable_bits.bits.output_enable_rev2 = 1;
 #endif
@@ -320,7 +318,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   }
 #endif
 
-#ifdef ONLY_SINGLE_CHAIN
+#ifdef PI_REV1_RGB_PINOUT_
   color_clk_mask.bits.clock_rev1 = color_clk_mask.bits.clock_rev2 = 1;
 #endif
   color_clk_mask.bits.clock = 1;
@@ -329,7 +327,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   row_mask.bits.a = row_mask.bits.b = row_mask.bits.c = row_mask.bits.d = 1;
 
   IoBits clock, strobe, row_address;
-#ifdef ONLY_SINGLE_CHAIN
+#ifdef PI_REV1_RGB_PINOUT_
   clock.bits.clock_rev1 = clock.bits.clock_rev2 = 1;
 #endif
   clock.bits.clock = 1;

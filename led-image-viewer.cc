@@ -149,7 +149,8 @@ static void DisplayAnimation(const std::vector<PreprocessedFrame*> &frames,
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <image>\n", progname);
   fprintf(stderr, "Options:\n"
-          "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
+          "\t-r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),\n"
+	  "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; "
           "Default: 32\n"
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
@@ -180,9 +181,10 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (rows != 16 && rows != 32) {
-    fprintf(stderr, "Rows can either be 16 or 32\n");
-    return usage(argv[0]);
+  if (rows != 8 && rows != 16 && rows != 32) {
+    fprintf(stderr, "Rows can one of 8, 16 or 32 "
+            "for 1:4, 1:8 and 1:16 multiplexing respectively.\n");
+    return 1;
   }
 
   if (chain < 1) {
@@ -219,7 +221,7 @@ int main(int argc, char *argv[]) {
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
   }
-    
+
   RGBMatrix *const matrix = new RGBMatrix(&io, rows, chain, parallel);
   if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
     fprintf(stderr, "Invalid range of pwm-bits\n");

@@ -61,9 +61,7 @@ private:
   inline uint16_t MapColor(uint8_t c);
 
   const int rows_;     // Number of rows. 16 or 32.
-#ifndef ONLY_SINGLE_CHAIN
   const int parallel_; // Parallel rows of chains. 1 or 2.
-#endif
   const int height_;   // rows * parallel
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
@@ -110,6 +108,7 @@ private:
       // This bitset reflects the GPIO mapping. The naming of the
       // pins of type 'p0_r1' means 'first parallel chain, red-bit one'
 #ifdef ONLY_SINGLE_CHAIN
+#     define PI_REV1_RGB_PINOUT_
       // The Revision1 and Revision2 boards have different GPIO mappings
       // on the pins 2 and 3. Just use both interpretations.
       // To keep the I2C pins free, we don't use these anymore.

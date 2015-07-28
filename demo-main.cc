@@ -1008,22 +1008,23 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
           progname);
   fprintf(stderr, "Options:\n"
-          "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
+          "\t-r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),\n"
+	  "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; "
           "Default: 32\n"
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
-          "\t-c <chained>     : Daisy-chained boards. Default: 1.\n"
-          "\t-L               : 'Large' display, composed out of 4 times 32x32\n"
-          "\t-p <pwm-bits>    : Bits used for PWM. Something between 1..11\n"
-          "\t-l               : Don't do luminance correction (CIE1931)\n"
-          "\t-D <demo-nr>     : Always needs to be set\n"
-          "\t-d               : run as daemon. Use this when starting in\n"
-          "\t                   /etc/init.d, but also when running without\n"
-          "\t                   terminal (e.g. cron).\n"
-          "\t-t <seconds>     : Run for these number of seconds, then exit.\n"
-          "\t                   (if neither -d nor -t are supplied, waits for <RETURN>)\n"
-          "\t-b <brightness>  : Sets brightness percent. Default: 100.\n"
-          "\t-R <rotation>    : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.\n");
+          "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
+          "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
+          "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
+          "\t-l            : Don't do luminance correction (CIE1931)\n"
+          "\t-D <demo-nr>  : Always needs to be set\n"
+          "\t-d            : run as daemon. Use this when starting in\n"
+          "\t                /etc/init.d, but also when running without\n"
+          "\t                terminal (e.g. cron).\n"
+          "\t-t <seconds>  : Run for these number of seconds, then exit.\n"
+          "\t                (if neither -d nor -t are supplied, waits for <RETURN>)\n"
+          "\t-b <brightnes>: Sets brightness percent. Default: 100.\n"
+          "\t-R <rotation> : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.\n");
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
@@ -1133,8 +1134,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (rows != 16 && rows != 32) {
-    fprintf(stderr, "Rows can either be 16 or 32\n");
+  if (rows != 8 && rows != 16 && rows != 32) {
+    fprintf(stderr, "Rows can one of 8, 16 or 32 "
+            "for 1:4, 1:8 and 1:16 multiplexing respectively.\n");
     return 1;
   }
 
