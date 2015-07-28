@@ -11,7 +11,7 @@ CLEAN_ARGS := clean --all
 MANPAGES := $(patsubst %.txt,%,$(wildcard *.txt))
 TXTTOMAN := a2x -f manpage
 
-CPP_SOURCES = rgbmatrix/core.cpp rgbmatrix/graphics.cpp
+GENERATED_CPP_SOURCES = rgbmatrix/core.cpp rgbmatrix/graphics.cpp
 
 # Where our library resides. It is split between includes and the binary
 # library in lib
@@ -42,6 +42,8 @@ $(RGB_LIBRARY):
 %.cpp : %.pyx
 	$(CYTHON) --cplus -o $@ $^
 
+generate-code: $(GENERATED_CPP_SOURCES)
+
 test: test-python
 test-python:
 ifneq "$(wildcard tests/*.py)" ""
@@ -57,7 +59,7 @@ BUILD_ARGS += --executable=/usr/bin/$(PYEXEC)
 INST_ARGS  += --no-compile -O0
 
 build-python: $(PYVERS:%=build-python-%)
-build-python-%: $(RGB_LIBRARY) $(CPP_SOURCES)
+build-python-%: $(RGB_LIBRARY)
 	$(info * Doing build for $(PYTHON)$* ...)
 	$(PYTHON)$* $(SETUP) $(BUILD_ARGS)
 
@@ -70,7 +72,7 @@ clean-python: $(PYVERS:%=clean-python-%)
 clean-python-%:
 	$(PYTHON)$* $(SETUP) $(CLEAN_ARGS)
 else
-build-python: $(RGB_LIBRARY) $(CPP_SOURCES)
+build-python: $(RGB_LIBRARY)
 	$(PYTHON) $(SETUP) $(BUILD_ARGS)
 
 install-python:
