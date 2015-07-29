@@ -8,7 +8,7 @@ Adapter PCB to support up to 3 panels
    * Open source KiCAD PCB EDA format.
    * (not very pretty layout, was just lazy and let the auto-router do it).
 
-You can [buy the board from OSH Park][osh-passive3].
+This board is [shared on OSH Park][osh-passive3].
 
 ![Preview][rendering]
 

@@ -15,7 +15,7 @@ Adapter PCB to support up to 3 panels
      - 1x 40pin female connector to connect to the RPi.
    * The FAB files are provided as [active-3-fab.zip](./active-3-fab.zip)
 
-You can [buy the board from OSH Park][osh-active3].
+The board is also [shared on OSH Park][osh-active3].
 
 ![Preview][rendering]
 ![Real World][real-world]

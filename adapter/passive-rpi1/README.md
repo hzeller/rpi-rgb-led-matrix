@@ -8,7 +8,7 @@ Adapter PCB to connect to Rasbperry Pi1
    * Open source KiCAD PCB EDA format.
    * (not very pretty layout, was just lazy and let the auto-router do it).
 
-You can [buy the board from OSH Park][osh-passive-rpi].
+This board is [shared on OSH Park][osh-passive-rpi].
 
 ![Preview][rendering]
 
