@@ -42,7 +42,7 @@ static const long kBaseTimeNanos = 130;
 static PinPulser *sOutputEnablePulser = NULL;
 
 // The Adafruit HAT only supports one chain.
-#if defined(ADAFRUIT_RGBMATRIX_HAT)
+#if defined(ADAFRUIT_RGBMATRIX_HAT) || defined(ADAFRUIT_RGBMATRIX_HAT_PWM)
 #  define ONLY_SINGLE_CHAIN 1
 #endif
 
