@@ -37,6 +37,10 @@ TARGET=librgbmatrix.a
 # Uncomment the following line for Adafruit Matrix HAT gpio mappings
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
+# Uncomment the following line for Adafruit Matrix HAT gpio mappings with GPIO
+# 4 and 18 connected to enable using the Raspberry Pi PWM hardware.
+#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
+
 # If you have used this library before July 2015 and have wired it up, then
 # you need to define RGB_CLASSIC_PINOUT for your panel to work. The standard
 # pinout changed so that we can make use of the PWM pin for much more stable
