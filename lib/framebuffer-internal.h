@@ -43,7 +43,11 @@ public:
   void set_luminance_correct(bool on) { do_luminance_correct_ = on; }
   bool luminance_correct() const { return do_luminance_correct_; }
 
-  void SetBrightness(uint8_t brightness) {  brightness_ = brightness; }
+  // Set brightness in percent; range=1..100
+  // This will only affect newly set pixels.
+  void SetBrightness(uint8_t b) {
+    brightness_ = (b <= 100 ? (b != 0 ? b : 1) : 100);
+  }
   uint8_t brightness() { return brightness_; }
 
   void DumpToMatrix(GPIO *io);

@@ -162,7 +162,7 @@ inline uint16_t Framebuffer::MapColor(uint8_t c) {
 
   if (do_luminance_correct_) {
     static uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-    return COLOR_OUT_BITS(luminance_lookup[c * 100 + brightness_ - 1]);
+    return COLOR_OUT_BITS(luminance_lookup[c * 100 + (brightness_ - 1)]);
   } else {
     // simple scale down the color value
     c = c * brightness_ / 100;
