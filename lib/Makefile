@@ -60,6 +60,8 @@ $(TARGET) : $(OBJECTS)
 
 led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
 thread.o : thread.cc $(INCDIR)/thread.h
+framebuffer.o: framebuffer.cc framebuffer-internal.h
+graphics.o: graphics.cc utf8-internal.h
 
 %.o : %.cc
 	$(CXX) -I$(INCDIR) $(CXXFLAGS) -c -o $@ $<

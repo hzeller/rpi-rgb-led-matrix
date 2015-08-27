@@ -19,7 +19,7 @@ MAGICK_LDFLAGS=`GraphicsMagick++-config --ldflags --libs`
 
 all : $(BINARIES)
 
-$(RGB_LIBRARY):
+$(RGB_LIBRARY): FORCE
 	$(MAKE) -C $(RGB_LIBDIR)
 
 led-matrix : demo-main.o $(RGB_LIBRARY)
@@ -50,3 +50,5 @@ build-python: $(RGB_LIBRARY)
 
 install-python: build-python
 	$(MAKE) -C $(PYTHON_LIB_DIR) install
+
+FORCE:
