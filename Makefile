@@ -52,3 +52,4 @@ install-python: build-python
 	$(MAKE) -C $(PYTHON_LIB_DIR) install
 
 FORCE:
+.PHONY: FORCE

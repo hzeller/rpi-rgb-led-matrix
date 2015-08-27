@@ -399,7 +399,7 @@ For GPIO slow-down, uncomment the following line in [lib/Makefile](lib/Makefile)
 
      #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
 
-Then `make clean` and `make` again.
+Then `make` again.
 
 Inverted Colors ?
 -----------------
@@ -412,7 +412,6 @@ at the beginning of the line.
 
 Then, recompile
 
-     make clean
      make
 
 A word about power
