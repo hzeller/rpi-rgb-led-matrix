@@ -41,7 +41,7 @@ void Thread::WaitStopped() {
 }
 
 void Thread::Start(int priority) {
-  assert(!started_);
+  assert(!started_);  // Did you call WaitStopped() ?
   pthread_create(&thread_, NULL, &PthreadCallRun, this);
 
   if (priority > 0) {

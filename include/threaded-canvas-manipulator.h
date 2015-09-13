@@ -58,8 +58,16 @@ namespace rgb_matrix {
 */
 class ThreadedCanvasManipulator : public Thread {
 public:
-  ThreadedCanvasManipulator(Canvas *m) : running_(true), canvas_(m) {}
+  ThreadedCanvasManipulator(Canvas *m) : running_(false), canvas_(m) {}
   virtual ~ThreadedCanvasManipulator() {  Stop(); }
+
+  virtual void Start(int realtime_priority=0) {
+    {
+      MutexLock l(&mutex_);
+      running_ = true;
+    }
+    Thread::Start(realtime_priority);
+  }
 
   // Stop the thread at the next possible time Run() checks the running_ flag.
   void Stop() {
