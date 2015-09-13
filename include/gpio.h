@@ -45,6 +45,9 @@ class GPIO {
     *gpio_set_bits_ = value;
 #ifdef RGB_SLOWDOWN_GPIO
     *gpio_set_bits_ = value;
+#  if RGB_SLOWDOWN_GPIO > 1
+    *gpio_set_bits_ = value;   // for really slow cases
+#  endif
 #endif
   }
 
@@ -54,6 +57,9 @@ class GPIO {
     *gpio_clr_bits_ = value;
 #ifdef RGB_SLOWDOWN_GPIO
     *gpio_clr_bits_ = value;
+#  if RGB_SLOWDOWN_GPIO > 1
+    *gpio_clr_bits_ = value;  // for really slow cases
+#  endif
 #endif
   }
 
