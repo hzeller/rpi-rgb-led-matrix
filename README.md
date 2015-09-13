@@ -17,7 +17,16 @@ GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
 The demo-main.cc **example code** using this library is released to the
 public domain.
 
-## [PSA: the pinout changed on 2015-07-19 to provide more glitch-free output. If you have an existing wiring, provide -DRGB_CLASSIC_PINOUT to the compilation; better yet, consider changing the wiring as it provides a much more stable image.]
+## NOTICE: Wiring change on 2015-07-19
+
+The wiring to connect the RPi and the Hub75 changed on 2015-07-19 to provide
+improved output quality.
+If you have an existing wiring from an earlier version of this library, provide
+
+    DEFINE+=-DRGB_CLASSIC_PINOUT make
+
+to the compilation to make the old wiring work.
+Better yet, consider changing the wiring as it provides a much more stable image. See table below for wiring.
 
 Overview
 --------
