@@ -247,7 +247,7 @@ F 3 "" H 9300 2950 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	8750 2900 9300 2900
+	9300 2900 8750 2900
 Wire Wire Line
 	8750 2300 9300 2300
 Text GLabel 4950 3100 0    51   Input ~ 0
@@ -297,7 +297,7 @@ F 3 "" H 9300 4200 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	8750 4150 9300 4150
+	9300 4150 8750 4150
 Wire Wire Line
 	8750 3550 9300 3550
 $Comp
@@ -618,7 +618,7 @@ F 3 "" H 9300 5650 60  0000 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	8750 5600 9300 5600
+	9300 5600 8750 5600
 Wire Wire Line
 	8750 5000 9300 5000
 Text GLabel 8750 5100 2    51   Input ~ 0
@@ -756,7 +756,6 @@ Wire Wire Line
 	2950 4600 2950 4700
 Connection ~ 2950 4600
 NoConn ~ 6350 2600
-NoConn ~ 4950 2600
 $Comp
 L R R1
 U 1 1 55B6F717
@@ -774,4 +773,17 @@ Wire Wire Line
 	3000 2600 3000 2700
 Wire Wire Line
 	3000 2300 3000 2250
+$Comp
+L VCC #PWR023
+U 1 1 55F64D01
+P 4700 2600
+F 0 "#PWR023" H 4700 2700 30  0001 C CNN
+F 1 "VCC" H 4700 2700 30  0000 C CNN
+F 2 "" H 4700 2600 60  0000 C CNN
+F 3 "" H 4700 2600 60  0000 C CNN
+	1    4700 2600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4700 2600 4950 2600
 $EndSCHEMATC
