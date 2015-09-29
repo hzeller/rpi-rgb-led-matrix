@@ -36,18 +36,26 @@ TARGET=librgbmatrix.a
 
 # ------------ Pinout options; usually no change needed here --------------
 
-# Uncomment the following line for Adafruit Matrix HAT gpio mappings
+# Uncomment the following line for Adafruit Matrix HAT gpio mappings.
+# If you have an Adafruit HAT ( https://www.adafruit.com/products/2345 ),
+# you need to use this option as the HAT swaps pins around that are not
+# compatible with the default mapping.
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
-# Uncomment the following line for Adafruit Matrix HAT gpio mappings with GPIO
-# 4 and 18 connected to enable using the Raspberry Pi PWM hardware.
+# Uncomment if you want to use the Adafruit HAT with stable PWM timings
+# The newer version of this library allows for much more stable (less flicker)
+# output, but it does not work with the Adafruit HAT unless you do a
+# simple hardware hack on them: connectk GPIO 4 (OE) with 18; they have
+# convenient solder holes on the board.
+# Then uncomment the following define.
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
 
-# If you have used this library before July 2015 and have wired it up, then
-# you need to define RGB_CLASSIC_PINOUT for your panel to work. The standard
-# pinout changed so that we can make use of the PWM pin for much more stable
-# timing. So even if you have the classic pinout, you might consider wiring
-# up the new one (sorry for the inconvenience).
+# Compatibility option, usually not needed.
+# If you have used this library before July 2015 and have wired it up for that,
+# then you need to define RGB_CLASSIC_PINOUT for your panel to work. The
+# standard pinout changed so that we can make use of the PWM pin for much
+# more stable timing. So even if you have the classic pinout, you might
+# consider wiring up the new one (sorry for the inconvenience).
 #DEFINES+=-DRGB_CLASSIC_PINOUT
 
 # If you use RGB_CLASSIC_PINOUT and use Raspberry Pi 1, Revision A,
