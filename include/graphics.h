@@ -49,6 +49,8 @@ public:
   int DrawGlyph(Canvas *c, int x, int y, const Color &color,
                 uint32_t unicode_codepoint) const;
 private:
+  Font(const Font& x);  // No copy constructor. Use references or pointer instead.
+
   struct Glyph;
   typedef std::map<uint32_t, Glyph*> CodepointGlyphMap;
 

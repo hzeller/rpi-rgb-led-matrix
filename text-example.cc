@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
   GPIO io;
   if (!io.Init())
     return 1;
-    
+
   /*
    * Set up the RGBMatrix. It implements a 'Canvas' interface.
    */
