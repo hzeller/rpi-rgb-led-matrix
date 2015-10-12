@@ -61,12 +61,12 @@ public:
   ThreadedCanvasManipulator(Canvas *m) : running_(false), canvas_(m) {}
   virtual ~ThreadedCanvasManipulator() {  Stop(); }
 
-  virtual void Start(int realtime_priority=0) {
+  virtual void Start(int realtime_priority=0, uint32_t affinity_mask=0) {
     {
       MutexLock l(&mutex_);
       running_ = true;
     }
-    Thread::Start(realtime_priority);
+    Thread::Start(realtime_priority, affinity_mask);
   }
 
   // Stop the thread at the next possible time Run() checks the running_ flag.

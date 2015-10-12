@@ -18,7 +18,6 @@
 #include <assert.h>
 #include <math.h>
 #include <pthread.h>
-#include <sched.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,18 +56,6 @@ public:
   }
 
   virtual void Run() {
-    // If we have multiple processors, the kernel
-    // jumps around between these, creating some global flicker.
-    // So let's tie it to the last CPU available.
-    // The Raspberry Pi2 has 4 cores, our attempt to bind it to
-    //   core #3 will succeed.
-    // The Raspberry Pi1 only has one core, so this affinity
-    //   call will simply fail and we keep using the only core.
-    cpu_set_t affinity_mask;
-    CPU_ZERO(&affinity_mask);
-    CPU_SET(3, &affinity_mask);  // last in 4 cores
-    sched_setaffinity(0, sizeof(affinity_mask), &affinity_mask);
-
     while (running()) {
 #ifdef SHOW_REFRESH_RATE
       struct timeval start, end;
@@ -150,7 +137,14 @@ void RGBMatrix::SetGPIO(GPIO *io) {
   io_ = io;
   internal::Framebuffer::InitGPIO(io_, parallel_displays_);
   updater_ = new UpdateThread(io_, active_);
-  updater_->Start(99);  // Whatever we get :)
+  // If we have multiple processors, the kernel
+  // jumps around between these, creating some global flicker.
+  // So let's tie it to the last CPU available.
+  // The Raspberry Pi2 has 4 cores, our attempt to bind it to
+  //   core #3 will succeed.
+  // The Raspberry Pi1 only has one core, so this affinity
+  //   call will simply fail and we keep using the only core.
+  updater_->Start(99, (1<<3));  // Prio: high. Also: put on last CPU.
 }
 
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {

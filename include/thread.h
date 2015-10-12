@@ -16,6 +16,7 @@
 #ifndef RPI_THREAD_H
 #define RPI_THREAD_H
 
+#include <stdint.h>
 #include <pthread.h>
 
 namespace rgb_matrix {
@@ -32,7 +33,12 @@ public:
 
   // Start thread. If realtime_priority is > 0, then this will be a
   // thread with SCHED_FIFO and the given priority.
-  virtual void Start(int realtime_priority = 0);
+  // If cpu_affinity is set !=, chooses the given bitmask of CPUs
+  // this thread should have an affinity to.
+  // On a Raspberry Pi 1, this doesn't matter, as there is only one core,
+  // Raspberry Pi 2 can has 4 cores, so any combination of (1<<0) .. (1<<3) is
+  // valid.
+  virtual void Start(int realtime_priority = 0, uint32_t cpu_affinity_mask = 0);
 
   // Override this.
   virtual void Run() = 0;
