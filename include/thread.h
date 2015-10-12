@@ -26,7 +26,7 @@ public:
 
   // The destructor waits for Run() to return so make sure it does.
   virtual ~Thread();
-  
+
   // Wait for the Run() method to return.
   void WaitStopped();
 

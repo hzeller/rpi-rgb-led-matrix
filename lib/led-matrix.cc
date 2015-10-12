@@ -16,12 +16,13 @@
 #include "led-matrix.h"
 
 #include <assert.h>
+#include <math.h>
+#include <pthread.h>
+#include <sched.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <math.h>
-#include <pthread.h>
 
 #ifdef SHOW_REFRESH_RATE
 # include <stdio.h>
@@ -56,6 +57,18 @@ public:
   }
 
   virtual void Run() {
+    // If we have multiple processors, the kernel
+    // jumps around between these, creating some global flicker.
+    // So let's tie it to the last CPU available.
+    // The Raspberry Pi2 has 4 cores, our attempt to bind it to
+    //   core #3 will succeed.
+    // The Raspberry Pi1 only has one core, so this affinity
+    //   call will simply fail and we keep using the only core.
+    cpu_set_t affinity_mask;
+    CPU_ZERO(&affinity_mask);
+    CPU_SET(3, &affinity_mask);  // last in 4 cores
+    sched_setaffinity(0, sizeof(affinity_mask), &affinity_mask);
+
     while (running()) {
 #ifdef SHOW_REFRESH_RATE
       struct timeval start, end;
@@ -201,11 +214,11 @@ uint8_t RGBMatrix::brightness() {
 }
 
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
-int RGBMatrix::width() const { 
+int RGBMatrix::width() const {
   return transformer_->Transform(active_)->width();
 }
 
-int RGBMatrix::height() const { 
+int RGBMatrix::height() const {
   return transformer_->Transform(active_)->height();
 }
 
@@ -213,7 +226,7 @@ void RGBMatrix::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue)
   transformer_->Transform(active_)->SetPixel(x, y, red, green, blue);
 }
 
-void RGBMatrix::Clear() { 
+void RGBMatrix::Clear() {
   transformer_->Transform(active_)->Clear();
 }
 
