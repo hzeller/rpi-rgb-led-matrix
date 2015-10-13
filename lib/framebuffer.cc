@@ -213,8 +213,7 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   }
 }
 
-void Framebuffer::SetPixel(int x, int y,
-                                      uint8_t r, uint8_t g, uint8_t b) {
+void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   if (x < 0 || x >= columns_ || y < 0 || y >= height_) return;
 
   const uint16_t red   = MapColor(r);
