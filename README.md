@@ -399,9 +399,16 @@ If you encounter this, try these things
    - Make sure to have as short as possible flat-cables connecting your
      Raspberry Pi with the LED panel.
 
-   - Use an adapter board with a bus-driver that acts as level shifter between
-     3.3V and 5V. You can find [active adapter PCBs](./adapter/) in a
-     subdirectory of this project.
+   - In particular if the chips close to the input of the LED panel
+     read 74HC245 instead of 74HCT245 or 74AHCT245, then this board will not
+     work properly with 3.3V inputs coming from the Pi.
+     Use an [adapter board](./adapter/active-3) with a bus-driver that acts as
+     level shifter between 3.3V and 5V.
+     (In any case, it is always a good idea to use the level shifters).
+
+   - A temporary hack to make HC245 inputs work with the 3.3V levels is to
+     supply only like 4V to the LED panel. But the colors will be off, so not
+     really useable as long-term solution.
 
    - If you can't implement the above things, or still have problems, you can
      slow down the GPIO writing a bit. This will of course reduce the

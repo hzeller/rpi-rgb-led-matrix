@@ -11,7 +11,7 @@ Adapter PCB to support up to 3 panels
    * (not very pretty layout, was just lazy and let the auto-router do it).
    * The FAB files are provided as [passive3-rpi-hub75-adapter-fab.zip](./passive3-rpi-hub75-adapter-fab.zip)
 
-This board is [shared on OSH Park][osh-passive3].
+This board is [shared on OSH Park][osh-passive3] (not affiliated).
 
 ![Preview][rendering]
 

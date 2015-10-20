@@ -8,14 +8,14 @@ Adapter PCB to support up to 3 panels
    * Open source KiCAD PCB EDA format.
    * (not very pretty layout, was just lazy and let the auto-router do it).
    * BOM:
-     - 4x HCT245 in 20-SOIC (7.5mm package)
+     - 4x 74HCT245 or 74AHCT245 in 20-SOIC, 7.5mm package.
      - 4x 100nF ceramic capacitor (0805 package)
      - 1x 10kOhm resistor (0805 package)
      - 3x 16pin IDC (=2x8) male receptible to connect the panels.
      - 1x 40pin female connector to connect to the RPi.
    * The FAB files are provided as [active3-rpi-hub75-adapter-fab.zip](./active3-rpi-hub75-adapter-fab.zip)
 
-The board is also [shared on OSH Park][osh-active3].
+The board is also [shared on OSH Park][osh-active3] (not affiliated).
 
 ![Preview][rendering]
 ![Real World][real-world]
