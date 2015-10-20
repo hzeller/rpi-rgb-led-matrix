@@ -1,7 +1,8 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 //
 // This code is public domain
-// (but note, that the led-matrix library this depends on is GPL v2)
+// (but note, once linked against the led-matrix library, this is
+// covered by the GPL v2)
 
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
