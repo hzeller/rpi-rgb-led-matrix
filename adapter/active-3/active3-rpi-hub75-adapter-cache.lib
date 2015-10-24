@@ -58,6 +58,26 @@ X ~ 2 0 -150 110 U 40 40 1 1 P
 ENDDRAW
 ENDDEF
 #
+# CONN_01X01
+#
+DEF CONN_01X01 P 0 40 Y N 1 F N
+F0 "P" 0 100 50 H V C CNN
+F1 "CONN_01X01" 100 0 50 V V C CNN
+F2 "" 0 0 60 H V C CNN
+F3 "" 0 0 60 H V C CNN
+$FPLIST
+ Pin_Header_Straight_1X01
+ Pin_Header_Angled_1X01
+ Socket_Strip_Straight_1X01
+ Socket_Strip_Angled_1X01
+$ENDFPLIST
+DRAW
+S -50 5 10 -5 0 1 0 N
+S -50 50 50 -50 0 1 0 N
+X P1 1 -200 0 150 R 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
 # CONN_02X08
 #
 DEF CONN_02X08 P 0 1 Y N 1 F N
@@ -203,6 +223,53 @@ X P38 38 250 -850 150 L 50 50 1 1 P
 X P19 19 -250 50 150 R 50 50 1 1 P
 X P29 29 -250 -450 150 R 50 50 1 1 P
 X P39 39 -250 -950 150 R 50 50 1 1 P
+ENDDRAW
+ENDDEF
+#
+# CP_Small
+#
+DEF CP_Small C 0 10 N N 1 F N
+F0 "C" 10 70 50 H V L CNN
+F1 "CP_Small" 10 -80 50 H V L CNN
+F2 "" 0 0 60 H V C CNN
+F3 "" 0 0 60 H V C CNN
+$FPLIST
+ CP*
+ Elko*
+ TantalC*
+ C*elec
+ c_elec*
+ SMD*_Pol
+$ENDFPLIST
+DRAW
+S -60 -12 60 -27 0 1 0 F
+S -60 27 60 12 0 1 0 N
+P 2 0 1 0  -50 60  -30 60 N
+P 2 0 1 0  -40 50  -40 70 N
+X ~ 1 0 100 73 D 40 40 1 1 P
+X ~ 2 0 -100 73 U 40 40 1 1 P
+ENDDRAW
+ENDDEF
+#
+# C_Small
+#
+DEF C_Small C 0 10 N N 1 F N
+F0 "C" 10 70 50 H V L CNN
+F1 "C_Small" 10 -80 50 H V L CNN
+F2 "" 0 0 60 H V C CNN
+F3 "" 0 0 60 H V C CNN
+$FPLIST
+ C?
+ C_????_*
+ C_????
+ SMD*_c
+ Capacitor*
+$ENDFPLIST
+DRAW
+P 2 0 1 13  -60 -20  60 -20 N
+P 2 0 1 12  -60 20  60 20 N
+X ~ 1 0 100 75 D 40 40 1 1 P
+X ~ 2 0 -100 80 U 40 40 1 1 P
 ENDDRAW
 ENDDEF
 #
