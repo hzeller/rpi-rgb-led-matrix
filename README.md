@@ -8,7 +8,8 @@ color with CIE1931 profile.
 Supports 3 chains with many 32x32-panels each.
 On a Raspberry Pi 2, you can easily chain 12 panels in that chain (so 36 panels total),
 but you can stretch that to up to 96-ish panels (32 chain length) and still reach
-around 100Hz refresh rate with full 24Bit color!
+around 100Hz refresh rate with full 24Bit color (theoretical - never tested this;
+there might likely be timing problems with the panels that will creep up then).
 With fewer colors you can control even more, faster.
 
 The LED-matrix **library** is (c) Henner Zeller <h.zeller@acm.org> with
