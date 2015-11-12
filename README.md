@@ -315,9 +315,9 @@ them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
 the boards in a square, we get a logical display of 64x64 pixels.
 
 For convenience, we should only deal with the logical coordinates of
-64x64 pixels in our program: implement a `Canvas`
+64x64 pixels in our program: implement a `CanvasTransformer`
 interface to do the coordinate mapping. Have a look at
-`class LargeSquare64x64Canvas` for an example and see how it is delegating to
+`class LargeSquare64x64Transformer` for an example and see how it is delegating to
 the underlying RGBMatrix with changed coordinates.
 
 Here is how the wiring would look like:

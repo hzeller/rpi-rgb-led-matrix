@@ -42,8 +42,8 @@ namespace internal { class Framebuffer; }
 // methods. This is useful for animations and to prevent tearing.
 //
 // If you arrange the panels in a different way in the physical space, write
-// a delegating Canvas that does coordinate remapping, like the
-// LargeSquare64x64Canvas in demo-main.cc.
+// a CanvasTransformer that does coordinate remapping and which should be added
+// to the transformers, like with LargeSquare64x64Transformer in demo-main.cc.
 class RGBMatrix : public Canvas {
 public:
   // Initialize RGB matrix with GPIO to write to.
