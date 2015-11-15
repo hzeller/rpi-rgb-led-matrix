@@ -72,8 +72,7 @@ drlwriter.SetMapFileFormat( PLOT_FORMAT_PDF )
 mirror = False
 minimalHeader = False
 offset = wxPoint(0,0)
-mergeNPTH = False
-drlwriter.SetOptions( mirror, minimalHeader, offset, mergeNPTH )
+drlwriter.SetOptions( mirror, minimalHeader, offset )
 
 metricFmt = True
 drlwriter.SetFormat( metricFmt )
