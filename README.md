@@ -415,9 +415,13 @@ If you encounter this, try these things
      slow down the GPIO writing a bit. This will of course reduce the
      frame-rate, so it comes at a cost.
 
-For GPIO slow-down, uncomment the following line in [lib/Makefile](lib/Makefile)
+For GPIO slow-down, the following line in the [lib/Makefile](lib/Makefile)
+is interesting:
 
-     #DEFINES+=-DRGB_SLOWDOWN_GPIO   # remove '#' in the beginning
+     DEFINES+=-DRGB_SLOWDOWN_GPIO=1
+
+The default value is 1, if you still have problems, try the value 2. If you
+know that your display is fast enough, try to comment out that line.
 
 Then `make` again.
 
