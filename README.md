@@ -480,7 +480,8 @@ guidelines:
      and meter.
 
      In the following example you see the structural aluminum bars in the middle
-     (covered in colored vinyl) dualing as power bars:
+     (covered in colored vinyl) dualing as power bars. The 60A/5V power supply is connected
+     to the center bolts (display uses about 42A all LEDs on):
      ![Powerbar][powerbar]
 
    - Often these boards come with cables that have connectors crimped on.
