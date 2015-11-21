@@ -478,6 +478,9 @@ guidelines:
      your power solution. With aluminum of 1mm² specific resistivity of
      about 28mΩ/meter, you'd need a cross sectional area of about 4mm² per panel
      and meter.
+
+     In the following example you see the structural aluminum bars in the middle
+     (covered in colored vinyl) dualing as power bars:
      ![Powerbar][powerbar]
 
    - Often these boards come with cables that have connectors crimped on.
@@ -498,7 +501,8 @@ guidelines:
      fits easier under board).
      (In reality, we need of course less, as the highest ripple comes with
       50% duty cyle thus half the current; also the input is recharching all
-      the time. But: as engineer plan for maximum and then some).
+      the time. But: as engineer plan for maximum and then some; in the picture
+      above I am using 1x3300uF per panel and it works fine).
 
 Now welcome your over-engineered power solution :)
 
