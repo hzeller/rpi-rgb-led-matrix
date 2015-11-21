@@ -109,17 +109,17 @@ panels somewhere outside the picture on the left); note the notch on the right
 side of the connector:
 ![Hub 75 IDC connector][hub75-idc]
 
-The RPi only has 3.3V logic output level, but the display operated at 5V
-interprets these logic levels just fine, just make sure to run a short
-cable to the board.
+The RPi only has 3.3V logic output level, but many displays operated at 5V
+interprets these logic levels fine, just make sure to run a short
+cable to the board (if you see problems, see [troubleshouting paragraph](#troubleshooting)).
 If you do run into glitches or erratic pixels, consider some line-buffering,
 e.g. using the [active adapter PCB](./adapter/).
 Since we only need output pins on the RPi, we don't need to worry about level
 conversion back.
 
-For a single chain of LED-panels, we need 13 IO pins, which fit all in the
-header of the old Raspberry Pis. Newer Raspberry Pis have 40 GPIO pins, which
-allows us to connect three parallel chains of RGB panels.
+For a single chain of LED-panels, we need 13 IO lines, which fit all in the
+header of the old Raspberry Pis. Newer Raspberry Pis with 40 pins have more
+GPIO lines which allows us to connect three parallel chains of RGB panels.
 
 For reference, this is how the numbering on the Raspberry Pi looks like:
 <a href="img/raspberry-gpio.jpg"><img src="img/raspberry-gpio.jpg" width="600px"></a>
@@ -138,8 +138,8 @@ for simplicity).
 Then for each panel, there is a set of (R1, G1, B1, R2, G2, B2) that you have
 to connect to the corresponding pins that are marked `[1]`, `[2]` and `[3]` for
 chain 1, 2, and 3 below.
-If you only connect one panel or have one chain, connect it to [1] (:smile:); if you
-use parallel chains, add the other [2] and [3].
+If you only connect one panel or have one chain, connect it to `[1]` (:smile:); if you
+use parallel chains, add the other `[2]` and `[3]`.
 
 To make things quicker to navigate visually, each chain is marked with a separate
 icon:
@@ -388,8 +388,8 @@ Or, if you are lazy, just import the whole namespace:
 Read the [`minimal-example.cc`](./minimal-example.cc) to get started, then
 have a look into [`demo-main.cc`](./demo-main.cc).
 
-Help, some pixels are not displayed properly
---------------------------------------------
+Troubleshooting
+---------------
 Some panels don't handle the 3.3V logic level well, or the RPi output drivers
 have trouble driving longer cables, in particular with
 faster Raspberry Pis Version 2. This results in artifacts like randomly
@@ -472,16 +472,16 @@ guidelines:
      panels to get the needed cross-section.
      (For Americans: that would be ~13 gauge wire for 3 ft and one panel)
 
-   - You might consider using aluminum mounting brackets or bars as part of
-     your power trace solution. With aluminum of 1mm² specific resistivity of
+   - While a star configuration for the cabeling would be optimal (each panel gets
+     an individual wire from the power supply), it is typically sufficient
+     using aluminum mounting brackets or bars as part of
+     your power solution. With aluminum of 1mm² specific resistivity of
      about 28mΩ/meter, you'd need a cross sectional area of about 4mm² per panel
      and meter.
+     ![Powerbar][powerbar]
 
-   - These are the minimum values to not drop more than 50mV. As engineer, you'd
-     like to aim for less than that :)
-
-   - Often these boards come with connectors that have cables crimped on.
-     These cables are typically too thin; you might want to clip them close to
+   - Often these boards come with cables that have connectors crimped on.
+     Some cheap cables are typically too thin; you might want to clip them close to
      the connector solder your proper, thick cable to it.
 
    - It is good to buffer the current spikes directly at the panel. The most
@@ -499,9 +499,6 @@ guidelines:
      (In reality, we need of course less, as the highest ripple comes with
       50% duty cyle thus half the current; also the input is recharching all
       the time. But: as engineer plan for maximum and then some).
-
-   - If you still see noise, increase the voltage sligthly above 5V. But note,
-     this is typically only a symptom of too thin traces.
 
 Now welcome your over-engineered power solution :)
 
@@ -574,6 +571,7 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [time]: ./img/time-display.jpg
 [pp-vid]: ./img/pixelpusher-vid.jpg
 [run-vid]: ./img/running-vid.jpg
+[powerbar]: ./img/powerbar.jpg
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
 [sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/product/1484
