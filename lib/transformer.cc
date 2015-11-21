@@ -224,4 +224,68 @@ Canvas *LargeSquare64x64Transformer::Transform(Canvas *output) {
   return canvas_;
 }
 
+/***********************************/
+/* Half Transformer Canvas */
+/***********************************/
+class HalfTransformer::TransformCanvas : public Canvas {
+public:
+  TransformCanvas() : delegatee_(NULL) {}
+
+  void SetDelegatee(Canvas* delegatee);
+
+  virtual void Clear();
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  virtual int width() const;
+  virtual int height() const;
+  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+
+private:
+  Canvas *delegatee_;
+};
+
+void HalfTransformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
+  // Our assumptions of the underlying geometry:
+  assert(delegatee->height() % 2 == 0);
+
+  delegatee_ = delegatee;
+}
+
+void HalfTransformer::TransformCanvas::Clear() {
+  delegatee_->Clear();
+}
+
+void HalfTransformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+  delegatee_->Fill(red, green, blue);
+}
+
+int HalfTransformer::TransformCanvas::width() const {
+  return delegatee_->width();
+}
+
+int HalfTransformer::TransformCanvas::height() const {
+  return delegatee_->height() / 2;
+}
+
+void HalfTransformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+  delegatee_->SetPixel(x, y, red, green, blue);
+}
+
+/****************************/
+/* Half Transformer */
+/****************************/
+HalfTransformer::HalfTransformer()
+  : canvas_(new TransformCanvas()) {
+}
+
+HalfTransformer::~HalfTransformer() {
+  delete canvas_;
+}
+
+Canvas *HalfTransformer::Transform(Canvas *output) {
+  assert(output != NULL);
+
+  canvas_->SetDelegatee(output);
+  return canvas_;
+}
+
 } // namespace rgb_matrix
