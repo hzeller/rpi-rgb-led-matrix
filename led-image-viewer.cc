@@ -20,6 +20,7 @@
 // $ make led-image-viewer
 
 #include "led-matrix.h"
+#include "transformer.h"
 
 #include <math.h>
 #include <signal.h>
@@ -34,6 +35,7 @@
 using rgb_matrix::GPIO;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
+using rgb_matrix::CanvasTransformer;
 
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
@@ -45,7 +47,9 @@ namespace {
 // on VSync.
 class PreprocessedFrame {
 public:
-  PreprocessedFrame(const Magick::Image &img, rgb_matrix::FrameCanvas *output)
+  PreprocessedFrame(const Magick::Image &img,
+                    rgb_matrix::Canvas *transformed_draw_canvas,
+                    rgb_matrix::FrameCanvas *output)
     : canvas_(output) {
     int delay_time = img.animationDelay();  // in 1/100s of a second.
     if (delay_time < 1) delay_time = 1;
@@ -54,13 +58,12 @@ public:
     for (size_t y = 0; y < img.rows(); ++y) {
       for (size_t x = 0; x < img.columns(); ++x) {
         const Magick::Color &c = img.pixelColor(x, y);
-        int drawX, drawY;
-        CoordinateMapping(x, y, &drawX, &drawY);
         if (c.alphaQuantum() < 256) {
-          output->SetPixel(drawX, drawY,
-                           ScaleQuantumToChar(c.redQuantum()),
-                           ScaleQuantumToChar(c.greenQuantum()),
-                           ScaleQuantumToChar(c.blueQuantum()));
+          transformed_draw_canvas
+            ->SetPixel(x, y,
+                       ScaleQuantumToChar(c.redQuantum()),
+                       ScaleQuantumToChar(c.greenQuantum()),
+                       ScaleQuantumToChar(c.blueQuantum()));
         }
       }
     }
@@ -73,13 +76,6 @@ public:
   }
 
 private:
-  // In case you have a different physical layout in your matrix,
-  // implement this method differently.
-  void CoordinateMapping(int xin, int yin, int *xout, int *yout) {
-    *xout = xin;
-    *yout = yin;
-  }
-
   FrameCanvas *const canvas_;
   int delay_micros_;
 };
@@ -121,12 +117,15 @@ static bool LoadAnimation(const char *filename, int width, int height,
 // Preprocess buffers: create readily filled frame-buffers that can be
 // swapped with the matrix to minimize computation time when we're displaying.
 static void PrepareBuffers(const std::vector<Magick::Image> &images,
-                           RGBMatrix *buffer_factory,
+                           RGBMatrix *matrix,
                            std::vector<PreprocessedFrame*> *frames) {
   fprintf(stderr, "Preprocess for display.\n");
+  CanvasTransformer *transformer = matrix->transformer();
   for (size_t i = 0; i < images.size(); ++i) {
-    FrameCanvas *canvas = buffer_factory->CreateFrameCanvas();
-    frames->push_back(new PreprocessedFrame(images[i], canvas));
+    FrameCanvas *canvas = matrix->CreateFrameCanvas();
+    frames->push_back(new PreprocessedFrame(images[i],
+                                            transformer->Transform(canvas),
+                                            canvas));
   }
 }
 
@@ -155,6 +154,7 @@ static int usage(const char *progname) {
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
+          "\t-L            : Large 64x64 display made from four 32x32 in a chain\n"
           "\t-d            : Run as daemon.\n");
   return 1;
 }
@@ -166,16 +166,22 @@ int main(int argc, char *argv[]) {
   int chain = 1;
   int parallel = 1;
   int pwm_bits = -1;
+  bool large_display = false;  // example for using Transformers
   bool as_daemon = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:p:d")) != -1) {
+  while ((opt = getopt(argc, argv, "r:P:c:p:dL")) != -1) {
     switch (opt) {
     case 'r': rows = atoi(optarg); break;
     case 'P': parallel = atoi(optarg); break;
     case 'c': chain = atoi(optarg); break;
     case 'p': pwm_bits = atoi(optarg); break;
     case 'd': as_daemon = true; break;
+    case 'L':
+      chain = 4;
+      rows = 32;
+      large_display = true;
+      break;
     default:
       return usage(argv[0]);
     }
@@ -226,6 +232,14 @@ int main(int argc, char *argv[]) {
   if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
     fprintf(stderr, "Invalid range of pwm-bits\n");
     return 1;
+  }
+
+  // Here is an example where to add your own transformer. In this case, we
+  // just to the chain-of-four-32x32 => 64x64 transformer, but just use any
+  // of the transformers in transformer.h or write your own.
+  if (large_display) {
+    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
+    matrix->SetTransformer(new rgb_matrix::LargeSquare64x64Transformer());
   }
 
   std::vector<Magick::Image> sequence_pics;
