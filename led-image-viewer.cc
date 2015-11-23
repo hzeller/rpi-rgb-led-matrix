@@ -33,6 +33,7 @@
 #include <magick/image.h>
 
 using rgb_matrix::GPIO;
+using rgb_matrix::Canvas;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::CanvasTransformer;
@@ -48,13 +49,14 @@ namespace {
 class PreprocessedFrame {
 public:
   PreprocessedFrame(const Magick::Image &img,
-                    rgb_matrix::Canvas *transformed_draw_canvas,
+                    CanvasTransformer *transformer,
                     rgb_matrix::FrameCanvas *output)
     : canvas_(output) {
     int delay_time = img.animationDelay();  // in 1/100s of a second.
     if (delay_time < 1) delay_time = 1;
     delay_micros_ = delay_time * 10000;
 
+    Canvas *const transformed_draw_canvas = transformer->Transform(output);
     for (size_t y = 0; y < img.rows(); ++y) {
       for (size_t x = 0; x < img.columns(); ++x) {
         const Magick::Color &c = img.pixelColor(x, y);
@@ -120,12 +122,10 @@ static void PrepareBuffers(const std::vector<Magick::Image> &images,
                            RGBMatrix *matrix,
                            std::vector<PreprocessedFrame*> *frames) {
   fprintf(stderr, "Preprocess for display.\n");
-  CanvasTransformer *transformer = matrix->transformer();
+  CanvasTransformer *const transformer = matrix->transformer();
   for (size_t i = 0; i < images.size(); ++i) {
     FrameCanvas *canvas = matrix->CreateFrameCanvas();
-    frames->push_back(new PreprocessedFrame(images[i],
-                                            transformer->Transform(canvas),
-                                            canvas));
+    frames->push_back(new PreprocessedFrame(images[i], transformer, canvas));
   }
 }
 
