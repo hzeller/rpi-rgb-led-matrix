@@ -42,12 +42,14 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 # compatible with the default mapping.
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
-# Uncomment if you want to use the Adafruit HAT with stable PWM timings
+# Uncomment if you want to use the Adafruit HAT with stable PWM timings.
 # The newer version of this library allows for much more stable (less flicker)
 # output, but it does not work with the Adafruit HAT unless you do a
-# simple hardware hack on them: connectk GPIO 4 (OE) with 18; they have
-# convenient solder holes on the board.
-# Then uncomment the following define.
+# simple hardware hack on them:
+# connect GPIO 4 (old OE) with 18 (the new OE); there are
+# convenient solder holes labeled 4 and 18 on the Adafruit HAT, pretty
+# close together.
+# Then uncomment the following define and recompile.
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
 
 # Compatibility option, usually not needed.
