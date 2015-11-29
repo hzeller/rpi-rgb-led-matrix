@@ -155,7 +155,8 @@ static int usage(const char *progname) {
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : Large 64x64 display made from four 32x32 in a chain\n"
-          "\t-d            : Run as daemon.\n");
+          "\t-d            : Run as daemon.\n"
+          "\t-b <brightnes>: Sets brightness percent. Default: 100.\n");
   return 1;
 }
 
@@ -166,17 +167,19 @@ int main(int argc, char *argv[]) {
   int chain = 1;
   int parallel = 1;
   int pwm_bits = -1;
+  int brightness = 100;
   bool large_display = false;  // example for using Transformers
   bool as_daemon = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:p:dL")) != -1) {
+  while ((opt = getopt(argc, argv, "r:P:c:p:b:dL")) != -1) {
     switch (opt) {
     case 'r': rows = atoi(optarg); break;
     case 'P': parallel = atoi(optarg); break;
     case 'c': chain = atoi(optarg); break;
     case 'p': pwm_bits = atoi(optarg); break;
     case 'd': as_daemon = true; break;
+    case 'b': brightness = atoi(optarg); break;
     case 'L':
       chain = 4;
       rows = 32;
@@ -202,6 +205,11 @@ int main(int argc, char *argv[]) {
   }
   if (parallel < 1 || parallel > 3) {
     fprintf(stderr, "Parallel outside usable range.\n");
+    return usage(argv[0]);
+  }
+
+  if (brightness < 1 || brightness > 100) {
+    fprintf(stderr, "Brightness is outside usable range.\n");
     return usage(argv[0]);
   }
 
@@ -233,6 +241,8 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Invalid range of pwm-bits\n");
     return 1;
   }
+
+  matrix->SetBrightness(brightness);
 
   // Here is an example where to add your own transformer. In this case, we
   // just to the chain-of-four-32x32 => 64x64 transformer, but just use any
