@@ -82,6 +82,19 @@ private:
   TransformCanvas *const canvas_;
 };
 
+class HalfTransformer : public CanvasTransformer {
+public:
+  HalfTransformer();
+  virtual ~HalfTransformer();
+
+  virtual Canvas *Transform(Canvas *output);
+
+private:
+  class TransformCanvas;
+
+  TransformCanvas *const canvas_;
+};
+
 } // namespace rgb_matrix
 
 #endif // RPI_TRANSFORMER_H
