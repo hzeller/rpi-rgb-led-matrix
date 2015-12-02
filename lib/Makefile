@@ -15,6 +15,11 @@ TARGET=librgbmatrix.a
 # has uses inverse logic for the RGB bits. In that case: uncomment this.
 #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS
 
+# Some panels out there seem to have Green and Blue swapped (even though the
+# writing on connector looks correct). This option will swap these colors if
+# you happen to have gotten such panel.
+#DEFINES+=-DRGB_SWAP_GREEN_BLUE
+
 # For curiosity reasons: uncomment to see refresh rate in terminal.
 #DEFINES+=-DSHOW_REFRESH_RATE
 
