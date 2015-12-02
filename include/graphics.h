@@ -48,6 +48,9 @@ public:
   // character or 0 if we didn't draw any chracter.
   int DrawGlyph(Canvas *c, int x, int y, const Color &color,
                 uint32_t unicode_codepoint) const;
+  // Background is untouched if null.
+  int DrawGlyph(Canvas *c, int x, int y, const Color &color, const Color *background,
+                uint32_t unicode_codepoint) const;
 private:
   Font(const Font& x);  // No copy constructor. Use references or pointer instead.
 
@@ -66,6 +69,9 @@ private:
 // Draw text, encoded in UTF-8, with given "font" at "x","y" with "color".
 // Returns how far we advance on the screen.
 int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color,
+             const char *utf8_text);
+// Background is untouched if null.
+int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color, const Color *background,
              const char *utf8_text);
 
 // Draw a circle centered at "x", "y", with a radius of "radius" and with "color"
