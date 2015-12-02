@@ -106,7 +106,8 @@ int Font::CharacterWidth(uint32_t unicode_codepoint) const {
   return g ? g->width : -1;
 }
 
-int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos, const Color &color, const Color *background,
+int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
+                    const Color &color, const Color *bgcolor,
                     uint32_t unicode_codepoint) const {
   const Glyph *g = FindGlyph(unicode_codepoint);
   if (g == NULL) g = FindGlyph(kUnicodeReplacementCodepoint);
@@ -118,9 +119,8 @@ int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos, const Color &color, const C
     for (int x = 0; x < g->width; ++x, x_mask >>= 1) {
       if (row & x_mask) {
         c->SetPixel(x_pos + x, y_pos + y, color.r, color.g, color.b);
-      } else {
-        if (background)
-          c->SetPixel(x_pos + x, y_pos + y, background->r, background->g, background->b);
+      } else if (bgcolor) {
+          c->SetPixel(x_pos + x, y_pos + y, bgcolor->r, bgcolor->g, bgcolor->b);
       }
     }
   }
