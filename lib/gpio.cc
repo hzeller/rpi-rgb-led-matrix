@@ -13,6 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "gpio.h"
 
 #include <assert.h>
@@ -127,9 +130,9 @@ static bool IsRaspberryPi2() {
   buffer[r >= 0 ? r : 0] = '\0';
   close(fd);
   const char *mem_size_key;
-  uint64_t mem_size;
+  uint64_t mem_size = 0;
   if ((mem_size_key = strstr(buffer, "mem_size=")) != NULL
-      && (sscanf(mem_size_key + strlen("mem_size="), "%llx", &mem_size) == 1)
+      && (sscanf(mem_size_key + strlen("mem_size="), "%" PRIx64, &mem_size) == 1)
       && (mem_size == 0x3F000000)) {
     return true;
   }
