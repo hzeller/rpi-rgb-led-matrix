@@ -69,6 +69,15 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 # this might be useful.
 #DEFINES+=-DONLY_SINGLE_CHAIN
 
+# Typically, a Hub75 panel is split in two half displays, so that a 1:16
+# multiplexing actually multiplexes over two half displays and gives 32 lines.
+# There are some other displays out there that you might experiment with
+# that are internally wired to only have one sub-panel. In that case you might
+# want to try this define to get a more reasonable canvas mapping.
+# This option is typically _not_ needed, only use when you attempt to connect
+# some oddball old (typically one-colored) display, such as Hub12.
+#DEFINES+=-DONLY_SINGLE_SUB_PANEL
+
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
 

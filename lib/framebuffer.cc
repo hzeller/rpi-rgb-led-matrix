@@ -52,13 +52,19 @@ static PinPulser *sOutputEnablePulser = NULL;
 #  define PANEL_SWAP_G_B_ 0
 #endif
 
+#ifdef ONLY_SINGLE_SUB_PANEL
+#  define SUB_PANELS_ 1
+#else
+#  define SUB_PANELS_ 2
+#endif
+
 Framebuffer::Framebuffer(int rows, int columns, int parallel)
   : rows_(rows),
     parallel_(parallel),
     height_(rows * parallel),
     columns_(columns),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
-    double_rows_(rows / 2), row_mask_(double_rows_ - 1) {
+    double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
   assert(rows_ <= 32);
