@@ -40,7 +40,7 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 # If you have an Adafruit HAT ( https://www.adafruit.com/products/2345 ),
 # you need to use this option as the HAT swaps pins around that are not
 # compatible with the default mapping.
-#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
+DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
 # Uncomment if you want to use the Adafruit HAT with stable PWM timings
 # The newer version of this library allows for much more stable (less flicker)
