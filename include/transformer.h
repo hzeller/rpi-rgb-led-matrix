@@ -32,7 +32,7 @@ public:
 
   void SetAngle(int angle);
   inline int angle() { return angle_; }
-  
+
   virtual Canvas *Transform(Canvas *output);
 
 private:
@@ -49,7 +49,7 @@ private:
 class LinkedTransformer : public CanvasTransformer {
 public:
   typedef std::vector<CanvasTransformer*> List;
-  
+
   LinkedTransformer() {}
   LinkedTransformer(List transformer_list) : list_(transformer_list) {}
 
@@ -73,6 +73,19 @@ class LargeSquare64x64Transformer : public CanvasTransformer {
 public:
   LargeSquare64x64Transformer();
   virtual ~LargeSquare64x64Transformer();
+
+  virtual Canvas *Transform(Canvas *output);
+
+private:
+  class TransformCanvas;
+
+  TransformCanvas *const canvas_;
+};
+
+class Scrambled32x16Transformer : public CanvasTransformer {
+public:
+  Scrambled32x16Transformer();
+  virtual ~Scrambled32x16Transformer();
 
   virtual Canvas *Transform(Canvas *output);
 

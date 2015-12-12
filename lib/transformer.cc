@@ -73,16 +73,16 @@ void RotateTransformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uin
   delegatee_->SetPixel(x, y, red, green, blue);
 }
 
-int RotateTransformer::TransformCanvas::width() const { 
+int RotateTransformer::TransformCanvas::width() const {
   return (angle_ % 180 == 0) ? delegatee_->width() : delegatee_->height();
 }
 
-int RotateTransformer::TransformCanvas::height() const { 
+int RotateTransformer::TransformCanvas::height() const {
   return (angle_ % 180 == 0) ? delegatee_->height() : delegatee_->width();
 }
 
-void RotateTransformer::TransformCanvas::Clear() { 
-  delegatee_->Clear(); 
+void RotateTransformer::TransformCanvas::Clear() {
+  delegatee_->Clear();
 }
 
 void RotateTransformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
@@ -180,20 +180,20 @@ void LargeSquare64x64Transformer::TransformCanvas::SetDelegatee(Canvas* delegate
   delegatee_ = delegatee;
 }
 
-void LargeSquare64x64Transformer::TransformCanvas::Clear() { 
-  delegatee_->Clear(); 
+void LargeSquare64x64Transformer::TransformCanvas::Clear() {
+  delegatee_->Clear();
 }
 
 void LargeSquare64x64Transformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   delegatee_->Fill(red, green, blue);
 }
 
-int LargeSquare64x64Transformer::TransformCanvas::width() const { 
-  return 64; 
+int LargeSquare64x64Transformer::TransformCanvas::width() const {
+  return 64;
 }
 
-int LargeSquare64x64Transformer::TransformCanvas::height() const { 
-  return 64; 
+int LargeSquare64x64Transformer::TransformCanvas::height() const {
+  return 64;
 }
 
 void LargeSquare64x64Transformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
@@ -219,7 +219,104 @@ LargeSquare64x64Transformer::~LargeSquare64x64Transformer() {
 
 Canvas *LargeSquare64x64Transformer::Transform(Canvas *output) {
   assert(output != NULL);
-  
+
+  canvas_->SetDelegatee(output);
+  return canvas_;
+}
+
+/********************************/
+/* Scrambled Transformer Canvas */
+/********************************/
+class Scrambled32x16Transformer::TransformCanvas : public Canvas {
+public:
+  TransformCanvas() : delegatee_(NULL), map_(NULL) {}
+  ~TransformCanvas();
+
+  void SetDelegatee(Canvas* delegatee);
+
+  virtual void Clear();
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  virtual int width() const;
+  virtual int height() const;
+  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+
+private:
+  Canvas *delegatee_;
+  int width_, height_;
+  unsigned int **map_;
+};
+
+Scrambled32x16Transformer::TransformCanvas::~TransformCanvas(){
+  if (map_){
+    for (int i=0; i<width_; i++){
+      delete map_[i];
+    }
+    delete map_;
+  }
+}
+
+void Scrambled32x16Transformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
+  // The scrambled display I have has 2 chain per 32x16 panel, each of 8 rows
+  // When we chain several of this scrambled display, the 8 lower rows of the entire display
+  // is at the end of the chain.
+  // So to use this display with the current library, we need to define 8 rows and 2 x number of diplay for chain number.
+  // Here we set width and height in a more user friendly way.
+  assert(delegatee->height() == 8);
+  assert(delegatee->width() % 32 == 0);
+  height_ = 16;
+  width_ = delegatee->width()/2;
+
+  if (!map_){
+    map_ = new unsigned int*[width_];
+    for (int i=0; i<width_; i++){
+      map_[i] = new unsigned int[height_];
+    }
+    for (int i=0; i<width_*height_; i++){
+      map_[i%width_][i/width_] = i%8 + (2*(i/8)+1-(i%(8*width_))/(4*width_))*8%(8*width_) + (i/(8*width_))*(8*width_);
+    }
+  }
+
+  delegatee_ = delegatee;
+}
+
+void Scrambled32x16Transformer::TransformCanvas::Clear() {
+  delegatee_->Clear();
+}
+
+void Scrambled32x16Transformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+  delegatee_->Fill(red, green, blue);
+}
+
+int Scrambled32x16Transformer::TransformCanvas::width() const {
+  return width_;
+}
+
+int Scrambled32x16Transformer::TransformCanvas::height() const {
+  return height_;
+}
+
+void Scrambled32x16Transformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+  int idx = map_[x][y];
+  x = idx%(width_*2);
+  y = idx/(width_*2);
+
+  delegatee_->SetPixel(x, y, red, green, blue);
+}
+
+/*****************************/
+/* Scrambled32x16Transformer */
+/*****************************/
+Scrambled32x16Transformer::Scrambled32x16Transformer()
+  : canvas_(new TransformCanvas()) {
+}
+
+Scrambled32x16Transformer::~Scrambled32x16Transformer() {
+  delete canvas_;
+}
+
+Canvas *Scrambled32x16Transformer::Transform(Canvas *output) {
+  assert(output != NULL);
+
   canvas_->SetDelegatee(output);
   return canvas_;
 }
