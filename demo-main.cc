@@ -1016,6 +1016,8 @@ static int usage(const char *progname) {
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
+          "\t-S            : 'Scrambled' 32x16 display with 2 chains on each panel,\n"
+          "\t                you should take care of chain & row parameters yourself.\n"
           "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
           "\t-l            : Don't do luminance correction (CIE1931)\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
@@ -1057,12 +1059,13 @@ int main(int argc, char *argv[]) {
   int brightness = 100;
   int rotation = 0;
   bool large_display = false;
+  bool scrambled_display = false;
   bool do_luminance_correct = true;
 
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:LR:")) != -1) {
+  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:LR:S")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -1113,6 +1116,10 @@ int main(int argc, char *argv[]) {
 
     case 'R':
       rotation = atoi(optarg);
+      break;
+
+    case 'S':
+      scrambled_display = true;
       break;
 
     default: /* '?' */
@@ -1191,6 +1198,11 @@ int main(int argc, char *argv[]) {
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
     transformer->AddTransformer(new LargeSquare64x64Transformer());
+  }
+
+  if (scrambled_display) {
+    // Mapping the coordinates of a scrambled 32x16 display with 2 chains per panel
+    transformer->AddTransformer(new Scrambled32x16Transformer());
   }
 
   if (rotation > 0) {
