@@ -28,7 +28,9 @@ static int usage(const char *progname) {
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-x <x-origin> : X-Origin of displaying text (Default: 0)\n"
           "\t-y <y-origin> : Y-Origin of displaying text (Default: 0)\n"
-          "\t-C <r,g,b>    : Color. Default 255,255,0\n");
+          "\t-C <r,g,b>    : Color. Default 255,255,0\n"
+          "\t-S            : 'Scrambled' 32x16 display with 2 chains on each panel,\n");
+
   return 1;
 }
 
@@ -44,9 +46,10 @@ int main(int argc, char *argv[]) {
   int parallel = 1;
   int x_orig = 0;
   int y_orig = -1;
+  bool scrambled_display = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:x:y:f:C:")) != -1) {
+  while ((opt = getopt(argc, argv, "r:P:c:x:y:f:C:S")) != -1) {
     switch (opt) {
     case 'r': rows = atoi(optarg); break;
     case 'P': parallel = atoi(optarg); break;
@@ -59,6 +62,9 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Invalid color spec.\n");
         return usage(argv[0]);
       }
+      break;
+    case 'S':
+      scrambled_display = true;
       break;
     default:
       return usage(argv[0]);
@@ -79,8 +85,8 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  if (rows != 16 && rows != 32) {
-    fprintf(stderr, "Rows can either be 16 or 32\n");
+  if (rows!= 8 && rows != 16 && rows != 32) {
+    fprintf(stderr, "Rows can either be 8, 16 or 32\n");
     return 1;
   }
 
@@ -107,6 +113,14 @@ int main(int argc, char *argv[]) {
    * Set up the RGBMatrix. It implements a 'Canvas' interface.
    */
   RGBMatrix *canvas = new RGBMatrix(&io, rows, chain, parallel);
+
+  LinkedTransformer *transformer = new LinkedTransformer();
+  canvas->SetTransformer(transformer);
+
+  if (scrambled_display) {
+    // Mapping the coordinates of a scrambled 32x16 display with 2 chains per panel
+    transformer->AddTransformer(new Scrambled32x16Transformer());
+  }
 
   bool all_extreme_colors = true;
   all_extreme_colors &= color.r == 0 || color.r == 255;
@@ -145,3 +159,4 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
+
