@@ -155,6 +155,7 @@ static int usage(const char *progname) {
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : Large 64x64 display made from four 32x32 in a chain\n"
+          "\t-S            : 'Scrambled' 32x16 display with 2 chains on each panel,\n"
           "\t-d            : Run as daemon.\n");
   return 1;
 }
@@ -167,10 +168,11 @@ int main(int argc, char *argv[]) {
   int parallel = 1;
   int pwm_bits = -1;
   bool large_display = false;  // example for using Transformers
+  bool scrambled_display = false;
   bool as_daemon = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:p:dL")) != -1) {
+  while ((opt = getopt(argc, argv, "r:P:c:p:dLS")) != -1) {
     switch (opt) {
     case 'r': rows = atoi(optarg); break;
     case 'P': parallel = atoi(optarg); break;
@@ -181,6 +183,9 @@ int main(int argc, char *argv[]) {
       chain = 4;
       rows = 32;
       large_display = true;
+      break;
+    case 'S':
+      scrambled_display = true;
       break;
     default:
       return usage(argv[0]);
@@ -240,6 +245,11 @@ int main(int argc, char *argv[]) {
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
     matrix->SetTransformer(new rgb_matrix::LargeSquare64x64Transformer());
+  }
+
+  if (scrambled_display) {
+    // Mapping the coordinates of a scrambled 32x16 display with 2 chains per panel
+    matrix->SetTransformer(new rgb_matrix::Scrambled32x16Transformer());
   }
 
   std::vector<Magick::Image> sequence_pics;
