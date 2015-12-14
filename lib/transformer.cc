@@ -17,6 +17,7 @@
 #include <assert.h>
 
 #include "transformer.h"
+#include <stdio.h>
 
 namespace rgb_matrix {
 
@@ -296,6 +297,7 @@ int Scrambled32x16Transformer::TransformCanvas::height() const {
 }
 
 void Scrambled32x16Transformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+  if ( x >= width_ || y >= height_ || x < 0 || y < 0 ) return;
   int idx = map_[x][y];
   x = idx%(width_*2);
   y = idx/(width_*2);
