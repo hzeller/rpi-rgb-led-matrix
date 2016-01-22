@@ -43,6 +43,20 @@ private:
   TransformCanvas *const canvas_;
 };
 
+// Transformer to flip top/bottom
+class FlipTopBottomTransformer : public CanvasTransformer {
+public:
+  FlipTopBottomTransformer();
+  virtual ~FlipTopBottomTransformer();
+
+  virtual Canvas *Transform(Canvas *output);
+
+private:
+  class TransformCanvas;
+
+  TransformCanvas *const canvas_;
+};
+
 // Transformer for linked transformer objects
 // First transformer added will be considered last
 // (so it would the transformer that gets the original Canvas object)

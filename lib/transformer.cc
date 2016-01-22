@@ -124,6 +124,72 @@ void RotateTransformer::SetAngle(int angle) {
   angle_ = angle;
 }
 
+/************************************/
+/* FlipTopBottom Transformer Canvas */
+/************************************/
+class FlipTopBottomTransformer::TransformCanvas : public Canvas {
+public:
+  TransformCanvas();
+
+  void SetDelegatee(Canvas* delegatee);
+
+  virtual int width() const;
+  virtual int height() const;
+  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+  virtual void Clear();
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+
+private:
+  Canvas *delegatee_;
+};
+
+FlipTopBottomTransformer::TransformCanvas::TransformCanvas()
+  : delegatee_(NULL) {
+
+}
+
+void FlipTopBottomTransformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
+  delegatee_ = delegatee;
+}
+
+void FlipTopBottomTransformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+  // translate point to origin
+  int half = delegatee_->height() / 2;
+  delegatee_->SetPixel(x, y < half ? y + half : y - half, red, green, blue);
+}
+
+int FlipTopBottomTransformer::TransformCanvas::width() const { 
+  return delegatee_->width();
+}
+
+int FlipTopBottomTransformer::TransformCanvas::height() const { 
+  return delegatee_->height();
+}
+
+void FlipTopBottomTransformer::TransformCanvas::Clear() { 
+  delegatee_->Clear();
+}
+
+void FlipTopBottomTransformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+  delegatee_->Fill(red, green, blue);
+}
+
+FlipTopBottomTransformer::FlipTopBottomTransformer()
+  : canvas_(new TransformCanvas()) {
+}
+
+FlipTopBottomTransformer::~FlipTopBottomTransformer() {
+  delete canvas_;
+}
+
+Canvas *FlipTopBottomTransformer::Transform(Canvas *output) {
+  assert(output != NULL);
+
+  canvas_->SetDelegatee(output);
+  return canvas_;
+}
+
+
 /**********************/
 /* Linked Transformer */
 /**********************/

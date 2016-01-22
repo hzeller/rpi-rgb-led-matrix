@@ -155,6 +155,7 @@ static int usage(const char *progname) {
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : Large 64x64 display made from four 32x32 in a chain\n"
+          "\t-f            : Flip bottom and up in large 64x64 display\n"
           "\t-d            : Run as daemon.\n"
           "\t-b <brightnes>: Sets brightness percent. Default: 100.\n");
   return 1;
@@ -170,9 +171,10 @@ int main(int argc, char *argv[]) {
   int brightness = 100;
   bool large_display = false;  // example for using Transformers
   bool as_daemon = false;
+  bool flip_large = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:p:b:dL")) != -1) {
+  while ((opt = getopt(argc, argv, "r:P:c:p:b:dLf")) != -1) {
     switch (opt) {
     case 'r': rows = atoi(optarg); break;
     case 'P': parallel = atoi(optarg); break;
@@ -184,6 +186,9 @@ int main(int argc, char *argv[]) {
       chain = 4;
       rows = 32;
       large_display = true;
+      break;
+    case 'f':
+      flip_large = true;
       break;
     default:
       return usage(argv[0]);
@@ -248,8 +253,15 @@ int main(int argc, char *argv[]) {
   // just to the chain-of-four-32x32 => 64x64 transformer, but just use any
   // of the transformers in transformer.h or write your own.
   if (large_display) {
+    rgb_matrix::LinkedTransformer *transformer = new rgb_matrix::LinkedTransformer();
+
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    matrix->SetTransformer(new rgb_matrix::LargeSquare64x64Transformer());
+    matrix->SetTransformer(transformer);
+    transformer->AddTransformer(new rgb_matrix::LargeSquare64x64Transformer());
+
+    if (flip_large) {
+      transformer->AddTransformer(new rgb_matrix::FlipTopBottomTransformer());
+    }
   }
 
   std::vector<Magick::Image> sequence_pics;

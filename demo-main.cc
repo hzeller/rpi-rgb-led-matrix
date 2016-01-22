@@ -1016,6 +1016,7 @@ static int usage(const char *progname) {
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
+          "\t-f            : Flip bottom and up in large 64x64 display\n"
           "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
           "\t-l            : Don't do luminance correction (CIE1931)\n"
           "\t-D <demo-nr>  : Always needs to be set\n"
@@ -1057,12 +1058,13 @@ int main(int argc, char *argv[]) {
   int brightness = 100;
   int rotation = 0;
   bool large_display = false;
+  bool flip_large = false;
   bool do_luminance_correct = true;
 
   const char *demo_parameter = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:LR:")) != -1) {
+  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:LfR:")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -1109,6 +1111,10 @@ int main(int argc, char *argv[]) {
       chain = 4;
       rows = 32;
       large_display = true;
+      break;
+
+    case 'f':
+      flip_large = true;
       break;
 
     case 'R':
@@ -1191,6 +1197,10 @@ int main(int argc, char *argv[]) {
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
     transformer->AddTransformer(new LargeSquare64x64Transformer());
+  }
+
+  if (flip_large) {
+      transformer->AddTransformer(new rgb_matrix::FlipTopBottomTransformer());
   }
 
   if (rotation > 0) {
