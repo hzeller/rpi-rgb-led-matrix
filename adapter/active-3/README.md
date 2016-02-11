@@ -17,6 +17,7 @@ Adapter PCB to support up to 3 panels
      - 1x 10kOhm resistor (0805 package)
      - 3x 16pin IDC (=2x8) male receptible to connect the panels.
      - 1x 40pin female connector to connect to the RPi.
+     - 1x (optional) 22uF .. 100uF capacitor for 5V rail.
    * The Gerber FAB files are provided as [active3-rpi-hub75-adapter-fab.zip](./active3-rpi-hub75-adapter-fab.zip)
 
 The board is also [shared on OSH Park][osh-active3] (not affiliated).
