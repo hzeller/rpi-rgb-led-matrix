@@ -254,7 +254,7 @@ One of the possibly useful demo applications is an image viewer that
 reads all kinds of image formats, including animated gifs. It is not compiled
 by default, as you need to install the GraphicsMagick dependencies first:
 
-     sudo aptitude install libgraphicsmagick++1-dev
+     sudo aptitude install libgraphicsmagick++-dev libwebp-dev
      make led-image-viewer
 
 Then, you can run it with any common image format, including animated gifs:
