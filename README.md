@@ -46,18 +46,14 @@ All Raspberry Pi versions supported
 -----------------------------------
 
 This supports the old Raspberry Pi's Version 1 with 26 pin header and also the
-newer B+ models as well as the Raspberry Pi 2 with 40 pins.
+B+ models, the Pi Zero, as well as the Raspberry Pi 2 and 3 with 40 pins.
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
 
-The Raspberry Pi 2 is faster than older models and sometimes the cabeling
-can't keep up with the speed; check out
+The Raspberry Pi 2 and 3 are faster than older models (and the Pi Zero) and
+sometimes the cabeling can't keep up with the speed; check out
 this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
 what to do.
-
-It is recommended to install an image with a realtime kernel
-(for instance [this one][emlid-rt]) to minimize a loaded system having an
-influence on the image quality.
 
 Types of Displays
 -----------------
@@ -559,8 +555,18 @@ is less noticable on Raspberry Pi, Version 2 that has more cores).
 
 Also, the output quality is suceptible to other heavy tasks running on that
 computer - there might be changes in the overall brigthness when this affects
-the referesh rate. In general, it is a good idea to use a Linux kernel with
-realtime extensions.
+the referesh rate.
+
+If you have a loaded system and one of the newer Pis with 4 cores, you can
+reserve one core just for the refresh of the display:
+
+```
+isolcpus=3
+```
+
+.. at the end of the line of `/boot/cmdline.txt`. This will use the last core
+only to refresh the display then, but it also means, that no other process can
+utilize it then. Still, I'd typically recommend it.
 
 Limitations
 -----------
@@ -574,7 +580,7 @@ was considered but after extensive experiments
 dropped due to its slow speed..
 
 There is an upper limit in how fast the GPIO pins can be controlled, which
-limits the frame-rate. Raspberry Pi 2's are generally faster.
+limits the frame-rate. Raspberry Pi 2's and newer are generally faster.
 
 Fun
 ---
@@ -596,5 +602,4 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/product/1484
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
-[emlid-rt]: http://docs.emlid.com/Downloads/Real-time-Linux-RPi2/
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf
