@@ -73,16 +73,16 @@ void RotateTransformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uin
   delegatee_->SetPixel(x, y, red, green, blue);
 }
 
-int RotateTransformer::TransformCanvas::width() const { 
+int RotateTransformer::TransformCanvas::width() const {
   return (angle_ % 180 == 0) ? delegatee_->width() : delegatee_->height();
 }
 
-int RotateTransformer::TransformCanvas::height() const { 
+int RotateTransformer::TransformCanvas::height() const {
   return (angle_ % 180 == 0) ? delegatee_->height() : delegatee_->width();
 }
 
-void RotateTransformer::TransformCanvas::Clear() { 
-  delegatee_->Clear(); 
+void RotateTransformer::TransformCanvas::Clear() {
+  delegatee_->Clear();
 }
 
 void RotateTransformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
@@ -180,20 +180,20 @@ void LargeSquare64x64Transformer::TransformCanvas::SetDelegatee(Canvas* delegate
   delegatee_ = delegatee;
 }
 
-void LargeSquare64x64Transformer::TransformCanvas::Clear() { 
-  delegatee_->Clear(); 
+void LargeSquare64x64Transformer::TransformCanvas::Clear() {
+  delegatee_->Clear();
 }
 
 void LargeSquare64x64Transformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   delegatee_->Fill(red, green, blue);
 }
 
-int LargeSquare64x64Transformer::TransformCanvas::width() const { 
-  return 64; 
+int LargeSquare64x64Transformer::TransformCanvas::width() const {
+  return 64;
 }
 
-int LargeSquare64x64Transformer::TransformCanvas::height() const { 
-  return 64; 
+int LargeSquare64x64Transformer::TransformCanvas::height() const {
+  return 64;
 }
 
 void LargeSquare64x64Transformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
@@ -219,7 +219,7 @@ LargeSquare64x64Transformer::~LargeSquare64x64Transformer() {
 
 Canvas *LargeSquare64x64Transformer::Transform(Canvas *output) {
   assert(output != NULL);
-  
+
   canvas_->SetDelegatee(output);
   return canvas_;
 }
