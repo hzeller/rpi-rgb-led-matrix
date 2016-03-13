@@ -25,6 +25,13 @@ The board is also [shared on OSH Park][osh-active3] (not affiliated).
 ![Preview][rendering]
 ![Real World][real-world]
 
+Essentially, this is connecting the output pins through level shifting buffers (they
+are operated at 5V, but the HCT series chips accept 3.3V input levels from the Pi). The
+strobe, OE and clock signals are separately buffered for each connector.
+
+![Schematic][schematic]
+
 [rendering]: ../../img/active3-pcb.png
+[schematic]: ../../img/active3-schematic.png
 [real-world]: ../../img/three-parallel-panels-soic.jpg
 [osh-active3]: https://oshpark.com/shared_projects/QIA9YHZH
