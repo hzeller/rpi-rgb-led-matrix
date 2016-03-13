@@ -13,6 +13,9 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include "gpio.h"
 
 #include <assert.h>
@@ -98,6 +101,16 @@ uint32_t GPIO::InitOutputs(uint32_t outputs) {
     fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
     return 0;
   }
+
+#ifdef ADAFRUIT_RGBMATRIX_HAT_PWM
+  // Hack: the user soldered together GPIO 18 (new OE) with GPIO 4 (old OE).
+  // We want to make extra sure that, whatever the outside system set as pinmux,
+  // the old OE is not also set as output so that these GPIO outputs don't fight
+  // each other.
+  // So explicitly set this particular pin as input.
+  INP_GPIO(4);
+#endif
+
   outputs &= kValidBits;   // Sanitize input.
   output_bits_ = outputs;
   for (uint32_t b = 0; b <= 27; ++b) {
@@ -117,9 +130,9 @@ static bool IsRaspberryPi2() {
   buffer[r >= 0 ? r : 0] = '\0';
   close(fd);
   const char *mem_size_key;
-  uint64_t mem_size;
+  uint64_t mem_size = 0;
   if ((mem_size_key = strstr(buffer, "mem_size=")) != NULL
-      && (sscanf(mem_size_key + strlen("mem_size="), "%llx", &mem_size) == 1)
+      && (sscanf(mem_size_key + strlen("mem_size="), "%" PRIx64, &mem_size) == 1)
       && (mem_size == 0x3F000000)) {
     return true;
   }

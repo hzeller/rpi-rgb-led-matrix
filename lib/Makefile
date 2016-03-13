@@ -15,6 +15,11 @@ TARGET=librgbmatrix.a
 # has uses inverse logic for the RGB bits. In that case: uncomment this.
 #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS
 
+# Some panels out there seem to have Green and Blue swapped (even though the
+# writing on connector looks correct). This option will swap these colors if
+# you happen to have gotten such panel.
+#DEFINES+=-DRGB_SWAP_GREEN_BLUE
+
 # For curiosity reasons: uncomment to see refresh rate in terminal.
 #DEFINES+=-DSHOW_REFRESH_RATE
 
@@ -42,12 +47,14 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 # compatible with the default mapping.
 DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 
-# Uncomment if you want to use the Adafruit HAT with stable PWM timings
+# Uncomment if you want to use the Adafruit HAT with stable PWM timings.
 # The newer version of this library allows for much more stable (less flicker)
 # output, but it does not work with the Adafruit HAT unless you do a
-# simple hardware hack on them: connectk GPIO 4 (OE) with 18; they have
-# convenient solder holes on the board.
-# Then uncomment the following define.
+# simple hardware hack on them:
+# connect GPIO 4 (old OE) with 18 (the new OE); there are
+# convenient solder holes labeled 4 and 18 on the Adafruit HAT, pretty
+# close together.
+# Then uncomment the following define and recompile.
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
 
 # Compatibility option, usually not needed.
@@ -61,6 +68,15 @@ DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
 # If you use RGB_CLASSIC_PINOUT and use Raspberry Pi 1, Revision A,
 # this might be useful.
 #DEFINES+=-DONLY_SINGLE_CHAIN
+
+# Typically, a Hub75 panel is split in two half displays, so that a 1:16
+# multiplexing actually multiplexes over two half displays and gives 32 lines.
+# There are some other displays out there that you might experiment with
+# that are internally wired to only have one sub-panel. In that case you might
+# want to try this define to get a more reasonable canvas mapping.
+# This option is typically _not_ needed, only use when you attempt to connect
+# some oddball old (typically one-colored) display, such as Hub12.
+#DEFINES+=-DONLY_SINGLE_SUB_PANEL
 
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)

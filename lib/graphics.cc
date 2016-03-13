@@ -22,19 +22,25 @@ namespace rgb_matrix {
 int DrawText(Canvas *c, const Font &font,
              int x, int y, const Color &color,
              const char *utf8_text) {
+  return DrawText(c, font, x, y, color, NULL, utf8_text);
+}
+
+int DrawText(Canvas *c, const Font &font,
+             int x, int y, const Color &color, const Color *background_color,
+             const char *utf8_text) {
   const int start_x = x;
   while (*utf8_text) {
     const uint32_t cp = utf8_next_codepoint(utf8_text);
-    x += font.DrawGlyph(c, x, y, color, cp);
+    x += font.DrawGlyph(c, x, y, color, background_color, cp);
   }
   return x - start_x;
 }
-    
-    
+
+
 void DrawCircle(Canvas *c, int x0, int y0, int radius, const Color &color) {
   int x = radius, y = 0;
   int radiusError = 1 - x;
-        
+
   while (y <= x) {
     c->SetPixel(x + x0, y + y0, color.r, color.g, color.b);
     c->SetPixel(y + x0, x + y0, color.r, color.g, color.b);
@@ -53,10 +59,10 @@ void DrawCircle(Canvas *c, int x0, int y0, int radius, const Color &color) {
     }
   }
 }
-    
+
 void DrawLine(Canvas *c, int x0, int y0, int x1, int y1, const Color &color) {
   int dy = y1 - y0, dx = x1 - x0, gradient, x, y, shift = 0x10;
-    
+
   if (abs(dx) > abs(dy)) {
     // x variation is bigger than y variation
     if (x1 < x0) {
@@ -64,7 +70,7 @@ void DrawLine(Canvas *c, int x0, int y0, int x1, int y1, const Color &color) {
       std::swap(y0, y1);
     }
     gradient = (dy << shift) / dx ;
-    
+
     for (x = x0 , y = 0x8000 + (y0 << shift); x <= x1; ++x, y += gradient) {
       c->SetPixel(x, y >> shift, color.r, color.g, color.b);
     }

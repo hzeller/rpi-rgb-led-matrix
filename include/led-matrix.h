@@ -57,8 +57,9 @@ public:
   // connected in parallel to the GPIO port - this only works with newer
   // Raspberry Pi that have 40 interface pins.
   //
-  // If "io" is not NULL, starts refreshing the screen immediately; you can
-  // defer that by setting GPIO later with SetGPIO().
+  // If "io" is not NULL, initializes GPIO pins and starts refreshing the
+  // screen immediately. If you need finer control, pass NULL here and see
+  // SetGPIO() method.
   //
   // The resulting canvas is (rows * parallel_displays) high and
   // (32 * chained_displays) wide.
@@ -67,8 +68,26 @@ public:
   virtual ~RGBMatrix();
 
   // Set GPIO output if it was not set already in constructor (otherwise: NoOp).
-  // Starts display refresh thread if this is the first setting.
-  void SetGPIO(GPIO *io);
+  // If "start_thread" is true, starts the refresh thread.
+  //
+  // When would you start the thread separately from setting the GPIO ?
+  // If you are becoming a daemon, you must start the thread _after_ that,
+  // because all threads are stopped after daemon.
+  // However, you need to set the GPIO betfore dropping privileges (which you
+  // usually do when running as daemon).
+  //
+  // So if you write a daemon with dropping privileges, this is the pseudocode
+  // of what you need to do:
+  // ------------
+  //   GPIO gpio;
+  //   gpio.Init();
+  //   RGBMatrix *matrix = new RGBMatrix(NULL);  // No init with gpio yet.
+  //   matrix->SetGPIO(&gpio, false);   // First init GPIO use..
+  //   drop_privileges();               // .. then drop privileges.
+  //   daemon(0, 0);
+  //   matrix->SetGPIO(&gpio, true);    // Now start thread.
+  // -------------
+  void SetGPIO(GPIO *io, bool start_thread = true);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // limited comic-colors, 1 might be sufficient. Lower require less CPU and

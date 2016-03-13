@@ -40,12 +40,19 @@ public:
   // does not exist.
   int CharacterWidth(uint32_t unicode_codepoint) const;
 
-  // Draws the unicode character at position "x","y" with "color". The "y"
-  // position is the baseline of the font.
+  // Draws the unicode character at position "x","y"
+  // with "color" on "background_color" (background_color can be NULL for
+  // transparency.
+  // The "y" position is the baseline of the font.
   // If we don't have it in the font, draws the replacement character "�" if
   // available.
   // Returns how much we advance on the screen, which is the width of the
   // character or 0 if we didn't draw any chracter.
+  int DrawGlyph(Canvas *c, int x, int y,
+                const Color &color, const Color *background_color,
+                uint32_t unicode_codepoint) const;
+
+  // Same without background. Deprecated, use the one above instead.
   int DrawGlyph(Canvas *c, int x, int y, const Color &color,
                 uint32_t unicode_codepoint) const;
 private:
@@ -64,7 +71,13 @@ private:
 // -- Some utility functions.
 
 // Draw text, encoded in UTF-8, with given "font" at "x","y" with "color".
+// "background_color" can be NULL for transparency.
 // Returns how far we advance on the screen.
+int DrawText(Canvas *c, const Font &font, int x, int y,
+             const Color &color, const Color *background_color,
+             const char *utf8_text);
+
+// Same without background. Deprecated, use the one above instead.
 int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color,
              const char *utf8_text);
 

@@ -92,3 +92,7 @@ cdef __createFrameCanvas(cppinc.FrameCanvas* newCanvas):
     canvas = FrameCanvas()
     canvas.__canvas = newCanvas
     return canvas
+
+# Local Variables:
+# mode: python
+# End:

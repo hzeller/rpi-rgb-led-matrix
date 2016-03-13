@@ -131,20 +131,23 @@ RGBMatrix::~RGBMatrix() {
   }
 }
 
-void RGBMatrix::SetGPIO(GPIO *io) {
+void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
   if (io == NULL) return;  // nothing to set.
-  if (io_ != NULL) return;  // already set.
-  io_ = io;
-  internal::Framebuffer::InitGPIO(io_, parallel_displays_);
-  updater_ = new UpdateThread(io_, active_);
-  // If we have multiple processors, the kernel
-  // jumps around between these, creating some global flicker.
-  // So let's tie it to the last CPU available.
-  // The Raspberry Pi2 has 4 cores, our attempt to bind it to
-  //   core #3 will succeed.
-  // The Raspberry Pi1 only has one core, so this affinity
-  //   call will simply fail and we keep using the only core.
-  updater_->Start(99, (1<<3));  // Prio: high. Also: put on last CPU.
+  if (io_ == NULL) {
+    io_ = io;
+    internal::Framebuffer::InitGPIO(io_, parallel_displays_);
+  }
+  if (start_thread && updater_ == NULL) {
+    updater_ = new UpdateThread(io_, active_);
+    // If we have multiple processors, the kernel
+    // jumps around between these, creating some global flicker.
+    // So let's tie it to the last CPU available.
+    // The Raspberry Pi2 has 4 cores, our attempt to bind it to
+    //   core #3 will succeed.
+    // The Raspberry Pi1 only has one core, so this affinity
+    //   call will simply fail and we keep using the only core.
+    updater_->Start(99, (1<<3));  // Prio: high. Also: put on last CPU.
+  }
 }
 
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {

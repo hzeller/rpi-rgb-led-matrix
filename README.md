@@ -46,18 +46,14 @@ All Raspberry Pi versions supported
 -----------------------------------
 
 This supports the old Raspberry Pi's Version 1 with 26 pin header and also the
-newer B+ models as well as the Raspberry Pi 2 with 40 pins.
+B+ models, the Pi Zero, as well as the Raspberry Pi 2 and 3 with 40 pins.
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
 
-The Raspberry Pi 2 is faster than older models and sometimes the cabeling
-can't keep up with the speed; check out
+The Raspberry Pi 2 and 3 are faster than older models (and the Pi Zero) and
+sometimes the cabeling can't keep up with the speed; check out
 this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
 what to do.
-
-It is recommended to install an image with a realtime kernel
-(for instance [this one][emlid-rt]) to minimize a loaded system having an
-influence on the image quality.
 
 Types of Displays
 -----------------
@@ -254,7 +250,7 @@ One of the possibly useful demo applications is an image viewer that
 reads all kinds of image formats, including animated gifs. It is not compiled
 by default, as you need to install the GraphicsMagick dependencies first:
 
-     sudo aptitude install libgraphicsmagick++1-dev
+     sudo aptitude install libgraphicsmagick++-dev libwebp-dev
      make led-image-viewer
 
 Then, you can run it with any common image format, including animated gifs:
@@ -309,21 +305,36 @@ parameters and the coordinate system.
 <a href="adapter/"><img src="img/three-parallel-panels-soic.jpg" width="300px"></a>
 
 ## Remapping coordinates ##
-You can as well chain multiple boards together and then arrange them in a
-different layout. Say you have 4 displays with 32x32 -- if we chain
+You might choose a different physical layout than the wiring provides.
+
+Say you have 4 displays with 32x32 and only a single output
+like with a Raspberry Pi 1 or the Adafruit HAT -- if we chain
 them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
-the boards in a square, we get a logical display of 64x64 pixels.
-
-For convenience, we should only deal with the logical coordinates of
-64x64 pixels in our program: implement a `CanvasTransformer`
-interface to do the coordinate mapping. Have a look at
-`class LargeSquare64x64Transformer` for an example and see how it is delegating to
-the underlying RGBMatrix with changed coordinates.
-
-Here is how the wiring would look like:
+the boards in a square, we get a logical display of 64x64 pixels:
 
 <img src="img/chained-64x64.jpg" width="400px"> In action:
 [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
+
+How can we make this 'folded' 128x32 screen behave like a 64x64 screen ?
+
+In the API, there is an interface to implement,
+a [`CanvasTransformer`](./include/canvas.h) that allows to program re-arrangements
+of pixels in any way. You can plug such a `CanvasTransformer` into the RGBMatrix
+to use the new layout (`void RGBMatrix::SetTransformer(CanvasTransformer *transformer)`).
+
+Sometimes you even need this for the panel itself: In newer panels
+(often with 1:4 multiplexing) the pixels are often not mapped in
+a straight-forward way, but in a snake arrangement for instance. The CanvasTransformer
+allows you to work around that (sorry, I have not seen these panels myself so that
+I couldn't test that; but if you come accross one, you might want to send a pull-request
+with a new CanvasTransformer).
+
+Back to the 64x64 arrangement:
+
+There is a sample implementation `class LargeSquare64x64Transformer` that maps
+the 128x32 pixel logical arrangement into the 64x64 arrangement doing
+the coordinate mapping. In the demo program and the `led-image-viewer`, you
+can activate this with the `-L` option.
 
 Using the API
 -------------
@@ -544,8 +555,18 @@ is less noticable on Raspberry Pi, Version 2 that has more cores).
 
 Also, the output quality is suceptible to other heavy tasks running on that
 computer - there might be changes in the overall brigthness when this affects
-the referesh rate. In general, it is a good idea to use a Linux kernel with
-realtime extensions.
+the referesh rate.
+
+If you have a loaded system and one of the newer Pis with 4 cores, you can
+reserve one core just for the refresh of the display:
+
+```
+isolcpus=3
+```
+
+.. at the end of the line of `/boot/cmdline.txt`. This will use the last core
+only to refresh the display then, but it also means, that no other process can
+utilize it then. Still, I'd typically recommend it.
 
 Limitations
 -----------
@@ -559,7 +580,7 @@ was considered but after extensive experiments
 dropped due to its slow speed..
 
 There is an upper limit in how fast the GPIO pins can be controlled, which
-limits the frame-rate. Raspberry Pi 2's are generally faster.
+limits the frame-rate. Raspberry Pi 2's and newer are generally faster.
 
 Fun
 ---
@@ -581,5 +602,4 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/product/1484
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
-[emlid-rt]: http://docs.emlid.com/Downloads/Real-time-Linux-RPi2/
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf

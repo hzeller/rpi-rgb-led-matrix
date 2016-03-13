@@ -6,14 +6,19 @@ from libc.stdint cimport uint8_t, uint32_t
 cimport core
 
 cdef class Color:
+    def __init__(self, uint8_t red = 0, uint8_t green = 0, uint8_t blue = 0):
+        self.__color.r = red
+        self.__color.g = green
+        self.__color.b = blue
+
     property red:
         def __get__(self): return self.__color.r
         def __set__(self, uint8_t value): self.__color.r = value
-    
+
     property green:
         def __get__(self): return self.__color.g
         def __set__(self, uint8_t value): self.__color.g = value
-    
+
     property blue:
         def __get__(self): return self.__color.b
         def __set__(self, uint8_t value): self.__color.b = value
@@ -42,3 +47,7 @@ def DrawCircle(core.Canvas c, int x, int y, int r, Color color):
 
 def DrawLine(core.Canvas c, int x1, int y1, int x2, int y2, Color color):
     cppinc.DrawLine(c.__getCanvas(), x1, y1, x2, y2, color.__color)
+
+# Local Variables:
+# mode: python
+# End:
