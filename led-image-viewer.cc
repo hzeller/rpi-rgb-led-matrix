@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
   int pwm_bits = -1;
   int brightness = 100;
   bool large_display = false;  // example for using Transformers
-  bool scrambled_display = false;
+  bool striped4multiplexing_display = false;
   bool as_daemon = false;
 
   int opt;
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
       large_display = true;
       break;
     case 'S':
-      scrambled_display = true;
+      striped4multiplexing_display = true;
       break;
     default:
       return usage(argv[0]);
@@ -257,8 +257,8 @@ int main(int argc, char *argv[]) {
     matrix->SetTransformer(new rgb_matrix::LargeSquare64x64Transformer());
   }
 
-  if (scrambled_display) {
-    // Mapping the coordinates of a scrambled 32x16 display with 2 chains per panel
+  if (striped4multiplexing_display) {
+    // Mapping the coordinates of a striped 4 multiplexing 32x16 display with 2 chains per panel
     matrix->SetTransformer(new rgb_matrix::Striped4Multiplexing32x16Transformer());
   }
 

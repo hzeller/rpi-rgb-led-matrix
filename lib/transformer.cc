@@ -257,8 +257,8 @@ Striped4Multiplexing32x16Transformer::TransformCanvas::~TransformCanvas(){
 }
 
 void Striped4Multiplexing32x16Transformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
-  // The scrambled display I have has 2 chains per 32x16 panel, each of 8 rows
-  // When we chain several of this scrambled display, the 8 lower rows of the entire display
+  // The display I have has 2 chains per 32x16 panel, each of 8 rows
+  // When we chain several of this display, the 8 lower rows of the entire display
   // is at the end of the chain.
   // So to use this display with the current library, we need to define 8 rows and 2 x number of diplay for chain number.
   // Here we set width and height in a more user friendly way.

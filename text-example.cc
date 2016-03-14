@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
   int parallel = 1;
   int x_orig = 0;
   int y_orig = -1;
-  bool scrambled_display = false;
+  bool striped4multiplexing_display = false;
   int brightness = 100;
 
   int opt;
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
       }
       break;
     case 'S':
-      scrambled_display = true;
+      striped4multiplexing_display = true;
       break;
     default:
       return usage(argv[0]);
@@ -125,8 +125,8 @@ int main(int argc, char *argv[]) {
   LinkedTransformer *transformer = new LinkedTransformer();
   canvas->SetTransformer(transformer);
 
-  if (scrambled_display) {
-    // Mapping the coordinates of a scrambled 32x16 display with 2 chains per panel
+  if (striped4multiplexing_display) {
+    // Mapping the coordinates of a striped 4 multiplexing 32x16 display with 2 chains per panel
     transformer->AddTransformer(new Striped4Multiplexing32x16Transformer());
   }
 
