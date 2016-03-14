@@ -1,6 +1,6 @@
 CXXFLAGS=-Wall -O3 -g
-OBJECTS=demo-main.o minimal-example.o pixel-mapping.o text-example.o led-image-viewer.o
-BINARIES=led-matrix minimal-example pixel-mapping text-example
+OBJECTS=demo-main.o minimal-example.o text-example.o led-image-viewer.o
+BINARIES=led-matrix minimal-example text-example
 ALL_BINARIES=$(BINARIES) led-image-viewer
 
 # Where our library resides. It is split between includes and the binary
@@ -24,9 +24,6 @@ $(RGB_LIBRARY): FORCE
 
 led-matrix : demo-main.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) demo-main.o -o $@ $(LDFLAGS)
-
-pixel-mapping : pixel-mapping.o $(RGB-LIBRARY)
-	$(CXX) $(CXXFLAGS) pixel-mapping.o -o $@ $(LDFLAGS)
 
 minimal-example : minimal-example.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) minimal-example.o -o $@ $(LDFLAGS)
