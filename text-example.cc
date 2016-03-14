@@ -30,7 +30,7 @@ static int usage(const char *progname) {
           "\t-x <x-origin> : X-Origin of displaying text (Default: 0)\n"
           "\t-y <y-origin> : Y-Origin of displaying text (Default: 0)\n"
           "\t-C <r,g,b>    : Color. Default 255,255,0\n"
-          "\t-S            : 'Scrambled' 32x16 display with 2 chains on each panel,\n");
+          "\t-S            : Striped 4 Multiplexing 32x16 display with 2 chains on each panel,\n");
 
   return 1;
 }
@@ -122,19 +122,15 @@ int main(int argc, char *argv[]) {
   RGBMatrix *canvas = new RGBMatrix(&io, rows, chain, parallel);
   canvas->SetBrightness(brightness);
 
-<<<<<<< HEAD
   LinkedTransformer *transformer = new LinkedTransformer();
   canvas->SetTransformer(transformer);
 
   if (scrambled_display) {
     // Mapping the coordinates of a scrambled 32x16 display with 2 chains per panel
-    transformer->AddTransformer(new Scrambled32x16Transformer());
+    transformer->AddTransformer(new Striped4Multiplexing32x16Transformer());
   }
 
-  bool all_extreme_colors = true;
-=======
   bool all_extreme_colors = brightness == 100;
->>>>>>> master
   all_extreme_colors &= color.r == 0 || color.r == 255;
   all_extreme_colors &= color.g == 0 || color.g == 255;
   all_extreme_colors &= color.b == 0 || color.b == 255;

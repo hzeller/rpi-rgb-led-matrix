@@ -82,10 +82,10 @@ private:
   TransformCanvas *const canvas_;
 };
 
-class Scrambled32x16Transformer : public CanvasTransformer {
+class Striped4Multiplexing32x16Transformer : public CanvasTransformer {
 public:
-  Scrambled32x16Transformer();
-  virtual ~Scrambled32x16Transformer();
+  Striped4Multiplexing32x16Transformer();
+  virtual ~Striped4Multiplexing32x16Transformer();
 
   virtual Canvas *Transform(Canvas *output);
 

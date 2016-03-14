@@ -226,9 +226,9 @@ Canvas *LargeSquare64x64Transformer::Transform(Canvas *output) {
 }
 
 /********************************/
-/* Scrambled Transformer Canvas */
+/* Striped 4 Multiplexing 32x16 Transformer Canvas */
 /********************************/
-class Scrambled32x16Transformer::TransformCanvas : public Canvas {
+class Striped4Multiplexing32x16Transformer::TransformCanvas : public Canvas {
 public:
   TransformCanvas() : delegatee_(NULL), map_(NULL) {}
   ~TransformCanvas();
@@ -247,7 +247,7 @@ private:
   unsigned int **map_;
 };
 
-Scrambled32x16Transformer::TransformCanvas::~TransformCanvas(){
+Striped4Multiplexing32x16Transformer::TransformCanvas::~TransformCanvas(){
   if (map_){
     for (int i=0; i<width_; i++){
       delete map_[i];
@@ -256,7 +256,7 @@ Scrambled32x16Transformer::TransformCanvas::~TransformCanvas(){
   }
 }
 
-void Scrambled32x16Transformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
+void Striped4Multiplexing32x16Transformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
   // The scrambled display I have has 2 chain per 32x16 panel, each of 8 rows
   // When we chain several of this scrambled display, the 8 lower rows of the entire display
   // is at the end of the chain.
@@ -280,23 +280,23 @@ void Scrambled32x16Transformer::TransformCanvas::SetDelegatee(Canvas* delegatee)
   delegatee_ = delegatee;
 }
 
-void Scrambled32x16Transformer::TransformCanvas::Clear() {
+void Striped4Multiplexing32x16Transformer::TransformCanvas::Clear() {
   delegatee_->Clear();
 }
 
-void Scrambled32x16Transformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+void Striped4Multiplexing32x16Transformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   delegatee_->Fill(red, green, blue);
 }
 
-int Scrambled32x16Transformer::TransformCanvas::width() const {
+int Striped4Multiplexing32x16Transformer::TransformCanvas::width() const {
   return width_;
 }
 
-int Scrambled32x16Transformer::TransformCanvas::height() const {
+int Striped4Multiplexing32x16Transformer::TransformCanvas::height() const {
   return height_;
 }
 
-void Scrambled32x16Transformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+void Striped4Multiplexing32x16Transformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
   if ( x >= width_ || y >= height_ || x < 0 || y < 0 ) return;
   int idx = map_[x][y];
   x = idx%(width_*2);
@@ -306,17 +306,17 @@ void Scrambled32x16Transformer::TransformCanvas::SetPixel(int x, int y, uint8_t 
 }
 
 /*****************************/
-/* Scrambled32x16Transformer */
+/* Striped4Multiplexing32x16Transformer */
 /*****************************/
-Scrambled32x16Transformer::Scrambled32x16Transformer()
+Striped4Multiplexing32x16Transformer::Striped4Multiplexing32x16Transformer()
   : canvas_(new TransformCanvas()) {
 }
 
-Scrambled32x16Transformer::~Scrambled32x16Transformer() {
+Striped4Multiplexing32x16Transformer::~Striped4Multiplexing32x16Transformer() {
   delete canvas_;
 }
 
-Canvas *Scrambled32x16Transformer::Transform(Canvas *output) {
+Canvas *Striped4Multiplexing32x16Transformer::Transform(Canvas *output) {
   assert(output != NULL);
 
   canvas_->SetDelegatee(output);

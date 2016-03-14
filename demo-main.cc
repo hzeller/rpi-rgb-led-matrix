@@ -1016,7 +1016,7 @@ static int usage(const char *progname) {
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
-          "\t-S            : 'Scrambled' 32x16 display with 2 chains on each panel,\n"
+          "\t-S            : Striped 4 Multiplexing 32x16 display with 2 chains on each panel,\n"
           "\t                you should take care of chain & row parameters yourself.\n"
           "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
           "\t-l            : Don't do luminance correction (CIE1931)\n"
@@ -1059,7 +1059,7 @@ int main(int argc, char *argv[]) {
   int brightness = 100;
   int rotation = 0;
   bool large_display = false;
-  bool scrambled_display = false;
+  bool striped4multiplexing_display = false;
   bool do_luminance_correct = true;
 
   const char *demo_parameter = NULL;
@@ -1119,7 +1119,7 @@ int main(int argc, char *argv[]) {
       break;
 
     case 'S':
-      scrambled_display = true;
+      striped4multiplexing_display = true;
       break;
 
     default: /* '?' */
@@ -1200,9 +1200,9 @@ int main(int argc, char *argv[]) {
     transformer->AddTransformer(new LargeSquare64x64Transformer());
   }
 
-  if (scrambled_display) {
-    // Mapping the coordinates of a scrambled 32x16 display with 2 chains per panel
-    transformer->AddTransformer(new Scrambled32x16Transformer());
+  if (striped4multiplexing_display) {
+    // Mapping the coordinates of a striped 4 multiplexing 32x16 display with 2 chains per panel
+    transformer->AddTransformer(new Striped4Multiplexing32x16Transformer());
   }
 
   if (rotation > 0) {

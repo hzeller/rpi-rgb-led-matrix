@@ -155,13 +155,9 @@ static int usage(const char *progname) {
           "Default: 1\n"
           "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
           "\t-L            : Large 64x64 display made from four 32x32 in a chain\n"
-<<<<<<< HEAD
-          "\t-S            : 'Scrambled' 32x16 display with 2 chains on each panel,\n"
-          "\t-d            : Run as daemon.\n");
-=======
+          "\t-S            : Striped 4 Multiplexing 32x16 display with 2 chains on each panel,\n"
           "\t-d            : Run as daemon.\n"
           "\t-b <brightnes>: Sets brightness percent. Default: 100.\n");
->>>>>>> master
   return 1;
 }
 
@@ -263,7 +259,7 @@ int main(int argc, char *argv[]) {
 
   if (scrambled_display) {
     // Mapping the coordinates of a scrambled 32x16 display with 2 chains per panel
-    matrix->SetTransformer(new rgb_matrix::Scrambled32x16Transformer());
+    matrix->SetTransformer(new rgb_matrix::Striped4Multiplexing32x16Transformer());
   }
 
   std::vector<Magick::Image> sequence_pics;
