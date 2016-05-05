@@ -31,7 +31,7 @@ public:
   ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
-  static void InitGPIO(GPIO *io, int parallel);
+  static void InitGPIO(GPIO *io, int rows, int parallel);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.
@@ -109,7 +109,8 @@ private:
       unsigned int strobe             : 1;  // 21
       unsigned int a                  : 1;  // 22
       unsigned int p0_b2              : 1;  // 23
-      unsigned int unused_24_25       : 2;  // 24,25
+      unsigned int e                  : 1;  // 24  // Needs manual wiring
+      unsigned int unused_25          : 1;  // 25
       unsigned int b                  : 1;  // 26
       unsigned int c                  : 1;  // 27
     } bits;
@@ -150,7 +151,7 @@ private:
       unsigned int p1_g2              : 1;  // 13     (only on A+/B+/Pi2)
       unsigned int p2_r1              : 1;  // 14     (masks TxD when parallel=3)
       unsigned int p2_r2              : 1;  // 15     (masks RxD when parallel=3)
-      unsigned int unused_16          : 1;  // 16     (only on A+/B+/Pi2)
+      unsigned int e                  : 1;  // 16     (only on A+/B+/Pi2)
       unsigned int p0_r1              : 1;  // 17
       unsigned int p0_g1              : 1;  // 18
       unsigned int p1_r2              : 1;  // 19     (only on A+/B+/Pi2)
@@ -190,7 +191,7 @@ private:
       unsigned int p1_r1          : 1;  // 12 P1-32 (only on A+/B+/Pi2)
       unsigned int p1_g2          : 1;  // 13 P1-33 (only on A+/B+/Pi2)
       unsigned int p2_r1          : 1;  // 14 P1-08 (masks TxD when parallel=3)
-      unsigned int unused_15      : 1;  // 15 P1-10 (RxD) - kept free.
+      unsigned int e              : 1;  // 15 P1-10 (RxD) - kept free unless 1:64
       unsigned int p2_g2          : 1;  // 16 P1-36 (only on A+/B+/Pi2)
 
       unsigned int clock          : 1;  // 17 P1-11

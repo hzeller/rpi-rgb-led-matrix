@@ -67,7 +67,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
     double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
-  assert(rows_ <= 32);
+  assert(rows_ == 4 || rows_ == 8 || rows_ == 16 || rows_ == 32 || rows_ == 64);
   assert(parallel >= 1 && parallel <= 3);
 #ifdef ONLY_SINGLE_CHAIN
   if (parallel > 1) {
@@ -81,7 +81,7 @@ Framebuffer::~Framebuffer() {
   delete [] bitplane_buffer_;
 }
 
-/* static */ void Framebuffer::InitGPIO(GPIO *io, int parallel) {
+/* static */ void Framebuffer::InitGPIO(GPIO *io, int rows, int parallel) {
   if (sOutputEnablePulser != NULL)
     return;  // already initialized.
 
@@ -113,7 +113,12 @@ Framebuffer::~Framebuffer() {
   }
 #endif
 
-  b.bits.a = b.bits.b = b.bits.c = b.bits.d = 1;
+  const int double_rows = rows / 2;
+  if (double_rows >= 32) b.bits.e = 1;
+  if (double_rows >= 16) b.bits.d = 1;
+  if (double_rows >=  8) b.bits.c = 1;
+  if (double_rows >=  4) b.bits.b = 1;
+  b.bits.a = 1;
 
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io->InitOutputs(b.raw);
@@ -335,7 +340,8 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   color_clk_mask.bits.clock = 1;
 
   IoBits row_mask;
-  row_mask.bits.a = row_mask.bits.b = row_mask.bits.c = row_mask.bits.d = 1;
+  row_mask.bits.a = row_mask.bits.b = row_mask.bits.c
+    = row_mask.bits.d = row_mask.bits.e = 1;
 
   IoBits clock, strobe, row_address;
 #ifdef PI_REV1_RGB_PINOUT_
@@ -350,6 +356,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
     row_address.bits.b = d_row >> 1;
     row_address.bits.c = d_row >> 2;
     row_address.bits.d = d_row >> 3;
+    row_address.bits.e = d_row >> 4;
 
     io->WriteMaskedBits(row_address.raw, row_mask.raw);  // Set row address
 

@@ -134,7 +134,7 @@ RGBMatrix::~RGBMatrix() {
 void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
   if (io != NULL && io_ == NULL) {
     io_ = io;
-    internal::Framebuffer::InitGPIO(io_, parallel_displays_);
+    internal::Framebuffer::InitGPIO(io_, rows_, parallel_displays_);
   }
   if (start_thread && updater_ == NULL) {
     assert(io_ != NULL);  // Starting thread: need GPIO

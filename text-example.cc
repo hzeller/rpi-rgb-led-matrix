@@ -82,8 +82,9 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  if (rows != 16 && rows != 32) {
-    fprintf(stderr, "Rows can either be 16 or 32\n");
+  if (rows != 8 && rows != 16 && rows != 32 && rows != 64) {
+    fprintf(stderr, "Rows can one of 8, 16, 32 or 32 "
+            "for 1:4, 1:8, 1:16 and 1:32 multiplexing respectively.\n");
     return 1;
   }
 
