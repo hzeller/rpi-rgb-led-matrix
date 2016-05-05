@@ -1,5 +1,5 @@
-Adapter PCB to support up to 3 panels
-======================================
+Adapter PCB to support up to 3 panel chains
+===========================================
 
    * Supports up to three panel chains for newer plus models and
      Raspberry Pi 2 that have 40 GPIO pins.

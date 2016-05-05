@@ -895,4 +895,6 @@ Wire Wire Line
 Connection ~ 3850 3100
 Text GLabel 4950 2600 0    51   Input ~ 0
 row_E
+Text Notes 6400 2600 0    60   ~ 0
+TBD: See issue #120
 $EndSCHEMATC
