@@ -3,8 +3,8 @@
 # So
 #   -lrgbmatrix
 ##
-OBJECTS=gpio.o led-matrix.o framebuffer.o thread.o bdf-font.o graphics.o transformer.o
-TARGET=librgbmatrix.a
+OBJECTS=gpio.o led-matrix.o framebuffer.o thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o
+TARGET=librgbmatrix
 
 ###
 # After you change any of the following DEFINES, make sure to 'make clean'
@@ -81,8 +81,13 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
 
-$(TARGET) : $(OBJECTS)
+all : $(TARGET).a $(TARGET).so.1
+
+$(TARGET).a : $(OBJECTS)
 	ar rcs $@ $^
+
+$(TARGET).so.1 : $(OBJECTS)
+	gcc -shared -Wl,-soname,$@ -o $@ $^ -lpthread  -lrt -lm -lpthread
 
 led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
 thread.o : thread.cc $(INCDIR)/thread.h
@@ -93,7 +98,7 @@ graphics.o: graphics.cc utf8-internal.h
 	$(CXX) -I$(INCDIR) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTS) $(TARGET)
+	rm -f $(OBJECTS) $(TARGET).a $(TARGET).so.1
 
 compiler-flags: FORCE
 	@echo '$(CXXFLAGS)' | cmp -s - $@ || echo '$(CXXFLAGS)' > $@
