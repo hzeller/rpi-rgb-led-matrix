@@ -132,12 +132,12 @@ RGBMatrix::~RGBMatrix() {
 }
 
 void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
-  if (io == NULL) return;  // nothing to set.
-  if (io_ == NULL) {
+  if (io != NULL && io_ == NULL) {
     io_ = io;
     internal::Framebuffer::InitGPIO(io_, parallel_displays_);
   }
   if (start_thread && updater_ == NULL) {
+    assert(io_ != NULL);  // Starting thread: need GPIO
     updater_ = new UpdateThread(io_, active_);
     // If we have multiple processors, the kernel
     // jumps around between these, creating some global flicker.
