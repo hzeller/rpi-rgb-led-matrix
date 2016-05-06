@@ -533,7 +533,7 @@ ready-made vs. single-chain tradeoff is worthwhile, then you might go for that
 
 ### Getting it to work
 
-Tha Adafruit HAT uses a modified pinout, so they forked this library and
+The Adafruit HAT uses a modified pinout, so they forked this library and
 modified the pinout there. However, that fork is _ancient_, so I stronlgy
 suggest to use this original library instead.
 
@@ -549,9 +549,9 @@ Then re-compile and a display connected to the HAT should work.
 
 ### Improving flicker
 
-There is another thing you can do to improve the image quality. For that, you
-have to do a little hardware modification, but it is very simple: solder a wire
-between GPIO 4 and 18 as shown in the following picture (click to enlarge):
+To improve flicker, we need to do a little hardware modification,
+but it is very simple: solder a wire between GPIO 4 and 18 as shown in the
+following picture (click to enlarge):
 
 <a href="img/adafruit-mod.jpg"><img src="img/adafruit-mod.jpg" height="80px"></a>
 
