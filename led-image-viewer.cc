@@ -14,7 +14,7 @@
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
 // To use this image viewer, first get image-magick development files
-// $ sudo aptitude install libmagick++-dev
+// $ sudo apt-get install libgraphicsmagick++-dev libwebp-dev
 //
 // Then compile with
 // $ make led-image-viewer
