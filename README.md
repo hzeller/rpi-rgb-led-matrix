@@ -519,6 +519,54 @@ guidelines:
 
 Now welcome your over-engineered power solution :)
 
+If you have an Adafruit HAT
+---------------------------
+
+Generally, if you want to connect RGB panels via an adapter instead of
+hand-wiring, I suggest to build one of the adapters whose open-hardware
+files you find in the [adapter/](./adapter) subdirectory.
+
+However, Adafruit [offers an adapter][adafruit-hat] which is already ready-made,
+but it only allows for a single chain. If the
+ready-made vs. single-chain tradeoff is worthwhile, then you might go for that
+(I am not affiliated with Adafruit).
+
+### Getting it to work
+
+Tha Adafruit HAT uses a modified pinout, so they forked this library and
+modified the pinout there. However, that fork is _ancient_, so I stronlgy
+suggest to use this original library instead.
+
+In this library here, you have to uncomment the following line in
+the [lib/Makefile](./lib/Makefile)
+
+```
+#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
+```
+Uncommenting means: remove the `#` in front of that line.
+
+Then re-compile and a display connected to the HAT should work.
+
+### Improving flicker
+
+There is another thing you can do to improve the image quality. For that, you
+have to do a little hardware modification, but it is very simple: solder a wire
+between GPIO 4 and 18 as shown in the following picture (click to enlarge):
+
+<a href="img/adafruit-mod.jpg"><img src="img/adafruit-mod.jpg" height="80px"></a>
+
+Then, uncomment the following line in the Makefile and recompile.
+
+```
+#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
+```
+
+Reboot the Pi and you now should have less visible flicker.
+
+(There is potentially another hardware hack needed for 1:32 multiplexing 64x64
+panels that require an E-channel, but that is experimental right now; contact
+me directly for instructions).
+
 Technical details
 -----------------
 
@@ -604,3 +652,4 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [ada]: http://www.adafruit.com/product/1484
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf
+[adafruit-hat]: https://www.adafruit.com/products/2345
