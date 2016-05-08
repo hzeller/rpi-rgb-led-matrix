@@ -67,7 +67,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
     double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
-  assert(rows_ == 4 || rows_ == 8 || rows_ == 16 || rows_ == 32 || rows_ == 64);
+  assert(rows_ == 8 || rows_ == 16 || rows_ == 32 || rows_ == 64);
   assert(parallel >= 1 && parallel <= 3);
 #ifdef ONLY_SINGLE_CHAIN
   if (parallel > 1) {
