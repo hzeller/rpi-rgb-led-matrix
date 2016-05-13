@@ -1,3 +1,10 @@
+TARGET_SYS?=arm-linux-gnueabihf
+SYS:=$(shell $(CXX) -dumpmachine)
+ifneq ($(SYS),$(TARGET_SYS))
+	CXX:=$(TARGET_SYS)-c++
+	AR:=$(TARGET_SYS)-ar
+endif
+
 CXXFLAGS=-Wall -O3 -g
 OBJECTS=demo-main.o minimal-example.o text-example.o led-image-viewer.o
 BINARIES=led-matrix minimal-example text-example
@@ -20,7 +27,7 @@ MAGICK_LDFLAGS=`GraphicsMagick++-config --ldflags --libs`
 all : $(BINARIES)
 
 $(RGB_LIBRARY): FORCE
-	$(MAKE) -C $(RGB_LIBDIR)
+	CXX=$(CXX) AR=$(AR) $(MAKE) -C $(RGB_LIBDIR)
 
 led-matrix : demo-main.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) demo-main.o -o $@ $(LDFLAGS)
