@@ -18,17 +18,6 @@ GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
 The demo-main.cc **example code** using this library is released to the
 public domain.
 
-## NOTICE: Wiring change on 2015-07-19
-
-The wiring to connect the RPi and the Hub75 changed on 2015-07-19 to provide
-improved output quality.
-If you have an existing wiring from an earlier version of this library, provide
-
-    DEFINE+=-DRGB_CLASSIC_PINOUT make
-
-to the compilation to make the old wiring work.
-Better yet, consider changing the wiring as it provides a much more stable image. See table below for wiring.
-
 Overview
 --------
 The 32x32 or 16x32 RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
@@ -62,6 +51,7 @@ They vary in the way the multiplexing is happening or sometimes they are
 
 Type  | Scan Multiplexing | Program Option  | Remark
 -----:|:-----------------:|:----------------|-------
+64x64 |  1:32             | -r 64 -c 2      | For displays with E line.
 32x32 |  1:16             | -r 32           |
 32x64 |  1:16             | -r 32 -c 2      | internally two chained 32x32
 16x32 |  1:8              | -r 16           |
@@ -149,7 +139,7 @@ Connection                        | Pin | Pin |  Connection
              :droplet: **[3] G1** |   3 |   4 | -
              :droplet: **[3] B1** |   5 |   6 | **GND** :smile::boom::droplet:
 :smile::boom::droplet: **strobe** |   7 |   8 | **[3] R1** :droplet:
-                              -   |   9 |  10 | -
+                              -   |   9 |  10 | **E**    :smile::boom::droplet: (for 64 row matrix, 1:32)
 :smile::boom::droplet: **clock**  |  11 |  12 | **OE-**  :smile::boom::droplet:
               :smile:  **[1] G1** |  13 |  14 | -
 :smile::boom::droplet:      **A** |  15 |  16 | **B**    :smile::boom::droplet:
@@ -402,7 +392,26 @@ have a look into [`demo-main.cc`](./demo-main.cc).
 
 Troubleshooting
 ---------------
-Some panels don't handle the 3.3V logic level well, or the RPi output drivers
+### Bad interaction with Sound
+If sound is enabled on your Pi, this will not work together with the LED matrix,
+as both need the same internal hardware sub-system. So if you run `lsmod` and
+see any modules show up with `snd` in their name, this could be causing trouble.
+
+In that case, you should create a kernel module blacklist file like the
+following on your system and update your initramfs:
+
+```
+$ cat /etc/modprobe.d/rgb-matrix-blacklist.conf
+blacklist snd_bcm2835
+blacklist snd_pcm
+blacklist snd_timer
+blacklist snd_pcsp
+blacklist snd
+$ sudo update-initramfs -u
+```
+
+### Logic level voltage not sufficient
+Some panels don't interpret the 3.3V logic level well, or the RPi output drivers
 have trouble driving longer cables, in particular with
 faster Raspberry Pis Version 2. This results in artifacts like randomly
 showing up pixels, color fringes, or parts of the panel showing 'static'.
