@@ -44,6 +44,8 @@ sometimes the cabeling can't keep up with the speed; check out
 this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
 what to do.
 
+The [Raspbian Lite][raspbian-lite] distribution is recommended.
+
 Types of Displays
 -----------------
 There are various types of displays that come all with the same Hub75 connector.
@@ -392,6 +394,18 @@ have a look into [`demo-main.cc`](./demo-main.cc).
 
 Troubleshooting
 ---------------
+Here are some tips in case things don't work as expected.
+
+### Use minimal Raspbian distribution
+In general, run a minimal configuration on your Pi. There were some
+unconfirmed reports of problems with Pis running GUI systems. Even though the
+Raspberry Pi foundation makes you believe that you can do that: don't. Using it
+with a GUI is a frustratingly slow use of an otherwise perfectly good
+embedded device.
+
+Everything seems to work well with a **[Raspbian Lite][raspbian-lite]**
+distribution.
+
 ### Bad interaction with Sound
 If sound is enabled on your Pi, this will not work together with the LED matrix,
 as both need the same internal hardware sub-system. So if you run `lsmod` and
@@ -401,14 +415,18 @@ In that case, you should create a kernel module blacklist file like the
 following on your system and update your initramfs:
 
 ```
-$ cat /etc/modprobe.d/rgb-matrix-blacklist.conf
+cat <<EOF | sudo tee /etc/modprobe.d/blacklist-rgb-matrix.conf
 blacklist snd_bcm2835
 blacklist snd_pcm
 blacklist snd_timer
 blacklist snd_pcsp
 blacklist snd
-$ sudo update-initramfs -u
+EOF
+
+sudo update-initramfs -u
 ```
+
+Reboot and confirm that no 'snd' module is running.
 
 ### Logic level voltage not sufficient
 Some panels don't interpret the 3.3V logic level well, or the RPi output drivers
@@ -662,3 +680,4 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf
 [adafruit-hat]: https://www.adafruit.com/products/2345
+[raspbian-lite]: https://downloads.raspberrypi.org/raspbian_lite_latest
