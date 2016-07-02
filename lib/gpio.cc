@@ -278,7 +278,13 @@ static void sleep_nanos_rpi_2(long nanos) {
 // It only works on GPIO-18 though.
 class HardwarePinPulser : public PinPulser {
 public:
-  static bool CanHandle(uint32_t gpio_mask) { return gpio_mask == (1 << 18); }
+  static bool CanHandle(uint32_t gpio_mask) {
+#ifdef DISABLE_HARDWARE_PULSES
+    return false;
+#else
+    return gpio_mask == (1 << 18);
+#endif
+  }
 
   HardwarePinPulser(uint32_t pins, const std::vector<int> &specs) {
     assert(CanHandle(pins));

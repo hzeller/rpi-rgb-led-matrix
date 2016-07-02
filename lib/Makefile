@@ -78,6 +78,13 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 # some oddball old (typically one-colored) display, such as Hub12.
 #DEFINES+=-DONLY_SINGLE_SUB_PANEL
 
+# This is to debug problems with the hardware pulse generation. The PWM hardware
+# module is also used by Raspberry Pi sound system, so there might be
+# interference. Note, you typically don't want the hardware pulses disabled, as
+# the image will have visible brightness glitches; but for debugging, this is
+# a good choice.
+#DEFINES+=-DDISABLE_HARDWARE_PULSES
+
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
 
