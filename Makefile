@@ -1,5 +1,5 @@
 CXXFLAGS=-Wall -O3 -g
-OBJECTS=demo-main.o minimal-example.o text-example.o led-image-viewer.o
+OBJECTS=demo-main.o minimal-example.o text-example.o led-image-viewer.o simple-udp.o zmq.o
 BINARIES=led-matrix minimal-example text-example
 ALL_BINARIES=$(BINARIES) led-image-viewer
 
@@ -24,6 +24,9 @@ $(RGB_LIBRARY): FORCE
 
 led-matrix : demo-main.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) demo-main.o -o $@ $(LDFLAGS)
+
+zmq : zmq.o $(RGB_LIBRARY)
+	$(CXX) $(CXXFLAGS) zmq.o -o $@ $(LDFLAGS)  -lzmq
 
 minimal-example : minimal-example.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) minimal-example.o -o $@ $(LDFLAGS)
