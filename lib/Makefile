@@ -85,6 +85,9 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 # a good choice.
 #DEFINES+=-DDISABLE_HARDWARE_PULSES
 
+# Experimental. Only use this if you do 1 bit PWM.
+#DEFINES+=-DEXPERIMENTAL_HIGH_BRIGHTNESS
+
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
 
