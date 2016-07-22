@@ -1,5 +1,5 @@
 CXXFLAGS=-Wall -O3 -g
-OBJECTS=demo-main.o minimal-example.o text-example.o led-image-viewer.o simple-udp.o zmq.o
+OBJECTS=demo-main.o minimal-example.o text-example.o led-image-viewer.o zmq.o
 BINARIES=led-matrix minimal-example text-example
 ALL_BINARIES=$(BINARIES) led-image-viewer
 
