@@ -253,6 +253,23 @@ Then, you can run it with any common image format, including animated gifs:
 It also supports the standard options to specify the connected
 displays (`-r`, `-c`, `-P`).
 
+### zeromq server ###
+
+The library comes with a simple zeromq server implementation that allows controlling the matrix over network via tcp. It is not compiled by default, as you need to install the zeromq dependencies first:
+
+     sudo apt-get update
+     sudo apt-get install libzmq3 libzmq3-dev
+     make zmq
+
+Then you can run it with:
+
+  sudo ./zmq
+  
+It supports the standard options to specify the connected displays ('-r', '-c', '-P') and also '-P' to specify the port to listen on (default 5555).
+
+To send data open a zmq push connection to the rpi on the chosen port ('tcp://rpi:5555' as the protocol). You need to send rows * rows * chain * parallel * 3 unsigned 8 bit integers (uint8_t) as the matrix rgb data, where first integer is the red component of the top left pixel, next the green and the third the blue component etc.
+
+
 Chaining, parallel chains and coordinate system
 ------------------------------------------------
 
