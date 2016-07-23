@@ -350,8 +350,23 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   clock.bits.clock = 1;
   strobe.bits.strobe = 1;
 
+#if RGB_SCAN_INTERLACED
+  uint8_t rot_bits = 0;
+  switch (double_rows_) {
+  case  4: rot_bits = 1; break;
+  case  8: rot_bits = 2; break;
+  case 16: rot_bits = 3; break;
+  case 32: rot_bits = 4; break;
+  }
+#endif
+
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
-  for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
+  for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
+#if RGB_SCAN_INTERLACED
+    uint8_t d_row = ((row_loop << 1) | (row_loop >> rot_bits)) & row_mask_;
+#else
+    uint8_t d_row = row_loop;
+#endif
     row_address.bits.a = d_row;
     row_address.bits.b = d_row >> 1;
     row_address.bits.c = d_row >> 2;

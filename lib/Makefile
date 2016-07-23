@@ -23,6 +23,11 @@ TARGET=librgbmatrix
 # For curiosity reasons: uncomment to see refresh rate in terminal.
 #DEFINES+=-DSHOW_REFRESH_RATE
 
+# For low refresh rates below 100Hz (e.g. a lot of panels), the eye will notice
+# some flicker. With this option enabled, the refreshed lines are interleaved,
+# so it is less noticeable. But looks less pleasant with fast eye movements.
+#DEFINES+=-DRGB_SCAN_INTERLACED=1
+
 # The signal can be too fast for some LED panels, in particular with newer
 # (faster) Raspberry Pi 2s.
 # In these cases, you want to make sure that
