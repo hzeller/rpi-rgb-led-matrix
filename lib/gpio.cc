@@ -456,5 +456,4 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
   }
 #endif
 }
-
 } // namespace rgb_matrix
