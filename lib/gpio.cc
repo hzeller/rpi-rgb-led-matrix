@@ -220,16 +220,19 @@ class OnTimePriorityPinPulser : public PinPulser {
 public:
   OnTimePriorityPinPulser(GPIO *io, uint32_t bits,
                           const std::vector<int> &nano_specs)
-    : io_(io), bits_(bits), nano_specs_(nano_specs) {}
+    : io_(io), bits_(bits), nano_specs_(nano_specs), triggered_(false) {}
 
   virtual void SendPulse(int time_spec_number) {
     io_->ClearBits(bits_);
     requested_spec_ = time_spec_number;
+    triggered_ = true;
   }
 
   virtual void WaitPulseFinished() {
+    if (!triggered_) return;
     Timers::sleep_nanos(nano_specs_[requested_spec_]);
     io_->SetBits(bits_);
+    triggered_ = false;
   }
 
 private:
@@ -237,6 +240,7 @@ private:
   const uint32_t bits_;
   const std::vector<int> nano_specs_;
   int requested_spec_;
+  bool triggered_;
 };
 
 static volatile uint32_t *timer1Mhz = NULL;
@@ -314,7 +318,8 @@ public:
 #endif
   }
 
-  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs) {
+  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
+    : triggered_(false) {
     assert(CanHandle(pins));
 
     for (size_t i = 0; i < specs.size(); ++i) {
@@ -377,10 +382,12 @@ public:
 
     sleep_hint_ = sleep_hints_[c];
     start_time_ = *timer1Mhz;
+    triggered_ = true;
     pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
   }
 
   virtual void WaitPulseFinished() {
+    if (!triggered_) return;
     // Determine how long we already spent and sleep to get close to the
     // actual end-time of our sleep period.
     // (substract 25 usec, as this is the OS overhead).
@@ -394,6 +401,7 @@ public:
       // busy wait until done.
     }
     pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
+    triggered_ = false;
   }
 
 private:
@@ -429,6 +437,7 @@ private:
   volatile uint32_t *clk_reg_;
   uint32_t start_time_;
   int sleep_hint_;
+  bool triggered_;
 };
 
 } // end anonymous namespace
