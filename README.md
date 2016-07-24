@@ -464,18 +464,28 @@ know that your display is fast enough, try to comment out that line.
 
 Then `make` again.
 
-Inverted Colors ?
------------------
+### Ghosting
+Some panels have trouble with sharp contrasts and short pulses that results
+in ghosting. It is particularly apparent with very sharp contrasts, such as
+bright text on black background. This can be improved by tweaking the `LSB_PWM_NANOSECONDS`
+parameter in [lib/Makefile](./lib/Makefile). See description there for details.
+
+The following example is a little exaggerated:
+
+Ghosting with low LSB_PWM_NANOSECONDS  | No ghosting after tweaking
+---------------------------------------|------------------------------
+![](img/text-ghosting.jpg)             |![](img/text-no-ghosting.jpg)
+
+### Inverted Colors ?
+
 There are some displays out there that use inverse logic for the colors. You
-notice that your image looks like a 'negative'. In that case, uncomment the
-folling `DEFINES` line in [lib/Makefile](./lib/Makefile) by removing the `#`
-at the beginning of the line.
+notice that your image looks like a 'negative'. The parameter to tweak is
+`INVERSE_RGB_DISPLAY_COLORS` in [lib/Makefile](./lib/Makefile).
 
-     #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
+### Check configuration in lib/Makefile
 
-Then, recompile
-
-     make
+There are lots of parameters in [lib/Makefile](./lib/Makefile) that you might
+be interested in tweaking.
 
 A word about power
 ------------------

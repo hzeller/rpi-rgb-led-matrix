@@ -8,7 +8,7 @@ TARGET=librgbmatrix
 
 ###
 # After you change any of the following DEFINES, make sure to 'make clean'
-# and make again
+# and 'make' again
 ###
 
 # If you see that your display is inverse, you might have a matrix variant
