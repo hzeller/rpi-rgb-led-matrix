@@ -21,11 +21,14 @@ const int kRows = 32;
 const int kChain = 4;
 const int kParallel = 1;
 
+zmq::context_t context (1);
+
 using namespace rgb_matrix;
 
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
   interrupt_received = true;
+  free(context);
 }
 
 static FrameCanvas *FillFramebuffer(RGBMatrix *matrix, FrameCanvas *canvas,
@@ -107,8 +110,9 @@ int main(int argc, char *argv[]) {
   sigaction(SIGTERM, &sa, NULL);
   sigaction(SIGINT,  &sa, NULL);
 
-  zmq::context_t context (1);
   zmq::socket_t socket (context, ZMQ_PULL);
+  int linger = 0;
+  socket.setsockopt(ZMQ_LINGER,&linger,sizeof(int));
   socket.bind (zmq_bind);
 
   matrix->Clear();
@@ -118,13 +122,12 @@ int main(int argc, char *argv[]) {
 
     try{
       //  Wait for next request from client
-      while(-1 == socket.recv (&request, ZMQ_DONTWAIT))
+      while(-1 == socket.recv (&request))
       {
         if (EAGAIN != errno || interrupt_received)
         {
           break;
         }
-        sleep(100);
       }
     
       if (interrupt_received)
