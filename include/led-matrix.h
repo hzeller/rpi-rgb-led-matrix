@@ -130,7 +130,14 @@ public:
   // replaced with NULL. You can use the NULL-behavior to just wait on
   // VSync or to retrieve the initial buffer when preparing a multi-buffer
   // animation.
-  FrameCanvas *SwapOnVSync(FrameCanvas *other);
+  //
+  // The optional "framerate_fraction" parameter allows to choose which
+  // multiple of the global frame-count to use. So it slows down your animation
+  // to an exact fraction of the refresh rate.
+  // Default is 1, so immediately next available frame.
+  // (Say you have 140Hz refresh rate, then a value of 5 would give you an
+  // 28Hz animation, nicely locked to the frame-rate).
+  FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction = 1);
 
   // Set image transformer that maps the logical canvas we provide to the
   // physical canvas (e.g. panel mapping, rotation ...).
