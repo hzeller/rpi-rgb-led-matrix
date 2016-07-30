@@ -4,14 +4,28 @@ Python bindings for RGB Matrix library
 Building
 --------
 
-In the root directory for the matrix library simply type
+In the root directory for the matrix library simply type:
 
-      $ sudo apt-get install python2.7-dev
-      $ make build-python
-      $ make install-python
+```shell
+sudo apt-get update && sudo apt-get install python2.7-dev -y
+make build-python
+sudo make install-python
+```
+
+You can also build for Python 3:
+
+```shell
+sudo apt-get update && sudo apt-get install python3.4-dev -y
+export PYTHON=$(which python3.4)
+make build-python
+sudo make install-python
+```
 
 Using the library
 -----------------
+
+Be aware of the fact, that using the RGBMatrix requires root privileges.
+Therefore you will need to run all you python scripts as using sudo.
 
 ```python
 #!/usr/bin/env python
