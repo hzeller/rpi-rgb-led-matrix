@@ -62,6 +62,10 @@ Type  | Scan Multiplexing | Program Option  | Remark
 These can be chained by connecting the output of one panel to the input of
 the next panel. You can chain quite a few together.
 
+The 64x64 matrixes typically have 5 address lines (A, B, C, D, E). There are
+also 64x64 panels out there that only seem to have 1:4 multiplexing (there
+is A and B), but I have not had these in my lab yet to test.
+
 Connection
 ----------
 You need a separate power supply for the panel. There is a connector for that
@@ -600,9 +604,24 @@ Then, uncomment the following line in the Makefile and recompile.
 
 Reboot the Pi and you now should have less visible flicker.
 
-(There is potentially another hardware hack needed for 1:32 multiplexing 64x64
-panels that require an E-channel, but that is experimental right now; contact
-me directly for instructions).
+### 64x64 with E-line on Adafruit HAT
+There is another hardware mod needed for 1:32 multiplexing 64x64
+panels that require an E-channel. It is a little more advanced hack, so this
+is only really for people who are comfortable with this kind of thing.
+First, you have to figure out which is the input of the E-Line on your matrix
+(they seem to be either on Pin 4 or Pin 8 of the IDC connector).
+You need to disconnect that Pin from the ground plane (e.g. with an Exacto
+knife) and connect GPIO 24 to it. The following images illustrate the case for
+IDC Pin 4.
+
+<a href="img/adafruit-64x64-front.jpg"><img src="img/adafruit-64x64-front.jpg" height="80px"></a>
+<a href="img/adafruit-64x64-back.jpg"><img src="img/adafruit-64x64-back.jpg" height="80px"></a>
+
+If the direct connection does not work, you need to send it through a free
+level converter of the Adafruit HAT. Since all unused inputs are grounded
+with traces under the chip, this involves lifting a leg from the
+HCT245 (figure out a free bus driver from the schematic). If all of the
+above makes sense to you, you have the Ninja level to do it!
 
 Technical details
 -----------------
