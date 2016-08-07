@@ -623,6 +623,9 @@ with traces under the chip, this involves lifting a leg from the
 HCT245 (figure out a free bus driver from the schematic). If all of the
 above makes sense to you, you have the Ninja level to do it!
 
+It might be more convienent at this point to consider the [Active3 adapter](./adapter/active-3)
+that has that covered already.
+
 Technical details
 -----------------
 
