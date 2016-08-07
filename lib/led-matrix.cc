@@ -46,7 +46,8 @@ class RGBMatrix::UpdateThread : public Thread {
 public:
   UpdateThread(GPIO *io, FrameCanvas *initial_frame)
     : io_(io), running_(true),
-      current_frame_(initial_frame), next_frame_(NULL) {
+      current_frame_(initial_frame), next_frame_(NULL),
+      requested_frame_multiple_(1) {
     pthread_cond_init(&frame_done_, NULL);
   }
 
@@ -56,6 +57,7 @@ public:
   }
 
   virtual void Run() {
+    unsigned frame_count = 0;
     while (running()) {
 #ifdef SHOW_REFRESH_RATE
       struct timeval start, end;
@@ -66,12 +68,21 @@ public:
 
       {
         MutexLock l(&frame_sync_);
-        if (next_frame_ != NULL) {
-          current_frame_ = next_frame_;
-          next_frame_ = NULL;
+        // Do fast equality test first (likely due to frame_count reset).
+        if (frame_count == requested_frame_multiple_
+            || frame_count % requested_frame_multiple_ == 0) {
+          // We reset to avoid frame hick-up every couple of weeks
+          // run-time iff requested_frame_multiple_ is not a factor of 2^32.
+          frame_count = 0;
+          if (next_frame_ != NULL) {
+            current_frame_ = next_frame_;
+            next_frame_ = NULL;
+          }
+          pthread_cond_signal(&frame_done_);
         }
-        pthread_cond_signal(&frame_done_);
       }
+
+      ++frame_count;
 
 #ifdef SHOW_REFRESH_RATE
       gettimeofday(&end, NULL);
@@ -82,10 +93,11 @@ public:
     }
   }
 
-  FrameCanvas *SwapOnVSync(FrameCanvas *other) {
+  FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned frame_fraction) {
     MutexLock l(&frame_sync_);
     FrameCanvas *previous = current_frame_;
     next_frame_ = other;
+    requested_frame_multiple_ = frame_fraction;
     frame_sync_.WaitOn(&frame_done_);
     return previous;
   }
@@ -104,6 +116,7 @@ private:
   pthread_cond_t frame_done_;
   FrameCanvas *current_frame_;
   FrameCanvas *next_frame_;
+  unsigned requested_frame_multiple_;
 };
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
@@ -114,7 +127,7 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
   Clear();
-  SetGPIO(io);
+  SetGPIO(io, true);
 }
 
 RGBMatrix::~RGBMatrix() {
@@ -136,8 +149,7 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
     io_ = io;
     internal::Framebuffer::InitGPIO(io_, rows_, parallel_displays_);
   }
-  if (start_thread && updater_ == NULL) {
-    assert(io_ != NULL);  // Starting thread: need GPIO
+  if (start_thread && updater_ == NULL && io_ != NULL) {
     updater_ = new UpdateThread(io_, active_);
     // If we have multiple processors, the kernel
     // jumps around between these, creating some global flicker.
@@ -168,8 +180,10 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
   return result;
 }
 
-FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other) {
-  FrameCanvas *const previous = updater_->SwapOnVSync(other);
+FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other,
+                                    unsigned frame_fraction) {
+  if (frame_fraction == 0) frame_fraction = 1; // correct user error.
+  FrameCanvas *const previous = updater_->SwapOnVSync(other, frame_fraction);
   if (other) active_ = other;
   return previous;
 }

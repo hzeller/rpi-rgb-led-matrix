@@ -33,9 +33,18 @@ enum {
   kBitPlanes = 11  // maximum usable bitplanes.
 };
 
-// Lower values create a higher framerate, but display will be a
-// bit dimmer. Good values are between 100 and 200.
+#if defined(LSB_PWM_NANOSECONDS)
+// Make sure that there are sensible values.
+//   > 3000ns flickers even with 1:4 multiplexing on a single panel
+//   < 50ns   timings don't really work well with the TTL-logic on the matrix.
+#  if (LSB_PWM_NANOSECONDS >= 50) && (LSB_PWM_NANOSECONDS <= 3000)
+static const long kBaseTimeNanos = LSB_PWM_NANOSECONDS;
+#  else
+#     error "PWM Nanoseconds should be in the range of 50...3000"
+#  endif
+#else
 static const long kBaseTimeNanos = 130;
+#endif
 
 // We need one global instance of a timing correct pulser. There are different
 // implementations depending on the context.
@@ -350,15 +359,28 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   clock.bits.clock = 1;
   strobe.bits.strobe = 1;
 
+#if RGB_SCAN_INTERLACED
+  uint8_t rot_bits = 0;
+  switch (double_rows_) {
+  case  4: rot_bits = 1; break;
+  case  8: rot_bits = 2; break;
+  case 16: rot_bits = 3; break;
+  case 32: rot_bits = 4; break;
+  }
+#endif
+
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
-  for (uint8_t d_row = 0; d_row < double_rows_; ++d_row) {
+  for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
+#if RGB_SCAN_INTERLACED
+    uint8_t d_row = ((row_loop << 1) | (row_loop >> rot_bits)) & row_mask_;
+#else
+    uint8_t d_row = row_loop;
+#endif
     row_address.bits.a = d_row;
     row_address.bits.b = d_row >> 1;
     row_address.bits.c = d_row >> 2;
     row_address.bits.d = d_row >> 3;
     row_address.bits.e = d_row >> 4;
-
-    io->WriteMaskedBits(row_address.raw, row_mask.raw);  // Set row address
 
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
@@ -376,13 +398,14 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       // OE of the previous row-data must be finished before strobe.
       sOutputEnablePulser->WaitPulseFinished();
 
+      // Setting address and strobing needs to happen in dark time.
+      io->WriteMaskedBits(row_address.raw, row_mask.raw);  // Set row address
       io->SetBits(strobe.raw);   // Strobe in the previously clocked in row.
       io->ClearBits(strobe.raw);
 
       // Now switch on for the sleep time necessary for that bit-plane.
       sOutputEnablePulser->SendPulse(b);
     }
-    sOutputEnablePulser->WaitPulseFinished();
   }
 }
 }  // namespace internal

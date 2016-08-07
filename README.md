@@ -18,17 +18,6 @@ GNU General Public License Version 2.0 <http://www.gnu.org/licenses/gpl-2.0.txt>
 The demo-main.cc **example code** using this library is released to the
 public domain.
 
-## NOTICE: Wiring change on 2015-07-19
-
-The wiring to connect the RPi and the Hub75 changed on 2015-07-19 to provide
-improved output quality.
-If you have an existing wiring from an earlier version of this library, provide
-
-    DEFINE+=-DRGB_CLASSIC_PINOUT make
-
-to the compilation to make the old wiring work.
-Better yet, consider changing the wiring as it provides a much more stable image. See table below for wiring.
-
 Overview
 --------
 The 32x32 or 16x32 RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
@@ -55,6 +44,8 @@ sometimes the cabeling can't keep up with the speed; check out
 this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
 what to do.
 
+The [Raspbian Lite][raspbian-lite] distribution is recommended.
+
 Types of Displays
 -----------------
 There are various types of displays that come all with the same Hub75 connector.
@@ -62,6 +53,7 @@ They vary in the way the multiplexing is happening or sometimes they are
 
 Type  | Scan Multiplexing | Program Option  | Remark
 -----:|:-----------------:|:----------------|-------
+64x64 |  1:32             | -r 64 -c 2      | For displays with E line.
 32x32 |  1:16             | -r 32           |
 32x64 |  1:16             | -r 32 -c 2      | internally two chained 32x32
 16x32 |  1:8              | -r 16           |
@@ -69,6 +61,10 @@ Type  | Scan Multiplexing | Program Option  | Remark
 
 These can be chained by connecting the output of one panel to the input of
 the next panel. You can chain quite a few together.
+
+The 64x64 matrixes typically have 5 address lines (A, B, C, D, E). There are
+also 64x64 panels out there that only seem to have 1:4 multiplexing (there
+is A and B), but I have not had these in my lab yet to test.
 
 Connection
 ----------
@@ -149,7 +145,7 @@ Connection                        | Pin | Pin |  Connection
              :droplet: **[3] G1** |   3 |   4 | -
              :droplet: **[3] B1** |   5 |   6 | **GND** :smile::boom::droplet:
 :smile::boom::droplet: **strobe** |   7 |   8 | **[3] R1** :droplet:
-                              -   |   9 |  10 | -
+                              -   |   9 |  10 | **E**    :smile::boom::droplet: (for 64 row matrix, 1:32)
 :smile::boom::droplet: **clock**  |  11 |  12 | **OE-**  :smile::boom::droplet:
               :smile:  **[1] G1** |  13 |  14 | -
 :smile::boom::droplet:      **A** |  15 |  16 | **B**    :smile::boom::droplet:
@@ -402,7 +398,42 @@ have a look into [`demo-main.cc`](./demo-main.cc).
 
 Troubleshooting
 ---------------
-Some panels don't handle the 3.3V logic level well, or the RPi output drivers
+Here are some tips in case things don't work as expected.
+
+### Use minimal Raspbian distribution
+In general, run a minimal configuration on your Pi. There were some
+unconfirmed reports of problems with Pis running GUI systems. Even though the
+Raspberry Pi foundation makes you believe that you can do that: don't. Using it
+with a GUI is a frustratingly slow use of an otherwise perfectly good
+embedded device.
+
+Everything seems to work well with a **[Raspbian Lite][raspbian-lite]**
+distribution.
+
+### Bad interaction with Sound
+If sound is enabled on your Pi, this will not work together with the LED matrix,
+as both need the same internal hardware sub-system. So if you run `lsmod` and
+see any modules show up with `snd` in their name, this could be causing trouble.
+
+In that case, you should create a kernel module blacklist file like the
+following on your system and update your initramfs:
+
+```
+cat <<EOF | sudo tee /etc/modprobe.d/blacklist-rgb-matrix.conf
+blacklist snd_bcm2835
+blacklist snd_pcm
+blacklist snd_timer
+blacklist snd_pcsp
+blacklist snd
+EOF
+
+sudo update-initramfs -u
+```
+
+Reboot and confirm that no 'snd' module is running.
+
+### Logic level voltage not sufficient
+Some panels don't interpret the 3.3V logic level well, or the RPi output drivers
 have trouble driving longer cables, in particular with
 faster Raspberry Pis Version 2. This results in artifacts like randomly
 showing up pixels, color fringes, or parts of the panel showing 'static'.
@@ -437,18 +468,28 @@ know that your display is fast enough, try to comment out that line.
 
 Then `make` again.
 
-Inverted Colors ?
------------------
+### Ghosting
+Some panels have trouble with sharp contrasts and short pulses that results
+in ghosting. It is particularly apparent with very sharp contrasts, such as
+bright text on black background. This can be improved by tweaking the `LSB_PWM_NANOSECONDS`
+parameter in [lib/Makefile](./lib/Makefile). See description there for details.
+
+The following example is a little exaggerated:
+
+Ghosting with low LSB_PWM_NANOSECONDS  | No ghosting after tweaking
+---------------------------------------|------------------------------
+![](img/text-ghosting.jpg)             |![](img/text-no-ghosting.jpg)
+
+### Inverted Colors ?
+
 There are some displays out there that use inverse logic for the colors. You
-notice that your image looks like a 'negative'. In that case, uncomment the
-folling `DEFINES` line in [lib/Makefile](./lib/Makefile) by removing the `#`
-at the beginning of the line.
+notice that your image looks like a 'negative'. The parameter to tweak is
+`INVERSE_RGB_DISPLAY_COLORS` in [lib/Makefile](./lib/Makefile).
 
-     #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS   # remove '#' in the beginning
+### Check configuration in lib/Makefile
 
-Then, recompile
-
-     make
+There are lots of parameters in [lib/Makefile](./lib/Makefile) that you might
+be interested in tweaking.
 
 A word about power
 ------------------
@@ -563,9 +604,24 @@ Then, uncomment the following line in the Makefile and recompile.
 
 Reboot the Pi and you now should have less visible flicker.
 
-(There is potentially another hardware hack needed for 1:32 multiplexing 64x64
-panels that require an E-channel, but that is experimental right now; contact
-me directly for instructions).
+### 64x64 with E-line on Adafruit HAT
+There is another hardware mod needed for 1:32 multiplexing 64x64
+panels that require an E-channel. It is a little more advanced hack, so this
+is only really for people who are comfortable with this kind of thing.
+First, you have to figure out which is the input of the E-Line on your matrix
+(they seem to be either on Pin 4 or Pin 8 of the IDC connector).
+You need to disconnect that Pin from the ground plane (e.g. with an Exacto
+knife) and connect GPIO 24 to it. The following images illustrate the case for
+IDC Pin 4.
+
+<a href="img/adafruit-64x64-front.jpg"><img src="img/adafruit-64x64-front.jpg" height="80px"></a>
+<a href="img/adafruit-64x64-back.jpg"><img src="img/adafruit-64x64-back.jpg" height="80px"></a>
+
+If the direct connection does not work, you need to send it through a free
+level converter of the Adafruit HAT. Since all unused inputs are grounded
+with traces under the chip, this involves lifting a leg from the
+HCT245 (figure out a free bus driver from the schematic). If all of the
+above makes sense to you, you have the Ninja level to do it!
 
 Technical details
 -----------------
@@ -653,3 +709,4 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf
 [adafruit-hat]: https://www.adafruit.com/products/2345
+[raspbian-lite]: https://downloads.raspberrypi.org/raspbian_lite_latest

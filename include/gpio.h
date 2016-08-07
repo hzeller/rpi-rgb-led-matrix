@@ -44,9 +44,14 @@ class GPIO {
     if (!value) return;
     *gpio_set_bits_ = value;
 #ifdef RGB_SLOWDOWN_GPIO
-    *gpio_set_bits_ = value;
-#  if RGB_SLOWDOWN_GPIO > 1
+#  if RGB_SLOWDOWN_GPIO != 0
+    *gpio_set_bits_ = value;   // Slowdown=1. Typical for RPi 2 & 3, not for 1.
+#  endif
+#  if RGB_SLOWDOWN_GPIO >= 2
     *gpio_set_bits_ = value;   // for really slow cases
+#  endif
+#  if RGB_SLOWDOWN_GPIO >= 3
+    *gpio_set_bits_ = value;   // Jeez, that should really not be necessary
 #  endif
 #endif
   }
@@ -56,9 +61,14 @@ class GPIO {
     if (!value) return;
     *gpio_clr_bits_ = value;
 #ifdef RGB_SLOWDOWN_GPIO
-    *gpio_clr_bits_ = value;
-#  if RGB_SLOWDOWN_GPIO > 1
+#  if RGB_SLOWDOWN_GPIO != 0
+    *gpio_clr_bits_ = value;  // Slowdown=1. Typical for RPi 2 & 3, not for 1.
+#  endif
+#  if RGB_SLOWDOWN_GPIO >= 2
     *gpio_clr_bits_ = value;  // for really slow cases
+#  endif
+#  if RGB_SLOWDOWN_GPIO >= 3
+    *gpio_clr_bits_ = value;  // Jeez, that should really not be necessary
 #  endif
 #endif
   }
@@ -103,4 +113,5 @@ public:
 };
 
 }  // end namespace rgb_matrix
+
 #endif  // RPI_GPIO_H

@@ -211,6 +211,38 @@ private:
   const std::vector<int> nano_specs_;
 };
 
+// This Pin-Pulser does not guarantee timings, but it
+// will interleave and keep the pin on for as long as possible
+// (and thus: brighness).
+// This is only really acceptable for 1-bit PWM where we don't care
+// about relative timings.
+class OnTimePriorityPinPulser : public PinPulser {
+public:
+  OnTimePriorityPinPulser(GPIO *io, uint32_t bits,
+                          const std::vector<int> &nano_specs)
+    : io_(io), bits_(bits), nano_specs_(nano_specs), triggered_(false) {}
+
+  virtual void SendPulse(int time_spec_number) {
+    io_->ClearBits(bits_);
+    requested_spec_ = time_spec_number;
+    triggered_ = true;
+  }
+
+  virtual void WaitPulseFinished() {
+    if (!triggered_) return;
+    Timers::sleep_nanos(nano_specs_[requested_spec_]);
+    io_->SetBits(bits_);
+    triggered_ = false;
+  }
+
+private:
+  GPIO *const io_;
+  const uint32_t bits_;
+  const std::vector<int> nano_specs_;
+  int requested_spec_;
+  bool triggered_;
+};
+
 static volatile uint32_t *timer1Mhz = NULL;
 
 static void sleep_nanos_rpi_1(long nanos);
@@ -278,9 +310,16 @@ static void sleep_nanos_rpi_2(long nanos) {
 // It only works on GPIO-18 though.
 class HardwarePinPulser : public PinPulser {
 public:
-  static bool CanHandle(uint32_t gpio_mask) { return gpio_mask == (1 << 18); }
+  static bool CanHandle(uint32_t gpio_mask) {
+#ifdef DISABLE_HARDWARE_PULSES
+    return false;
+#else
+    return gpio_mask == (1 << 18);
+#endif
+  }
 
-  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs) {
+  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
+    : triggered_(false) {
     assert(CanHandle(pins));
 
     for (size_t i = 0; i < specs.size(); ++i) {
@@ -343,10 +382,12 @@ public:
 
     sleep_hint_ = sleep_hints_[c];
     start_time_ = *timer1Mhz;
+    triggered_ = true;
     pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
   }
 
   virtual void WaitPulseFinished() {
+    if (!triggered_) return;
     // Determine how long we already spent and sleep to get close to the
     // actual end-time of our sleep period.
     // (substract 25 usec, as this is the OS overhead).
@@ -360,6 +401,7 @@ public:
       // busy wait until done.
     }
     pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
+    triggered_ = false;
   }
 
 private:
@@ -395,6 +437,7 @@ private:
   volatile uint32_t *clk_reg_;
   uint32_t start_time_;
   int sleep_hint_;
+  bool triggered_;
 };
 
 } // end anonymous namespace
@@ -402,13 +445,15 @@ private:
 // Public PinPulser factory
 PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
                              const std::vector<int> &nano_wait_spec) {
-  // The only implementation so far.
   if (!Timers::Init()) return NULL;
+#if EXPERIMENTAL_HIGH_BRIGHTNESS
+  return new OnTimePriorityPinPulser(io, gpio_mask, nano_wait_spec);
+#else
   if (HardwarePinPulser::CanHandle(gpio_mask)) {
     return new HardwarePinPulser(gpio_mask, nano_wait_spec);
   } else {
     return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
   }
+#endif
 }
-
 } // namespace rgb_matrix

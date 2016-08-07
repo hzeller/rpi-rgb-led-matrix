@@ -809,8 +809,8 @@ public:
   }
 
 private:
-  void drawBarRow(int bar, uint8_t y, uint8_t r, uint8_t g, uint8_t b) {
-    for (uint8_t x=bar*barWidth_; x<(bar+1)*barWidth_; ++x) {
+  void drawBarRow(int bar, int y, uint8_t r, uint8_t g, uint8_t b) {
+    for (int x=bar*barWidth_; x<(bar+1)*barWidth_; ++x) {
       canvas()->SetPixel(x, height_-1-y, r, g, b);
     }
   }
