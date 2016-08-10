@@ -6,6 +6,20 @@
 OBJECTS=gpio.o led-matrix.o framebuffer.o thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o
 TARGET=librgbmatrix
 
+# There are several different pinouts for various breakout boards that uses
+# this library. If you are using the described pinout in the toplevel README.md
+# or the standard active-3 breakout board, then 'regular' is the one you'd like
+# to use (there is also a 'classic' one for an early form).
+#
+# Adafruit also made a breakout board, if you want to use that, choose
+# 'adafruit-hat'
+#
+# These are the choices
+#   regular
+#   adafruit-hat
+#   classic            # Not really used anymore
+HARDWARE_DESC?=regular
+
 ###
 # After you change any of the following DEFINES, make sure to 'make clean'
 # and 'make' again
@@ -90,9 +104,9 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 # consider wiring up the new one (sorry for the inconvenience).
 #DEFINES+=-DRGB_CLASSIC_PINOUT
 
-# If you use RGB_CLASSIC_PINOUT and use Raspberry Pi 1, Revision A,
+# If you use HARDWARE_DESC=classic and a Raspberry Pi 1, Revision A,
 # this might be useful.
-#DEFINES+=-DONLY_SINGLE_CHAIN
+#DEFINES+=-DPI_REV1_RGB_PINOUT
 
 # Typically, a Hub75 panel is split in two half displays, so that a 1:16
 # multiplexing actually multiplexes over two half displays and gives 32 lines.
@@ -118,7 +132,7 @@ DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 DEFINES+=$(USER_DEFINES)
 
 INCDIR=../include
-CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
+CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES) -Ihardware/$(HARDWARE_DESC)
 
 all : $(TARGET).a $(TARGET).so.1
 
@@ -140,6 +154,7 @@ clean:
 	rm -f $(OBJECTS) $(TARGET).a $(TARGET).so.1
 
 compiler-flags: FORCE
+	@if [ ! -d hardware/$(HARDWARE_DESC) ] ; then echo "HARDWARE_DESC='$(HARDWARE_DESC)' is an unsupported hardware description. Typo ?"; exit 1; fi
 	@echo '$(CXXFLAGS)' | cmp -s - $@ || echo '$(CXXFLAGS)' > $@
 
 .PHONY: FORCE

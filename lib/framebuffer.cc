@@ -33,6 +33,10 @@ enum {
   kBitPlanes = 11  // maximum usable bitplanes.
 };
 
+#ifndef RGB_PARALLEL_CHAINS
+# error "Your pin-mapping.h file should contain an RGB_PARALLEL_CHAINS macro"
+#endif
+
 #if defined(LSB_PWM_NANOSECONDS)
 // Make sure that there are sensible values.
 //   > 3000ns flickers even with 1:4 multiplexing on a single panel
@@ -49,11 +53,6 @@ static const long kBaseTimeNanos = 130;
 // We need one global instance of a timing correct pulser. There are different
 // implementations depending on the context.
 static PinPulser *sOutputEnablePulser = NULL;
-
-// The Adafruit HAT only supports one chain.
-#if defined(ADAFRUIT_RGBMATRIX_HAT) || defined(ADAFRUIT_RGBMATRIX_HAT_PWM)
-#  define ONLY_SINGLE_CHAIN 1
-#endif
 
 #ifdef RGB_SWAP_GREEN_BLUE
 #  define PANEL_SWAP_G_B_ 1
@@ -78,12 +77,11 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel)
   Clear();
   assert(rows_ == 8 || rows_ == 16 || rows_ == 32 || rows_ == 64);
   assert(parallel >= 1 && parallel <= 3);
-#ifdef ONLY_SINGLE_CHAIN
-  if (parallel > 1) {
-    fprintf(stderr, "ONLY_SINGLE_CHAIN is defined, but parallel > 1 given\n");
+  if (parallel > RGB_PARALLEL_CHAINS) {
+    fprintf(stderr, "Parallel of %d is higher than the supported "
+            "RGB_PARALLEL_CHAINS of %d\n", parallel, RGB_PARALLEL_CHAINS);
     assert(parallel == 1);
   }
-#endif
 }
 
 Framebuffer::~Framebuffer() {
@@ -98,7 +96,8 @@ Framebuffer::~Framebuffer() {
   IoBits b;
   b.raw = 0;
 
-#ifdef PI_REV1_RGB_PINOUT_
+#ifdef PI_REV1_RGB_PINOUT
+  // This is only to be enabled with classic pinout.
   b.bits.output_enable_rev1 = b.bits.output_enable_rev2 = 1;
   b.bits.clock_rev1 = b.bits.clock_rev2 = 1;
 #endif
@@ -110,12 +109,14 @@ Framebuffer::~Framebuffer() {
   b.bits.p0_r1 = b.bits.p0_g1 = b.bits.p0_b1 = 1;
   b.bits.p0_r2 = b.bits.p0_g2 = b.bits.p0_b2 = 1;
 
-#ifndef ONLY_SINGLE_CHAIN
+#if RGB_PARALLEL_CHAINS >= 2
   if (parallel >= 2) {
     b.bits.p1_r1 = b.bits.p1_g1 = b.bits.p1_b1 = 1;
     b.bits.p1_r2 = b.bits.p1_g2 = b.bits.p1_b2 = 1;
   }
+#endif
 
+#if RGB_PARALLEL_CHAINS >= 3
   if (parallel >= 3) {
     b.bits.p2_r1 = b.bits.p2_g1 = b.bits.p2_b1 = 1;
     b.bits.p2_r2 = b.bits.p2_g2 = b.bits.p2_b2 = 1;
@@ -222,7 +223,7 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
     plane_bits.bits.p0_g1 = plane_bits.bits.p0_g2 = (green & mask) == mask;
     plane_bits.bits.p0_b1 = plane_bits.bits.p0_b2 = (blue & mask) == mask;
 
-#ifndef ONLY_SINGLE_CHAIN
+#if RGB_PARALLEL_CHAINS > 1
     plane_bits.bits.p1_r1 = plane_bits.bits.p1_r2 =
       plane_bits.bits.p2_r1 = plane_bits.bits.p2_r2 = (red & mask) == mask;
     plane_bits.bits.p1_g1 = plane_bits.bits.p1_g2 =
@@ -271,7 +272,7 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
         bits += columns_;
       }
     }
-#ifndef ONLY_SINGLE_CHAIN
+#if RGB_PARALLEL_CHAINS >= 2
   } else if (y >= rows_ && y < 2 * rows_) {
     // Parallel chain #2
     if (y - rows_ < double_rows_) {   // Upper sub-panel.
@@ -291,6 +292,8 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
         bits += columns_;
       }
     }
+#endif
+#if RGB_PARALLEL_CHAINS >= 3
   } else {
     // Parallel chain #3
     if (y - 2*rows_ < double_rows_) {   // Upper sub-panel.
@@ -323,7 +326,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
     = color_clk_mask.bits.p0_g2
     = color_clk_mask.bits.p0_b2 = 1;
 
-#ifndef ONLY_SINGLE_CHAIN
+#if RGB_PARALLEL_CHAINS >= 2
   if (parallel_ >= 2) {
     color_clk_mask.bits.p1_r1
       = color_clk_mask.bits.p1_g1
@@ -332,7 +335,9 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       = color_clk_mask.bits.p1_g2
       = color_clk_mask.bits.p1_b2 = 1;
   }
+#endif
 
+#if RGB_PARALLEL_CHAINS >= 3
   if (parallel_ >= 3) {
     color_clk_mask.bits.p2_r1
       = color_clk_mask.bits.p2_g1
