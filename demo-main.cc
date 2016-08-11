@@ -1010,7 +1010,7 @@ static int usage(const char *progname) {
           progname);
   fprintf(stderr, "Options:\n"
           "\t-r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),\n"
-	  "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; 64 for 1:32 multiplexing. "
+          "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; 64 for 1:32 multiplexing. "
           "Default: 32\n"
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
@@ -1265,7 +1265,7 @@ int main(int argc, char *argv[]) {
   // Image generating demo is crated. Now start the thread.
   image_gen->Start();
 
-  // Now, the image genreation runs in the background. We can do arbitrary
+  // Now, the image generation runs in the background. We can do arbitrary
   // things here in parallel. In this demo, we're essentially just
   // waiting for one of the conditions to exit.
   if (as_daemon) {
