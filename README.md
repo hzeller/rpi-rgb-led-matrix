@@ -575,7 +575,7 @@ ready-made vs. single-chain tradeoff is worthwhile, then you might go for that
 ### Getting it to work
 
 The Adafruit HAT uses a modified pinout, so they forked this library and
-modified the pinout there. However, that fork is _ancient_, so I stronlgy
+modified the pinout there. However, that fork is _ancient_, so I strongly
 suggest to use this original library instead.
 
 In this library here, you have to uncomment the following line in
