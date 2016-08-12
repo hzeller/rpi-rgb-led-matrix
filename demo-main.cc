@@ -295,6 +295,8 @@ public:
       }
       offscreen_ = matrix_->SwapOnVSync(offscreen_);
       horizontal_position_ += scroll_jumps_;
+	  
+	  horizontal_position_%=matrix_->transformer()->Transform(offscreen_)->width();
       if (horizontal_position_ < 0) horizontal_position_ = current_image_.width;
       if (scroll_ms_ <= 0) {
         // No scrolling. We don't need the image anymore.
