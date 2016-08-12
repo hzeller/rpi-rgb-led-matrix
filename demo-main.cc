@@ -67,7 +67,8 @@ private:
 // Simple generator that pulses through brightness on red, green, blue and white
 class BrightnessPulseGenerator : public ThreadedCanvasManipulator {
 public:
-  BrightnessPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {}
+  BrightnessPulseGenerator(RGBMatrix *m)
+    : ThreadedCanvasManipulator(m), matrix_(m) {}
   void Run() {
     const uint8_t max_brightness = matrix_->brightness();
     const uint8_t c = 255;
@@ -267,8 +268,10 @@ public:
   }
 
   void Run() {
-    const int screen_height = matrix_->transformer()->Transform(offscreen_)->height();
-    const int screen_width = matrix_->transformer()->Transform(offscreen_)->width();
+    const int screen_height = matrix_->transformer()->Transform(offscreen_)
+      ->height();
+    const int screen_width = matrix_->transformer()->Transform(offscreen_)
+      ->width();
     while (running()) {
       {
         MutexLock l(&mutex_new_image_);
@@ -285,8 +288,9 @@ public:
       for (int x = 0; x < screen_width; ++x) {
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = current_image_.getPixel(
-              (horizontal_position_ + x) % current_image_.width, y);
-          matrix_->transformer()->Transform(offscreen_)->SetPixel(x, y, p.red, p.green, p.blue);
+            (horizontal_position_ + x) % current_image_.width, y);
+          matrix_->transformer()->Transform(offscreen_)->SetPixel(
+            x, y, p.red, p.green, p.blue);
         }
       }
       offscreen_ = matrix_->SwapOnVSync(offscreen_);
@@ -341,7 +345,7 @@ private:
   // Current image is only manipulated in our thread.
   Image current_image_;
 
-  // New image can be loaded from another thread, then taken over in main thread.
+  // New image can be loaded from another thread, then taken over in main thread
   Mutex mutex_new_image_;
   Image new_image_;
 
@@ -1010,7 +1014,8 @@ static int usage(const char *progname) {
           progname);
   fprintf(stderr, "Options:\n"
           "\t-r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),\n"
-          "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; 64 for 1:32 multiplexing. "
+          "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; "
+          "64 for 1:32 multiplexing. "
           "Default: 32\n"
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
@@ -1023,9 +1028,11 @@ static int usage(const char *progname) {
           "\t                /etc/init.d, but also when running without\n"
           "\t                terminal (e.g. cron).\n"
           "\t-t <seconds>  : Run for these number of seconds, then exit.\n"
-          "\t                (if neither -d nor -t are supplied, waits for <RETURN>)\n"
+          "\t                (if neither -d nor -t are supplied, "
+          "waits for <RETURN>)\n"
           "\t-b <brightnes>: Sets brightness percent. Default: 100.\n"
-          "\t-R <rotation> : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.\n");
+          "\t-R <rotation> : Sets the rotation of matrix. "
+          "Allowed: 0, 90, 180, 270. Default: 0.\n");
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
@@ -1159,7 +1166,8 @@ int main(int argc, char *argv[]) {
   }
 
   if (rotation % 90 != 0) {
-    fprintf(stderr, "Rotation %d not allowed! Only 0, 90, 180 and 270 are possible.\n", rotation);
+    fprintf(stderr, "Rotation %d not allowed! "
+            "Only 0, 90, 180 and 270 are possible.\n", rotation);
     return 1;
   }
 
