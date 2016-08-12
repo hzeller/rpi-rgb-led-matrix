@@ -82,10 +82,10 @@ public:
       }
 
       switch (count % 4) {
-        case 0: matrix_->Fill(c, 0, 0); break;
-        case 1: matrix_->Fill(0, c, 0); break;
-        case 2: matrix_->Fill(0, 0, c); break;
-        case 3: matrix_->Fill(c, c, c); break;
+      case 0: matrix_->Fill(c, 0, 0); break;
+      case 1: matrix_->Fill(0, c, 0); break;
+      case 2: matrix_->Fill(0, 0, c); break;
+      case 3: matrix_->Fill(c, c, c); break;
       }
 
       usleep(20 * 1000);
@@ -212,7 +212,7 @@ public:
       scroll_ms_(scroll_ms),
       horizontal_position_(0),
       matrix_(m) {
-      offscreen_ = matrix_->CreateFrameCanvas();
+    offscreen_ = matrix_->CreateFrameCanvas();
   }
 
   virtual ~ImageScroller() {
@@ -285,7 +285,7 @@ public:
       for (int x = 0; x < screen_width; ++x) {
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = current_image_.getPixel(
-                     (horizontal_position_ + x) % current_image_.width, y);
+              (horizontal_position_ + x) % current_image_.width, y);
           matrix_->transformer()->Transform(offscreen_)->SetPixel(x, y, p.red, p.green, p.blue);
         }
       }
@@ -400,20 +400,20 @@ public:
       for (int x=0; x<width_; ++x) {
         for (int y=0; y<height_; ++y) {
           switch (values_[x][y]) {
-            case 0:
-              canvas()->SetPixel(x, y, 0, 0, 0);
-              break;
-            case 1:
-              canvas()->SetPixel(x, y, 0, 0, 200);
-              break;
-            case 2:
-              canvas()->SetPixel(x, y, 0, 200, 0);
-              break;
-            case 3:
-              canvas()->SetPixel(x, y, 150, 100, 0);
-              break;
-            default:
-              canvas()->SetPixel(x, y, 200, 0, 0);
+          case 0:
+            canvas()->SetPixel(x, y, 0, 0, 0);
+            break;
+          case 1:
+            canvas()->SetPixel(x, y, 0, 0, 200);
+            break;
+          case 2:
+            canvas()->SetPixel(x, y, 0, 200, 0);
+            break;
+          case 3:
+            canvas()->SetPixel(x, y, 150, 100, 0);
+            break;
+          default:
+            canvas()->SetPixel(x, y, 200, 0, 0);
           }
         }
       }
@@ -496,15 +496,15 @@ public:
     if (r_<150 && g_<150 && b_<150) {
       int c = rand()%3;
       switch (c) {
-        case 0:
-          r_ = 200;
-          break;
-        case 1:
-          g_ = 200;
-          break;
-        case 2:
-          b_ = 200;
-          break;
+      case 0:
+        r_ = 200;
+        break;
+      case 1:
+        g_ = 200;
+        break;
+      case 2:
+        b_ = 200;
+        break;
       }
     }
   }
@@ -653,32 +653,32 @@ public:
     while (running()) {
       // LLRR
       switch (values_[antX_][antY_]) {
-        case 0:
-        case 1:
-          antDir_ = (antDir_+1+4) % 4;
-          break;
-        case 2:
-        case 3:
-          antDir_ = (antDir_-1+4) % 4;
-          break;
+      case 0:
+      case 1:
+        antDir_ = (antDir_+1+4) % 4;
+        break;
+      case 2:
+      case 3:
+        antDir_ = (antDir_-1+4) % 4;
+        break;
       }
 
       values_[antX_][antY_] = (values_[antX_][antY_] + 1) % numColors_;
       int oldX = antX_;
       int oldY = antY_;
       switch (antDir_) {
-        case 0:
-          antX_++;
-          break;
-        case 1:
-          antY_++;
-          break;
-        case 2:
-          antX_--;
-          break;
-        case 3:
-          antY_--;
-          break;
+      case 0:
+        antX_++;
+        break;
+      case 1:
+        antY_++;
+        break;
+      case 2:
+        antX_--;
+        break;
+      case 3:
+        antY_--;
+        break;
       }
       updatePixel(oldX, oldY);
       if (antX_ < 0 || antX_ >= width_ || antY_ < 0 || antY_ >= height_)
@@ -691,18 +691,18 @@ public:
 private:
   void updatePixel(int x, int y) {
     switch (values_[x][y]) {
-      case 0:
-        canvas()->SetPixel(x, y, 200, 0, 0);
-        break;
-      case 1:
-        canvas()->SetPixel(x, y, 0, 200, 0);
-        break;
-      case 2:
-        canvas()->SetPixel(x, y, 0, 0, 200);
-        break;
-      case 3:
-        canvas()->SetPixel(x, y, 150, 100, 0);
-        break;
+    case 0:
+      canvas()->SetPixel(x, y, 200, 0, 0);
+      break;
+    case 1:
+      canvas()->SetPixel(x, y, 0, 200, 0);
+      break;
+    case 2:
+      canvas()->SetPixel(x, y, 0, 0, 200);
+      break;
+    case 3:
+      canvas()->SetPixel(x, y, 150, 100, 0);
+      break;
     }
     if (x == antX_ && y == antY_)
       canvas()->SetPixel(x, y, 0, 0, 0);
@@ -989,9 +989,9 @@ private:
   bool is85PercentFit() {
     int numFit = 0;
     for (int i = 0; i < popSize_; ++i) {
-        if (calcFitness(children_[i].dna, target_) < 1) {
-            ++numFit;
-        }
+      if (calcFitness(children_[i].dna, target_) < 1) {
+        ++numFit;
+      }
     }
     return ((numFit / (float)popSize_) > 0.85f);
   }
@@ -1010,7 +1010,7 @@ static int usage(const char *progname) {
           progname);
   fprintf(stderr, "Options:\n"
           "\t-r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),\n"
-	  "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; 64 for 1:32 multiplexing. "
+          "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; 64 for 1:32 multiplexing. "
           "Default: 32\n"
           "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
           "Default: 1\n"
@@ -1265,7 +1265,7 @@ int main(int argc, char *argv[]) {
   // Image generating demo is crated. Now start the thread.
   image_gen->Start();
 
-  // Now, the image genreation runs in the background. We can do arbitrary
+  // Now, the image generation runs in the background. We can do arbitrary
   // things here in parallel. In this demo, we're essentially just
   // waiting for one of the conditions to exit.
   if (as_daemon) {
