@@ -140,6 +140,6 @@ clean:
 	rm -f $(OBJECTS) $(TARGET).a $(TARGET).so.1
 
 compiler-flags: FORCE
-	@echo '$(CXXFLAGS)' | cmp -s - $@ || echo '$(CXXFLAGS)' > $@
+	@echo '$(CXX) $(CXXFLAGS)' | cmp -s - $@ || echo '$(CXX) $(CXXFLAGS)' > $@
 
 .PHONY: FORCE
