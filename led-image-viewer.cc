@@ -53,7 +53,7 @@ public:
                     rgb_matrix::FrameCanvas *output)
     : canvas_(output) {
     int delay_time = img.animationDelay();  // in 1/100s of a second.
-    if (delay_time < 1) delay_time = 1;
+    if (delay_time < 1) delay_time = 10;
     delay_micros_ = delay_time * 10000;
 
     Canvas *const transformed_draw_canvas = transformer->Transform(output);
