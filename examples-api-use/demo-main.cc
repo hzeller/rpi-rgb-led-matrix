@@ -1056,9 +1056,7 @@ int main(int argc, char *argv[]) {
   bool as_daemon = false;
   int runtime_seconds = -1;
   int demo = -1;
-  int rows = 32;
-  int chain = 1;
-  int parallel = 1;
+  RGBMatrix::Options options;
   int scroll_ms = 30;
   int pwm_bits = -1;
   int brightness = 100;
@@ -1084,15 +1082,15 @@ int main(int argc, char *argv[]) {
       break;
 
     case 'r':
-      rows = atoi(optarg);
+      options.rows = atoi(optarg);
       break;
 
     case 'P':
-      parallel = atoi(optarg);
+      options.parallel = atoi(optarg);
       break;
 
     case 'c':
-      chain = atoi(optarg);
+      options.chain_length = atoi(optarg);
       break;
 
     case 'm':
@@ -1113,8 +1111,8 @@ int main(int argc, char *argv[]) {
 
     case 'L':
       // The 'large' display assumes a chain of four displays with 32x32
-      chain = 4;
-      rows = 32;
+      options.chain_length = 4;
+      options.rows = 32;
       large_display = true;
       break;
 
@@ -1142,20 +1140,21 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (rows != 8 && rows != 16 && rows != 32 && rows != 64) {
+  if (options.rows != 8 && options.rows != 16
+      && options.rows != 32 && options.rows != 64) {
     fprintf(stderr, "Rows can one of 8, 16, 32 or 64 "
             "for 1:4, 1:8, 1:16 and 1:32 multiplexing respectively.\n");
     return 1;
   }
 
-  if (chain < 1) {
+  if (options.chain_length < 1) {
     fprintf(stderr, "Chain outside usable range\n");
     return 1;
   }
-  if (chain > 8) {
+  if (options.chain_length > 8) {
     fprintf(stderr, "That is a long chain. Expect some flicker.\n");
   }
-  if (parallel < 1 || parallel > 3) {
+  if (options.parallel < 1 || options.parallel > 3) {
     fprintf(stderr, "Parallel outside usable range.\n");
     return 1;
   }
@@ -1185,7 +1184,7 @@ int main(int argc, char *argv[]) {
   }
 
   // The matrix, our 'frame buffer' and display updater.
-  RGBMatrix *matrix = new RGBMatrix(&io, rows, chain, parallel);
+  RGBMatrix *matrix = new RGBMatrix(&io, options);
   matrix->set_luminance_correct(do_luminance_correct);
   matrix->SetBrightness(brightness);
   if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {

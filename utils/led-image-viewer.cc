@@ -163,9 +163,7 @@ static int usage(const char *progname) {
 int main(int argc, char *argv[]) {
   Magick::InitializeMagick(*argv);
 
-  int rows = 32;
-  int chain = 1;
-  int parallel = 1;
+  RGBMatrix::Options options;
   int pwm_bits = -1;
   int brightness = 100;
   bool large_display = false;  // example for using Transformers
@@ -174,15 +172,15 @@ int main(int argc, char *argv[]) {
   int opt;
   while ((opt = getopt(argc, argv, "r:P:c:p:b:dL")) != -1) {
     switch (opt) {
-    case 'r': rows = atoi(optarg); break;
-    case 'P': parallel = atoi(optarg); break;
-    case 'c': chain = atoi(optarg); break;
+    case 'r': options.rows = atoi(optarg); break;
+    case 'P': options.parallel = atoi(optarg); break;
+    case 'c': options.chain_length = atoi(optarg); break;
     case 'p': pwm_bits = atoi(optarg); break;
     case 'd': as_daemon = true; break;
     case 'b': brightness = atoi(optarg); break;
     case 'L':
-      chain = 4;
-      rows = 32;
+      options.chain_length = 4;
+      options.rows = 32;
       large_display = true;
       break;
     default:
@@ -190,20 +188,21 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (rows != 8 && rows != 16 && rows != 32 && rows != 64) {
+  if (options.rows != 8 && options.rows != 16
+      && options.rows != 32 && options.rows != 64) {
     fprintf(stderr, "Rows can one of 8, 16, 32 or 64 "
             "for 1:4, 1:8, 1:16 and 1:32 multiplexing respectively.\n");
     return 1;
   }
 
-  if (chain < 1) {
+  if (options.chain_length < 1) {
     fprintf(stderr, "Chain outside usable range\n");
     return usage(argv[0]);
   }
-  if (chain > 8) {
+  if (options.chain_length > 8) {
     fprintf(stderr, "That is a long chain. Expect some flicker.\n");
   }
-  if (parallel < 1 || parallel > 3) {
+  if (options.parallel < 1 || options.parallel > 3) {
     fprintf(stderr, "Parallel outside usable range.\n");
     return usage(argv[0]);
   }
@@ -236,7 +235,7 @@ int main(int argc, char *argv[]) {
     close(STDERR_FILENO);
   }
 
-  RGBMatrix *const matrix = new RGBMatrix(&io, rows, chain, parallel);
+  RGBMatrix *const matrix = new RGBMatrix(&io, options);
   if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
     fprintf(stderr, "Invalid range of pwm-bits\n");
     return 1;

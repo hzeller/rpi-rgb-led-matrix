@@ -42,8 +42,11 @@ struct RGBLedMatrix *led_matrix_create(int rows, int chained, int parallel) {
   if (!gpio.Init()) {
     return NULL;
   }
-  rgb_matrix::RGBMatrix *matrix = new rgb_matrix::RGBMatrix(&gpio, rows, chained,
-                                                            parallel);
+  rgb_matrix::RGBMatrix::Options options;
+  options.rows = rows;
+  options.chain_length = chained;
+  options.parallel = parallel;
+  rgb_matrix::RGBMatrix *matrix = new rgb_matrix::RGBMatrix(&gpio, options);
   return from_matrix(matrix);
 }
 

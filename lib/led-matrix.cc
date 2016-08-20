@@ -119,6 +119,19 @@ private:
   unsigned requested_frame_multiple_;
 };
 
+// Some defaults.
+RGBMatrix::Options::Options() : rows(32), chain_length(1), parallel(1) {}
+
+RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
+  : rows_(options.rows), chained_displays_(options.chain_length),
+    parallel_displays_(options.parallel),
+    io_(NULL), updater_(NULL) {
+  SetTransformer(NULL);
+  active_ = CreateFrameCanvas();
+  Clear();
+  SetGPIO(io, true);
+}
+
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
   : rows_(rows), chained_displays_(chained_displays),

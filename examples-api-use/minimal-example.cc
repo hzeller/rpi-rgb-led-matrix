@@ -42,14 +42,15 @@ int main(int argc, char *argv[]) {
   GPIO io;
   if (!io.Init())
     return 1;
-    
+
   /*
    * Set up the RGBMatrix. It implements a 'Canvas' interface.
    */
-  int rows = 32;    // A 32x32 display. Use 16 when this is a 16x32 display.
-  int chain = 1;    // Number of boards chained together.
-  int parallel = 1; // Number of chains in parallel (1..3). > 1 for plus or Pi2
-  Canvas *canvas = new RGBMatrix(&io, rows, chain, parallel);
+  RGBMatrix::Options options;
+  options.rows = 32;    // A 32x32 display. Use 16 when this is a 16x32 display.
+  options.chain_length = 1;  // Number of boards chained together.
+  options.parallel = 1;      // Number of chains in parallel (1..3).
+  Canvas *canvas = new RGBMatrix(&io, options);
 
   DrawOnCanvas(canvas);    // Using the canvas.
 

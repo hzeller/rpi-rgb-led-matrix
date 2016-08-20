@@ -46,25 +46,40 @@ namespace internal { class Framebuffer; }
 // to the transformers, like with LargeSquare64x64Transformer in demo-main.cc.
 class RGBMatrix : public Canvas {
 public:
-  // Initialize RGB matrix with GPIO to write to.
-  //
-  // The "rows" are the number
-  // of rows supported by the display, so 32 or 16. Number of "chained_display"s
-  // tells many of these are daisy-chained together (output of one connected
-  // to input of next).
-  //
-  // The "parallel_display" number determines if there is one or two displays
-  // connected in parallel to the GPIO port - this only works with newer
-  // Raspberry Pi that have 40 interface pins.
+  // Options to initialize the RGBMatrix.
+  struct Options {
+    Options();   // Creates a default option set.
+
+    // The "rows" are the number
+    // of rows supported by the display, so 32 or 16. Default: 32.
+    int rows;
+
+    // The chain_length is the number of displays daisy-chained together
+    // (output of one connected to input of next). Default: 1
+    int chain_length;
+
+    // The number of parallel chains connected to the Pi; in old Pis with 26
+    // GPIO pins, that is 1, in newer Pis with 40 interfaces pins, that can
+    // also be 2 or 3. The effective number of pixels in vertical direction is
+    // then thus rows * parallel. Default: 1
+    int parallel;
+  };
+
+  // Create an RGBMatrix.
   //
   // If "io" is not NULL, initializes GPIO pins and starts refreshing the
   // screen immediately. If you need finer control, pass NULL here and see
   // SetGPIO() method.
   //
-  // The resulting canvas is (rows * parallel_displays) high and
-  // (32 * chained_displays) wide.
+  // The resulting canvas is (options.rows * options.parallel) high and
+  // (32 * options.chain_length) wide.
+  RGBMatrix(GPIO *io, const Options &options);
+
+  // Convenience constructor if you don't need the fine-control with the
+  // Options object.
   RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1,
             int parallel_displays = 1);
+
   virtual ~RGBMatrix();
 
   // Set GPIO output if it was not set already in constructor (otherwise: NoOp).
