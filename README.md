@@ -80,6 +80,24 @@ This documentation is split into parts that help you through the process
   3. Use the utilities. The [utils](./utils) directory has some ready-made
      useful utilities to show image or text.
 
+### Utilities
+
+There are a couple of ready utilities to show images, text and video in
+the [utils directory](./utils). Read the [README](./utils/README.md) there
+for instructions how to compile
+
+### API
+
+The library comes as an API that you can use for your own utilities and use-cases.
+
+  * The native library is a C++ library (see [include/](./include)).
+    Example uses you find in the [examples-api-use/](./examples-api-use)
+    directory.
+  * If you prefer to program in C, there is also a
+    [C API](./include/led-matrix-c.h).
+  * In the [python](./python) subdirectory, you find a Python API including a
+    couple of [examples](./python/samples) to get started.
+
 Chaining panels
 ---------------
 
@@ -95,7 +113,6 @@ document explains the details.
 
 <a href="wiring.md#chaining-parallel-chains-and-coordinate-system"><img src="img/coordinates.png"></a>
 <a href="adapter/"><img src="img/three-parallel-panels-soic.jpg" width="300px"></a>
-
 
 Troubleshooting
 ---------------
