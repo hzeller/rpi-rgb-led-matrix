@@ -1,6 +1,7 @@
 *.o
 *.a
+*~
 led-image-viewer
-led-matrix
+demo
 minimal-example
 text-example
