@@ -29,13 +29,23 @@ namespace rgb_matrix {
 namespace {
 typedef char** argv_iterator;
 
+#define OPTION_PREFIX     "--led-"
+#define OPTION_PREFIX_LEN strlen(OPTION_PREFIX)
+
 static bool ConsumeBoolFlag(const char *flag_name, const argv_iterator &pos,
                             bool *result_value) {
   const char *option = *pos;
-  const size_t flag_len = strlen(flag_name);
-  if (strncmp(option, flag_name, flag_len) != 0)
+  if (strncmp(option, OPTION_PREFIX, OPTION_PREFIX_LEN) != 0)
+    return false;
+  option += OPTION_PREFIX_LEN;
+  bool value_to_set = true;
+  if (strncmp(option, "no-", 3) == 0) {
+    value_to_set = false;
+    option += 3;
+  }
+  if (strcmp(option, flag_name) != 0)
     return false;  // not consumed.
-  *result_value = !*result_value;
+  *result_value = value_to_set;
   return true;
 }
 
@@ -43,6 +53,9 @@ static bool ConsumeIntFlag(const char *flag_name,
                            argv_iterator &pos, const argv_iterator end,
                            int *result_value, int *error) {
   const char *option = *pos;
+  if (strncmp(option, OPTION_PREFIX, OPTION_PREFIX_LEN) != 0)
+    return false;
+  option += OPTION_PREFIX_LEN;
   const size_t flag_len = strlen(flag_name);
   if (strncmp(option, flag_name, flag_len) != 0)
     return false;  // not consumed.
@@ -52,16 +65,17 @@ static bool ConsumeIntFlag(const char *flag_name,
   else if (pos + 1 < end) {     // --option 42  # value in next arg
     value = *(++pos);
   } else {
-    fprintf(stderr, "Parameter expected after %s\n", flag_name);
+    fprintf(stderr, "Parameter expected after %s%s\n",
+            OPTION_PREFIX, flag_name);
     ++*error;
     return true;  // consumed, but error.
   }
   char *end_value = NULL;
   int val = strtol(value, &end_value, 10);
   if (!*value || *end_value) {
-    fprintf(stderr, "Couldn't parse parameter %s=%s "
-            "(Expected number but '%s' looks funny)\n",
-            flag_name, value, end_value);
+    fprintf(stderr, "Couldn't parse parameter %s%s=%s "
+            "(Expected decimal number but '%s' looks funny)\n",
+            OPTION_PREFIX, flag_name, value, end_value);
     ++*error;
     return true;  // consumed, but error
   }
@@ -86,30 +100,35 @@ static bool FlagInit(int &argc, char **&argv,
   unused_options.push_back(*it++);  // Not interested in program name
 
   int err = 0;
-  bool posix_end_option_seen = false;
+  bool posix_end_option_seen = false;  // end of options '--'
   for (/**/; it < end; ++it) {
     posix_end_option_seen |= (strcmp(*it, "--") == 0);
     if (!posix_end_option_seen) {
-      if (ConsumeIntFlag("--led-rows", it, end, &mopts->rows, &err))
+      if (ConsumeIntFlag("rows", it, end, &mopts->rows, &err))
         continue;
-      if (ConsumeIntFlag("--led-chain", it, end, &mopts->chain_length, &err))
+      if (ConsumeIntFlag("chain", it, end, &mopts->chain_length, &err))
         continue;
-      if (ConsumeIntFlag("--led-parallel", it, end, &mopts->parallel, &err))
+      if (ConsumeIntFlag("parallel", it, end, &mopts->parallel, &err))
         continue;
-      if (ConsumeIntFlag("--led-brightness", it, end, &mopts->brightness, &err))
+      if (ConsumeIntFlag("brightness", it, end, &mopts->brightness, &err))
         continue;
-      if (ConsumeIntFlag("--led-pwm-bits", it, end, &mopts->pwm_bits, &err))
+      if (ConsumeIntFlag("pwm-bits", it, end, &mopts->pwm_bits, &err))
         continue;
-      if (ConsumeBoolFlag("--led-show-refresh", it, &mopts->show_refresh_rate))
+      if (ConsumeBoolFlag("show-refresh", it, &mopts->show_refresh_rate))
         continue;
-      if (ConsumeBoolFlag("--led-inverse", it, &mopts->inverse_colors))
+      if (ConsumeBoolFlag("inverse", it, &mopts->inverse_colors))
         continue;
-      if (ConsumeBoolFlag("--led-swap-green-blue", it, &mopts->swap_green_blue))
+      if (ConsumeBoolFlag("swap-green-blue", it, &mopts->swap_green_blue))
         continue;
-      if (ConsumeBoolFlag("--led-daemon", it, &ropts->as_daemon))
+      if (ConsumeBoolFlag("daemon", it, &ropts->as_daemon))
         continue;
-      if (ConsumeBoolFlag("--led-drop-privs", it, &ropts->drop_privileges))
+      if (ConsumeBoolFlag("drop-privs", it, &ropts->drop_privileges))
         continue;
+
+      if (strncmp(*it, OPTION_PREFIX, OPTION_PREFIX_LEN) == 0) {
+        fprintf(stderr, "Option %s starts with %s but it is unkown. Typo?\n",
+                *it, OPTION_PREFIX);
+      }
     }
     unused_options.push_back(*it);
   }
@@ -202,7 +221,7 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
   return result;
 }
 
-void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &defaults,
+void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
                       bool show_daemon) {
   fprintf(out,
           "\t--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. "
@@ -213,22 +232,22 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &defaults,
           "chains. range=1..3 (Default: %d).\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
-          "\t--led-refresh-rate        : Toogle show refres rate (Default: %s).\n"
-          "\t--led-inverse             : Toogle if your matrix shows inverse "
-          "colors (Default: %s).\n"
-          "\t--led-swap-green-blue     : Toogle if your matrix has green/blue "
-          "swapped (Default: %s).\n"
+          "\t--led-%sshow-refresh        : %show refresh rate.\n"
+          "\t--led-%sinverse             "
+          ": Switch if your matrix has inverse colors %s.\n "
+          "\t--led-%sswap-green-blue     : Switch if your matrix has green/blue "
+          "swapped %s.\n"
           "\t--led-drop-privs          : Drop privileges from 'root' after "
-          "initializing the hardware (Default: false).\n",
-          defaults.rows, defaults.chain_length, defaults.parallel,
-          defaults.pwm_bits, defaults.brightness,
-          defaults.show_refresh_rate ? "true" : "false",
-          defaults.inverse_colors ? "true" : "false",
-          defaults.swap_green_blue ? "true" : "false"
+          "initializing the hardware.\n",
+          d.rows, d.chain_length, d.parallel,
+          d.pwm_bits, d.brightness,
+          d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
+          d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
+          d.swap_green_blue ? "no-" : "",    d.swap_green_blue ? "off" : "on"
           );
   if (show_daemon) {
     fprintf(out,
-            "\t--led-daemon              :"
+            "\t--led-daemon              : "
             "Make the process run in the background as daemon.\n");
   }
 }
