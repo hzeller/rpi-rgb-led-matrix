@@ -252,15 +252,10 @@ private:
 // The function will extract the options and remove these from argv, so that
 // your own flag processing does not have to deal with unknown options.
 //
-// The first optional parameter is RGBMatrix::Option which allows you to
-// pre-set options, such as your chain and parallel settings.
-//
-// The next optional parameter 'allow_daemon' tells if this function should allow
-// the --led-daemon option. Usually, you want this on, but if you
-// want to deal with your own daemon handling that should happen after this
-// call, switch this off.
-// If you set it to off, you need to manually call StartRefresh(), see
-// documentation there.
+// The optional parameter is RGBMatrix::Option which allows you to
+// pre-set options, such as your chain and parallel settings. It is also an
+// out-parameter, so its values are changed according to what the user
+// set on the command line.
 //
 // Example use:
 /*
@@ -270,8 +265,10 @@ int main(int argc, char **argv) {
   RGBMatrix::Options my_defaults;
   my_defaults.chain_length = 3;
   my_defaults.show_refresh_rate = true;
+  rgb_matrix::RuntimeOptions runtime;
+  runtime.drop_privileges = 1;
   RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv,
-                                                        my_defaults);
+                                                        &my_defaults, &runtime);
   if (matrix == NULL) {
     PrintMatrixFlags(stderr, my_defaults);
     return 1;
@@ -284,16 +281,24 @@ int main(int argc, char **argv) {
   delete matrix;   // Make sure to delete it in the end.
 }
 */
+struct RuntimeOptions {
+  RuntimeOptions();
+
+  int gpio_slowdown;    // 0 = no slowdown.
+  int daemon;           // -1 disabled. 0=off, 1=on.
+  int drop_privileges;  // -1 disabled. 0=off, 1=on.
+};
+
 RGBMatrix *CreateMatrixFromFlags(
   int *argc, char ***argv,
-  const RGBMatrix::Options &default_options = RGBMatrix::Options(),
-  bool allow_daemon = true);
+  RGBMatrix::Options *default_options = NULL,
+  RuntimeOptions *runtime_options = NULL);
 
 // Show all the available options for CreateMatrixFromFlags(). If
 // show_daemon_option is set to false, the --led-daemon option is not shown.
 void PrintMatrixFlags(FILE *out,
                       const RGBMatrix::Options &defaults = RGBMatrix::Options(),
-                      bool show_daemon_option = true);
+                      const RuntimeOptions &rt_opt = RuntimeOptions());
 
 }  // end namespace rgb_matrix
 #endif  // RPI_RGBMATRIX_H

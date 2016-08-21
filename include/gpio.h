@@ -33,7 +33,13 @@ class GPIO {
 
   // Initialize before use. Returns 'true' if successful, 'false' otherwise
   // (e.g. due to a permission problem).
-  bool Init();
+  bool Init(int
+#if RGB_SLOWDOWN_GPIO
+            slowdown = RGB_SLOWDOWN_GPIO
+#else
+            slowdown = 1
+#endif
+            );
 
   // Initialize outputs.
   // Returns the bits that are actually set.
@@ -43,34 +49,18 @@ class GPIO {
   inline void SetBits(uint32_t value) {
     if (!value) return;
     *gpio_set_bits_ = value;
-#ifdef RGB_SLOWDOWN_GPIO
-#  if RGB_SLOWDOWN_GPIO != 0
-    *gpio_set_bits_ = value;   // Slowdown=1. Typical for RPi 2 & 3, not for 1.
-#  endif
-#  if RGB_SLOWDOWN_GPIO >= 2
-    *gpio_set_bits_ = value;   // for really slow cases
-#  endif
-#  if RGB_SLOWDOWN_GPIO >= 3
-    *gpio_set_bits_ = value;   // Jeez, that should really not be necessary
-#  endif
-#endif
+    for (int i = 0; i < slowdown_; ++i) {
+      *gpio_set_bits_ = value;
+    }
   }
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   inline void ClearBits(uint32_t value) {
     if (!value) return;
     *gpio_clr_bits_ = value;
-#ifdef RGB_SLOWDOWN_GPIO
-#  if RGB_SLOWDOWN_GPIO != 0
-    *gpio_clr_bits_ = value;  // Slowdown=1. Typical for RPi 2 & 3, not for 1.
-#  endif
-#  if RGB_SLOWDOWN_GPIO >= 2
-    *gpio_clr_bits_ = value;  // for really slow cases
-#  endif
-#  if RGB_SLOWDOWN_GPIO >= 3
-    *gpio_clr_bits_ = value;  // Jeez, that should really not be necessary
-#  endif
-#endif
+    for (int i = 0; i < slowdown_; ++i) {
+      *gpio_clr_bits_ = value;
+    }
   }
 
   // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
@@ -85,6 +75,7 @@ class GPIO {
 
  private:
   uint32_t output_bits_;
+  int slowdown_;
   volatile uint32_t *gpio_port_;
   volatile uint32_t *gpio_set_bits_;
   volatile uint32_t *gpio_clr_bits_;

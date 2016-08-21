@@ -26,6 +26,17 @@
 #include <vector>
 
 namespace rgb_matrix {
+RuntimeOptions::RuntimeOptions() :
+#ifdef RGB_SLOWDOWN_GPIO
+  gpio_slowdown(RGB_SLOWDOWN_GPIO),
+#else
+  gpio_slowdown(1),
+#endif
+  daemon(0), drop_privileges(0)
+{
+  // Nothing to see here.
+}
+
 namespace {
 typedef char** argv_iterator;
 
@@ -83,13 +94,6 @@ static bool ConsumeIntFlag(const char *flag_name,
   return true;  // consumed.
 }
 
-struct RuntimeOptions {
-  RuntimeOptions() : as_daemon(false), drop_privileges(false) {}
-
-  bool as_daemon;
-  bool drop_privileges;
-};
-
 static bool FlagInit(int &argc, char **&argv,
                      RGBMatrix::Options *mopts,
                      RuntimeOptions *ropts) {
@@ -99,6 +103,7 @@ static bool FlagInit(int &argc, char **&argv,
   std::vector<char*> unused_options;
   unused_options.push_back(*it++);  // Not interested in program name
 
+  bool bool_scratch;
   int err = 0;
   bool posix_end_option_seen = false;  // end of options '--'
   for (/**/; it < end; ++it) {
@@ -120,11 +125,19 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeBoolFlag("swap-green-blue", it, &mopts->swap_green_blue))
         continue;
-      if (ConsumeBoolFlag("daemon", it, &ropts->as_daemon))
-        continue;
-      if (ConsumeBoolFlag("drop-privs", it, &ropts->drop_privileges))
-        continue;
 
+      // Runtime options.
+      if (ConsumeIntFlag("slowdown-gpio", it, end, &ropts->gpio_slowdown, &err))
+        continue;
+      if (ropts->daemon >= 0 && ConsumeBoolFlag("daemon", it, &bool_scratch)) {
+        ropts->daemon = bool_scratch ? 1 : 0;
+        continue;
+      }
+      if (ropts->drop_privileges >= 0 &&
+          ConsumeBoolFlag("drop-privs", it, &bool_scratch)) {
+        ropts->drop_privileges = bool_scratch ? 1 : 0;
+        continue;
+      }
       if (strncmp(*it, OPTION_PREFIX, OPTION_PREFIX_LEN) == 0) {
         fprintf(stderr, "Option %s starts with %s but it is unkown. Typo?\n",
                 *it, OPTION_PREFIX);
@@ -177,16 +190,19 @@ static bool drop_privs(const char *priv_user, const char *priv_group) {
 
 // Public interface.
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
-                                 const RGBMatrix::Options &default_options,
-                                 bool allow_daemon) {
-  RGBMatrix::Options mopt = default_options;
-  RuntimeOptions ropt;
-  if (!FlagInit(*argc, *argv, &mopt, &ropt)) {
+                                 RGBMatrix::Options *m_opt_in,
+                                 RuntimeOptions *rt_opt_in) {
+  RGBMatrix::Options scratch_matrix;
+  RGBMatrix::Options *mopt = (m_opt_in != NULL) ? m_opt_in : &scratch_matrix;
+
+  RuntimeOptions scratch_rt;
+  RuntimeOptions *ropt = (rt_opt_in != NULL) ? rt_opt_in : &scratch_rt;
+  if (!FlagInit(*argc, *argv, mopt, ropt)) {
     return NULL;
   }
 
   std::string error;
-  if (!mopt.Validate(&error)) {
+  if (!mopt->Validate(&error)) {
     fprintf(stderr, "%s\n", error.c_str());
     return NULL;
   }
@@ -197,24 +213,26 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
     return NULL;
   }
 
+  if (ropt->gpio_slowdown < 0 || ropt->gpio_slowdown > 4) {
+    fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
+            ropt->gpio_slowdown);
+    return NULL;
+  }
   static GPIO io;  // This static var is a little bit icky.
-  if (!io.Init()) {
+  if (!io.Init(ropt->gpio_slowdown)) {
     return NULL;
   }
 
-  if (!allow_daemon && ropt.as_daemon) {
-    fprintf(stderr, "Ignoring --led-daemon which was disabled.\n");
-  }
-
-  if (allow_daemon && ropt.as_daemon && daemon(1, 0) != 0) {
+  if (ropt->daemon > 0 && daemon(1, 0) != 0) {
     perror("Failed to become daemon");
   }
 
-  RGBMatrix *result = new RGBMatrix(NULL, mopt);
+  RGBMatrix *result = new RGBMatrix(NULL, *mopt);
   // Allowing daemon also means we are allowed to start the thread now.
+  const bool allow_daemon = !(ropt->daemon < 0);
   result->SetGPIO(&io, allow_daemon);
 
-  if (ropt.drop_privileges) {
+  if (ropt->drop_privileges > 0) {
     drop_privs("daemon", "daemon");
   }
 
@@ -222,7 +240,7 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
 }
 
 void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
-                      bool show_daemon) {
+                      const RuntimeOptions &r) {
   fprintf(out,
           "\t--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. "
           "(Default: %d).\n"
@@ -236,19 +254,29 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-%sinverse             "
           ": Switch if your matrix has inverse colors %s.\n "
           "\t--led-%sswap-green-blue     : Switch if your matrix has green/blue "
-          "swapped %s.\n"
-          "\t--led-drop-privs          : Drop privileges from 'root' after "
-          "initializing the hardware.\n",
+          "swapped %s.\n",
           d.rows, d.chain_length, d.parallel,
           d.pwm_bits, d.brightness,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
           d.swap_green_blue ? "no-" : "",    d.swap_green_blue ? "off" : "on"
           );
-  if (show_daemon) {
+  fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
+          "Slowdown GPIO. Needed for faster Pis and/or slower panels "
+          "(Default: %d).\n", r.gpio_slowdown);
+  if (r.daemon >= 0) {
+    const bool on = (r.daemon > 0);
     fprintf(out,
-            "\t--led-daemon              : "
-            "Make the process run in the background as daemon.\n");
+            "\t--led-%sdaemon              : "
+            "%sake the process run in the background as daemon.\n",
+            on ? "no-" : "", on ? "Don't m" : "M");
+  }
+  if (r.drop_privileges >= 0) {
+    const bool on = (r.drop_privileges > 0);
+    fprintf(out,
+            "\t--led-%sdrop-privs          : %srop privileges from 'root' "
+            "after initializing the hardware.\n",
+            on ? "no-" : "", on ? "Don't d" : "D");
   }
 }
 

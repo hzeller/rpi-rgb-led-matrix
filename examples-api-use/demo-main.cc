@@ -1029,7 +1029,12 @@ static int usage(const char *progname) {
           "\t-t <seconds>              : Run for these number of seconds, then exit.\n"
           "\t-R <rotation>             : Sets the rotation of matrix. "
           "Allowed: 0, 90, 180, 270. Default: 0.\n");
-  rgb_matrix::PrintMatrixFlags(stderr);
+
+  RGBMatrix::Options m_options;
+  rgb_matrix::RuntimeOptions rt_options;
+  rt_options.drop_privileges = 1;
+  rgb_matrix::PrintMatrixFlags(stderr, m_options, rt_options);
+
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
@@ -1058,7 +1063,9 @@ int main(int argc, char *argv[]) {
 
   // First things first: create matrix and fish out the command line
   // options it responds to. After that, we parse the remaining options.
-  RGBMatrix *matrix = CreateMatrixFromFlags(&argc, &argv);
+  rgb_matrix::RuntimeOptions rt_options;
+  rt_options.drop_privileges = 1;
+  RGBMatrix *matrix = CreateMatrixFromFlags(&argc, &argv, NULL, &rt_options);
 
   int opt;
   while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:LR:")) != -1) {
