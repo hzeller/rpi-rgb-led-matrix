@@ -47,9 +47,15 @@ int main(int argc, char *argv[]) {
    * Set up the RGBMatrix. It implements a 'Canvas' interface.
    */
   RGBMatrix::Options options;
-  options.rows = 32;    // A 32x32 display. Use 16 when this is a 16x32 display.
-  options.chain_length = 1;  // Number of boards chained together.
-  options.parallel = 1;      // Number of chains in parallel (1..3).
+  if (!options.InitializeFromFlags(&argc, &argv)) {
+    options.FlagUsageMessage();
+    return 1;
+  }
+  std::string err;
+  if (!options.Validate(&err)) {
+    fprintf(stderr, "%s", err.c_str());
+    return 1;
+  }
   Canvas *canvas = new RGBMatrix(&io, options);
 
   DrawOnCanvas(canvas);    // Using the canvas.

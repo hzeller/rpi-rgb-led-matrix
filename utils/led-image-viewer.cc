@@ -43,6 +43,9 @@ static void InterruptHandler(int signo) {
   interrupt_received = true;
 }
 
+#define TERM_ERR  "\033[1;31m"
+#define TERM_NORM "\033[0m"
+
 namespace {
 // Preprocess as much as possible, so that we can just exchange full frames
 // on VSync.
@@ -147,16 +150,14 @@ static void DisplayAnimation(const std::vector<PreprocessedFrame*> &frames,
 
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <image>\n", progname);
-  fprintf(stderr, "Options:\n"
-          "\t-r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),\n"
-	  "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; 64 for 1:32 multiplexing."
-          "Default: 32\n"
-          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
-          "Default: 1\n"
-          "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
-          "\t-L            : Large 64x64 display made from four 32x32 in a chain\n"
-          "\t-d            : Run as daemon.\n"
-          "\t-b <brightnes>: Sets brightness percent. Default: 100.\n");
+  fprintf(stderr, "Options:\n");
+  RGBMatrix::Options::FlagUsageMessage();
+  fprintf(stderr,
+          "\t-L                        : Large 64x64 display made "
+          "from four 32x32 in a chain\n"
+          "\t-d                        : Run as daemon.\n"
+          "\t-b <brightnes>            : Sets brightness percent. "
+          "Default: 100.\n");
   return 1;
 }
 
@@ -169,12 +170,14 @@ int main(int argc, char *argv[]) {
   bool large_display = false;  // example for using Transformers
   bool as_daemon = false;
 
+  // First, let's consume the flags for the options.
+  if (!options.InitializeFromFlags(&argc, &argv)) {
+    return usage(argv[0]);
+  }
+
   int opt;
   while ((opt = getopt(argc, argv, "r:P:c:p:b:dL")) != -1) {
     switch (opt) {
-    case 'r': options.rows = atoi(optarg); break;
-    case 'P': options.parallel = atoi(optarg); break;
-    case 'c': options.chain_length = atoi(optarg); break;
     case 'p': pwm_bits = atoi(optarg); break;
     case 'd': as_daemon = true; break;
     case 'b': brightness = atoi(optarg); break;
@@ -183,28 +186,38 @@ int main(int argc, char *argv[]) {
       options.rows = 32;
       large_display = true;
       break;
+
+      // These used to be options we understood, but deprecate now. Accept them
+      // for now, but tell the user.
+    case 'r':
+      options.rows = atoi(optarg);
+      fprintf(stderr, TERM_ERR "-r is a deprecated option. "
+              "Please use --led-rows=%d instead!\n" TERM_NORM, options.rows);
+      break;
+
+    case 'P':
+      options.parallel = atoi(optarg);
+      fprintf(stderr, TERM_ERR "-P is a deprecated option. "
+              "Please use --led-parallel=%d instead!\n" TERM_NORM,
+              options.parallel);
+      break;
+
+    case 'c':
+      options.chain_length = atoi(optarg);
+      fprintf(stderr, TERM_ERR "-c is a deprecated option. "
+              "Please use --led-chain=%d instead!\n" TERM_NORM,
+              options.chain_length);
+      break;
+
     default:
       return usage(argv[0]);
     }
   }
 
-  if (options.rows != 8 && options.rows != 16
-      && options.rows != 32 && options.rows != 64) {
-    fprintf(stderr, "Rows can one of 8, 16, 32 or 64 "
-            "for 1:4, 1:8, 1:16 and 1:32 multiplexing respectively.\n");
+  std::string err;
+  if (!options.Validate(&err)) {
+    fprintf(stderr, "%s", err.c_str());
     return 1;
-  }
-
-  if (options.chain_length < 1) {
-    fprintf(stderr, "Chain outside usable range\n");
-    return usage(argv[0]);
-  }
-  if (options.chain_length > 8) {
-    fprintf(stderr, "That is a long chain. Expect some flicker.\n");
-  }
-  if (options.parallel < 1 || options.parallel > 3) {
-    fprintf(stderr, "Parallel outside usable range.\n");
-    return usage(argv[0]);
   }
 
   if (brightness < 1 || brightness > 100) {

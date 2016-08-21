@@ -119,7 +119,7 @@ private:
   unsigned requested_frame_multiple_;
 };
 
-// Some defaults.
+// Some defaults. See options-initialize.cc for the command line parsing.
 RGBMatrix::Options::Options() : rows(32), chain_length(1), parallel(1) {}
 
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)

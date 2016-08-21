@@ -19,17 +19,14 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options]\n", progname);
   fprintf(stderr, "Reads text from stdin and displays it. "
           "Empty string: clear screen\n");
-  fprintf(stderr, "Options:\n"
-          "\t-f <font-file>: Use given font.\n"
-          "\t-r <rows>     : Display rows. 16 for 16x32, 32 for 32x32. "
-          "Default: 32\n"
-          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
-          "Default: 1\n"
-          "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
-          "\t-b <brightness>: Sets brightness percent. Default: 100.\n"
-          "\t-x <x-origin> : X-Origin of displaying text (Default: 0)\n"
-          "\t-y <y-origin> : Y-Origin of displaying text (Default: 0)\n"
-          "\t-C <r,g,b>    : Color. Default 255,255,0\n");
+  fprintf(stderr, "Options:\n");
+  RGBMatrix::Options::FlagUsageMessage();
+  fprintf(stderr,
+          "\t-f <font-file>    : Use given font.\n"
+          "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
+          "\t-x <x-origin>     : X-Origin of displaying text (Default: 0)\n"
+          "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
+          "\t-C <r,g,b>        : Color. Default 255,255,0\n");
   return 1;
 }
 
@@ -45,12 +42,14 @@ int main(int argc, char *argv[]) {
   int y_orig = -1;
   int brightness = 100;
 
+  // First, let's consume the flags for the options.
+  if (!options.InitializeFromFlags(&argc, &argv)) {
+    return usage(argv[0]);
+  }
+
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:x:y:f:C:b:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:b:")) != -1) {
     switch (opt) {
-    case 'r': options.rows = atoi(optarg); break;
-    case 'P': options.parallel = atoi(optarg); break;
-    case 'c': options.chain_length = atoi(optarg); break;
     case 'b': brightness = atoi(optarg); break;
     case 'x': x_orig = atoi(optarg); break;
     case 'y': y_orig = atoi(optarg); break;
@@ -80,24 +79,12 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  if (options.rows != 8 && options.rows != 16
-      && options.rows != 32 && options.rows != 64) {
-    fprintf(stderr, "Rows can one of 8, 16, 32 or 64 "
-            "for 1:4, 1:8, 1:16 and 1:32 multiplexing respectively.\n");
+  std::string err;
+  if (!options.Validate(&err)) {
+    fprintf(stderr, "%s", err.c_str());
     return 1;
   }
 
-  if (options.chain_length < 1) {
-    fprintf(stderr, "Chain outside usable range\n");
-    return 1;
-  }
-  if (options.chain_length > 8) {
-    fprintf(stderr, "That is a long chain. Expect some flicker.\n");
-  }
-  if (options.parallel < 1 || options.parallel > 3) {
-    fprintf(stderr, "Parallel outside usable range.\n");
-    return 1;
-  }
   if (brightness < 1 || brightness > 100) {
     fprintf(stderr, "Brightness is outside usable range.\n");
     return 1;

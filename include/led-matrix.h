@@ -21,6 +21,7 @@
 #define RPI_RGBMATRIX_H
 
 #include <stdint.h>
+#include <string>
 #include <vector>
 
 #include "gpio.h"
@@ -49,6 +50,23 @@ public:
   // Options to initialize the RGBMatrix.
   struct Options {
     Options();   // Creates a default option set.
+
+    // Validate the options and possibly output a message to
+    bool Validate(std::string *err);
+
+    // --led_rows, --led_chain, --led_parallel
+    // This modifies the argc and argv, so use in main such as
+    // int main(int argc, char *argv[]) {
+    //     RGBMatrix::Options options;
+    //     if (!options.InitializeFromFlags(&argc, &argv)) {
+    //        return 1;
+    //      }
+    //     // ... now do the relevant stuff.
+    // }
+    bool InitializeFromFlags(int *argc, char ***argv);
+
+    // Usage message that explains the available flags.
+    static void FlagUsageMessage();
 
     // The "rows" are the number
     // of rows supported by the display, so 32 or 16. Default: 32.

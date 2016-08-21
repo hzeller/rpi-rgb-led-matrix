@@ -3,7 +3,8 @@
 # So
 #   -lrgbmatrix
 ##
-OBJECTS=gpio.o led-matrix.o framebuffer.o thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o
+OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
+        thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o
 TARGET=librgbmatrix
 
 ###

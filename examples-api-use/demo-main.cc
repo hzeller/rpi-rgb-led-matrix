@@ -3,7 +3,8 @@
 // This code is public domain
 // (but note, once linked against the led-matrix library, this is
 // covered by the GPL v2)
-
+//
+// This is a grab-bag of various demos and not very readable.
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
 #include "transformer.h"
@@ -20,6 +21,9 @@
 
 using std::min;
 using std::max;
+
+#define TERM_ERR  "\033[1;31m"
+#define TERM_NORM "\033[0m"
 
 using namespace rgb_matrix;
 
@@ -1012,26 +1016,22 @@ private:
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
           progname);
-  fprintf(stderr, "Options:\n"
-          "\t-r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),\n"
-          "\t                '32' for 32x32 (1:16), '8' for 1:4 multiplexing; "
-          "64 for 1:32 multiplexing. "
-          "Default: 32\n"
-          "\t-P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. "
-          "Default: 1\n"
-          "\t-c <chained>  : Daisy-chained boards. Default: 1.\n"
-          "\t-L            : 'Large' display, composed out of 4 times 32x32\n"
-          "\t-p <pwm-bits> : Bits used for PWM. Something between 1..11\n"
-          "\t-l            : Don't do luminance correction (CIE1931)\n"
-          "\t-D <demo-nr>  : Always needs to be set\n"
-          "\t-d            : run as daemon. Use this when starting in\n"
-          "\t                /etc/init.d, but also when running without\n"
-          "\t                terminal (e.g. cron).\n"
-          "\t-t <seconds>  : Run for these number of seconds, then exit.\n"
-          "\t                (if neither -d nor -t are supplied, "
+  fprintf(stderr, "Options:\n");
+  RGBMatrix::Options::FlagUsageMessage();
+  fprintf(stderr,
+          "\t-L                        : 'Large' display, composed out of 4 times 32x32\n"
+          "\t-p <pwm-bits>             : Bits used for PWM. Something between 1..11\n"
+          "\t-D <demo-nr>              : Always needs to be set\n"
+          "\t-d                        : run as daemon. Use this when starting "
+          "in\n"
+          "\t                           /etc/init.d, but also when "
+          "running without\n"
+          "\t                           terminal (e.g. cron).\n"
+          "\t-t <seconds>              : Run for these number of seconds, then exit.\n"
+          "\t                           (if neither -d nor -t are supplied, "
           "waits for <RETURN>)\n"
-          "\t-b <brightnes>: Sets brightness percent. Default: 100.\n"
-          "\t-R <rotation> : Sets the rotation of matrix. "
+          "\t-b <brightnes>            : Sets brightness percent. Default: 100.\n"
+          "\t-R <rotation>             : Sets the rotation of matrix. "
           "Allowed: 0, 90, 180, 270. Default: 0.\n");
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
@@ -1066,6 +1066,11 @@ int main(int argc, char *argv[]) {
 
   const char *demo_parameter = NULL;
 
+  // First, let's consume the flags for the options.
+  if (!options.InitializeFromFlags(&argc, &argv)) {
+    return usage(argv[0]);
+  }
+
   int opt;
   while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:LR:")) != -1) {
     switch (opt) {
@@ -1079,18 +1084,6 @@ int main(int argc, char *argv[]) {
 
     case 't':
       runtime_seconds = atoi(optarg);
-      break;
-
-    case 'r':
-      options.rows = atoi(optarg);
-      break;
-
-    case 'P':
-      options.parallel = atoi(optarg);
-      break;
-
-    case 'c':
-      options.chain_length = atoi(optarg);
       break;
 
     case 'm':
@@ -1120,6 +1113,28 @@ int main(int argc, char *argv[]) {
       rotation = atoi(optarg);
       break;
 
+      // These used to be options we understood, but deprecate now. Accept them
+      // for now, but tell the user.
+    case 'r':
+      options.rows = atoi(optarg);
+      fprintf(stderr, TERM_ERR "-r is a deprecated option. "
+              "Please use --led-rows=%d instead!\n" TERM_NORM, options.rows);
+      break;
+
+    case 'P':
+      options.parallel = atoi(optarg);
+      fprintf(stderr, TERM_ERR "-P is a deprecated option. "
+              "Please use --led-parallel=%d instead!\n" TERM_NORM,
+              options.parallel);
+      break;
+
+    case 'c':
+      options.chain_length = atoi(optarg);
+      fprintf(stderr, TERM_ERR "-c is a deprecated option. "
+              "Please use --led-chain=%d instead!\n" TERM_NORM,
+              options.chain_length);
+      break;
+
     default: /* '?' */
       return usage(argv[0]);
     }
@@ -1129,44 +1144,32 @@ int main(int argc, char *argv[]) {
     demo_parameter = argv[optind];
   }
 
+  std::string err;
+  if (!options.Validate(&err)) {
+    fprintf(stderr, "%s", err.c_str());
+    return 1;
+  }
+
   if (demo < 0) {
-    fprintf(stderr, "Expected required option -D <demo>\n");
+    fprintf(stderr, TERM_ERR "Expected required option -D <demo>\n" TERM_NORM);
     return usage(argv[0]);
   }
 
-  if (getuid() != 0) {
-    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command:\n\tsudo %s ...\n", argv[0]);
-    return 1;
-  }
-
-  if (options.rows != 8 && options.rows != 16
-      && options.rows != 32 && options.rows != 64) {
-    fprintf(stderr, "Rows can one of 8, 16, 32 or 64 "
-            "for 1:4, 1:8, 1:16 and 1:32 multiplexing respectively.\n");
-    return 1;
-  }
-
-  if (options.chain_length < 1) {
-    fprintf(stderr, "Chain outside usable range\n");
-    return 1;
-  }
-  if (options.chain_length > 8) {
-    fprintf(stderr, "That is a long chain. Expect some flicker.\n");
-  }
-  if (options.parallel < 1 || options.parallel > 3) {
-    fprintf(stderr, "Parallel outside usable range.\n");
-    return 1;
-  }
-
   if (brightness < 1 || brightness > 100) {
-    fprintf(stderr, "Brightness is outside usable range.\n");
+    fprintf(stderr, TERM_ERR "Brightness is outside usable range.\n" TERM_NORM);
     return 1;
   }
 
   if (rotation % 90 != 0) {
-    fprintf(stderr, "Rotation %d not allowed! "
-            "Only 0, 90, 180 and 270 are possible.\n", rotation);
+    fprintf(stderr, TERM_ERR "Rotation %d not allowed! "
+            "Only 0, 90, 180 and 270 are possible.\n" TERM_NORM, rotation);
+    return 1;
+  }
+
+  if (getuid() != 0) {
+    fprintf(stderr, TERM_ERR "Must run as root to be able to access /dev/mem\n"
+            "Prepend 'sudo' to the command:\n\tsudo %s ...\n" TERM_NORM,
+            argv[0]);
     return 1;
   }
 
