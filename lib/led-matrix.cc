@@ -126,8 +126,7 @@ RGBMatrix::Options::Options()
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   : rows_(options.rows), chained_displays_(options.chain_length),
     parallel_displays_(options.parallel),
-    pwm_bits_(options.pwm_bits),
-    brightness_(options.brightness),
+    pwm_bits_(options.pwm_bits), brightness_(options.brightness),
     io_(NULL), updater_(NULL) {
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
@@ -139,6 +138,7 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
   : rows_(rows), chained_displays_(chained_displays),
     parallel_displays_(parallel_displays),
+    pwm_bits_(11), brightness_(100),
     io_(NULL), updater_(NULL) {
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
@@ -184,14 +184,13 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
                                               parallel_displays_));
   if (created_frames_.empty()) {
     // First time. Get defaults from initial Framebuffer.
-    pwm_bits_ = result->framebuffer()->pwmbits();
     do_luminance_correct_ = result->framebuffer()->luminance_correct();
-    brightness_ = result->framebuffer()->brightness();
-  } else {
-    result->framebuffer()->SetPWMBits(pwm_bits_);
-    result->framebuffer()->set_luminance_correct(do_luminance_correct_);
-    result->framebuffer()->SetBrightness(brightness_);
   }
+
+  result->framebuffer()->SetPWMBits(pwm_bits_);
+  result->framebuffer()->set_luminance_correct(do_luminance_correct_);
+  result->framebuffer()->SetBrightness(brightness_);
+
   created_frames_.push_back(result);
   return result;
 }
