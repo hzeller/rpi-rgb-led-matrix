@@ -1017,22 +1017,12 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
           progname);
   fprintf(stderr, "Options:\n");
-  RGBMatrix::Options::FlagUsageMessage();
   fprintf(stderr,
-          "\t-L                        : 'Large' display, composed out of 4 times 32x32\n"
-          "\t-p <pwm-bits>             : Bits used for PWM. Something between 1..11\n"
           "\t-D <demo-nr>              : Always needs to be set\n"
-          "\t-d                        : run as daemon. Use this when starting "
-          "in\n"
-          "\t                           /etc/init.d, but also when "
-          "running without\n"
-          "\t                           terminal (e.g. cron).\n"
           "\t-t <seconds>              : Run for these number of seconds, then exit.\n"
-          "\t                           (if neither -d nor -t are supplied, "
-          "waits for <RETURN>)\n"
-          "\t-b <brightnes>            : Sets brightness percent. Default: 100.\n"
           "\t-R <rotation>             : Sets the rotation of matrix. "
           "Allowed: 0, 90, 180, 270. Default: 0.\n");
+  rgb_matrix::PrintMatrixOptions(stderr);
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
@@ -1052,34 +1042,21 @@ static int usage(const char *progname) {
 }
 
 int main(int argc, char *argv[]) {
-  GPIO io;
-  bool as_daemon = false;
+  // First things first: create matrix and take command line flags.
+  RGBMatrix *matrix = CreateMatrixFromFlags(&argc, &argv);
+
   int runtime_seconds = -1;
   int demo = -1;
-  RGBMatrix::Options options;
   int scroll_ms = 30;
-  int pwm_bits = -1;
-  int brightness = 100;
   int rotation = 0;
-  bool large_display = false;
-  bool do_luminance_correct = true;
-
   const char *demo_parameter = NULL;
-
-  // First, let's consume the flags for the options.
-  if (!options.InitializeFromFlags(&argc, &argv)) {
-    return usage(argv[0]);
-  }
+  bool any_deprecated_option = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "dlD:t:r:P:c:p:b:m:LR:")) != -1) {
+  while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:LR:")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
-      break;
-
-    case 'd':
-      as_daemon = true;
       break;
 
     case 't':
@@ -1090,49 +1067,39 @@ int main(int argc, char *argv[]) {
       scroll_ms = atoi(optarg);
       break;
 
-    case 'p':
-      pwm_bits = atoi(optarg);
-      break;
-
-    case 'b':
-      brightness = atoi(optarg);
-      break;
-
-    case 'l':
-      do_luminance_correct = !do_luminance_correct;
-      break;
-
-    case 'L':
-      // The 'large' display assumes a chain of four displays with 32x32
-      options.chain_length = 4;
-      options.rows = 32;
-      large_display = true;
-      break;
-
     case 'R':
       rotation = atoi(optarg);
       break;
 
-      // These used to be options we understood, but deprecate now. Accept them
-      // for now, but tell the user.
+      // These used to be options we understood, but deprecated now. Tell user.
     case 'r':
-      options.rows = atoi(optarg);
-      fprintf(stderr, TERM_ERR "-r is a deprecated option. "
-              "Please use --led-rows=%d instead!\n" TERM_NORM, options.rows);
+      fprintf(stderr, "-r is a deprecated option. "
+              "Please use --led-rows=... instead!\n");
+      any_deprecated_option = true;
       break;
 
     case 'P':
-      options.parallel = atoi(optarg);
-      fprintf(stderr, TERM_ERR "-P is a deprecated option. "
-              "Please use --led-parallel=%d instead!\n" TERM_NORM,
-              options.parallel);
+      fprintf(stderr, "-P is a deprecated option. "
+              "Please use --led-parallel=... instead!\n");
+      any_deprecated_option = true;
       break;
 
     case 'c':
-      options.chain_length = atoi(optarg);
-      fprintf(stderr, TERM_ERR "-c is a deprecated option. "
-              "Please use --led-chain=%d instead!\n" TERM_NORM,
-              options.chain_length);
+      fprintf(stderr, "-c is a deprecated option. "
+              "Please use --led-chain=... instead!\n");
+      any_deprecated_option = true;
+      break;
+
+    case 'p':
+      fprintf(stderr, "-p is a deprecated option. "
+              "Please use --led-pwm-bits=... instead!\n");
+      any_deprecated_option = true;
+      break;
+
+    case 'b':
+      fprintf(stderr, "-b is a deprecated option. "
+              "Please use --led-brightness=... instead!\n");
+      any_deprecated_option = true;
       break;
 
     default: /* '?' */
@@ -1140,24 +1107,16 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  if (any_deprecated_option)
+    return usage(argv[0]);
+
   if (optind < argc) {
     demo_parameter = argv[optind];
-  }
-
-  std::string err;
-  if (!options.Validate(&err)) {
-    fprintf(stderr, "%s", err.c_str());
-    return 1;
   }
 
   if (demo < 0) {
     fprintf(stderr, TERM_ERR "Expected required option -D <demo>\n" TERM_NORM);
     return usage(argv[0]);
-  }
-
-  if (brightness < 1 || brightness > 100) {
-    fprintf(stderr, TERM_ERR "Brightness is outside usable range.\n" TERM_NORM);
-    return 1;
   }
 
   if (rotation % 90 != 0) {
@@ -1166,42 +1125,12 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (getuid() != 0) {
-    fprintf(stderr, TERM_ERR "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command:\n\tsudo %s ...\n" TERM_NORM,
-            argv[0]);
-    return 1;
-  }
-
-  // Initialize GPIO pins. This might fail when we don't have permissions.
-  if (!io.Init())
-    return 1;
-
-  // Start daemon before we start any threads.
-  if (as_daemon) {
-    if (fork() != 0)
-      return 0;
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
-  }
-
   // The matrix, our 'frame buffer' and display updater.
-  RGBMatrix *matrix = new RGBMatrix(&io, options);
-  matrix->set_luminance_correct(do_luminance_correct);
-  matrix->SetBrightness(brightness);
-  if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
-    fprintf(stderr, "Invalid range of pwm-bits\n");
+  if (matrix == NULL)
     return 1;
-  }
 
   LinkedTransformer *transformer = new LinkedTransformer();
   matrix->SetTransformer(transformer);
-
-  if (large_display) {
-    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    transformer->AddTransformer(new LargeSquare64x64Transformer());
-  }
 
   if (rotation > 0) {
     transformer->AddTransformer(new RotateTransformer(rotation));
@@ -1278,9 +1207,7 @@ int main(int argc, char *argv[]) {
   // Now, the image generation runs in the background. We can do arbitrary
   // things here in parallel. In this demo, we're essentially just
   // waiting for one of the conditions to exit.
-  if (as_daemon) {
-    sleep(runtime_seconds > 0 ? runtime_seconds : INT_MAX);
-  } else if (runtime_seconds > 0) {
+  if (runtime_seconds > 0) {
     sleep(runtime_seconds);
   } else {
     // Things are set up. Just wait for <RETURN> to be pressed.

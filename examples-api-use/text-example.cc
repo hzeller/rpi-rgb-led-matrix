@@ -20,7 +20,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "Reads text from stdin and displays it. "
           "Empty string: clear screen\n");
   fprintf(stderr, "Options:\n");
-  RGBMatrix::Options::FlagUsageMessage();
+  rgb_matrix::PrintMatrixOptions(stderr);
   fprintf(stderr,
           "\t-f <font-file>    : Use given font.\n"
           "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
@@ -35,17 +35,13 @@ static bool parseColor(Color *c, const char *str) {
 }
 
 int main(int argc, char *argv[]) {
+  RGBMatrix *canvas = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
+
   Color color(255, 255, 0);
   const char *bdf_font_file = NULL;
-  RGBMatrix::Options options;
   int x_orig = 0;
   int y_orig = -1;
   int brightness = 100;
-
-  // First, let's consume the flags for the options.
-  if (!options.InitializeFromFlags(&argc, &argv)) {
-    return usage(argv[0]);
-  }
 
   int opt;
   while ((opt = getopt(argc, argv, "x:y:f:C:b:")) != -1) {
@@ -65,6 +61,9 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  if (canvas == NULL)
+    return 1;
+
   if (bdf_font_file == NULL) {
     fprintf(stderr, "Need to specify BDF font-file with -f\n");
     return usage(argv[0]);
@@ -79,28 +78,11 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  std::string err;
-  if (!options.Validate(&err)) {
-    fprintf(stderr, "%s", err.c_str());
-    return 1;
-  }
-
   if (brightness < 1 || brightness > 100) {
     fprintf(stderr, "Brightness is outside usable range.\n");
     return 1;
   }
 
-  /*
-   * Set up GPIO pins. This fails when not running as root.
-   */
-  GPIO io;
-  if (!io.Init())
-    return 1;
-
-  /*
-   * Set up the RGBMatrix. It implements a 'Canvas' interface.
-   */
-  RGBMatrix *canvas = new RGBMatrix(&io, options);
   canvas->SetBrightness(brightness);
 
   bool all_extreme_colors = brightness == 100;

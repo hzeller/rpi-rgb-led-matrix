@@ -25,6 +25,8 @@ $(RGB_LIBRARY): FORCE
 
 clean:
 	$(MAKE) -C lib clean
+	$(MAKE) -C examples-api-use clean
+	$(MAKE) -C utils clean
 	$(MAKE) -C $(PYTHON_LIB_DIR) clean
 
 build-python: $(RGB_LIBRARY)

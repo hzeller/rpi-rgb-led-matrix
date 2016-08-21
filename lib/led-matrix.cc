@@ -120,11 +120,14 @@ private:
 };
 
 // Some defaults. See options-initialize.cc for the command line parsing.
-RGBMatrix::Options::Options() : rows(32), chain_length(1), parallel(1) {}
+RGBMatrix::Options::Options()
+  : rows(32), chain_length(1), parallel(1), pwm_bits(11), brightness(100) {}
 
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   : rows_(options.rows), chained_displays_(options.chain_length),
     parallel_displays_(options.parallel),
+    pwm_bits_(options.pwm_bits),
+    brightness_(options.brightness),
     io_(NULL), updater_(NULL) {
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();

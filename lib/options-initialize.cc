@@ -14,14 +14,30 @@
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
 #include "led-matrix.h"
-#include <string.h>
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <grp.h>
+#include <pwd.h>
+
 #include <vector>
 
 namespace rgb_matrix {
 namespace {
 typedef char** argv_iterator;
+
+static bool ConsumeBoolFlag(const char *flag_name, const argv_iterator &pos,
+                            bool *result_value) {
+  const char *option = *pos;
+  const size_t flag_len = strlen(flag_name);
+  if (strncmp(option, flag_name, flag_len) != 0)
+    return false;  // not consumed.
+  *result_value = !*result_value;
+  return true;
+}
 
 static bool ConsumeIntFlag(const char *flag_name,
                            argv_iterator &pos, const argv_iterator end,
@@ -53,7 +69,16 @@ static bool ConsumeIntFlag(const char *flag_name,
   return true;  // consumed.
 }
 
-static bool OptFlagInit(int &argc, char **&argv, RGBMatrix::Options *mopts) {
+struct RuntimeOptions {
+  RuntimeOptions() : as_daemon(false), drop_privileges(false) {}
+
+  bool as_daemon;
+  bool drop_privileges;
+};
+
+static bool FlagInit(int &argc, char **&argv,
+                     RGBMatrix::Options *mopts,
+                     RuntimeOptions *ropts) {
   argv_iterator it = &argv[0];
   argv_iterator end = it + argc;
 
@@ -71,6 +96,14 @@ static bool OptFlagInit(int &argc, char **&argv, RGBMatrix::Options *mopts) {
         continue;
       if (ConsumeIntFlag("--led-parallel", it, end, &mopts->parallel, &err))
         continue;
+      if (ConsumeIntFlag("--led-brightness", it, end, &mopts->brightness, &err))
+        continue;
+      if (ConsumeIntFlag("--led-pwm-bits", it, end, &mopts->pwm_bits, &err))
+        continue;
+      if (ConsumeBoolFlag("--led-daemon", it, &ropts->as_daemon))
+        continue;
+      if (ConsumeBoolFlag("--led-drop-privs", it, &ropts->drop_privileges))
+        continue;
     }
     unused_options.push_back(*it);
   }
@@ -86,43 +119,118 @@ static bool OptFlagInit(int &argc, char **&argv, RGBMatrix::Options *mopts) {
   }
   return true;
 }
-}  // namespace
 
-bool RGBMatrix::Options::InitializeFromFlags(int *argc, char ***argv) {
-  // Unfortunately, we can't use getopt_long(), as it does not provide a
-  // way to only fish out some of the flags and leave the rest as-is without
-  // much complaining. So we have to do this here ourselves.
-  return OptFlagInit(*argc, *argv, this);
+static bool drop_privs(const char *priv_user, const char *priv_group) {
+  uid_t ruid, euid, suid;
+  if (getresuid(&ruid, &euid, &suid) >= 0) {
+    if (euid != 0)   // not root anyway. No priv dropping.
+      return true;
+  }
+
+  struct group *g = getgrnam(priv_group);
+  if (g == NULL) {
+    perror("group lookup.");
+    return false;
+  }
+  if (setresgid(g->gr_gid, g->gr_gid, g->gr_gid) != 0) {
+    perror("setresgid()");
+    return false;
+  }
+  struct passwd *p = getpwnam(priv_user);
+  if (p == NULL) {
+    perror("user lookup.");
+    return false;
+  }
+  if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) != 0) {
+    perror("setresuid()");
+    return false;
+  }
+  return true;
 }
 
-void RGBMatrix::Options::FlagUsageMessage() {
-  fprintf(stderr,
-          "\t--led-rows <rows>         : Panel rows. 8, 16, 32 or 64. "
+}  // namespace
+
+// Public interface.
+RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv) {
+  RGBMatrix::Options mopt;
+  RuntimeOptions ropt;
+  if (!FlagInit(*argc, *argv, &mopt, &ropt)) {
+    return NULL;
+  }
+
+  std::string error;
+  if (!mopt.Validate(&error)) {
+    fprintf(stderr, "%s\n", error.c_str());
+    return NULL;
+  }
+
+  if (getuid() != 0) {
+    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
+            "Prepend 'sudo' to the command:\n\tsudo %s ...\n", (*argv)[0]);
+    return NULL;
+  }
+
+  static GPIO io;  // This static var is a little bit icky.
+  if (!io.Init()) {
+    return NULL;
+  }
+
+  if (ropt.as_daemon && daemon(1, 0) != 0) {
+    perror("Failed to become daemon");
+  }
+
+  RGBMatrix *result = new RGBMatrix(&io, mopt);
+
+  if (ropt.drop_privileges) {
+    drop_privs("daemon", "daemon");
+  }
+
+  return result;
+}
+
+void PrintMatrixOptions(FILE *out) {
+  fprintf(out,
+          "\t--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. "
           "Default: 32\n"
-          "\t--led-parallel <parallel> : For Plus-models or RPi2: parallel "
+          "\t--led-chain=<chained>     : Number of daisy-chained panels. "
+          "Default: 1.\n"
+          "\t--led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel "
           "chains. 1..3. Default: 1\n"
-          "\t--led-chain <chained>     : Number of daisy-chained boards. "
-          "Default: 1.\n");
+          "\t--led-pwm-bits=<1..11>    : PWM bits. Default: 11\n"
+          "\t--led-brightness=<percent>: Brightness in percent. Default: 100.\n"
+          "\t--led-drop-privs          : Drop privileges from 'root'.\n"
+          "\t--led-daemon              : Make the process run as daemon.\n");
 }
 
 bool RGBMatrix::Options::Validate(std::string *err) {
-  bool any_error = false;
+  bool success = true;
   if (rows != 8 && rows != 16 && rows != 32 && rows != 64) {
     err->append("Invalid number or panel rows. "
                 "Should be one of 8, 16, 32 or 64\n");
-    any_error = true;
+    success = false;
   }
 
   if (chain_length < 1) {
     err->append("Chain-length outside usable range\n");
-    any_error = true;
+    success = false;
   }
 
   if (parallel < 1 || parallel > 3) {
     err->append("Parallel outside usable range.\n");
-    any_error = true;
+    success = false;
   }
-  return !any_error;
+
+  if (brightness < 1 || brightness > 100) {
+    err->append("Brightness is outside usable range.\n");
+    success = false;
+  }
+
+  if (pwm_bits <= 0 || pwm_bits > 11) {
+    err->append("Invalid range of pwm-bits\n");
+    success = false;
+  }
+
+  return success;
 }
 
 }  // namespace rgb_matrix

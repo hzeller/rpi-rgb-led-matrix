@@ -36,27 +36,9 @@ static void DrawOnCanvas(Canvas *canvas) {
 }
 
 int main(int argc, char *argv[]) {
-  /*
-   * Set up GPIO pins. This fails when not running as root.
-   */
-  GPIO io;
-  if (!io.Init())
+  Canvas *canvas = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
+  if (canvas == NULL)
     return 1;
-
-  /*
-   * Set up the RGBMatrix. It implements a 'Canvas' interface.
-   */
-  RGBMatrix::Options options;
-  if (!options.InitializeFromFlags(&argc, &argv)) {
-    options.FlagUsageMessage();
-    return 1;
-  }
-  std::string err;
-  if (!options.Validate(&err)) {
-    fprintf(stderr, "%s", err.c_str());
-    return 1;
-  }
-  Canvas *canvas = new RGBMatrix(&io, options);
 
   DrawOnCanvas(canvas);    // Using the canvas.
 

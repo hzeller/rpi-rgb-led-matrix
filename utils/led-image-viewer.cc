@@ -151,62 +151,47 @@ static void DisplayAnimation(const std::vector<PreprocessedFrame*> &frames,
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <image>\n", progname);
   fprintf(stderr, "Options:\n");
-  RGBMatrix::Options::FlagUsageMessage();
-  fprintf(stderr,
-          "\t-L                        : Large 64x64 display made "
-          "from four 32x32 in a chain\n"
-          "\t-d                        : Run as daemon.\n"
-          "\t-b <brightnes>            : Sets brightness percent. "
-          "Default: 100.\n");
+  rgb_matrix::PrintMatrixOptions(stderr);
   return 1;
 }
 
 int main(int argc, char *argv[]) {
   Magick::InitializeMagick(*argv);
+  RGBMatrix *const matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
 
-  RGBMatrix::Options options;
-  int pwm_bits = -1;
-  int brightness = 100;
-  bool large_display = false;  // example for using Transformers
-  bool as_daemon = false;
-
-  // First, let's consume the flags for the options.
-  if (!options.InitializeFromFlags(&argc, &argv)) {
-    return usage(argv[0]);
-  }
-
+  // These used to be options we understood, but deprecate now. Accept them
+  // for now, but tell the user.
+  bool any_deprecated_option = false;
   int opt;
-  while ((opt = getopt(argc, argv, "r:P:c:p:b:dL")) != -1) {
+  while ((opt = getopt(argc, argv, "r:P:c:p:b:d")) != -1) {
     switch (opt) {
-    case 'p': pwm_bits = atoi(optarg); break;
-    case 'd': as_daemon = true; break;
-    case 'b': brightness = atoi(optarg); break;
-    case 'L':
-      options.chain_length = 4;
-      options.rows = 32;
-      large_display = true;
-      break;
-
-      // These used to be options we understood, but deprecate now. Accept them
-      // for now, but tell the user.
     case 'r':
-      options.rows = atoi(optarg);
-      fprintf(stderr, TERM_ERR "-r is a deprecated option. "
-              "Please use --led-rows=%d instead!\n" TERM_NORM, options.rows);
+      fprintf(stderr, "-r is a deprecated option. "
+              "Please use --led-rows=... instead!\n");
+      any_deprecated_option = true;
       break;
 
     case 'P':
-      options.parallel = atoi(optarg);
-      fprintf(stderr, TERM_ERR "-P is a deprecated option. "
-              "Please use --led-parallel=%d instead!\n" TERM_NORM,
-              options.parallel);
+      fprintf(stderr, "-P is a deprecated option. "
+              "Please use --led-parallel=... instead!\n");
+      any_deprecated_option = true;
       break;
 
     case 'c':
-      options.chain_length = atoi(optarg);
-      fprintf(stderr, TERM_ERR "-c is a deprecated option. "
-              "Please use --led-chain=%d instead!\n" TERM_NORM,
-              options.chain_length);
+      fprintf(stderr, "-c is a deprecated option. "
+              "Please use --led-chain=... instead!\n");
+      any_deprecated_option = true;
+      break;
+
+    case 'p':
+      fprintf(stderr, "-p is a deprecated option. "
+              "Please use --led-pwm-bits=... instead!\n");
+      any_deprecated_option = true;
+      break;
+    case 'b':
+      fprintf(stderr, "-b is a deprecated option. "
+              "Please use --led-brightness=... instead!\n");
+      any_deprecated_option = true;
       break;
 
     default:
@@ -214,55 +199,18 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  std::string err;
-  if (!options.Validate(&err)) {
-    fprintf(stderr, "%s", err.c_str());
-    return 1;
-  }
-
-  if (brightness < 1 || brightness > 100) {
-    fprintf(stderr, "Brightness is outside usable range.\n");
+  if (any_deprecated_option)
     return usage(argv[0]);
-  }
 
   if (optind >= argc) {
     fprintf(stderr, "Expected image filename.\n");
     return usage(argv[0]);
   }
 
+  if (matrix == NULL)
+    return 1;
+
   const char *filename = argv[optind];
-
-  /*
-   * Set up GPIO pins. This fails when not running as root.
-   */
-  GPIO io;
-  if (!io.Init())
-    return 1;
-
-  // Start daemon before we start any threads.
-  if (as_daemon) {
-    if (fork() != 0)
-      return 0;
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
-  }
-
-  RGBMatrix *const matrix = new RGBMatrix(&io, options);
-  if (pwm_bits >= 0 && !matrix->SetPWMBits(pwm_bits)) {
-    fprintf(stderr, "Invalid range of pwm-bits\n");
-    return 1;
-  }
-
-  matrix->SetBrightness(brightness);
-
-  // Here is an example where to add your own transformer. In this case, we
-  // just to the chain-of-four-32x32 => 64x64 transformer, but just use any
-  // of the transformers in transformer.h or write your own.
-  if (large_display) {
-    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    matrix->SetTransformer(new rgb_matrix::LargeSquare64x64Transformer());
-  }
 
   std::vector<Magick::Image> sequence_pics;
   if (!LoadAnimation(filename, matrix->width(), matrix->height(),

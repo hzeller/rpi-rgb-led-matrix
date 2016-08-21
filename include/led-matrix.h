@@ -30,8 +30,33 @@
 #include "transformer.h"
 
 namespace rgb_matrix {
+class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
 namespace internal { class Framebuffer; }
+
+// Convenience factory utility to create a Matrix and set values from the
+// command line. You pass it a pointer to the argc and argv of main, it
+// extracts the relevant options and leaves the remaining options.
+//
+// Example use:
+/*
+using rgb_matrix::RGBMatrix;
+int main(int argc, char **argv) {
+  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
+  if (matrix == NULL) {
+    PrintMatrixOptions(stderr);
+    return 1;
+  }
+
+  // Do your own command line handling with the remaining options.
+
+  //  .. now use matrix
+
+  delete matrix;   // Make sure to delete it in the end.
+}
+*/
+RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv);
+void PrintMatrixOptions(FILE *out);
 
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
@@ -51,22 +76,8 @@ public:
   struct Options {
     Options();   // Creates a default option set.
 
-    // Validate the options and possibly output a message to
+    // Validate the options and possibly output a message to string.
     bool Validate(std::string *err);
-
-    // --led_rows, --led_chain, --led_parallel
-    // This modifies the argc and argv, so use in main such as
-    // int main(int argc, char *argv[]) {
-    //     RGBMatrix::Options options;
-    //     if (!options.InitializeFromFlags(&argc, &argv)) {
-    //        return 1;
-    //      }
-    //     // ... now do the relevant stuff.
-    // }
-    bool InitializeFromFlags(int *argc, char ***argv);
-
-    // Usage message that explains the available flags.
-    static void FlagUsageMessage();
 
     // The "rows" are the number
     // of rows supported by the display, so 32 or 16. Default: 32.
@@ -81,6 +92,15 @@ public:
     // also be 2 or 3. The effective number of pixels in vertical direction is
     // then thus rows * parallel. Default: 1
     int parallel;
+
+    // Set PWM bits used for output. Default is 11, but if you only deal with
+    // limited comic-colors, 1 might be sufficient. Lower require less CPU and
+    // increases refresh-rate.
+    int pwm_bits;
+
+    // The initial brightness of the panel in percent. Valid range is 1..100
+    // Default: 100
+    int brightness;
   };
 
   // Create an RGBMatrix.
