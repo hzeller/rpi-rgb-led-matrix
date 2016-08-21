@@ -165,7 +165,13 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
     io_ = io;
     internal::Framebuffer::InitGPIO(io_, rows_, parallel_displays_);
   }
-  if (start_thread && updater_ == NULL && io_ != NULL) {
+  if (start_thread) {
+    StartRefresh();
+  }
+}
+
+bool RGBMatrix::StartRefresh() {
+  if (updater_ == NULL && io_ != NULL) {
     updater_ = new UpdateThread(io_, active_);
     // If we have multiple processors, the kernel
     // jumps around between these, creating some global flicker.
@@ -176,6 +182,7 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
     //   call will simply fail and we keep using the only core.
     updater_->Start(99, (1<<3));  // Prio: high. Also: put on last CPU.
   }
+  return updater_ != NULL;
 }
 
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {

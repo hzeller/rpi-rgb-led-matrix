@@ -226,9 +226,6 @@ static bool WarnAboutDeprecatedOption(int argc, char **argv) {
               "Please use --led-brightness=... instead!\n");
       any_deprecated_option = true;
       break;
-
-    default:
-      return usage(argv[0]);
     }
   }
   return any_deprecated_option;

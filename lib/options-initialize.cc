@@ -151,7 +151,7 @@ static bool drop_privs(const char *priv_user, const char *priv_group) {
 }  // namespace
 
 // Public interface.
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv) {
+RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv, bool allow_daemon) {
   RGBMatrix::Options mopt;
   RuntimeOptions ropt;
   if (!FlagInit(*argc, *argv, &mopt, &ropt)) {
@@ -175,11 +175,17 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv) {
     return NULL;
   }
 
-  if (ropt.as_daemon && daemon(1, 0) != 0) {
+  if (!allow_daemon && ropt.as_daemon) {
+    fprintf(stderr, "Ignoring --led-daemon which was disabled.\n");
+  }
+
+  if (allow_daemon && ropt.as_daemon && daemon(1, 0) != 0) {
     perror("Failed to become daemon");
   }
 
-  RGBMatrix *result = new RGBMatrix(&io, mopt);
+  RGBMatrix *result = new RGBMatrix(NULL, mopt);
+  // Allowing daemon also means we are allowed to start the thread now.
+  result->SetGPIO(&io, allow_daemon);
 
   if (ropt.drop_privileges) {
     drop_privs("daemon", "daemon");
@@ -188,7 +194,7 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv) {
   return result;
 }
 
-void PrintMatrixOptions(FILE *out) {
+void PrintMatrixOptions(FILE *out, bool show_daemon) {
   fprintf(out,
           "\t--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. "
           "Default: 32\n"
@@ -199,9 +205,12 @@ void PrintMatrixOptions(FILE *out) {
           "\t--led-pwm-bits=<1..11>    : PWM bits. Default: 11\n"
           "\t--led-brightness=<percent>: Brightness in percent. Default: 100.\n"
           "\t--led-drop-privs          : Drop privileges from 'root' after "
-          "initializing the hardware.\n"
-          "\t--led-daemon              : Make the process run in the background "
-          "as daemon.\n");
+          "initializing the hardware.\n");
+  if (show_daemon) {
+    fprintf(out,
+            "\t--led-daemon              :"
+            "Make the process run in the background as daemon.\n");
+  }
 }
 
 bool RGBMatrix::Options::Validate(std::string *err) {

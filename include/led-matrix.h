@@ -34,9 +34,20 @@ class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
 namespace internal { class Framebuffer; }
 
-// Convenience factory utility to create a Matrix and set values from the
-// command line. You pass it a pointer to the argc and argv of main, it
-// extracts the relevant options and leaves the remaining options.
+// Convenience utility to create a Matrix and extract relevant values from the
+// command line. Commandline options are something like --led-rows, --led-chain,
+// --led-parallel. See output of PrintMatrixOptions() for all available options.
+//
+// You call it with the address of 'argc' and 'argv' that you get from main();
+// The function will extract the options and remove these from argv, so that
+// your own flag processing does not have to deal with unknown options.
+//
+// The optional parameter 'allow_daemon' tells if this function should allow
+// the --led-daemon option. Usually, you want this on, but if you
+// want to deal with your own daemon handling that should happen after this
+// call, switch this off.
+// If you set it to off, you need to manually call StartRefresh(), see
+// documentation there.
 //
 // Example use:
 /*
@@ -55,8 +66,12 @@ int main(int argc, char **argv) {
   delete matrix;   // Make sure to delete it in the end.
 }
 */
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv);
-void PrintMatrixOptions(FILE *out);
+RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
+                                 bool allow_daemon = true);
+
+// Show all the available options for CreateMatrixFromFlags(). If
+// show_daemon_option is set to false, the --led-daemon option is not shown.
+void PrintMatrixOptions(FILE *out, bool show_daemon_option = true);
 
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
@@ -126,21 +141,28 @@ public:
   // When would you start the thread separately from setting the GPIO ?
   // If you are becoming a daemon, you must start the thread _after_ that,
   // because all threads are stopped after daemon.
-  // However, you need to set the GPIO betfore dropping privileges (which you
+  // However, you need to set the GPIO before dropping privileges (which you
   // usually do when running as daemon).
   //
   // So if you write a daemon with dropping privileges, this is the pseudocode
   // of what you need to do:
   // ------------
+  //   RGBMatrix::Options opts;
+  //   RGBMatrix *matrix = new RGBMatrix(NULL, opts);  // No init with gpio yet.
   //   GPIO gpio;
   //   gpio.Init();
-  //   RGBMatrix *matrix = new RGBMatrix(NULL);  // No init with gpio yet.
   //   matrix->SetGPIO(&gpio, false);   // First init GPIO use..
   //   drop_privileges();               // .. then drop privileges.
-  //   daemon(0, 0);
-  //   matrix->SetGPIO(&gpio, true);    // Now start thread.
+  //   daemon(0, 0);                    // .. start daemon before threads.
+  //   matrix->StartRefresh();          // Now start thread.
   // -------------
   void SetGPIO(GPIO *io, bool start_thread = true);
+
+  // Start thread. Typically, you don't need this, see SetGPIO() description
+  // when you might want it.
+  // It doesn't harm to call if the thread is already started.
+  // Returns 'false' if it couldn't start because GPIO was not set yet.
+  bool StartRefresh();
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // limited comic-colors, 1 might be sufficient. Lower require less CPU and
