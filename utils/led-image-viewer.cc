@@ -43,9 +43,6 @@ static void InterruptHandler(int signo) {
   interrupt_received = true;
 }
 
-#define TERM_ERR  "\033[1;31m"
-#define TERM_NORM "\033[0m"
-
 namespace {
 // Preprocess as much as possible, so that we can just exchange full frames
 // on VSync.
@@ -155,11 +152,47 @@ static int usage(const char *progname) {
   return 1;
 }
 
+static bool WarnAboutDeprecatedOption(int argc, char **argv);
+
 int main(int argc, char *argv[]) {
   Magick::InitializeMagick(*argv);
   RGBMatrix *const matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
 
-  // These used to be options we understood, but deprecate now. Accept them
+  if (WarnAboutDeprecatedOption(argc, argv))
+    return usage(argv[0]);
+
+  if (argc <= 1) {
+    fprintf(stderr, "Expected image filename.\n");
+    return usage(argv[0]);
+  }
+
+  if (matrix == NULL)
+    return 1;
+
+  const char *filename = argv[argc-1];
+
+  std::vector<Magick::Image> sequence_pics;
+  if (!LoadAnimation(filename, matrix->width(), matrix->height(),
+                     &sequence_pics)) {
+    return 0;
+  }
+
+  std::vector<PreprocessedFrame*> frames;
+  PrepareBuffers(sequence_pics, matrix, &frames);
+
+  DisplayAnimation(frames, matrix);
+
+  fprintf(stderr, "Caught signal. Exiting.\n");
+
+  // Animation finished. Shut down the RGB matrix.
+  matrix->Clear();
+  delete matrix;
+
+  return 0;
+}
+
+static bool WarnAboutDeprecatedOption(int argc, char **argv) {
+    // These used to be options we understood, but deprecate now. Accept them
   // for now, but tell the user.
   bool any_deprecated_option = false;
   int opt;
@@ -198,36 +231,5 @@ int main(int argc, char *argv[]) {
       return usage(argv[0]);
     }
   }
-
-  if (any_deprecated_option)
-    return usage(argv[0]);
-
-  if (optind >= argc) {
-    fprintf(stderr, "Expected image filename.\n");
-    return usage(argv[0]);
-  }
-
-  if (matrix == NULL)
-    return 1;
-
-  const char *filename = argv[optind];
-
-  std::vector<Magick::Image> sequence_pics;
-  if (!LoadAnimation(filename, matrix->width(), matrix->height(),
-                     &sequence_pics)) {
-    return 0;
-  }
-
-  std::vector<PreprocessedFrame*> frames;
-  PrepareBuffers(sequence_pics, matrix, &frames);
-
-  DisplayAnimation(frames, matrix);
-
-  fprintf(stderr, "Caught signal. Exiting.\n");
-
-  // Animation finished. Shut down the RGB matrix.
-  matrix->Clear();
-  delete matrix;
-
-  return 0;
+  return any_deprecated_option;
 }

@@ -14,9 +14,11 @@
 #include <getopt.h>
 #include <limits.h>
 #include <math.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include <algorithm>
 
 using std::min;
@@ -26,6 +28,11 @@ using std::max;
 #define TERM_NORM "\033[0m"
 
 using namespace rgb_matrix;
+
+volatile bool interrupt_received = false;
+static void InterruptHandler(int signo) {
+  interrupt_received = true;
+}
 
 /*
  * The following are demo image generators. They all use the utility
@@ -40,7 +47,7 @@ public:
   }
   void Run() {
     uint32_t continuum = 0;
-    while (running()) {
+    while (running() && !interrupt_received) {
       usleep(5 * 1000);
       continuum += 1;
       continuum %= 3 * 255;
@@ -78,7 +85,7 @@ public:
     const uint8_t c = 255;
     uint8_t count = 0;
 
-    while (running()) {
+    while (running() && !interrupt_received) {
       if (matrix_->brightness() < 1) {
         matrix_->SetBrightness(max_brightness);
         count++;
@@ -129,7 +136,7 @@ public:
     const int x_step = max(1, width / sub_blocks);
     const int y_step = max(1, height / sub_blocks);
     uint8_t count = 0;
-    while (running()) {
+    while (running() && !interrupt_received) {
       for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
           int c = sub_blocks * (y / y_step) + x / x_step;
@@ -176,7 +183,7 @@ public:
 
     const float deg_to_rad = 2 * 3.14159265 / 360;
     int rotation = 0;
-    while (running()) {
+    while (running() && !interrupt_received) {
       ++rotation;
       usleep(15 * 1000);
       rotation %= 360;
@@ -276,7 +283,7 @@ public:
       ->height();
     const int screen_width = matrix_->transformer()->Transform(offscreen_)
       ->width();
-    while (running()) {
+    while (running() && !interrupt_received) {
       {
         MutexLock l(&mutex_new_image_);
         if (new_image_.IsValid()) {
@@ -400,7 +407,7 @@ public:
   }
 
   void Run() {
-    while (running()) {
+    while (running() && !interrupt_received) {
       // Drop a sand grain in the centre
       values_[width_/2][height_/2]++;
       updateValues();
@@ -529,7 +536,7 @@ public:
   }
 
   void Run() {
-    while (running()) {
+    while (running() && !interrupt_received) {
 
       updateValues();
 
@@ -658,7 +665,7 @@ public:
       }
     }
 
-    while (running()) {
+    while (running() && !interrupt_received) {
       // LLRR
       switch (values_[antX_][antY_]) {
       case 0:
@@ -770,7 +777,7 @@ public:
     }
 
     // Start the loop
-    while (running()) {
+    while (running() && !interrupt_received) {
       if (t_ % 8 == 0) {
         // Change the means
         for (int i=0; i<numBars_; ++i) {
@@ -870,7 +877,7 @@ public:
       children_[i].dna = rand() & 0xFFFFFF;
     }
 
-    while(running()) {
+    while (running() && !interrupt_received) {
       swap();
       sort();
       mate();
@@ -1042,15 +1049,16 @@ static int usage(const char *progname) {
 }
 
 int main(int argc, char *argv[]) {
-  // First things first: create matrix and take command line flags.
-  RGBMatrix *matrix = CreateMatrixFromFlags(&argc, &argv);
-
   int runtime_seconds = -1;
   int demo = -1;
   int scroll_ms = 30;
   int rotation = 0;
   const char *demo_parameter = NULL;
   bool any_deprecated_option = false;
+
+  // First things first: create matrix and fish out the command line
+  // options it responds to. After that, we parse the remaining options.
+  RGBMatrix *matrix = CreateMatrixFromFlags(&argc, &argv);
 
   int opt;
   while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:LR:")) != -1) {
@@ -1125,7 +1133,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // The matrix, our 'frame buffer' and display updater.
+  // If we couldn't create a matrix with the command line options, bail out now.
   if (matrix == NULL)
     return 1;
 
@@ -1201,6 +1209,12 @@ int main(int argc, char *argv[]) {
   if (image_gen == NULL)
     return usage(argv[0]);
 
+  // Set up an interrupt handler to be able to stop animations while they go
+  // on. Note, each demo tests for while (running() && !interrupt_received) {},
+  // so they exit as soon as they get a signal.
+  signal(SIGTERM, InterruptHandler);
+  signal(SIGINT, InterruptHandler);
+
   // Image generating demo is crated. Now start the thread.
   image_gen->Start();
 
@@ -1210,12 +1224,15 @@ int main(int argc, char *argv[]) {
   if (runtime_seconds > 0) {
     sleep(runtime_seconds);
   } else {
-    // Things are set up. Just wait for <RETURN> to be pressed.
-    printf("Press <RETURN> to exit and reset LEDs\n");
-    getchar();
+    // The
+    printf("Press <CTRL-C> to exit and reset LEDs\n");
+    while (!interrupt_received) {
+      sleep(1); // Time doesn't really matter. The syscall will be interrupted.
+    }
+    fprintf(stderr, "\nReceived interrupt. Stopping.\n");
   }
 
-  // Stop image generating thread.
+  // Stop image generating thread. The delete triggers
   delete image_gen;
   delete canvas;
 

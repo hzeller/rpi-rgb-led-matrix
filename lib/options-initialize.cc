@@ -198,8 +198,10 @@ void PrintMatrixOptions(FILE *out) {
           "chains. 1..3. Default: 1\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits. Default: 11\n"
           "\t--led-brightness=<percent>: Brightness in percent. Default: 100.\n"
-          "\t--led-drop-privs          : Drop privileges from 'root'.\n"
-          "\t--led-daemon              : Make the process run as daemon.\n");
+          "\t--led-drop-privs          : Drop privileges from 'root' after "
+          "initializing the hardware.\n"
+          "\t--led-daemon              : Make the process run in the background "
+          "as daemon.\n");
 }
 
 bool RGBMatrix::Options::Validate(std::string *err) {
