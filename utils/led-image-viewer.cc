@@ -148,7 +148,7 @@ static void DisplayAnimation(const std::vector<PreprocessedFrame*> &frames,
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <image>\n", progname);
   fprintf(stderr, "Options:\n");
-  rgb_matrix::PrintMatrixOptions(stderr);
+  rgb_matrix::PrintMatrixFlags(stderr);
   return 1;
 }
 

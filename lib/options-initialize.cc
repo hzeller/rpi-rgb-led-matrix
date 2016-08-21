@@ -100,6 +100,12 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("--led-pwm-bits", it, end, &mopts->pwm_bits, &err))
         continue;
+      if (ConsumeBoolFlag("--led-show-refresh", it, &mopts->show_refresh_rate))
+        continue;
+      if (ConsumeBoolFlag("--led-inverse", it, &mopts->inverse_colors))
+        continue;
+      if (ConsumeBoolFlag("--led-swap-green-blue", it, &mopts->swap_green_blue))
+        continue;
       if (ConsumeBoolFlag("--led-daemon", it, &ropts->as_daemon))
         continue;
       if (ConsumeBoolFlag("--led-drop-privs", it, &ropts->drop_privileges))
@@ -151,8 +157,10 @@ static bool drop_privs(const char *priv_user, const char *priv_group) {
 }  // namespace
 
 // Public interface.
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv, bool allow_daemon) {
-  RGBMatrix::Options mopt;
+RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
+                                 const RGBMatrix::Options &default_options,
+                                 bool allow_daemon) {
+  RGBMatrix::Options mopt = default_options;
   RuntimeOptions ropt;
   if (!FlagInit(*argc, *argv, &mopt, &ropt)) {
     return NULL;
@@ -194,18 +202,30 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv, bool allow_daemon) {
   return result;
 }
 
-void PrintMatrixOptions(FILE *out, bool show_daemon) {
+void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &defaults,
+                      bool show_daemon) {
   fprintf(out,
           "\t--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. "
-          "Default: 32\n"
+          "(Default: %d).\n"
           "\t--led-chain=<chained>     : Number of daisy-chained panels. "
-          "Default: 1.\n"
+          "(Default: %d).\n"
           "\t--led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel "
-          "chains. 1..3. Default: 1\n"
-          "\t--led-pwm-bits=<1..11>    : PWM bits. Default: 11\n"
-          "\t--led-brightness=<percent>: Brightness in percent. Default: 100.\n"
+          "chains. range=1..3 (Default: %d).\n"
+          "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
+          "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
+          "\t--led-refresh-rate        : Toogle show refres rate (Default: %s).\n"
+          "\t--led-inverse             : Toogle if your matrix shows inverse "
+          "colors (Default: %s).\n"
+          "\t--led-swap-green-blue     : Toogle if your matrix has green/blue "
+          "swapped (Default: %s).\n"
           "\t--led-drop-privs          : Drop privileges from 'root' after "
-          "initializing the hardware.\n");
+          "initializing the hardware (Default: false).\n",
+          defaults.rows, defaults.chain_length, defaults.parallel,
+          defaults.pwm_bits, defaults.brightness,
+          defaults.show_refresh_rate ? "true" : "false",
+          defaults.inverse_colors ? "true" : "false",
+          defaults.swap_green_blue ? "true" : "false"
+          );
   if (show_daemon) {
     fprintf(out,
             "\t--led-daemon              :"

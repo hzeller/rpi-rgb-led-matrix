@@ -20,7 +20,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "Reads text from stdin and displays it. "
           "Empty string: clear screen\n");
   fprintf(stderr, "Options:\n");
-  rgb_matrix::PrintMatrixOptions(stderr);
+  rgb_matrix::PrintMatrixFlags(stderr);
   fprintf(stderr,
           "\t-f <font-file>    : Use given font.\n"
           "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"

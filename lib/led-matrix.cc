@@ -22,11 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#ifdef SHOW_REFRESH_RATE
-# include <stdio.h>
-# include <sys/time.h>
-#endif
+#include <stdio.h>
+#include <sys/time.h>
 
 #include "gpio.h"
 #include "thread.h"
@@ -44,8 +41,8 @@ public:
 // Pump pixels to screen. Needs to be high priority real-time because jitter
 class RGBMatrix::UpdateThread : public Thread {
 public:
-  UpdateThread(GPIO *io, FrameCanvas *initial_frame)
-    : io_(io), running_(true),
+  UpdateThread(GPIO *io, FrameCanvas *initial_frame, bool show_refresh)
+    : io_(io), show_refresh_(show_refresh), running_(true),
       current_frame_(initial_frame), next_frame_(NULL),
       requested_frame_multiple_(1) {
     pthread_cond_init(&frame_done_, NULL);
@@ -59,10 +56,10 @@ public:
   virtual void Run() {
     unsigned frame_count = 0;
     while (running()) {
-#ifdef SHOW_REFRESH_RATE
       struct timeval start, end;
-      gettimeofday(&start, NULL);
-#endif
+      if (show_refresh_) {
+        gettimeofday(&start, NULL);
+      }
 
       current_frame_->framebuffer()->DumpToMatrix(io_);
 
@@ -84,12 +81,12 @@ public:
 
       ++frame_count;
 
-#ifdef SHOW_REFRESH_RATE
-      gettimeofday(&end, NULL);
-      int64_t usec = ((uint64_t)end.tv_sec * 1000000 + end.tv_usec)
-        - ((int64_t)start.tv_sec * 1000000 + start.tv_usec);
-      printf("\b\b\b\b\b\b\b\b%6.1fHz", 1e6 / usec);
-#endif
+      if (show_refresh_) {
+        gettimeofday(&end, NULL);
+        int64_t usec = ((uint64_t)end.tv_sec * 1000000 + end.tv_usec)
+          - ((int64_t)start.tv_sec * 1000000 + start.tv_usec);
+        printf("\b\b\b\b\b\b\b\b%6.1fHz", 1e6 / usec);
+      }
     }
   }
 
@@ -109,6 +106,7 @@ private:
   }
 
   GPIO *const io_;
+  const bool show_refresh_;
   Mutex running_mutex_;
   bool running_;
 
@@ -121,13 +119,32 @@ private:
 
 // Some defaults. See options-initialize.cc for the command line parsing.
 RGBMatrix::Options::Options()
-  : rows(32), chain_length(1), parallel(1), pwm_bits(11), brightness(100) {}
+  : rows(32), chain_length(1), parallel(1), pwm_bits(11), brightness(100),
+    // Historically, we provided these options only as #defines. Make sure that
+    // things still behave as before if someone has set these.
+#ifdef SHOW_REFRESH_RATE
+    show_refresh_rate(true),
+#else
+    show_refresh_rate(false),
+#endif
+
+#ifdef RGB_SWAP_GREEN_BLUE
+    swap_green_blue(true),
+#else
+    swap_green_blue(false),
+#endif
+
+#ifdef INVERSE_RGB_DISPLAY_COLORS
+    inverse_colors(true)
+#else
+    inverse_colors(false)
+#endif
+{
+  // Nothing to see here.
+}
 
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
-  : rows_(options.rows), chained_displays_(options.chain_length),
-    parallel_displays_(options.parallel),
-    pwm_bits_(options.pwm_bits), brightness_(options.brightness),
-    io_(NULL), updater_(NULL) {
+  : params_(options), io_(NULL), updater_(NULL) {
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
   Clear();
@@ -136,10 +153,7 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
-  : rows_(rows), chained_displays_(chained_displays),
-    parallel_displays_(parallel_displays),
-    pwm_bits_(11), brightness_(100),
-    io_(NULL), updater_(NULL) {
+  : params_(Options()), io_(NULL), updater_(NULL) {
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
   Clear();
@@ -163,7 +177,7 @@ RGBMatrix::~RGBMatrix() {
 void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
   if (io != NULL && io_ == NULL) {
     io_ = io;
-    internal::Framebuffer::InitGPIO(io_, rows_, parallel_displays_);
+    internal::Framebuffer::InitGPIO(io_, params_.rows, params_.parallel);
   }
   if (start_thread) {
     StartRefresh();
@@ -172,7 +186,7 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
 
 bool RGBMatrix::StartRefresh() {
   if (updater_ == NULL && io_ != NULL) {
-    updater_ = new UpdateThread(io_, active_);
+    updater_ = new UpdateThread(io_, active_, params_.show_refresh_rate);
     // If we have multiple processors, the kernel
     // jumps around between these, creating some global flicker.
     // So let's tie it to the last CPU available.
@@ -187,16 +201,19 @@ bool RGBMatrix::StartRefresh() {
 
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {
   FrameCanvas *result =
-    new FrameCanvas(new internal::Framebuffer(rows_, 32 * chained_displays_,
-                                              parallel_displays_));
+    new FrameCanvas(new internal::Framebuffer(params_.rows,
+                                              32 * params_.chain_length,
+                                              params_.parallel,
+                                              params_.swap_green_blue,
+                                              params_.inverse_colors));
   if (created_frames_.empty()) {
     // First time. Get defaults from initial Framebuffer.
     do_luminance_correct_ = result->framebuffer()->luminance_correct();
   }
 
-  result->framebuffer()->SetPWMBits(pwm_bits_);
+  result->framebuffer()->SetPWMBits(params_.pwm_bits);
   result->framebuffer()->set_luminance_correct(do_luminance_correct_);
-  result->framebuffer()->SetBrightness(brightness_);
+  result->framebuffer()->SetBrightness(params_.brightness);
 
   created_frames_.push_back(result);
   return result;
@@ -222,11 +239,11 @@ void RGBMatrix::SetTransformer(CanvasTransformer *transformer) {
 bool RGBMatrix::SetPWMBits(uint8_t value) {
   const bool success = active_->framebuffer()->SetPWMBits(value);
   if (success) {
-    pwm_bits_ = value;
+    params_.pwm_bits = value;
   }
   return success;
 }
-uint8_t RGBMatrix::pwmbits() { return pwm_bits_; }
+uint8_t RGBMatrix::pwmbits() { return params_.pwm_bits; }
 
 // Map brightness of output linearly to input with CIE1931 profile.
 void RGBMatrix::set_luminance_correct(bool on) {
@@ -239,11 +256,11 @@ bool RGBMatrix::luminance_correct() const {
 
 void RGBMatrix::SetBrightness(uint8_t brightness) {
   active_->framebuffer()->SetBrightness(brightness);
-  brightness_ = brightness;
+  params_.brightness = brightness;
 }
 
 uint8_t RGBMatrix::brightness() {
-  return brightness_;
+  return params_.brightness;
 }
 
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer

@@ -1029,7 +1029,7 @@ static int usage(const char *progname) {
           "\t-t <seconds>              : Run for these number of seconds, then exit.\n"
           "\t-R <rotation>             : Sets the rotation of matrix. "
           "Allowed: 0, 90, 180, 270. Default: 0.\n");
-  rgb_matrix::PrintMatrixOptions(stderr);
+  rgb_matrix::PrintMatrixFlags(stderr);
   fprintf(stderr, "Demos, choosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"

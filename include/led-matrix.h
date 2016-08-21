@@ -34,45 +34,6 @@ class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
 namespace internal { class Framebuffer; }
 
-// Convenience utility to create a Matrix and extract relevant values from the
-// command line. Commandline options are something like --led-rows, --led-chain,
-// --led-parallel. See output of PrintMatrixOptions() for all available options.
-//
-// You call it with the address of 'argc' and 'argv' that you get from main();
-// The function will extract the options and remove these from argv, so that
-// your own flag processing does not have to deal with unknown options.
-//
-// The optional parameter 'allow_daemon' tells if this function should allow
-// the --led-daemon option. Usually, you want this on, but if you
-// want to deal with your own daemon handling that should happen after this
-// call, switch this off.
-// If you set it to off, you need to manually call StartRefresh(), see
-// documentation there.
-//
-// Example use:
-/*
-using rgb_matrix::RGBMatrix;
-int main(int argc, char **argv) {
-  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
-  if (matrix == NULL) {
-    PrintMatrixOptions(stderr);
-    return 1;
-  }
-
-  // Do your own command line handling with the remaining options.
-
-  //  .. now use matrix
-
-  delete matrix;   // Make sure to delete it in the end.
-}
-*/
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
-                                 bool allow_daemon = true);
-
-// Show all the available options for CreateMatrixFromFlags(). If
-// show_daemon_option is set to false, the --led-daemon option is not shown.
-void PrintMatrixOptions(FILE *out, bool show_daemon_option = true);
-
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
 //
@@ -116,6 +77,10 @@ public:
     // The initial brightness of the panel in percent. Valid range is 1..100
     // Default: 100
     int brightness;
+
+    bool show_refresh_rate;
+    bool swap_green_blue;
+    bool inverse_colors;
   };
 
   // Create an RGBMatrix.
@@ -233,13 +198,8 @@ private:
   class UpdateThread;
   friend class UpdateThread;
 
-  const int rows_;
-  const int chained_displays_;
-  const int parallel_displays_;
-
-  uint8_t pwm_bits_;
+  Options params_;
   bool do_luminance_correct_;
-  uint8_t brightness_;
 
   FrameCanvas *active_;
 
@@ -283,5 +243,57 @@ private:
 
   internal::Framebuffer *const frame_;
 };
+
+// Convenience utility to create a Matrix and extract relevant values from the
+// command line. Commandline flags are something like --led-rows, --led-chain,
+// --led-parallel. See output of PrintMatrixFlags() for all available options.
+//
+// You call it with the address of 'argc' and 'argv' that you get from main();
+// The function will extract the options and remove these from argv, so that
+// your own flag processing does not have to deal with unknown options.
+//
+// The first optional parameter is RGBMatrix::Option which allows you to
+// pre-set options, such as your chain and parallel settings.
+//
+// The next optional parameter 'allow_daemon' tells if this function should allow
+// the --led-daemon option. Usually, you want this on, but if you
+// want to deal with your own daemon handling that should happen after this
+// call, switch this off.
+// If you set it to off, you need to manually call StartRefresh(), see
+// documentation there.
+//
+// Example use:
+/*
+using rgb_matrix::RGBMatrix;
+int main(int argc, char **argv) {
+  // Set some defaults
+  RGBMatrix::Options my_defaults;
+  my_defaults.chain_length = 3;
+  my_defaults.show_refresh_rate = true;
+  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv,
+                                                        my_defaults);
+  if (matrix == NULL) {
+    PrintMatrixFlags(stderr, my_defaults);
+    return 1;
+  }
+
+  // Do your own command line handling with the remaining options.
+
+  //  .. now use matrix
+
+  delete matrix;   // Make sure to delete it in the end.
+}
+*/
+RGBMatrix *CreateMatrixFromFlags(
+  int *argc, char ***argv,
+  const RGBMatrix::Options &default_options = RGBMatrix::Options(),
+  bool allow_daemon = true);
+
+// Show all the available options for CreateMatrixFromFlags(). If
+// show_daemon_option is set to false, the --led-daemon option is not shown.
+void PrintMatrixFlags(FILE *out,
+                      const RGBMatrix::Options &defaults = RGBMatrix::Options(),
+                      bool show_daemon_option = true);
+
 }  // end namespace rgb_matrix
 #endif  // RPI_RGBMATRIX_H

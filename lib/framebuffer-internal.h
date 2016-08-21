@@ -27,7 +27,8 @@ namespace internal {
 // written out.
 class Framebuffer {
 public:
-  Framebuffer(int rows, int columns, int parallel);
+  Framebuffer(int rows, int columns, int parallel,
+              bool swap_green_blue, bool inverse_color);
   ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
@@ -69,6 +70,9 @@ private:
   const int height_;   // rows * parallel
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
+  const bool swap_green_blue_;
+  const bool inverse_color_;
+
   uint8_t pwm_bits_;   // PWM bits to display.
   bool do_luminance_correct_;
   uint8_t brightness_;
@@ -86,7 +90,7 @@ private:
       // This bitset reflects the GPIO mapping. The naming of the
       // pins of type 'p0_r1' means 'first parallel chain, red-bit one'
       unsigned int unused_0_3         : 4;  // 0..3
-#ifdef ADAFRUIT_RGBMATRIX_HAT_PWM      
+#ifdef ADAFRUIT_RGBMATRIX_HAT_PWM
       unsigned int unused_4           : 1;  // 4
 #else
       unsigned int output_enable      : 1;  // 4
@@ -99,7 +103,7 @@ private:
       unsigned int unused_14_15       : 2;  // 14,15
       unsigned int p0_g2              : 1;  // 16
       unsigned int clock              : 1;  // 17
-#ifdef ADAFRUIT_RGBMATRIX_HAT_PWM      
+#ifdef ADAFRUIT_RGBMATRIX_HAT_PWM
       unsigned int output_enable      : 1;  // 18
       unsigned int unused_19          : 1;  // 19
 #else

@@ -55,23 +55,19 @@ static PinPulser *sOutputEnablePulser = NULL;
 #  define ONLY_SINGLE_CHAIN 1
 #endif
 
-#ifdef RGB_SWAP_GREEN_BLUE
-#  define PANEL_SWAP_G_B_ 1
-#else
-#  define PANEL_SWAP_G_B_ 0
-#endif
-
 #ifdef ONLY_SINGLE_SUB_PANEL
 #  define SUB_PANELS_ 1
 #else
 #  define SUB_PANELS_ 2
 #endif
 
-Framebuffer::Framebuffer(int rows, int columns, int parallel)
+Framebuffer::Framebuffer(int rows, int columns, int parallel,
+                         bool swap_green_blue, bool inverse_color)
   : rows_(rows),
     parallel_(parallel),
     height_(rows * parallel),
     columns_(columns),
+    swap_green_blue_(swap_green_blue), inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
@@ -180,39 +176,35 @@ static uint16_t *CreateLuminanceCIE1931LookupTable() {
 }
 
 inline uint16_t Framebuffer::MapColor(uint8_t c) {
-#ifdef INVERSE_RGB_DISPLAY_COLORS
-#  define COLOR_OUT_BITS(x) (x) ^ 0xffff
-#else
-#  define COLOR_OUT_BITS(x) (x)
-#endif
-
+  uint16_t result;
   if (do_luminance_correct_) {
     static uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-    return COLOR_OUT_BITS(luminance_lookup[c * 100 + (brightness_ - 1)]);
+    result = luminance_lookup[c * 100 + (brightness_ - 1)];
   } else {
     // simple scale down the color value
     c = c * brightness_ / 100;
 
     enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
-    return COLOR_OUT_BITS((shift > 0) ? (c << shift) : (c >> -shift));
+    result = (shift > 0) ? (c << shift) : (c >> -shift);
   }
-
-#undef COLOR_OUT_BITS
+  if (inverse_color_) result ^= 0xffff;
+  return result;
 }
 
 void Framebuffer::Clear() {
-#ifdef INVERSE_RGB_DISPLAY_COLORS
-  Fill(0, 0, 0);
-#else
-  memset(bitplane_buffer_, 0,
-         sizeof(*bitplane_buffer_) * double_rows_ * columns_ * kBitPlanes);
-#endif
+  if (inverse_color_) {
+    Fill(0, 0, 0);
+  } else  {
+    // Cheaper.
+    memset(bitplane_buffer_, 0,
+           sizeof(*bitplane_buffer_) * double_rows_ * columns_ * kBitPlanes);
+  }
 }
 
 void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   const uint16_t red   = MapColor(r);
-  const uint16_t green = MapColor(PANEL_SWAP_G_B_ ? b : g);
-  const uint16_t blue  = MapColor(PANEL_SWAP_G_B_ ? g : b);
+  const uint16_t green = MapColor(swap_green_blue_ ? b : g);
+  const uint16_t blue  = MapColor(swap_green_blue_ ? g : b);
 
   for (int b = kBitPlanes - pwm_bits_; b < kBitPlanes; ++b) {
     uint16_t mask = 1 << b;
@@ -243,8 +235,8 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   if (x < 0 || x >= columns_ || y < 0 || y >= height_) return;
 
   const uint16_t red   = MapColor(r);
-  const uint16_t green = MapColor(PANEL_SWAP_G_B_ ? b : g);
-  const uint16_t blue  = MapColor(PANEL_SWAP_G_B_ ? g : b);
+  const uint16_t green = MapColor(swap_green_blue_ ? b : g);
+  const uint16_t blue  = MapColor(swap_green_blue_ ? g : b);
 
   const int min_bit_plane = kBitPlanes - pwm_bits_;
   IoBits *bits = ValueAt(y & row_mask_, x, min_bit_plane);
