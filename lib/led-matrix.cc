@@ -122,6 +122,12 @@ RGBMatrix::Options::Options()
   : rows(32), chain_length(1), parallel(1), pwm_bits(11), brightness(100),
     // Historically, we provided these options only as #defines. Make sure that
     // things still behave as before if someone has set these.
+#ifdef RGB_SCAN_INTERLACED
+    scan_mode(1),
+#else
+    scan_mode(0),
+#endif
+
 #ifdef SHOW_REFRESH_RATE
     show_refresh_rate(true),
 #else
@@ -204,6 +210,7 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
     new FrameCanvas(new internal::Framebuffer(params_.rows,
                                               32 * params_.chain_length,
                                               params_.parallel,
+                                              params_.scan_mode,
                                               params_.swap_green_blue,
                                               params_.inverse_colors));
   if (created_frames_.empty()) {

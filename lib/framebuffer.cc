@@ -62,11 +62,13 @@ static PinPulser *sOutputEnablePulser = NULL;
 #endif
 
 Framebuffer::Framebuffer(int rows, int columns, int parallel,
+                         int scan_mode,
                          bool swap_green_blue, bool inverse_color)
   : rows_(rows),
     parallel_(parallel),
     height_(rows * parallel),
     columns_(columns),
+    scan_mode_(scan_mode),
     swap_green_blue_(swap_green_blue), inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1) {
@@ -351,7 +353,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   clock.bits.clock = 1;
   strobe.bits.strobe = 1;
 
-#if RGB_SCAN_INTERLACED
+  // info needed for interlace mode.
   uint8_t rot_bits = 0;
   switch (double_rows_) {
   case  4: rot_bits = 1; break;
@@ -359,15 +361,20 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
   case 16: rot_bits = 3; break;
   case 32: rot_bits = 4; break;
   }
-#endif
 
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
-#if RGB_SCAN_INTERLACED
-    uint8_t d_row = ((row_loop << 1) | (row_loop >> rot_bits)) & row_mask_;
-#else
-    uint8_t d_row = row_loop;
-#endif
+    uint8_t d_row;
+    switch (scan_mode_) {
+    case 0:  // progressive
+    default:
+      d_row = row_loop;
+      break;
+
+    case 1:  // interlaced
+      d_row = ((row_loop << 1) | (row_loop >> rot_bits)) & row_mask_;
+    }
+
     row_address.bits.a = d_row;
     row_address.bits.b = d_row >> 1;
     row_address.bits.c = d_row >> 2;

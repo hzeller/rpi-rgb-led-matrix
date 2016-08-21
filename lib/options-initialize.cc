@@ -32,7 +32,8 @@ RuntimeOptions::RuntimeOptions() :
 #else
   gpio_slowdown(1),
 #endif
-  daemon(0), drop_privileges(0)
+  daemon(0),            // Don't become a daemon by default.
+  drop_privileges(1)    // Encourage good practice: drop privileges by default.
 {
   // Nothing to see here.
 }
@@ -116,6 +117,8 @@ static bool FlagInit(int &argc, char **&argv,
       if (ConsumeIntFlag("parallel", it, end, &mopts->parallel, &err))
         continue;
       if (ConsumeIntFlag("brightness", it, end, &mopts->brightness, &err))
+        continue;
+      if (ConsumeIntFlag("scan-mode", it, end, &mopts->scan_mode, &err))
         continue;
       if (ConsumeIntFlag("pwm-bits", it, end, &mopts->pwm_bits, &err))
         continue;
@@ -250,13 +253,15 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "chains. range=1..3 (Default: %d).\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
+          "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
+          "(Default: %d).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "
           ": Switch if your matrix has inverse colors %s.\n "
           "\t--led-%sswap-green-blue     : Switch if your matrix has green/blue "
           "swapped %s.\n",
           d.rows, d.chain_length, d.parallel,
-          d.pwm_bits, d.brightness,
+          d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
           d.swap_green_blue ? "no-" : "",    d.swap_green_blue ? "off" : "on"
@@ -274,7 +279,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
   if (r.drop_privileges >= 0) {
     const bool on = (r.drop_privileges > 0);
     fprintf(out,
-            "\t--led-%sdrop-privs          : %srop privileges from 'root' "
+            "\t--led-%sdrop-privs       : %srop privileges from 'root' "
             "after initializing the hardware.\n",
             on ? "no-" : "", on ? "Don't d" : "D");
   }
@@ -289,25 +294,29 @@ bool RGBMatrix::Options::Validate(std::string *err) {
   }
 
   if (chain_length < 1) {
-    err->append("Chain-length outside usable range\n");
+    err->append("Chain-length outside usable range.\n");
     success = false;
   }
 
   if (parallel < 1 || parallel > 3) {
-    err->append("Parallel outside usable range.\n");
+    err->append("Parallel outside usable range (1..3 allowed).\n");
     success = false;
   }
 
   if (brightness < 1 || brightness > 100) {
-    err->append("Brightness is outside usable range.\n");
+    err->append("Brightness outside usable range (Percent 1..100 allowed).\n");
     success = false;
   }
 
   if (pwm_bits <= 0 || pwm_bits > 11) {
-    err->append("Invalid range of pwm-bits\n");
+    err->append("Invalid range of pwm-bits (0..11 allowed).\n");
     success = false;
   }
 
+  if (scan_mode < 0 || scan_mode > 1) {
+    err->append("Invalid scan mode (0 or 1 allowed).\n");
+    success = false;
+  }
   return success;
 }
 

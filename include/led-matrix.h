@@ -78,6 +78,9 @@ public:
     // Default: 100
     int brightness;
 
+    // Scan mode: 0=progressive, 1=interlaced
+    int scan_mode;
+
     bool show_refresh_rate;
     bool swap_green_blue;
     bool inverse_colors;

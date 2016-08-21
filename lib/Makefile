@@ -9,8 +9,9 @@ TARGET=librgbmatrix
 
 ###
 # After you change any of the following DEFINES, make sure to 'make' again.
-# Note, all these options now can be set programmatically and via command line
-# options as well. So be prepared for these to be removed.
+#
+# Note, most of these options now can be set programmatically and via command
+# line options as well. So be prepared for these to be removed.
 ###
 
 # If you see that your display is inverse, you might have a matrix variant

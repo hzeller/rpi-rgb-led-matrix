@@ -28,6 +28,7 @@ namespace internal {
 class Framebuffer {
 public:
   Framebuffer(int rows, int columns, int parallel,
+              int scan_mode,
               bool swap_green_blue, bool inverse_color);
   ~Framebuffer();
 
@@ -70,6 +71,7 @@ private:
   const int height_;   // rows * parallel
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
+  const int scan_mode_;
   const bool swap_green_blue_;
   const bool inverse_color_;
 
