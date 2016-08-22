@@ -360,6 +360,9 @@ public:
     // Determine how long we already spent and sleep to get close to the
     // actual end-time of our sleep period.
     // (substract 25 usec, as this is the OS overhead).
+    // TODO(hzeller): find if it is possible to get some sort of interrupt from
+    //   the hardware once it is done with the pulse. Sounds silly that there is
+    //   not.
     const uint32_t elapsed_usec = *timer1Mhz - start_time_;
     const int to_sleep = sleep_hint_ - elapsed_usec - 25;
     if (to_sleep > 0) {
