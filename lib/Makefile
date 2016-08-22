@@ -16,8 +16,8 @@ TARGET=librgbmatrix
 # 'adafruit-hat'
 #
 # These are the choices
-#   regular
-#   adafruit-hat
+#   regular            # Following this project wiring and using these PCBs
+#   adafruit-hat       # If you have a RGB matrix HAT from Adafruit
 #   classic            # Not really used anymore
 HARDWARE_DESC?=regular
 
@@ -88,7 +88,15 @@ HARDWARE_DESC?=regular
 # Flag: --led-pwm-lsb-nanoseconds
 #DEFINES+=-DLSB_PWM_NANOSECONDS=130
 
-# ------------ Pinout options; usually no change needed here --------------
+# This is to debug problems with the hardware pulse generation. The PWM hardware
+# module is also used by Raspberry Pi sound system, so there might be
+# interference. Note, you typically don't want the hardware pulses disabled, as
+# the image will have visible brightness glitches; but for debugging, this is
+# a good choice.
+# Flag: --led-no-hardware-pulses
+#DEFINES+=-DDISABLE_HARDWARE_PULSES
+
+# ---- Pinout options for hardware variants; usually no change needed here ----
 
 # Uncomment if you want to use the Adafruit HAT with stable PWM timings.
 # The newer version of this library allows for much more stable (less flicker)
@@ -112,14 +120,6 @@ HARDWARE_DESC?=regular
 # This option is typically _not_ needed, only use when you attempt to connect
 # some oddball old (typically one-colored) display, such as Hub12.
 #DEFINES+=-DONLY_SINGLE_SUB_PANEL
-
-# This is to debug problems with the hardware pulse generation. The PWM hardware
-# module is also used by Raspberry Pi sound system, so there might be
-# interference. Note, you typically don't want the hardware pulses disabled, as
-# the image will have visible brightness glitches; but for debugging, this is
-# a good choice.
-# Flag: --led-no-hardware-pulses
-#DEFINES+=-DDISABLE_HARDWARE_PULSES
 
 # If someone gives additional values on the make commandline e.g.
 # make USER_DEFINES="-DSHOW_REFRESH_RATE"

@@ -67,7 +67,7 @@ public:
 private:
   // Define the type to do the pin-mapping. These are include fils
   // found in include directory hardware/$(name-of-mapping)
-  #include "pin-mapping.h"
+#include "led-panel-pin-mapping.h"  // see HARDWARE_DESC in lib/Makefile
 
   // Map color
   inline uint16_t MapColor(uint8_t c);

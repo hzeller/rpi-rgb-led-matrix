@@ -1,0 +1,3 @@
+These sub-directories contain include files that are specific for the
+particular hardware used.
+They are chosen at compile-time with the HARDWARE_DESC variable in lib/Makefile.
