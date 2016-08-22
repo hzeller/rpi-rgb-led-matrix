@@ -52,13 +52,13 @@ Types of Displays
 There are various types of displays that come all with the same Hub75 connector.
 They vary in the way the multiplexing is happening.
 
-Type  | Scan Multiplexing | Program Option  | Remark
------:|:-----------------:|:----------------|-------
-64x64 |  1:32             | -r 64 -c 2      | For displays with E line.
-32x32 |  1:16             | -r 32           |
-32x64 |  1:16             | -r 32 -c 2      | internally two chained 32x32
-16x32 |  1:8              | -r 16           |
-?     |  1:4              | -r 8            | (not tested myself)
+Type  | Scan Multiplexing | Program Option               | Remark
+-----:|:-----------------:|:-----------------------------|-------
+64x64 |  1:32             | --led-rows=64 --led-chain=2  | For displays with E line.
+32x32 |  1:16             | --led-rows=32                |
+32x64 |  1:16             | --led-rows=32 --led-chain=2  | internally two chained 32x32
+16x32 |  1:8              | --led-rows=16                |
+?     |  1:4              | --led-rows=8                 | (not tested myself)
 
 These can be chained by connecting the output of one panel to the input of
 the next panel. You can chain quite a few together.
@@ -104,7 +104,7 @@ Chaining panels
 We might only have a limited amount of GPIOs on the Raspberry Pi, but luckily,
 the RGB matrices can be chained. The display panels have an input connector,
 and also have an output port, that you can connect to the next display in a
-daisy-chain manner. There is the flag `-c` in the demo program to give number
+daisy-chain manner. There is the flag `--led-chain` in the demo program to give number
 of displays that are chained.
 You end up with a very wide display (chain * 32 pixels).
 
@@ -176,38 +176,54 @@ If you encounter this, try these things
      slow down the GPIO writing a bit. This will of course reduce the
      frame-rate, so it comes at a cost.
 
-For GPIO slow-down, the following line in the [lib/Makefile](lib/Makefile)
-is interesting:
-
-     DEFINES+=-DRGB_SLOWDOWN_GPIO=1
+For GPIO slow-down, add the flag `--led-slowdown-gpio=2` to the invocation of
+the binary.
 
 The default value is 1, if you still have problems, try the value 2. If you
-know that your display is fast enough, try to comment out that line.
+know that your display is fast enough, use 0 (zero).
 
 Then `make` again.
 
 ### Ghosting
 Some panels have trouble with sharp contrasts and short pulses that results
 in ghosting. It is particularly apparent with very sharp contrasts, such as
-bright text on black background. This can be improved by tweaking the `LSB_PWM_NANOSECONDS`
-parameter in [lib/Makefile](./lib/Makefile). See description there for details.
+bright text on black background. This can be improved by tweaking the
+`--led-pwm-lsb-nanoseconds` parameter.
 
 The following example is a little exaggerated:
 
-Ghosting with low LSB_PWM_NANOSECONDS  | No ghosting after tweaking
----------------------------------------|------------------------------
-![](img/text-ghosting.jpg)             |![](img/text-no-ghosting.jpg)
+Ghosting with low --led-pwm-lsb-nanoseconds  | No ghosting after tweaking
+---------------------------------------------|------------------------------
+![](img/text-ghosting.jpg)                   |![](img/text-no-ghosting.jpg)
 
 ### Inverted Colors ?
 
 There are some displays out there that use inverse logic for the colors. You
 notice that your image looks like a 'negative'. The parameter to tweak is
-`INVERSE_RGB_DISPLAY_COLORS` in [lib/Makefile](./lib/Makefile).
+`--led-inverse`.
 
-### Check configuration in lib/Makefile
+### Check configuration via command line flags.
 
-There are lots of parameters in [lib/Makefile](./lib/Makefile) that you might
-be interested in tweaking.
+There are lots of parameters exposed as command line flags.
+```
+# These are the most important
+--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
+--led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
+--led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
+
+# These are for tweaking
+--led-pwm-bits=<1..11>    : PWM bits (Default: 11).
+--led-brightness=<percent>: Brightness in percent (Default: 100).
+--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
+--led-show-refresh        : Show refresh rate.
+--led-inverse             : Switch if your matrix has inverse colors on.
+--led-swap-green-blue     : Switch if your matrix has green/blue swapped on.
+--led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
+--led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
+--led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
+--led-daemon              : Make the process run in the background as daemon.
+--led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+```
 
 If you have an Adafruit HAT
 ---------------------------
@@ -227,14 +243,13 @@ The Adafruit HAT uses a modified pinout, so they forked this library and
 modified the pinout there. However, that fork is _ancient_, so I strongly
 suggest to use this original library instead.
 
-In this library here, you have to uncomment the following line in
-the [lib/Makefile](./lib/Makefile)
+In this library here, you can choose the Adafruit HAT pinout by editing
+`lib/Makefile` and change `HARDWARE_DESC?=regular` to `HARDWARE_DESC=adafruit-hat`.
 
+Alternatively, you can prefix the compilation call with this variable like so:
 ```
-#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
+HARDWARE_DESC=adafruit-hat make
 ```
-Uncommenting means: remove the `#` in front of that line.
-
 Then re-compile and a display connected to the HAT should work.
 
 ### Improving flicker

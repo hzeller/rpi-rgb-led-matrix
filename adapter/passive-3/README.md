@@ -1,7 +1,7 @@
 Adapter PCB to support up to 3 panel chains
 ===========================================
 
-   * Passive board. Simple, but might need to define `RGB_SLOWDOWN_GPIO` if you see
+   * Passive board. Simple, but might need to define `--led-slowdown-gpio` if you see
      glitches. Consider using the [active board](../active-3) in that case.
    * Only really advisable, if the LED panels have 74HCT245 (as opposed to just
      74HC245) in their input stage, because then they can deal properly with

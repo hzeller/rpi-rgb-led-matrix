@@ -13,4 +13,5 @@ Then, you can run it with any common image format, including animated gifs:
     sudo ./led-image-viewer myimage.gif
 
 It also supports the standard options to specify the connected
-displays (`-r`, `-c`, `-P`).
+displays (e.g. `--led-rows`, `--led-chain`, `--led-parallel` but also many more tweak
+flags).

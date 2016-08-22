@@ -31,20 +31,24 @@ HARDWARE_DESC?=regular
 
 # If you see that your display is inverse, you might have a matrix variant
 # has uses inverse logic for the RGB bits. In that case: uncomment this.
+# Flag: --led-inverse
 #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS
 
 # Some panels out there seem to have Green and Blue swapped (even though the
 # writing on connector looks correct). This option will swap these colors if
 # you happen to have gotten such panel.
+# Flag: --led-swap-green-blue
 #DEFINES+=-DRGB_SWAP_GREEN_BLUE
 
 # For curiosity reasons and while tweaking values for LSB_PWM_NANOSECONDS,
 # uncomment to see refresh rate in terminal.
+# Flag: --led-show-refresh
 #DEFINES+=-DSHOW_REFRESH_RATE
 
 # For low refresh rates below 100Hz (e.g. a lot of panels), the eye will notice
 # some flicker. With this option enabled, the refreshed lines are interleaved,
 # so it is less noticeable. But looks less pleasant with fast eye movements.
+# Flag: --led-scan-mode=1
 #DEFINES+=-DRGB_SCAN_INTERLACED=1
 
 # The signal can be too fast for some LED panels, in particular with newer
@@ -60,6 +64,7 @@ HARDWARE_DESC?=regular
 # particularly slow panels or bad signal cable situations. If that happens, you
 # typically should double check cables and add TTL level converter if you
 # haven't.
+# Flag: --led-slowdown-gpio
 #DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 
 # This allows to change the base time-unit for the on-time in the lowest
@@ -80,6 +85,7 @@ HARDWARE_DESC?=regular
 # ghosting in high-contrast applications (e.g. text), increase the value.
 # If you want to tweak, watch the framerate (-DSHOW_FRAME_RATE) while playing
 # with this number and the PWM values.
+# Flag: --led-pwm-lsb-nanoseconds
 #DEFINES+=-DLSB_PWM_NANOSECONDS=130
 
 # ------------ Pinout options; usually no change needed here --------------
@@ -95,7 +101,7 @@ HARDWARE_DESC?=regular
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
 
 # If you use HARDWARE_DESC=classic and a Raspberry Pi 1, Revision A,
-# this might be useful.
+# this might be useful (untested).
 #DEFINES+=-DPI_REV1_RGB_PINOUT
 
 # Typically, a Hub75 panel is split in two half displays, so that a 1:16
@@ -112,6 +118,7 @@ HARDWARE_DESC?=regular
 # interference. Note, you typically don't want the hardware pulses disabled, as
 # the image will have visible brightness glitches; but for debugging, this is
 # a good choice.
+# Flag: --led-no-hardware-pulses
 #DEFINES+=-DDISABLE_HARDWARE_PULSES
 
 # If someone gives additional values on the make commandline e.g.

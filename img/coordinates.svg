@@ -19,7 +19,7 @@
    viewBox="47 979 6532 2919"
    id="svg2"
    version="1.1"
-   inkscape:version="0.91 r"
+   inkscape:version="0.91 r13725"
    sodipodi:docname="coordinates.svg">
   <metadata
      id="metadata126">
@@ -50,7 +50,7 @@
      showgrid="false"
      inkscape:zoom="1.8506993"
      inkscape:cx="247.15083"
-     inkscape:cy="105.30809"
+     inkscape:cy="148.53499"
      inkscape:window-x="0"
      inkscape:window-y="0"
      inkscape:window-maximized="0"
@@ -373,7 +373,7 @@
      font-weight="normal"
      font-style="normal"
      y="3838.4653"
-     x="3555.1394"
+     x="3420.0002"
      xml:space="preserve">(32 * chain_length - 1, rows * parallel - 1)</text>
   <text
      style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-anchor:middle;fill:#000000;stroke-width:0.025in"
@@ -383,11 +383,11 @@
      font-style="normal"
      y="1151.4386"
      x="3139.2725"
-     xml:space="preserve">chain length (-c flag)</text>
+     xml:space="preserve">chain length (--led-chain flag)</text>
   <g
      style="fill:none;stroke-width:0.025in"
      id="g110"
-     transform="matrix(-3.6732199e-6,-1,1,-3.6732199e-6,988.4269,2574.235)">
+     transform="matrix(-3.6732199e-6,-1,1,-3.6732199e-6,988.4269,2736.4018)">
     <text
        style="font-style:normal;font-weight:normal;font-size:152px;font-family:Helvetica;text-anchor:middle;fill:#000000"
        id="text112"
@@ -396,7 +396,7 @@
        font-style="normal"
        y="0"
        x="0"
-       xml:space="preserve">(-P flag)</text>
+       xml:space="preserve">(--led-parallel flag)</text>
   </g>
   <text
      style="font-style:normal;font-weight:normal;font-size:126px;font-family:Helvetica;text-anchor:middle;fill:#000000;stroke-width:0.025in"
@@ -481,9 +481,18 @@
      font-size="126"
      font-weight="normal"
      font-style="normal"
-     y="1849.521"
-     x="3260.4895"
-     xml:space="preserve">(-r flag) </text>
+     y="1844.9573"
+     x="3176.5161"
+     xml:space="preserve">(--led-rows</text>
+  <text
+     style="font-style:normal;font-weight:normal;font-size:101.35415649px;font-family:Helvetica;text-anchor:start;fill:#000000;stroke-width:0.025in"
+     font-size="126"
+     font-weight="normal"
+     font-style="normal"
+     y="1944.4476"
+     x="3307.9529"
+     xml:space="preserve"
+     id="text3403"> flag) </text>
   <g
      style="fill:none;stroke-width:0.025in"
      id="g110-5"

@@ -6,24 +6,25 @@ the display type you have (16x32 or 32x32), and how many you have chained.
 ```
 $ make
 $ ./demo
-Expected required option -D <demo>
 usage: ./demo <options> -D <demo-nr> [optional parameter]
 Options:
-        -r <rows>     : Panel rows. '16' for 16x32 (1:8 multiplexing),
-                        '32' for 32x32 (1:16), '8' for 1:4 multiplexing; Default: 32
-        -P <parallel> : For Plus-models or RPi2: parallel chains. 1..3. Default: 1
-        -c <chained>  : Daisy-chained boards. Default: 1.
-        -L            : 'Large' display, composed out of 4 times 32x32
-        -p <pwm-bits> : Bits used for PWM. Something between 1..11
-        -l            : Don't do luminance correction (CIE1931)
-        -D <demo-nr>  : Always needs to be set
-        -d            : run as daemon. Use this when starting in
-                        /etc/init.d, but also when running without
-                        terminal (e.g. cron).
-        -t <seconds>  : Run for these number of seconds, then exit.
-                        (if neither -d nor -t are supplied, waits for <RETURN>)
-        -b <brightnes>: Sets brightness percent. Default: 100.
-        -R <rotation> : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.
+        -D <demo-nr>              : Always needs to be set
+        -t <seconds>              : Run for these number of seconds, then exit.
+        -R <rotation>             : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.
+        --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
+        --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
+        --led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
+        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
+        --led-brightness=<percent>: Brightness in percent (Default: 100).
+        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
+        --led-show-refresh        : Show refresh rate.
+        --led-inverse             : Switch if your matrix has inverse colors on.
+        --led-swap-green-blue     : Switch if your matrix has green/blue swapped on.
+        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
+        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
+        --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
+        --led-daemon              : Make the process run in the background as daemon.
+        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
 Demos, choosen with -D
         0  - some rotating square
         1  - forward scrolling an image (-m <scroll-ms>)
