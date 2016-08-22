@@ -45,7 +45,7 @@ TARGET=librgbmatrix
 # particularly slow panels or bad signal cable situations. If that happens, you
 # typically should double check cables and add TTL level converter if you
 # haven't.
-DEFINES+=-DRGB_SLOWDOWN_GPIO=1
+#DEFINES+=-DRGB_SLOWDOWN_GPIO=1
 
 # This allows to change the base time-unit for the on-time in the lowest
 # significant bit in nanoseconds.

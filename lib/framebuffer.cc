@@ -33,19 +33,6 @@ enum {
   kBitPlanes = 11  // maximum usable bitplanes.
 };
 
-#if defined(LSB_PWM_NANOSECONDS)
-// Make sure that there are sensible values.
-//   > 3000ns flickers even with 1:4 multiplexing on a single panel
-//   < 50ns   timings don't really work well with the TTL-logic on the matrix.
-#  if (LSB_PWM_NANOSECONDS >= 50) && (LSB_PWM_NANOSECONDS <= 3000)
-static const long kBaseTimeNanos = LSB_PWM_NANOSECONDS;
-#  else
-#     error "PWM Nanoseconds should be in the range of 50...3000"
-#  endif
-#else
-static const long kBaseTimeNanos = 130;
-#endif
-
 // We need one global instance of a timing correct pulser. There are different
 // implementations depending on the context.
 static PinPulser *sOutputEnablePulser = NULL;
@@ -88,7 +75,8 @@ Framebuffer::~Framebuffer() {
   delete [] bitplane_buffer_;
 }
 
-/* static */ void Framebuffer::InitGPIO(GPIO *io, int rows, int parallel) {
+/* static */ void Framebuffer::InitGPIO(GPIO *io, int rows, int parallel,
+                                        int pwm_lsb_nanoseconds) {
   if (sOutputEnablePulser != NULL)
     return;  // already initialized.
 
@@ -141,7 +129,7 @@ Framebuffer::~Framebuffer() {
 
   std::vector<int> bitplane_timings;
   for (int b = 0; b < kBitPlanes; ++b) {
-    bitplane_timings.push_back(kBaseTimeNanos << b);
+    bitplane_timings.push_back(pwm_lsb_nanoseconds << b);
   }
   sOutputEnablePulser = PinPulser::Create(io, output_enable_bits.raw,
                                           bitplane_timings);

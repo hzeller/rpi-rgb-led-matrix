@@ -61,13 +61,13 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (canvas == NULL)
-    return 1;
-
   if (bdf_font_file == NULL) {
     fprintf(stderr, "Need to specify BDF font-file with -f\n");
     return usage(argv[0]);
   }
+
+  if (canvas == NULL)
+    return 1;
 
   /*
    * Load font. This needs to be a filename with a bdf bitmap font.

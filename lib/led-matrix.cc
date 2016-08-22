@@ -119,9 +119,18 @@ private:
 
 // Some defaults. See options-initialize.cc for the command line parsing.
 RGBMatrix::Options::Options()
-  : rows(32), chain_length(1), parallel(1), pwm_bits(11), brightness(100),
+  : rows(32), chain_length(1), parallel(1), pwm_bits(11),
     // Historically, we provided these options only as #defines. Make sure that
     // things still behave as before if someone has set these.
+    // At some point: remove them from the Makefile. Later: remove them here.
+#ifdef LSB_PWM_NANOSECONDS
+    pwm_lsb_nanoseconds(LSB_PWM_NANOSECONDS),
+#else
+    pwm_lsb_nanoseconds(130),
+#endif
+
+    brightness(100),
+
 #ifdef RGB_SCAN_INTERLACED
     scan_mode(1),
 #else
@@ -151,6 +160,7 @@ RGBMatrix::Options::Options()
 
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   : params_(options), io_(NULL), updater_(NULL) {
+  assert(params_.Validate(NULL));
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
   Clear();
@@ -160,6 +170,7 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
   : params_(Options()), io_(NULL), updater_(NULL) {
+  assert(params_.Validate(NULL));
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
   Clear();
@@ -183,7 +194,8 @@ RGBMatrix::~RGBMatrix() {
 void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
   if (io != NULL && io_ == NULL) {
     io_ = io;
-    internal::Framebuffer::InitGPIO(io_, params_.rows, params_.parallel);
+    internal::Framebuffer::InitGPIO(io_, params_.rows, params_.parallel,
+                                    params_.pwm_lsb_nanoseconds);
   }
   if (start_thread) {
     StartRefresh();

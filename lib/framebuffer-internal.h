@@ -33,7 +33,8 @@ public:
   ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
-  static void InitGPIO(GPIO *io, int rows, int parallel);
+  static void InitGPIO(GPIO *io, int rows, int parallel,
+                       int pwm_lsb_nanoseconds);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.

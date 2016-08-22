@@ -74,6 +74,27 @@ public:
     // increases refresh-rate.
     int pwm_bits;
 
+    // This allows to change the base time-unit for the on-time in the lowest
+    // significant bit in nanoseconds.
+    // Higher numbers provide better quality (more accurate color, less
+    // ghosting), but have a negative impact on the frame rate.
+    //
+    // For the same frame-rate, displays with higher multiplexing (e.g. 1:16
+    // vs. 1:8) require lower values.
+    //
+    // Good values for full-color display (PWM=11) are somewhere between
+    // 100 and 300.
+    //
+    // If you you use reduced bit color (e.g. PWM=1 for 8 colors like for text),
+    // then higher values might be good to minimize ghosting (and you can afford
+    // that, because lower PWM values result in higher frame-rates).
+    //
+    // How to decide ? Just leave the default if things are fine. If you see
+    // ghosting in high-contrast applications (e.g. text), increase the value.
+    // If you want to tweak, watch the framerate (--led-show-refresh) while
+    // playing with this number and the PWM values.
+    int pwm_lsb_nanoseconds;
+
     // The initial brightness of the panel in percent. Valid range is 1..100
     // Default: 100
     int brightness;

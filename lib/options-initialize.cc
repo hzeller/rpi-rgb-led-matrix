@@ -122,6 +122,9 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("pwm-bits", it, end, &mopts->pwm_bits, &err))
         continue;
+      if (ConsumeIntFlag("pwm-lsb-nanoseconds", it, end,
+                         &mopts->pwm_lsb_nanoseconds, &err))
+        continue;
       if (ConsumeBoolFlag("show-refresh", it, &mopts->show_refresh_rate))
         continue;
       if (ConsumeBoolFlag("inverse", it, &mopts->inverse_colors))
@@ -259,12 +262,15 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-%sinverse             "
           ": Switch if your matrix has inverse colors %s.\n "
           "\t--led-%sswap-green-blue     : Switch if your matrix has green/blue "
-          "swapped %s.\n",
+          "swapped %s.\n"
+          "\t--led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB "
+          "(Default: %d)\n",
           d.rows, d.chain_length, d.parallel,
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
-          d.swap_green_blue ? "no-" : "",    d.swap_green_blue ? "off" : "on"
+          d.swap_green_blue ? "no-" : "",    d.swap_green_blue ? "off" : "on",
+          d.pwm_lsb_nanoseconds
           );
   fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
           "Slowdown GPIO. Needed for faster Pis and/or slower panels "
@@ -285,7 +291,9 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
   }
 }
 
-bool RGBMatrix::Options::Validate(std::string *err) {
+bool RGBMatrix::Options::Validate(std::string *err_in) {
+  std::string scratch;
+  std::string *err = err_in ? err_in : &scratch;
   bool success = true;
   if (rows != 8 && rows != 16 && rows != 32 && rows != 64) {
     err->append("Invalid number or panel rows. "
@@ -317,6 +325,17 @@ bool RGBMatrix::Options::Validate(std::string *err) {
     err->append("Invalid scan mode (0 or 1 allowed).\n");
     success = false;
   }
+
+  if (pwm_lsb_nanoseconds < 50 || pwm_lsb_nanoseconds > 3000) {
+    err->append("Invalid range of pwm-lsb-nanoseconds (50..3000 allowed).\n");
+    success = false;
+  }
+
+  if (!success && !err_in) {
+    // If we didn't get a string to write to, we write things to stderr.
+    fprintf(stderr, "%s", err->c_str());
+  }
+
   return success;
 }
 
