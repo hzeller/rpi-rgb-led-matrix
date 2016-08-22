@@ -7,6 +7,20 @@ OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
         thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o
 TARGET=librgbmatrix
 
+# There are several different pinouts for various breakout boards that uses
+# this library. If you are using the described pinout in the toplevel README.md
+# or the standard active-3 breakout board, then 'regular' is the one you'd like
+# to use (there is also a 'classic' one for an early form).
+#
+# Adafruit also made a breakout board, if you want to use that, choose
+# 'adafruit-hat'
+#
+# These are the choices
+#   regular
+#   adafruit-hat
+#   classic            # Not really used anymore
+HARDWARE_DESC?=regular
+
 ###
 # After you change any of the following DEFINES, make sure to 'make' again.
 #
@@ -70,12 +84,6 @@ TARGET=librgbmatrix
 
 # ------------ Pinout options; usually no change needed here --------------
 
-# Uncomment the following line for Adafruit Matrix HAT gpio mappings.
-# If you have an Adafruit HAT ( https://www.adafruit.com/products/2345 ),
-# you need to use this option as the HAT swaps pins around that are not
-# compatible with the default mapping.
-#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT
-
 # Uncomment if you want to use the Adafruit HAT with stable PWM timings.
 # The newer version of this library allows for much more stable (less flicker)
 # output, but it does not work with the Adafruit HAT unless you do a
@@ -86,17 +94,9 @@ TARGET=librgbmatrix
 # Then uncomment the following define and recompile.
 #DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
 
-# Compatibility option, usually not needed.
-# If you have used this library before July 2015 and have wired it up for that,
-# then you need to define RGB_CLASSIC_PINOUT for your panel to work. The
-# standard pinout changed so that we can make use of the PWM pin for much
-# more stable timing. So even if you have the classic pinout, you might
-# consider wiring up the new one (sorry for the inconvenience).
-#DEFINES+=-DRGB_CLASSIC_PINOUT
-
-# If you use RGB_CLASSIC_PINOUT and use Raspberry Pi 1, Revision A,
+# If you use HARDWARE_DESC=classic and a Raspberry Pi 1, Revision A,
 # this might be useful.
-#DEFINES+=-DONLY_SINGLE_CHAIN
+#DEFINES+=-DPI_REV1_RGB_PINOUT
 
 # Typically, a Hub75 panel is split in two half displays, so that a 1:16
 # multiplexing actually multiplexes over two half displays and gives 32 lines.
@@ -122,7 +122,7 @@ TARGET=librgbmatrix
 DEFINES+=$(USER_DEFINES)
 
 INCDIR=../include
-CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
+CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES) -Ihardware/$(HARDWARE_DESC)
 
 all : $(TARGET).a $(TARGET).so.1
 
@@ -144,6 +144,7 @@ clean:
 	rm -f $(OBJECTS) $(TARGET).a $(TARGET).so.1
 
 compiler-flags: FORCE
+	@if [ ! -d hardware/$(HARDWARE_DESC) ] ; then echo "HARDWARE_DESC='$(HARDWARE_DESC)' is an unsupported hardware description. Typo ?"; exit 1; fi
 	@echo '$(CXX) $(CXXFLAGS)' | cmp -s - $@ || echo '$(CXX) $(CXXFLAGS)' > $@
 
 .PHONY: FORCE
