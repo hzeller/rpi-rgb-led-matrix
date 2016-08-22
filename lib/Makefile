@@ -10,8 +10,9 @@ TARGET=librgbmatrix
 ###
 # After you change any of the following DEFINES, make sure to 'make' again.
 #
-# Note, most of these options now can be set programmatically and via command
-# line options as well. So be prepared for these to be removed.
+# Note, all of these options that don't directly influence the hardware mapping
+# can now can be set programmatically and via command line flags as well.
+# So be prepared for these to be removed in this Makefile.
 ###
 
 # If you see that your display is inverse, you might have a matrix variant
