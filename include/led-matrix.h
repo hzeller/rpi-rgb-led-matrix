@@ -57,21 +57,25 @@ public:
 
     // The "rows" are the number
     // of rows supported by the display, so 32 or 16. Default: 32.
+    // Flag: --led-rows
     int rows;
 
     // The chain_length is the number of displays daisy-chained together
     // (output of one connected to input of next). Default: 1
+    // Flag: --led-chain
     int chain_length;
 
     // The number of parallel chains connected to the Pi; in old Pis with 26
     // GPIO pins, that is 1, in newer Pis with 40 interfaces pins, that can
     // also be 2 or 3. The effective number of pixels in vertical direction is
     // then thus rows * parallel. Default: 1
+    // Flag: --led-parallel
     int parallel;
 
     // Set PWM bits used for output. Default is 11, but if you only deal with
     // limited comic-colors, 1 might be sufficient. Lower require less CPU and
     // increases refresh-rate.
+    // Flag: --led-pwm-bits
     int pwm_bits;
 
     // This allows to change the base time-unit for the on-time in the lowest
@@ -93,18 +97,26 @@ public:
     // ghosting in high-contrast applications (e.g. text), increase the value.
     // If you want to tweak, watch the framerate (--led-show-refresh) while
     // playing with this number and the PWM values.
+    // Flag: --led-pwm-lsb-nanoseconds
     int pwm_lsb_nanoseconds;
+
+    // Allow to use the hardware subsystem to create pulses. This won't do
+    // anything if output enable is not connected to GPIO 18.
+    // Flag: --led-hardware-pulse
+    bool allow_hardware_pulsing;
 
     // The initial brightness of the panel in percent. Valid range is 1..100
     // Default: 100
+    // Flag: --led-brightness
     int brightness;
 
     // Scan mode: 0=progressive, 1=interlaced
+    // Flag: --led-scan-mode
     int scan_mode;
 
-    bool show_refresh_rate;
-    bool swap_green_blue;
-    bool inverse_colors;
+    bool show_refresh_rate;  // Flag: --led-show-refresh
+    bool swap_green_blue;    // Flag: --led-swap-green-blue
+    bool inverse_colors;     // Flag: --led-inverse
   };
 
   // Create an RGBMatrix.
@@ -268,6 +280,14 @@ private:
   internal::Framebuffer *const frame_;
 };
 
+struct RuntimeOptions {
+  RuntimeOptions();
+
+  int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
+  int daemon;           // -1 disabled. 0=off, 1=on. Flag: --led-daemon
+  int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
+};
+
 // Convenience utility to create a Matrix and extract relevant values from the
 // command line. Commandline flags are something like --led-rows, --led-chain,
 // --led-parallel. See output of PrintMatrixFlags() for all available options.
@@ -280,6 +300,8 @@ private:
 // pre-set options, such as your chain and parallel settings. It is also an
 // out-parameter, so its values are changed according to what the user
 // set on the command line.
+//
+// Same for the last parameter for RuntimeOptions (see struct RuntimeOptions).
 //
 // Example use:
 /*
@@ -305,14 +327,6 @@ int main(int argc, char **argv) {
   delete matrix;   // Make sure to delete it in the end.
 }
 */
-struct RuntimeOptions {
-  RuntimeOptions();
-
-  int gpio_slowdown;    // 0 = no slowdown.
-  int daemon;           // -1 disabled. 0=off, 1=on.
-  int drop_privileges;  // -1 disabled. 0=off, 1=on.
-};
-
 RGBMatrix *CreateMatrixFromFlags(
   int *argc, char ***argv,
   RGBMatrix::Options *default_options = NULL,

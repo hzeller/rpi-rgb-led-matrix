@@ -34,6 +34,7 @@ public:
 
   // Initialize GPIO bits for output. Only call once.
   static void InitGPIO(GPIO *io, int rows, int parallel,
+                       bool allow_hardware_pulsing,
                        int pwm_lsb_nanoseconds);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with

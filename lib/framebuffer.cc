@@ -74,6 +74,7 @@ Framebuffer::~Framebuffer() {
 }
 
 /* static */ void Framebuffer::InitGPIO(GPIO *io, int rows, int parallel,
+                                        bool allow_hardware_pulsing,
                                         int pwm_lsb_nanoseconds) {
   if (sOutputEnablePulser != NULL)
     return;  // already initialized.
@@ -133,6 +134,7 @@ Framebuffer::~Framebuffer() {
     bitplane_timings.push_back(pwm_lsb_nanoseconds << b);
   }
   sOutputEnablePulser = PinPulser::Create(io, output_enable_bits.raw,
+                                          allow_hardware_pulsing,
                                           bitplane_timings);
 }
 

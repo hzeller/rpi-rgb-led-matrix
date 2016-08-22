@@ -413,9 +413,10 @@ private:
 
 // Public PinPulser factory
 PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
+                             bool allow_hardware_pulsing,
                              const std::vector<int> &nano_wait_spec) {
   if (!Timers::Init()) return NULL;
-  if (HardwarePinPulser::CanHandle(gpio_mask)) {
+  if (allow_hardware_pulsing && HardwarePinPulser::CanHandle(gpio_mask)) {
     return new HardwarePinPulser(gpio_mask, nano_wait_spec);
   } else {
     return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);

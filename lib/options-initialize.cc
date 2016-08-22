@@ -131,6 +131,8 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeBoolFlag("swap-green-blue", it, &mopts->swap_green_blue))
         continue;
+      if (ConsumeBoolFlag("hardware-pulse", it, &mopts->allow_hardware_pulsing))
+        continue;
 
       // Runtime options.
       if (ConsumeIntFlag("slowdown-gpio", it, end, &ropts->gpio_slowdown, &err))
@@ -264,14 +266,17 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-%sswap-green-blue     : Switch if your matrix has green/blue "
           "swapped %s.\n"
           "\t--led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB "
-          "(Default: %d)\n",
+          "(Default: %d)\n"
+          "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
           d.rows, d.chain_length, d.parallel,
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
-          d.swap_green_blue ? "no-" : "",    d.swap_green_blue ? "off" : "on",
-          d.pwm_lsb_nanoseconds
-          );
+          d.swap_green_blue ? "no-" : "",  d.swap_green_blue ? "off" : "on",
+          d.pwm_lsb_nanoseconds,
+          d.allow_hardware_pulsing ? "no-" : "",
+          d.allow_hardware_pulsing ? "Don't u" : "U");
+
   fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
           "Slowdown GPIO. Needed for faster Pis and/or slower panels "
           "(Default: %d).\n", r.gpio_slowdown);
