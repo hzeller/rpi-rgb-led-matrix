@@ -212,38 +212,6 @@ private:
   const std::vector<int> nano_specs_;
 };
 
-// This Pin-Pulser does not guarantee timings, but it
-// will interleave and keep the pin on for as long as possible
-// (and thus: brighness).
-// This is only really acceptable for 1-bit PWM where we don't care
-// about relative timings.
-class OnTimePriorityPinPulser : public PinPulser {
-public:
-  OnTimePriorityPinPulser(GPIO *io, uint32_t bits,
-                          const std::vector<int> &nano_specs)
-    : io_(io), bits_(bits), nano_specs_(nano_specs), triggered_(false) {}
-
-  virtual void SendPulse(int time_spec_number) {
-    io_->ClearBits(bits_);
-    requested_spec_ = time_spec_number;
-    triggered_ = true;
-  }
-
-  virtual void WaitPulseFinished() {
-    if (!triggered_) return;
-    Timers::sleep_nanos(nano_specs_[requested_spec_]);
-    io_->SetBits(bits_);
-    triggered_ = false;
-  }
-
-private:
-  GPIO *const io_;
-  const uint32_t bits_;
-  const std::vector<int> nano_specs_;
-  int requested_spec_;
-  bool triggered_;
-};
-
 static volatile uint32_t *timer1Mhz = NULL;
 
 static void sleep_nanos_rpi_1(long nanos);
@@ -447,14 +415,10 @@ private:
 PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
                              const std::vector<int> &nano_wait_spec) {
   if (!Timers::Init()) return NULL;
-#if EXPERIMENTAL_HIGH_BRIGHTNESS
-  return new OnTimePriorityPinPulser(io, gpio_mask, nano_wait_spec);
-#else
   if (HardwarePinPulser::CanHandle(gpio_mask)) {
     return new HardwarePinPulser(gpio_mask, nano_wait_spec);
   } else {
     return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
   }
-#endif
 }
 } // namespace rgb_matrix

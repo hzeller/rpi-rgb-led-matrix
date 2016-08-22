@@ -114,9 +114,6 @@ HARDWARE_DESC?=regular
 # a good choice.
 #DEFINES+=-DDISABLE_HARDWARE_PULSES
 
-# Experimental. Only use this if you do 1 bit PWM.
-#DEFINES+=-DEXPERIMENTAL_HIGH_BRIGHTNESS
-
 # If someone gives additional values on the make commandline e.g.
 # make USER_DEFINES="-DSHOW_REFRESH_RATE"
 DEFINES+=$(USER_DEFINES)
