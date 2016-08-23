@@ -240,6 +240,10 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
   const bool allow_daemon = !(ropt->daemon < 0);
   result->SetGPIO(&io, allow_daemon);
 
+  // TODO(hzeller): if we disallow daemon, then we might also disallow
+  // drop privileges: we can't drop privileges until we have created the
+  // realtime thread that usually requires root to be established.
+  // Double check and document.
   if (ropt->drop_privileges > 0) {
     drop_privs("daemon", "daemon");
   }

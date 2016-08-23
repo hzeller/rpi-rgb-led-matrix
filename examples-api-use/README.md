@@ -1,11 +1,15 @@
 Running some demos
 ------------------
-The demo-main.cc has some testing demos. Via command line flags, you can choose
-the display type you have (16x32 or 32x32), and how many you have chained.
+Let's start by running some demos, then we can dive into code. The
+[demo-main.cc](demo-main.cc) has some testing demos. Via command line flags,
+you can choose the display type you have (16x32 or 32x32), and how many you
+have chained and paralleled. For detailed description of these flags see the
+[main README section](../README.md#changing-parameters-via-command-line-flags)
+about it.
 
 ```
 $ make
-$ ./demo
+$ sudo ./demo
 usage: ./demo <options> -D <demo-nr> [optional parameter]
 Options:
         -D <demo-nr>              : Always needs to be set
@@ -44,10 +48,11 @@ Scrolls the runtext for 10 seconds
 ```
 
 To run the actual demos, you need to run this as root so that the
-GPIO pins can be accessed.
+GPIO pins can be accessed; as soon as that established, the program will drop
+the privileges.
 
-The most interesting one is probably the demo '1' which requires a ppm (type
-raw) with a height of 32 pixel - it is infinitely scrolled over the screen; for
+Here is how demo '1' looks. It requires a ppm (type raw) with a height of
+32 pixel - it is infinitely scrolled over the screen; for
 convenience, there is a little runtext.ppm example included:
 
      $ sudo ./demo -D 1 runtext.ppm
@@ -55,31 +60,77 @@ convenience, there is a little runtext.ppm example included:
 Here is a video of how it looks
 [![Runtext][run-vid]](http://youtu.be/OJvEWyvO4ro)
 
-There are also two examples [minimal-example.cc](./minimal-example.cc) and
-[text-example.cc](./text-example.cc) that show use of the API.
-
-The text example allows for some interactive output of text (using a bitmap-font
-found in the `fonts/` directory). Even though it is just an example, it can
-be useful in its own right. For instance, you can connect to its input with a
-pipe and simply feed text from a shell-script or other program that wants to
-output something. Let's display the time in blue:
-
-     (while :; do date +%T ; sleep 0.2 ; done) | sudo ./text-example -f ../fonts/8x13B.bdf -y8 -c2 -C0,0,255
-
-You could connect this via a pipe to any process that just outputs new
-information on standard-output every now and then. The screen is filled with
-text until it overflows which then clears it. Or sending an empty line explicitly
-clears the screen (if you want to display an empty line, just send a space).
-
-![Time][time]
-
 Using the API
 -------------
-While there is the demo program, the matrix code can be used independently as
-a library. The includes are in `include/`, the library to link is built
-in `lib/`. So if you are proficient in C++, then use it in your code.
+While there is the demo program and the [utilities](../utils), this code can
+be used independently as a library to be used in your own programs.
+The includes are in `include/`, the library to link is built
+in `lib/`. This is a C++ also with C bindings. There is also a
+[Python](../python) binding.
 
-Due to the wonders of github, it is pretty easy to be up-to-date.
+Getting started
+---------------
+The relevant part to start with is to look at
+[led-matrix.h](../include/led-matrix.h).
+
+You can would typically use the `CreateMatrixFromFlags()` factory to
+create an RGBMatrix and then go from there.
+
+```C++
+#include "led-matrix.h"
+
+using rgb_matrix::RGBMatrix;
+
+int main(int argc, char **argv) {
+  // Set some defaults
+  RGBMatrix::Options my_defaults;
+  my_defaults.chain_length = 3;
+  my_defaults.show_refresh_rate = true;
+  rgb_matrix::RuntimeOptions runtime_defaults;
+  runtime_defaults.drop_privileges = 1;
+  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv,
+                                                        &my_defaults,
+                                                        &runtime_defaults);
+  if (matrix == NULL) {
+    PrintMatrixFlags(stderr, my_defaults, runtime_defaults);
+    return 1;
+  }
+
+  // Do your own command line handling with the remaining options.
+
+  //  .. now use matrix
+
+  delete matrix;   // Make sure to delete it in the end.
+}
+```
+
+The `RGBMatrix` is essentially a canvas, it provides some basic functionality
+such as `SetPixel()`, `Fill()` or `Clear()`. If you want to do more, you
+might be interested in functions provided in the
+[graphics.h](../include/graphics.h) header.
+
+If you have animations, you might be interested in double-buffering. There is
+a way to create new canvases with `CreateFrameCanvas()`, and then use
+`SwapOnVSync()` to change the content atomically. See API documentation for
+details.
+
+Start with the [minimal-example.cc](./minimal-example.cc) to start.
+
+If you are interested in drawing text and the font drawing functions in
+graphics.h, have a look at the [text example](./text-example.cc):
+
+```
+sudo ./text-example -f ../fonts/8x13.bdf
+hello
+```
+
+<img src="../img/text-no-ghosting.jpg" height="100px">
+
+Integrating in your own application
+-----------------------------------
+Until this library shows up in your favorite Linux distribution, you can just
+include the library via github; it is pretty easy to be up-to-date.
+
 I suggest to add this code as a sub-module in your git repository. That way
 you can use that particular version and easily update it if there are changes:
 

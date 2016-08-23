@@ -35,7 +35,7 @@ side of the connector:
 
 The RPi only has 3.3V logic output level, but many displays operated at 5V
 interprets these logic levels fine, just make sure to run a short
-cable to the board (if you see problems, see [troubleshouting paragraph](#troubleshooting)).
+cable to the board.
 If you do run into glitches or erratic pixels, consider some line-buffering,
 e.g. using the [active adapter PCB](./adapter/).
 Since we only need output pins on the RPi, we don't need to worry about level
@@ -97,62 +97,31 @@ Connection                        | Pin | Pin |  Connection
 In the [adapter/](./adapter) directory, there are some boards that make
 the wiring task simpler.
 
-Chaining, parallel chains and coordinate system
-------------------------------------------------
+<a href="adapter/"><img src="img/three-parallel-panels-soic.jpg" width="300px"></a>
 
-Displays panels have an input connector, but also have an output port, that
-you can connect to the next display in a daisy-chain manner. There is the
-flag `-c` in the demo program to give number of displays that are chained.
-You end up with a very wide
-display (chain * 32 pixels). Longer chains affect the refresh rate negatively,
-so if you want to stay above 100Hz with full color, don't chain more than
-12 panels.
-If you use a PWM depth of 1 bit (`-p`), the chain can be much longer.
+### Chains
 
-The original Raspberry Pis with 26 GPIO pins just had enough connector pins
-to drive one chain of LED panels. Newer Raspberry Pis have 40 GPIO pins that
-allows to add two additional chains of panels in parallel - the nice thing is,
-that this doesn't require more CPU and allows you to keep your refresh-rate high,
-because you can shorten your chains.
-
-So with that, we have a couple of parameters to keep track of. The **rows** are
-the number of LED rows on a particular module; typically these are 16 for a 16x32
-display or 32 for 32x32 displays.
-
-Then there is the **chain length**, which is the number of panels that are
-daisy chained together.
-
-Finally, there is a parameter how many **parallel** chains we have connected to
-the Pi -- limited to 1 on old Raspberry Pis, up to three on newer Raspberry Pis.
-
-For a single Panel, the chain and parallel parameters are both just one: a single
-chain (with no else in parallel) with a chain length of 1.
-
-The `RGBMatrix` class constructor has parameters for number of rows,
-chain-length and number of parallel. For the demo programs and the image view,
-there are command line options for that: `-r` gives rows,
-`-c` the chain-length and `-P` the number of parallel chains.
-
-The coordinate system starts at (0,0) at the top of the first parallel chain,
-furthest away from the Pi. The following picture gives an overview of various
-parameters and the coordinate system.
+You connect the Pi to the first element in the chain of panels. Each panel has
+an output connector, that you then can connect to the next panel. Thus you can
+create a larger panel. Here a schematic view, below in the 'Power' section, you
+can see a real-live panel with three chains of 5 panels each seen from the back.
 
 ![Coordinate overview][coordinates]
 
-<a href="adapter/"><img src="img/three-parallel-panels-soic.jpg" width="300px"></a>
 
 A word about power
 ------------------
 
 These displays suck a lot of current. At 5V, when all LEDs are on (full white),
-my LED panel draws about 3.4A. That means, you need a beefy power supply to
-drive these panels; a 2A USB charger or similar is not enough for a
-32x32 panel; it might be for a 16x32.
+my 32x32 LED panel draws about 3.4A. For an outdoor panel that is very bright,
+that can be twice as much.
+That means, you need a beefy power supply to drive these panels; a 2A USB
+charger or similar is not enough for a 32x32 panel; it might be for a 16x32.
 
 If you connect multiple boards together, you needs a power supply that can
 keep up with 3.5A / panel. Good are old PC power supplies that often
-provide > 20A on the 5V rail. Also you can get dedicated 5V high current
-switching power supplies for these kind of applications (check eBay).
+provide > 20A on the 5V rail. Or you can get a dedicated 5V high current
+switching power supply for these kind of applications (check eBay).
 
 The current draw is pretty spiky. Due to the PWM of the LEDs, there are very
 short peaks of a couple of 100ns to about 1ms of full current draw.
@@ -162,7 +131,7 @@ as they should. A low ESR capacitor close to the input is good in these cases.
 
 On some displays, the quality of the output quickly gets erratic
 when voltage drops below 4.5V. Some even need a little bit higher voltage around
-5.5V to work reliably.
+5.5V to work reliably. Also, tweak with the `--led-slowdown-gpio` flag.
 
 When you connect these boards to a power source, the following are good
 guidelines:
@@ -200,7 +169,7 @@ guidelines:
      We want to get the energy out of the voltage drop of 50mV; so with
      W = 1/2*C*U², we can calculate the capacitance needed:
        C = 2 * 1.6mJoule / ((5V)² - (5V - 50mV)²) = ~6400µF.
-     So, **2 x 3300µF** low-ESR capacitors in parallel directly
+     So, 2 x 3300µF low-ESR capacitors in parallel directly
      at the board are a good choice (two, because lower parallel ESR; also
      fits easier under board).
      (In reality, we need of course less, as the highest ripple comes with
