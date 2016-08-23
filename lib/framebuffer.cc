@@ -33,6 +33,13 @@ enum {
   kBitPlanes = 11  // maximum usable bitplanes.
 };
 
+// Leave this in here for a while.
+#if defined(ADAFRUIT_RGBMATRIX_HAT) && !FYI_ADAFRUIT_HAT_PIN_MAPPING_INCLUDED_
+# error "You are using an old way to select the Adafruit HAT."
+# error "Set HARDWARE_DESC=adafruit-hat instead of ADAFRUIT_RGBMATRIX_HAT"
+# error "Check out https://github.com/hzeller/rpi-rgb-led-matrix#switch-the-pinout"
+#endif
+
 #ifndef RGB_PARALLEL_CHAINS
 # error "Your pin-mapping.h file should contain an RGB_PARALLEL_CHAINS macro"
 #endif

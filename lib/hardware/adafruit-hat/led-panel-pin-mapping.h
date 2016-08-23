@@ -3,7 +3,10 @@
 // different GPIO mapping. This is this mapping. A variant of this mapping
 // allows using the Raspberry Pi PWM hardware. This requires modifying the
 // HAT to connect GPIO 4 and 18. See #else for regular mapping.
+
 #define RGB_PARALLEL_CHAINS 1
+#define FYI_ADAFRUIT_HAT_PIN_MAPPING_INCLUDED_ 1
+
 union IoBits {
   struct {
     // This bitset reflects the GPIO mapping. The naming of the
