@@ -28,7 +28,11 @@ General LED matrix options:
         --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
         --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
         --led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
-   # more options for led matrix
+
+   # more options for led matrix ...
+
+Switch time between files: -w for static images; -t/-l for animations
+Animated gifs: If both -l and -t are given, whatever comes first determines duration.
 ```
 
 Then, you can run it with any common image format, including animated gifs:
@@ -40,8 +44,8 @@ sudo ./led-image-viewer animated.gif         # Show an animated gif
 sudo ./led-image-viewer -t5 animated.gif     # Show an animated gif for 5 seconds
 sudo ./led-image-viewer -l2 animated.gif     # Show an animated gif for 2 loops
 
-sudo ./led-image-viewer -w3 foo.jpg bar.png  # show two images, wait 3 seconds between. Stop.
-sudo ./led-image-viewer -f -w3 foo.gif bar.png  # show images, wait 3sec between, go back and loop forever
+sudo ./led-image-viewer    -w3 foo.jpg bar.png  # show two images, wait 3 seconds between. Stop.
+sudo ./led-image-viewer -f -w3 foo.jpg bar.png  # show images, wait 3sec between, go back and loop forever
 
 sudo ./led-image-viewer -f -w3 *.png *.jpg   # Loop forever through a list of images
 
@@ -52,5 +56,5 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 ```
 
 It also supports the standard options to specify the connected
-displays (e.g. `--led-rows`, `--led-chain`, `--led-parallel` but also
-[many more tweak flags](../README.md#changing-parameters-via-command-line-flags).
+displays (e.g. `--led-rows`, `--led-chain`, `--led-parallel` and
+[all other led-libray flags](../README.md#changing-parameters-via-command-line-flags).
