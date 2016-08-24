@@ -57,4 +57,4 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 
 It also supports the standard options to specify the connected
 displays (e.g. `--led-rows`, `--led-chain`, `--led-parallel` and
-[all other led-libray flags](../README.md#changing-parameters-via-command-line-flags).
+[all other led-libray flags](../README.md#changing-parameters-via-command-line-flags))
