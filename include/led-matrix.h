@@ -53,7 +53,7 @@ public:
     Options();   // Creates a default option set.
 
     // Validate the options and possibly output a message to string.
-    bool Validate(std::string *err);
+    bool Validate(std::string *err) const;
 
     // The "rows" are the number
     // of rows supported by the display, so 32 or 16. Default: 32.
@@ -327,10 +327,20 @@ int main(int argc, char **argv) {
   delete matrix;   // Make sure to delete it in the end.
 }
 */
-RGBMatrix *CreateMatrixFromFlags(
-  int *argc, char ***argv,
-  RGBMatrix::Options *default_options = NULL,
-  RuntimeOptions *runtime_options = NULL);
+// This parses the flags from argv and updates the given options.
+// All the recongized flags are removed from argv.
+bool ParseOptionsFromFlags(int *argc, char ***argv,
+                           RGBMatrix::Options *default_options,
+                           RuntimeOptions *runtime_options = NULL);
+
+RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
+                                   const RuntimeOptions &runtime_options
+                                   = RuntimeOptions());
+
+// A convenience function that combines the previous two steps.
+RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
+                                 RGBMatrix::Options *default_options = NULL,
+                                 RuntimeOptions *runtime_options = NULL);
 
 // Show all the available options for CreateMatrixFromFlags(). If
 // show_daemon_option is set to false, the --led-daemon option is not shown.

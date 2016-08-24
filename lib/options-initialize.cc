@@ -196,6 +196,64 @@ static bool drop_privs(const char *priv_user, const char *priv_group) {
 
 }  // namespace
 
+bool ParseOptionsFromFlags(int *argc, char ***argv,
+                           RGBMatrix::Options *m_opt_in,
+                           RuntimeOptions *rt_opt_in) {
+  // Replace NULL arguments with some scratch-space.
+  RGBMatrix::Options scratch_matrix;
+  RGBMatrix::Options *mopt = (m_opt_in != NULL) ? m_opt_in : &scratch_matrix;
+
+  RuntimeOptions scratch_rt;
+  RuntimeOptions *ropt = (rt_opt_in != NULL) ? rt_opt_in : &scratch_rt;
+
+  return FlagInit(*argc, *argv, mopt, ropt);
+}
+
+RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
+                                   const RuntimeOptions &runtime_options) {
+  std::string error;
+  if (!options.Validate(&error)) {
+    fprintf(stderr, "%s\n", error.c_str());
+    return NULL;
+  }
+
+  if (getuid() != 0) {
+    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
+            "Prepend 'sudo' to the command");
+    return NULL;
+  }
+
+  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 4) {
+    fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
+            runtime_options.gpio_slowdown);
+    return NULL;
+  }
+
+  static GPIO io;  // This static var is a little bit icky.
+  if (!io.Init(runtime_options.gpio_slowdown)) {
+    return NULL;
+  }
+
+  if (runtime_options.daemon > 0 && daemon(1, 0) != 0) {
+    perror("Failed to become daemon");
+  }
+
+  RGBMatrix *result = new RGBMatrix(NULL, options);
+  // Allowing daemon also means we are allowed to start the thread now.
+  const bool allow_daemon = !(runtime_options.daemon < 0);
+  result->SetGPIO(&io, allow_daemon);
+
+  // TODO(hzeller): if we disallow daemon, then we might also disallow
+  // drop privileges: we can't drop privileges until we have created the
+  // realtime thread that usually requires root to be established.
+  // Double check and document.
+  if (runtime_options.drop_privileges > 0) {
+    drop_privs("daemon", "daemon");
+  }
+
+  return result;
+}
+
 // Public interface.
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
                                  RGBMatrix::Options *m_opt_in,
@@ -205,50 +263,10 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
 
   RuntimeOptions scratch_rt;
   RuntimeOptions *ropt = (rt_opt_in != NULL) ? rt_opt_in : &scratch_rt;
-  if (!FlagInit(*argc, *argv, mopt, ropt)) {
+
+  if (!ParseOptionsFromFlags(argc, argv, mopt, ropt))
     return NULL;
-  }
-
-  std::string error;
-  if (!mopt->Validate(&error)) {
-    fprintf(stderr, "%s\n", error.c_str());
-    return NULL;
-  }
-
-  if (getuid() != 0) {
-    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command:\n\tsudo %s ...\n", (*argv)[0]);
-    return NULL;
-  }
-
-  if (ropt->gpio_slowdown < 0 || ropt->gpio_slowdown > 4) {
-    fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
-            ropt->gpio_slowdown);
-    return NULL;
-  }
-  static GPIO io;  // This static var is a little bit icky.
-  if (!io.Init(ropt->gpio_slowdown)) {
-    return NULL;
-  }
-
-  if (ropt->daemon > 0 && daemon(1, 0) != 0) {
-    perror("Failed to become daemon");
-  }
-
-  RGBMatrix *result = new RGBMatrix(NULL, *mopt);
-  // Allowing daemon also means we are allowed to start the thread now.
-  const bool allow_daemon = !(ropt->daemon < 0);
-  result->SetGPIO(&io, allow_daemon);
-
-  // TODO(hzeller): if we disallow daemon, then we might also disallow
-  // drop privileges: we can't drop privileges until we have created the
-  // realtime thread that usually requires root to be established.
-  // Double check and document.
-  if (ropt->drop_privileges > 0) {
-    drop_privs("daemon", "daemon");
-  }
-
-  return result;
+  return CreateMatrixFromOptions(*mopt, *ropt);
 }
 
 void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
@@ -300,7 +318,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
   }
 }
 
-bool RGBMatrix::Options::Validate(std::string *err_in) {
+bool RGBMatrix::Options::Validate(std::string *err_in) const {
   std::string scratch;
   std::string *err = err_in ? err_in : &scratch;
   bool success = true;
