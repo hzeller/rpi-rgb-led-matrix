@@ -310,6 +310,12 @@ int main(int argc, char *argv[]) {
       file_imgs.push_back(frames);
   }
 
+  if (file_imgs.empty()) {
+    // e.g. if all files could not be interpreted as image.
+    fprintf(stderr, "No image could be loaded.\n");
+    return 1;
+  }
+
   fprintf(stderr, "Display.\n");
 
   signal(SIGTERM, InterruptHandler);
