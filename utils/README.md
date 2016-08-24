@@ -23,6 +23,7 @@ Options:
         -f                        : Forever cycle through the list of files on the command line.
         -t<seconds>               : For gif animations: stop after this time.
         -l<loop-count>            : For gif animations: number of loops through a full cycle.
+        -L                        : 64x64 large display made out of chain of four 32x32
 
 General LED matrix options:
         --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).

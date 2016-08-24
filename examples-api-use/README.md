@@ -13,6 +13,7 @@ $ sudo ./demo
 usage: ./demo <options> -D <demo-nr> [optional parameter]
 Options:
         -D <demo-nr>              : Always needs to be set
+        -L                        : 'Large' display, composed out of 4 times 32x32
         -t <seconds>              : Run for these number of seconds, then exit.
         -R <rotation>             : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.
         --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
