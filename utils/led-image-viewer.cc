@@ -64,7 +64,7 @@ namespace {
 // on VSync.
 class PreprocessedFrame {
 public:
-  PreprocessedFrame(const Magick::Image &img,
+  PreprocessedFrame(const Magick::Image &img, bool do_center,
                     CanvasTransformer *transformer,
                     rgb_matrix::FrameCanvas *output)
     : canvas_(output) {
@@ -73,12 +73,18 @@ public:
     delay_millis_ = delay_time * 10;
 
     Canvas *const transformed_draw_canvas = transformer->Transform(output);
+    int x_offset = (do_center
+                    ? (transformed_draw_canvas->width() - img.columns()) / 2
+                    : 0);
+    int y_offset = (do_center
+                    ? (transformed_draw_canvas->height() - img.rows()) / 2
+                    : 0);
     for (size_t y = 0; y < img.rows(); ++y) {
       for (size_t x = 0; x < img.columns(); ++x) {
         const Magick::Color &c = img.pixelColor(x, y);
         if (c.alphaQuantum() < 256) {
           transformed_draw_canvas
-            ->SetPixel(x, y,
+            ->SetPixel(x + x_offset, y + y_offset,
                        ScaleQuantumToChar(c.redQuantum()),
                        ScaleQuantumToChar(c.greenQuantum()),
                        ScaleQuantumToChar(c.blueQuantum()));
@@ -180,6 +186,7 @@ void DisplayAnimation(const PreprocessedList &frames,
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <image> [<image> ...]\n", progname);
   fprintf(stderr, "Options:\n"
+          "\t-C                        : Center images.\n"
           "\t-w<seconds>               : If multiple images given: "
           "Wait time between in seconds (default: 1.5).\n"
           "\t-f                        : "
@@ -213,6 +220,7 @@ int main(int argc, char *argv[]) {
   }
 
   bool do_forever = false;
+  bool do_center = false;
   bool large_display = false;  // 64x64 made out of 4 in sequence.
   const tmillis_t distant_future = (1LL<<40); // that is a while.
   tmillis_t anim_duration_ms = distant_future;
@@ -220,7 +228,7 @@ int main(int argc, char *argv[]) {
   int loops  = -1;
 
   int opt;
-  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:Lh")) != -1) {
+  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhC")) != -1) {
     switch (opt) {
     case 'w':
       wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -233,6 +241,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'f':
       do_forever = true;
+      break;
+    case 'C':
+      do_center = true;
       break;
     case 'r':
       matrix_options.rows = atoi(optarg);
@@ -302,7 +313,7 @@ int main(int argc, char *argv[]) {
       // Convert to preprocessed frames.
       for (size_t i = 0; i < image_sequence.size(); ++i) {
         FrameCanvas *canvas = matrix->CreateFrameCanvas();
-        frames.push_back(new PreprocessedFrame(image_sequence[i],
+        frames.push_back(new PreprocessedFrame(image_sequence[i], do_center,
                                                transformer, canvas));
       }
       // The 'animation delay' of a single image is the time to the next image.

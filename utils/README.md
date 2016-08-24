@@ -19,6 +19,7 @@ The resulting binary has a couple of flags.
 ```
 usage: ./led-image-viewer [options] <image> [<image> ...]
 Options:
+        -C                        : Center images.
         -w<seconds>               : If multiple images given: Wait time between in seconds (default: 1.5).
         -f                        : Forever cycle through the list of files on the command line.
         -t<seconds>               : For gif animations: stop after this time.
