@@ -90,6 +90,7 @@ public:
   FrameCanvas *canvas() const { return canvas_; }
 
   tmillis_t delay_millis() const { return delay_millis_; }
+  void set_delay(tmillis_t delay) { delay_millis_ = delay; }
 
 private:
   FrameCanvas *const canvas_;
@@ -171,8 +172,7 @@ void DisplayAnimation(const PreprocessedList &frames,
                 break;
             PreprocessedFrame *frame = frames[i];
             matrix->SwapOnVSync(frame->canvas());
-            SleepMillis(frames.size() == 1
-                        ? duration_ms : frame->delay_millis());
+            SleepMillis(frame->delay_millis());
         }
     }
 }
@@ -193,10 +193,10 @@ static int usage(const char *progname) {
   rgb_matrix::PrintMatrixFlags(stderr);
 
   fprintf(stderr,
-          "Animated gifs                     : If both -l and -t are given, "
-          "whatever comes first stops.\n"
-          "Switch time between multiple files: "
-          "-w for static images; -t/-l for animations\n");
+          "Switch time between files: "
+          "-w for static images; -t/-l for animations\n"
+          "Animated gifs: If both -l and -t are given, "
+          "whatever comes first determines duration.\n");
   return 1;
 }
 
@@ -251,9 +251,11 @@ int main(int argc, char *argv[]) {
   if (matrix == NULL)
     return 1;
 
+  // These parameters are needed once we do scrolling.
   const bool fill_width = false;
   const bool fill_height = false;
 
+  fprintf(stderr, "Load images...\n");
   // Preparing all the images beforehand as the Pi might be too slow to
   // be quickly switching between these.
   std::vector<PreprocessedList> file_imgs;
@@ -274,8 +276,14 @@ int main(int argc, char *argv[]) {
         frames.push_back(new PreprocessedFrame(image_sequence[i],
                                                transformer, canvas));
       }
+      // The 'animation delay' of a single image is the time to the next image.
+      if (frames.size() == 1)
+        frames.back()->set_delay(wait_ms);
+
       file_imgs.push_back(frames);
   }
+
+  fprintf(stderr, "Display.\n");
 
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
