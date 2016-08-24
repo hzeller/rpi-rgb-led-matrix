@@ -331,16 +331,16 @@ int main(int argc, char **argv) {
 // All the recongized flags are removed from argv.
 bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RGBMatrix::Options *default_options,
-                           RuntimeOptions *runtime_options = NULL);
+                           RuntimeOptions *runtime_options);
 
 RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
-                                   const RuntimeOptions &runtime_options
-                                   = RuntimeOptions());
+                                   const RuntimeOptions &runtime_options);
 
-// A convenience function that combines the previous two steps.
+// A convenience function that combines the previous two steps. Can get
+// some default runtime options as defaults.
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
                                  RGBMatrix::Options *default_options = NULL,
-                                 RuntimeOptions *runtime_options = NULL);
+                                 RuntimeOptions *default_runtime_opts = NULL);
 
 // Show all the available options for CreateMatrixFromFlags(). If
 // show_daemon_option is set to false, the --led-daemon option is not shown.

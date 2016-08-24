@@ -206,7 +206,9 @@ int main(int argc, char *argv[]) {
   Magick::InitializeMagick(*argv);
 
   RGBMatrix::Options matrix_options;
-  if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv, &matrix_options)) {
+  rgb_matrix::RuntimeOptions runtime_opt;
+  if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
+                                         &matrix_options, &runtime_opt)) {
     return usage(argv[0]);
   }
 
@@ -269,7 +271,7 @@ int main(int argc, char *argv[]) {
     loops = 1;
   }
 
-  RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options);
+  RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
 
