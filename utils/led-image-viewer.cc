@@ -187,7 +187,9 @@ static int usage(const char *progname) {
           "\t-t<seconds>               : "
           "For gif animations: stop after this time.\n"
           "\t-l<loop-count>            : "
-          "For gif animations: number of loops through a full cycle.\n");
+          "For gif animations: number of loops through a full cycle.\n"
+          "\t-L                        : 64x64 large display made out of "
+          "chain of four 32x32\n");
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
   rgb_matrix::PrintMatrixFlags(stderr);
@@ -202,16 +204,21 @@ static int usage(const char *progname) {
 
 int main(int argc, char *argv[]) {
   Magick::InitializeMagick(*argv);
-  RGBMatrix *const matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
+
+  RGBMatrix::Options matrix_options;
+  if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv, &matrix_options)) {
+    return usage(argv[0]);
+  }
 
   bool do_forever = false;
+  bool large_display = false;  // 64x64 made out of 4 in sequence.
   const tmillis_t distant_future = (1LL<<40); // that is a while.
   tmillis_t anim_duration_ms = distant_future;
   tmillis_t wait_ms = 1500;
   int loops  = -1;
 
   int opt;
-  while ((opt = getopt(argc, argv, "w:t:l:fh")) != -1) {
+  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:Lh")) != -1) {
     switch (opt) {
     case 'w':
       wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -224,6 +231,20 @@ int main(int argc, char *argv[]) {
       break;
     case 'f':
       do_forever = true;
+      break;
+    case 'r':
+      matrix_options.rows = atoi(optarg);
+      break;
+    case 'c':
+      matrix_options.chain_length = atoi(optarg);
+      break;
+    case 'P':
+      matrix_options.parallel = atoi(optarg);
+      break;
+    case 'L':
+      matrix_options.rows = 32;
+      matrix_options.chain_length = 4;
+      large_display = true;
       break;
     case 'h':
     default:
@@ -248,8 +269,14 @@ int main(int argc, char *argv[]) {
     loops = 1;
   }
 
+  RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options);
   if (matrix == NULL)
     return 1;
+
+  if (large_display) {
+    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
+    matrix->SetTransformer(new rgb_matrix::LargeSquare64x64Transformer());
+  }
 
   // These parameters are needed once we do scrolling.
   const bool fill_width = false;
