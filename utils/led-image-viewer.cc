@@ -243,9 +243,9 @@ int main(int argc, char *argv[]) {
   else if (filename_count > 1 &&
            loops < 0 && anim_duration_ms == distant_future) {
     // More than one image but parameters for animations are default ? Set them
-    // to requested wait time, otherwise the first animation would just run
-    // forever.
-    anim_duration_ms = wait_ms;
+    // to default loop only once, otherwise the first animation would just run
+    // forever, stopping all the images after it.
+    loops = 1;
   }
 
   if (matrix == NULL)
