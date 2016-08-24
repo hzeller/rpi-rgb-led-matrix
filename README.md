@@ -394,9 +394,13 @@ Reboot the Pi and you now should have less visible flicker. This essentially
 gives you the hardware pulses feature.
 
 ### 64x64 with E-line on Adafruit HAT
-There is another hardware mod needed for 1:32 multiplexing 64x64
-panels that require an E-channel. It is a little more advanced hack, so this
-is only really for people who are comfortable with this kind of thing.
+There are LED panels that have 64x64 LEDs packed, but they need 5 address lines,
+which is 1:32 multiplexing (they have an `E` address-line). The hardware of
+the Adafruit HAT is not prepared for this, but it can be done with another
+hardware mod.
+
+It is a little more advanced hack, so  is only really for people who are
+comfortable with this kind of thing.
 First, you have to figure out which is the input of the E-Line on your matrix
 (they seem to be either on Pin 4 or Pin 8 of the IDC connector).
 You need to disconnect that Pin from the ground plane (e.g. with an Exacto

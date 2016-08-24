@@ -1026,6 +1026,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n");
   fprintf(stderr,
           "\t-D <demo-nr>              : Always needs to be set\n"
+          "\t-L                        : 'Large' display, composed out of 4 times 32x32\n"
           "\t-t <seconds>              : Run for these number of seconds, then exit.\n"
           "\t-R <rotation>             : Sets the rotation of matrix. "
           "Allowed: 0, 90, 180, 270. Default: 0.\n");
@@ -1055,12 +1056,16 @@ int main(int argc, char *argv[]) {
   int demo = -1;
   int scroll_ms = 30;
   int rotation = 0;
-  const char *demo_parameter = NULL;
-  bool any_deprecated_option = false;
+  bool large_display = false;
 
-  // First things first: create matrix and fish out the command line
-  // options it responds to. After that, we parse the remaining options.
-  RGBMatrix *matrix = CreateMatrixFromFlags(&argc, &argv);
+  const char *demo_parameter = NULL;
+  RGBMatrix::Options matrix_options;
+  rgb_matrix::RuntimeOptions runtime_opt;
+  // First things first: extract the command line flags that contain
+  // relevant matrix options.
+  if (!ParseOptionsFromFlags(&argc, &argv, &matrix_options, &runtime_opt)) {
+    usage(argv[0]);
+  }
 
   int opt;
   while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:LR:")) != -1) {
@@ -1081,44 +1086,42 @@ int main(int argc, char *argv[]) {
       rotation = atoi(optarg);
       break;
 
-      // These used to be options we understood, but deprecated now. Tell user.
+    case 'L':
+      matrix_options.chain_length = 4;
+      matrix_options.rows = 32;
+      large_display = true;
+      break;
+
+      // These used to be options we understood, but deprecated now. Accept
+      // but don't mention in usage()
+    case 'd':
+      runtime_opt.daemon = 1;
+      break;
+
     case 'r':
-      fprintf(stderr, "-r is a deprecated option. "
-              "Please use --led-rows=... instead!\n");
-      any_deprecated_option = true;
+      matrix_options.rows = atoi(optarg);
       break;
 
     case 'P':
-      fprintf(stderr, "-P is a deprecated option. "
-              "Please use --led-parallel=... instead!\n");
-      any_deprecated_option = true;
+      matrix_options.parallel = atoi(optarg);
       break;
 
     case 'c':
-      fprintf(stderr, "-c is a deprecated option. "
-              "Please use --led-chain=... instead!\n");
-      any_deprecated_option = true;
+      matrix_options.chain_length = atoi(optarg);
       break;
 
     case 'p':
-      fprintf(stderr, "-p is a deprecated option. "
-              "Please use --led-pwm-bits=... instead!\n");
-      any_deprecated_option = true;
+      matrix_options.pwm_bits = atoi(optarg);
       break;
 
     case 'b':
-      fprintf(stderr, "-b is a deprecated option. "
-              "Please use --led-brightness=... instead!\n");
-      any_deprecated_option = true;
+      matrix_options.brightness = atoi(optarg);
       break;
 
     default: /* '?' */
       return usage(argv[0]);
     }
   }
-
-  if (any_deprecated_option)
-    return usage(argv[0]);
 
   if (optind < argc) {
     demo_parameter = argv[optind];
@@ -1135,12 +1138,17 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  // If we couldn't create a matrix with the command line options, bail out now.
+  RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
 
   LinkedTransformer *transformer = new LinkedTransformer();
   matrix->SetTransformer(transformer);
+
+  if (large_display) {
+    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
+    transformer->AddTransformer(new LargeSquare64x64Transformer());
+  }
 
   if (rotation > 0) {
     transformer->AddTransformer(new RotateTransformer(rotation));
