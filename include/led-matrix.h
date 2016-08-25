@@ -48,11 +48,14 @@ namespace internal { class Framebuffer; }
 // to the transformers, like with LargeSquare64x64Transformer in demo-main.cc.
 class RGBMatrix : public Canvas {
 public:
-  // Options to initialize the RGBMatrix.
+  // Options to initialize the RGBMatrix. Also see the main README.md for
+  // detailed descriptions of the command line flags.
   struct Options {
     Options();   // Creates a default option set.
 
-    // Validate the options and possibly output a message to string.
+    // Validate the options and possibly output a message to string. If
+    // "err" is NULL, outputs validation problems to stderr.
+    // Returns 'true' if all options look good.
     bool Validate(std::string *err) const;
 
     // The "rows" are the number
@@ -78,25 +81,10 @@ public:
     // Flag: --led-pwm-bits
     int pwm_bits;
 
-    // This allows to change the base time-unit for the on-time in the lowest
+    // Change the base time-unit for the on-time in the lowest
     // significant bit in nanoseconds.
     // Higher numbers provide better quality (more accurate color, less
     // ghosting), but have a negative impact on the frame rate.
-    //
-    // For the same frame-rate, displays with higher multiplexing (e.g. 1:16
-    // vs. 1:8) require lower values.
-    //
-    // Good values for full-color display (PWM=11) are somewhere between
-    // 100 and 300.
-    //
-    // If you you use reduced bit color (e.g. PWM=1 for 8 colors like for text),
-    // then higher values might be good to minimize ghosting (and you can afford
-    // that, because lower PWM values result in higher frame-rates).
-    //
-    // How to decide ? Just leave the default if things are fine. If you see
-    // ghosting in high-contrast applications (e.g. text), increase the value.
-    // If you want to tweak, watch the framerate (--led-show-refresh) while
-    // playing with this number and the PWM values.
     // Flag: --led-pwm-lsb-nanoseconds
     int pwm_lsb_nanoseconds;
 
@@ -121,15 +109,20 @@ public:
 
   // Create an RGBMatrix.
   //
-  // If "io" is not NULL, initializes GPIO pins and starts refreshing the
-  // screen immediately. If you need finer control, pass NULL here and see
-  // SetGPIO() method.
+  // Needs an initialized GPIO object and configuration options from the
+  // RGBMatrix::Options struct.
+  //
+  // If you pass an GPIO object (which has to be Init()ialized), it will start
+  // the internal thread to start the screen immediately.
+  //
+  // If you need finer control over when the refresh thread starts (which you
+  // might when you become a daemon), pass NULL here and see SetGPIO() method.
   //
   // The resulting canvas is (options.rows * options.parallel) high and
   // (32 * options.chain_length) wide.
   RGBMatrix(GPIO *io, const Options &options);
 
-  // Convenience constructor if you don't need the fine-control with the
+  // Simple constructor if you don't need the fine-control with the
   // Options object.
   RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1,
             int parallel_displays = 1);
@@ -139,28 +132,31 @@ public:
   // Set GPIO output if it was not set already in constructor (otherwise: NoOp).
   // If "start_thread" is true, starts the refresh thread.
   //
-  // When would you start the thread separately from setting the GPIO ?
+  // When would you want to start the thread separately from setting the GPIO ?
   // If you are becoming a daemon, you must start the thread _after_ that,
-  // because all threads are stopped after daemon.
+  // because all threads are stopped at the fork().
   // However, you need to set the GPIO before dropping privileges (which you
   // usually do when running as daemon).
   //
-  // So if you write a daemon with dropping privileges, this is the pseudocode
-  // of what you need to do:
+  // So if want to manually crate a daemon with dropping privileges, this is
+  // the pseudocode of what you need to do:
   // ------------
   //   RGBMatrix::Options opts;
   //   RGBMatrix *matrix = new RGBMatrix(NULL, opts);  // No init with gpio yet.
   //   GPIO gpio;
   //   gpio.Init();
-  //   matrix->SetGPIO(&gpio, false);   // First init GPIO use..
+  //   matrix->SetGPIO(&gpio, false);   // First init GPIO use, but no thread.
+  //   // Now, GPIOs are all initialized, so we can drop privileges
   //   drop_privileges();               // .. then drop privileges.
   //   daemon(0, 0);                    // .. start daemon before threads.
   //   matrix->StartRefresh();          // Now start thread.
   // -------------
+  // (Note, that there is a convenience function (CreateMatrixFromOptions())
+  // that does these things).
   void SetGPIO(GPIO *io, bool start_thread = true);
 
-  // Start thread. Typically, you don't need this, see SetGPIO() description
-  // when you might want it.
+  // Start thread. Typically, you don't need to call this, see SetGPIO()
+  // description when you might want it.
   // It doesn't harm to call if the thread is already started.
   // Returns 'false' if it couldn't start because GPIO was not set yet.
   bool StartRefresh();
@@ -280,6 +276,8 @@ private:
   internal::Framebuffer *const frame_;
 };
 
+// Runtime options to simplify doing common things for many programs such as
+// dropping privileges and becoming a daemon.
 struct RuntimeOptions {
   RuntimeOptions();
 
@@ -288,62 +286,66 @@ struct RuntimeOptions {
   int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
 };
 
-// Convenience utility to create a Matrix and extract relevant values from the
-// command line. Commandline flags are something like --led-rows, --led-chain,
-// --led-parallel. See output of PrintMatrixFlags() for all available options.
-//
-// You call it with the address of 'argc' and 'argv' that you get from main();
-// The function will extract the options and remove these from argv, so that
-// your own flag processing does not have to deal with unknown options.
-//
-// The optional parameter is RGBMatrix::Option which allows you to
-// pre-set options, such as your chain and parallel settings. It is also an
-// out-parameter, so its values are changed according to what the user
-// set on the command line.
-//
-// Same for the last parameter for RuntimeOptions (see struct RuntimeOptions).
+// Convenience utility functions to read standard rgb-matrix flags and create
+// a RGBMatrix. Commandline flags are something like --led-rows, --led-chain,
+// --led-parallel. See output of PrintMatrixFlags() for all available options
+// and detailed description in
+// https://github.com/hzeller/rpi-rgb-led-matrix#changing-parameters-via-command-line-flags
 //
 // Example use:
 /*
 using rgb_matrix::RGBMatrix;
 int main(int argc, char **argv) {
-  // Set some defaults
-  RGBMatrix::Options my_defaults;
-  my_defaults.chain_length = 3;
-  my_defaults.show_refresh_rate = true;
+  RGBMatrix::Options led_options;
   rgb_matrix::RuntimeOptions runtime;
+
+  // Set defaults
+  led_options.chain_length = 3;
+  led_options.show_refresh_rate = true;
   runtime.drop_privileges = 1;
-  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv,
-                                                        &my_defaults, &runtime);
-  if (matrix == NULL) {
-    PrintMatrixFlags(stderr, my_defaults);
+  if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv, &led_options, &runtime)) {
+    rgb_matrix::PrintMatrixFlags(stderr);
     return 1;
   }
 
-  // Do your own command line handling with the remaining options.
+  // Do your own command line handling with the remaining flags.
+  while (getopt()) {...}
+
+  // Looks like we're ready to start
+  RGBMatrix *matrix = CreateMatrixFromOptions(led_options, runtime);
+  if (matrix == NULL) {
+    return 1;
+  }
 
   //  .. now use matrix
 
-  delete matrix;   // Make sure to delete it in the end.
+  delete matrix;   // Make sure to delete it in the end to switch off LEDs.
+  return 0;
 }
 */
-// This parses the flags from argv and updates the given options.
-// All the recongized flags are removed from argv.
+// This parses the flags from argv and updates the structs with the parsed-out
+// values. The recongized flags are removed from argv.
+// Returns 'true' on success, 'false' if there was flag parsing problem.
 bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RGBMatrix::Options *default_options,
                            RuntimeOptions *runtime_options);
 
+// Factory to create a matrix and possibly other things such as dropping
+// privileges and becoming a daemon.
+// Returns NULL, if there was a problem (a message then is written to stderr).
 RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
                                    const RuntimeOptions &runtime_options);
 
-// A convenience function that combines the previous two steps. Can get
-// some default runtime options as defaults.
+// A convenience function that combines the previous two steps. Optionally,
+// you can pass in option structs with a couple of defaults. A matrix is
+// created and returned; also the options structs are updated to reflect
+// the values that were used.
+// Returns NULL, if there was a problem (a message then is written to stderr).
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
                                  RGBMatrix::Options *default_options = NULL,
                                  RuntimeOptions *default_runtime_opts = NULL);
 
-// Show all the available options for CreateMatrixFromFlags(). If
-// show_daemon_option is set to false, the --led-daemon option is not shown.
+// Show all the available options for CreateMatrixFromFlags().
 void PrintMatrixFlags(FILE *out,
                       const RGBMatrix::Options &defaults = RGBMatrix::Options(),
                       const RuntimeOptions &rt_opt = RuntimeOptions());

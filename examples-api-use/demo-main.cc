@@ -1061,6 +1061,12 @@ int main(int argc, char *argv[]) {
   const char *demo_parameter = NULL;
   RGBMatrix::Options matrix_options;
   rgb_matrix::RuntimeOptions runtime_opt;
+
+  // These are the defaults when no command-line flags are given.
+  matrix_options.rows = 32;
+  matrix_options.chain_length = 1;
+  matrix_options.parallel = 1;
+
   // First things first: extract the command line flags that contain
   // relevant matrix options.
   if (!ParseOptionsFromFlags(&argc, &argv, &matrix_options, &runtime_opt)) {
