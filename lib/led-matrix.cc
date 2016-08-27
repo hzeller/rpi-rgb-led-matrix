@@ -176,6 +176,9 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
   : params_(Options()), io_(NULL), updater_(NULL) {
+  params_.rows = rows;
+  params_.chain_length = chained_displays;
+  params_.parallel = parallel_displays;
   assert(params_.Validate(NULL));
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
