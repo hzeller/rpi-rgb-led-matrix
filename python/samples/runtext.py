@@ -11,7 +11,8 @@ class RunText(SampleBase):
     def Run(self):
         offscreenCanvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
-        font.LoadFont("../../fonts/7x13.bdf")
+        if (not font.LoadFont("../../fonts/7x13.bdf")):
+            raise("Couldn't load font. Typo in path ?")
         textColor = graphics.Color(255, 255, 0)
         pos = offscreenCanvas.width
         myText = "Hello World!"
