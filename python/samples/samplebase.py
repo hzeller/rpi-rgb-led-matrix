@@ -7,6 +7,7 @@ class SampleBase(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         super(SampleBase, self).__init__(*args, **kwargs)
 
+        # TODO: could this fill RGBMatrix::Options instead ?
         self.add_argument("-r", "--rows", action = "store", help = "Display rows. 16 for 16x32, 32 for 32x32. Default: 32", default = 32, type = int)
         self.add_argument("-P", "--parallel", action = "store", help = "For Plus-models or RPi2: parallel chains. 1..3. Default: 1", default = 1, type = int)
         self.add_argument("-c", "--chain", action = "store", help = "Daisy-chained boards. Default: 1.", default = 1, type = int)
@@ -25,20 +26,7 @@ class SampleBase(argparse.ArgumentParser):
     def process(self):
         self.args = vars(self.parse_args())
 
-        if self.args["rows"] != 16 and self.args["rows"] != 32:
-            print("Rows can either be 16 or 32")
-            return False
-
-        if self.args["chain"] < 1:
-            print("Chain outside usable range")
-            return False
-
-        if self.args["chain"] > 8:
-            print("That is a long chain. Expect some flicker.")
-
-        if self.args["parallel"] < 1 or self.args["parallel"] > 3:
-            print("Parallel outside usable range.")
-            return False
+        # TODO: validate values with RGBmatrix::Options::Validate().
 
         self.matrix = RGBMatrix(self.args["rows"], self.args["chain"], self.args["parallel"])
         self.matrix.pwmBits = self.args["pwmbits"]
