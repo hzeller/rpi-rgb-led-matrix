@@ -15,8 +15,8 @@ sudo make install-python
 You can also build for Python 3:
 
 ```shell
-sudo apt-get update && sudo apt-get install python3.4-dev -y  # or 3.5
-export PYTHON=$(which python3.4)
+sudo apt-get update && sudo apt-get install python3-dev -y
+export PYTHON=$(which python3)
 make build-python
 sudo make install-python
 ```

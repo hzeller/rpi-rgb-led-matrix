@@ -1,5 +1,4 @@
 PYTHON     ?= python
-CYTHON     ?= cython
 SETUP      := setup.py
 BUILD_ARGS := build --build-lib .
 INST_ARGS  := install
@@ -36,11 +35,6 @@ clean: clean-python clean-man
 
 $(RGB_LIBRARY):
 	$(MAKE) -C $(RGB_LIBDIR)
-
-# For updating the generated code (not a direct dependency of build-python
-# as the generated file is included in the distribution)
-%.cpp : %.pyx
-	$(CYTHON) --cplus -o $@ $^
 
 generate-code: $(GENERATED_CPP_SOURCES)
 
