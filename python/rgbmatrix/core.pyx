@@ -41,8 +41,7 @@ cdef class RGBMatrix(Canvas):
     def __cinit__(self, int rows, int chains = 1, int parallel = 1):
         self.__gpio = new cppinc.GPIO()
         if not self.__gpio.Init():
-            raise Exception("Error initializing GPIOs")
-
+            raise Exception("Error initializing GPIOs")  # will segfault?!
         self.__matrix = new cppinc.RGBMatrix(self.__gpio, rows, chains, parallel)
 
     def __dealloc__(self):

@@ -5,3 +5,7 @@ cdef class Color:
 
 cdef class Font:
     cdef cppinc.Font __font
+
+# Local Variables:
+# mode: python
+# End:

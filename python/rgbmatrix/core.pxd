@@ -9,3 +9,7 @@ cdef class FrameCanvas(Canvas):
 cdef class RGBMatrix(Canvas):
     cdef cppinc.RGBMatrix *__matrix
     cdef cppinc.GPIO *__gpio
+
+# Local Variables:
+# mode: python
+# End:
