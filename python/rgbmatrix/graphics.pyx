@@ -28,7 +28,8 @@ cdef class Font:
         return self.__font.CharacterWidth(char)
 
     def LoadFont(self, const char* file):
-        return self.__font.LoadFont(file)
+        if (not self.__font.LoadFont(file)):
+            raise Exception("Couldn't load font " + file)
 
     def DrawGlyph(self, core.Canvas c, int x, int y, Color color, uint32_t char):
         return self.__font.DrawGlyph(c.__getCanvas(), x, y, color.__color, char)
