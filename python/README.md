@@ -7,7 +7,7 @@ Building
 In the root directory for the matrix library simply type:
 
 ```shell
-sudo apt-get update && sudo apt-get install python2.7-dev -y
+sudo apt-get update && sudo apt-get install python2.7-dev python-pillow -y
 make build-python
 sudo make install-python
 ```
@@ -15,7 +15,7 @@ sudo make install-python
 You can also build for Python 3:
 
 ```shell
-sudo apt-get update && sudo apt-get install python3-dev -y
+sudo apt-get update && sudo apt-get install python3-dev python3-pillow -y
 export PYTHON=$(which python3)
 make build-python
 sudo make install-python

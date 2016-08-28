@@ -2,10 +2,22 @@
 
 from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t
+from PIL import Image
 
 cdef class Canvas:
     cdef cppinc.Canvas* __getCanvas(self) except +:
         raise Exception("Not implemented")
+
+    # First implementation of a SetImage(). OPTIMIZE_ME: A more native
+    # implementation that directly reads the buffer and calls the underlying
+    # C functions can certainly be faster.
+    def SetImage(self, image, int offset_x = 0, int offset_y = 0):
+        img_width, img_height = image.size
+        img = image.load()
+        for x in range(max(0, -offset_x), min(img_width, self.width - offset_x)):
+            for y in range(max(0, -offset_y), min(img_height, self.height - offset_y)):
+                (r, g, b) = img[x, y]
+                self.SetPixel(x + offset_x, y + offset_y, r, g, b)
 
 cdef class FrameCanvas(Canvas):
     def __dealloc__(self):
