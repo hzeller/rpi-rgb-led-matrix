@@ -1,3 +1,4 @@
+# TODO: This contains a lot of {c|p}ython build boilerplate, this needs cleanup.
 PYTHON     ?= python
 SETUP      := setup.py
 BUILD_ARGS := build --build-lib .
@@ -9,8 +10,6 @@ CLEAN_ARGS := clean --all
 
 MANPAGES := $(patsubst %.txt,%,$(wildcard *.txt))
 TXTTOMAN := a2x -f manpage
-
-GENERATED_CPP_SOURCES = rgbmatrix/core.cpp rgbmatrix/graphics.cpp
 
 # Where our library resides. It is split between includes and the binary
 # library in lib
@@ -26,17 +25,15 @@ DEBDIST := $(PKGNAME)_$(VERSION).orig.tar.gz
 endif
 
 all: build
-build: build-python build-man
-install: install-python install-man
-clean: clean-python clean-man
+build: build-python
+install: install-python
+clean: clean-python
 	find ./rgbmatrix -type f -name \*.so -delete
 	find . -type f -name \*.pyc -delete
 	$(RM) build-* install-* test-*
 
 $(RGB_LIBRARY):
 	$(MAKE) -C $(RGB_LIBDIR)
-
-generate-code: $(GENERATED_CPP_SOURCES)
 
 test: test-python
 test-python:
@@ -76,19 +73,6 @@ clean-python:
 	$(PYTHON) $(SETUP) $(CLEAN_ARGS)
 endif
 
-build-man: $(MANPAGES:%=build-man-%)
-build-man-%: %.txt
-	$(info * Creating $* ...)
-	$(TXTTOMAN) $<
-
-install-man: $(MANPAGES:%=install-man-%)
-install-man-%:
-	$(info Installation of $* not implemented...)
-
-clean-man: $(MANPAGES:%=clean-man-%)
-clean-man-%:
-	$(RM) $* $*.xml
-
 distclean: clean
 dist: distclean
 	$(info * Creating ../$(UPSDIST) and ../$(DEBDIST))
@@ -104,4 +88,3 @@ dist: distclean
 
 .PHONY: build install test clean dist distclean
 .PHONY: build-python install-python clean-python
-.PHONY: build-man install-man clean-man
