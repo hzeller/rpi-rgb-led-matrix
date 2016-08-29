@@ -29,16 +29,36 @@ Therefore you will need to run all you python scripts as using sudo.
 
 You find examples in the [samples/](./samples) subdirectory.
 
+Here a complete example how to write an image viewer:
 ```python
 #!/usr/bin/env python
-from rgbmatrix import RGBMatrix
 import time
+import sys
 
-rows = 16
-chains = 1
-parallel = 2
-myMatrix = RGBMatrix(rows, chains, parallel)
-myMatrix.Fill(255, 0, 0)
-time.sleep(5)
-myMatrix.Clear()
+from rgbmatrix import RGBMatrix
+from PIL import Image
+
+if len(sys.argv) < 2:
+    sys.exit("Require an image argument")
+else:
+    image_file = sys.argv[1]
+
+image = Image.open(image_file)
+
+rows = 32
+chain = 1
+parallel = 1
+matrix = RGBMatrix(rows, chain, parallel)
+
+# Make image fit our screen.
+image.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
+
+matrix.SetImage(image.convert('RGB'))
+
+try:
+    print("Press CTRL-C to stop.")
+    while True:
+        time.sleep(100)
+except KeyboardInterrupt:
+    sys.exit(0)
 ```
