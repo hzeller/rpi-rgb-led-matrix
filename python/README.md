@@ -27,6 +27,15 @@ Be aware of the fact, that using the RGBMatrix requires root privileges.
 Therefore you will need to run all you python scripts as using sudo.
 
 You find examples in the [samples/](./samples) subdirectory.
+The examples all use the [samplebase.py](./samples/samplebase.py) that provides
+some utility to all example programs, such as command-line parsing: all
+sample-programs accept `--rows`, `--chain` and `--parallel` as options to
+adapt to your configuration
+
+```bash
+cd samples
+sudo ./runtext.py --chain=4
+```
 
 Here a complete example how to write an image viewer:
 ```python
