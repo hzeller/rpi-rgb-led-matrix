@@ -27,6 +27,8 @@ Using the library
 Be aware of the fact, that using the RGBMatrix requires root privileges.
 Therefore you will need to run all you python scripts as using sudo.
 
+You find examples in the [samples/](./samples) subdirectory.
+
 ```python
 #!/usr/bin/env python
 from rgbmatrix import RGBMatrix

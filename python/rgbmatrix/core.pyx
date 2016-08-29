@@ -12,11 +12,13 @@ cdef class Canvas:
     # implementation that directly reads the buffer and calls the underlying
     # C functions can certainly be faster.
     def SetImage(self, image, int offset_x = 0, int offset_y = 0):
+        if (image.mode != "RGB"):
+            raise Exception("Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB'). Pull requests to support more modes natively are also welcome :)")
         img_width, img_height = image.size
-        img = image.load()
+        pixels = image.load()
         for x in range(max(0, -offset_x), min(img_width, self.width - offset_x)):
             for y in range(max(0, -offset_y), min(img_height, self.height - offset_y)):
-                (r, g, b) = img[x, y]
+                (r, g, b) = pixels[x, y]
                 self.SetPixel(x + offset_x, y + offset_y, r, g, b)
 
 cdef class FrameCanvas(Canvas):
