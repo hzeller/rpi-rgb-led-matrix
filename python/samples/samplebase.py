@@ -40,7 +40,7 @@ class SampleBase(argparse.ArgumentParser):
             print("Press CTRL-C to stop sample")
             self.Run()
         except KeyboardInterrupt:
-            print "Exiting\n"
+            print("Exiting\n")
             sys.exit(0)
 
         return True

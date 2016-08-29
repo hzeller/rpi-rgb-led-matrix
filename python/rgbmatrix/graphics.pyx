@@ -27,8 +27,8 @@ cdef class Font:
     def CharacterWidth(self, uint32_t char):
         return self.__font.CharacterWidth(char)
 
-    def LoadFont(self, const char* file):
-        if (not self.__font.LoadFont(file)):
+    def LoadFont(self, file):
+        if (not self.__font.LoadFont(file.encode('utf-8'))):
             raise Exception("Couldn't load font " + file)
 
     def DrawGlyph(self, core.Canvas c, int x, int y, Color color, uint32_t char):
@@ -40,8 +40,8 @@ cdef class Font:
     property baseline:
         def __get__(self): return self.__font.baseline()
 
-def DrawText(core.Canvas c, Font f, int x, int y, Color color, const char* text):
-    return cppinc.DrawText(c.__getCanvas(), f.__font, x, y, color.__color, text)
+def DrawText(core.Canvas c, Font f, int x, int y, Color color, text):
+    return cppinc.DrawText(c.__getCanvas(), f.__font, x, y, color.__color, text.encode('utf-8'))
 
 def DrawCircle(core.Canvas c, int x, int y, int r, Color color):
     cppinc.DrawCircle(c.__getCanvas(), x, y, r, color.__color)

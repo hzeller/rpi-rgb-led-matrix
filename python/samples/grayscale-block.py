@@ -17,7 +17,7 @@ class GrayscaleBlock(SampleBase):
         while True:
             for y in range(0, height):
                 for x in range(0, width):
-                    c = sub_blocks * (y / y_step) + (x / x_step)
+                    c = sub_blocks * int(y / y_step) + int(x / x_step)
                     if count % 4 == 0:
                         self.matrix.SetPixel(x, y, c, c, c)
                     elif count % 4 == 1:

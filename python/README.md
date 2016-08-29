@@ -16,9 +16,8 @@ You can also build for Python 3:
 
 ```shell
 sudo apt-get update && sudo apt-get install python3-dev python3-pillow -y
-export PYTHON=$(which python3)
-make build-python
-sudo make install-python
+make build-python PYTHON=$(which python3)
+sudo make install-python PYTHON=$(which python3)
 ```
 
 Using the library
