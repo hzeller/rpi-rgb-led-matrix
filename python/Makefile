@@ -32,7 +32,7 @@ clean: clean-python
 	find . -type f -name \*.pyc -delete
 	$(RM) build-* install-* test-*
 
-$(RGB_LIBRARY):
+$(RGB_LIBRARY): FORCE
 	$(MAKE) -C $(RGB_LIBDIR)
 
 test: test-python
@@ -86,5 +86,7 @@ dist: distclean
 		mv -v ../$(DEBDIST) ../tarballs; \
 	fi
 
+FORCE:
+.PHONY: FORCE
 .PHONY: build install test clean dist distclean
 .PHONY: build-python install-python clean-python
