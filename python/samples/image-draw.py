@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# (This is an example similar to an example from the Adafrtui fork
+# (This is an example similar to an example from the Adafruit fork
 #  to show the similarities. Most important difference currently is, that
 #  this library wants RGB mode.)
 #

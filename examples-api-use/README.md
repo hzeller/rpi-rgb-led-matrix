@@ -135,7 +135,7 @@ include the library via github; it is pretty easy to be up-to-date.
 I suggest to add this code as a sub-module in your git repository. That way
 you can use that particular version and easily update it if there are changes:
 
-     git submodule add https://github.com/hzeller/rpi-rgb-demo.git matrix
+     git submodule add https://github.com/hzeller/rpi-rgb-led-matrix.git matrix
 
 (Read more about how to use [submodules in git][git-submodules])
 
