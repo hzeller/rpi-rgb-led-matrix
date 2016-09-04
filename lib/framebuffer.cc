@@ -199,6 +199,16 @@ inline Framebuffer::IoBits *Framebuffer::ValueAt(int double_row,
                             + column ];
 }
 
+void Framebuffer::Clear() {
+  if (inverse_color_) {
+    Fill(0, 0, 0);
+  } else  {
+    // Cheaper.
+    memset(bitplane_buffer_, 0,
+           sizeof(*bitplane_buffer_) * double_rows_ * columns_ * kBitPlanes);
+  }
+}
+
 // Do CIE1931 luminance correction and scale to output bitplanes
 static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
   float out_factor = ((1 << kBitPlanes) - 1);
@@ -218,36 +228,47 @@ static ColorLookup *CreateLuminanceCIE1931LookupTable() {
   return for_brightness;
 }
 
-inline uint16_t Framebuffer::MapColor(uint8_t c) {
-  uint16_t result;
-  if (do_luminance_correct_) {
-    static ColorLookup *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-    result = luminance_lookup[brightness_ - 1].color[c];
-  } else {
-    // simple scale down the color value
-    c = c * brightness_ / 100;
-
-    enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
-    result = (shift > 0) ? (c << shift) : (c >> -shift);
-  }
-  if (inverse_color_) result ^= 0xffff;
-  return result;
+static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
+  static ColorLookup *luminance_lookup = CreateLuminanceCIE1931LookupTable();
+  return luminance_lookup[brightness - 1].color[c];
 }
 
-void Framebuffer::Clear() {
+// Non luminance correction. TODO: consider getting rid of this.
+static inline uint16_t DirectMapColor(uint8_t brightness, uint8_t c) {
+  // simple scale down the color value
+  c = c * brightness / 100;
+
+  enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
+  return (shift > 0) ? (c << shift) : (c >> -shift);
+}
+
+inline void Framebuffer::MapColors(
+  uint8_t r, uint8_t g, uint8_t b,
+  uint16_t *red, uint16_t *green, uint16_t *blue) {
+  if (do_luminance_correct_) {
+    *red   = CIEMapColor(brightness_, r);
+    *green = CIEMapColor(brightness_, g);
+    *blue  = CIEMapColor(brightness_, b);
+  } else {
+    *red   = DirectMapColor(brightness_, r);
+    *green = DirectMapColor(brightness_, g);
+    *blue  = DirectMapColor(brightness_, b);
+  }
+
   if (inverse_color_) {
-    Fill(0, 0, 0);
-  } else  {
-    // Cheaper.
-    memset(bitplane_buffer_, 0,
-           sizeof(*bitplane_buffer_) * double_rows_ * columns_ * kBitPlanes);
+    *red = ~(*red);
+    *green = ~(*green);
+    *blue = ~(*blue);
   }
 }
 
 void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
-  const uint16_t red   = MapColor(r);
-  const uint16_t green = MapColor(swap_green_blue_ ? b : g);
-  const uint16_t blue  = MapColor(swap_green_blue_ ? g : b);
+  uint16_t red, green, blue;
+  if (!swap_green_blue_) {
+    MapColors(r, g, b, &red, &green, &blue);
+  } else {
+    MapColors(r, g, b, &red, &blue, &green);
+  }
 
   for (int b = kBitPlanes - pwm_bits_; b < kBitPlanes; ++b) {
     uint16_t mask = 1 << b;
@@ -280,9 +301,12 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   const int pos = designator->gpio_word;
   if (pos < 0) return;
 
-  const uint16_t red   = MapColor(r);
-  const uint16_t green = MapColor(swap_green_blue_ ? b : g);
-  const uint16_t blue  = MapColor(swap_green_blue_ ? g : b);
+  uint16_t red, green, blue;
+  if (!swap_green_blue_) {
+    MapColors(r, g, b, &red, &green, &blue);
+  } else {
+    MapColors(r, g, b, &red, &blue, &green);
+  }
 
   IoBits *bits = bitplane_buffer_ + pos;
   const int min_bit_plane = kBitPlanes - pwm_bits_;

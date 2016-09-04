@@ -72,10 +72,9 @@ private:
   class PixelMapper;
   class PixelDesignator;
 
-  // Map color
-  inline uint16_t MapColor(uint8_t c);
   void InitDefaultDesignator(int x, int y, PixelDesignator *designator);
-
+  inline void  MapColors(uint8_t r, uint8_t g, uint8_t b,
+                         uint16_t *red, uint16_t *green, uint16_t *blue);
   const int rows_;     // Number of rows. 16 or 32.
   const int parallel_; // Parallel rows of chains. 1 or 2.
   const int height_;   // rows * parallel
