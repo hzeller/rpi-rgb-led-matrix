@@ -206,20 +206,23 @@ static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
   return out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3));
 }
 
-static uint16_t *CreateLuminanceCIE1931LookupTable() {
-  uint16_t *result = new uint16_t[256 * 100];
-  for (int i = 0; i < 256; ++i)
-    for (int j = 0; j < 100; ++j)
-      result[i * 100 + j] = luminance_cie1931(i, j + 1);
+struct ColorLookup {
+  uint16_t color[256];
+};
+static ColorLookup *CreateLuminanceCIE1931LookupTable() {
+  ColorLookup *for_brightness = new ColorLookup[100];
+  for (int c = 0; c < 256; ++c)
+    for (int b = 0; b < 100; ++b)
+      for_brightness[b].color[c] = luminance_cie1931(c, b + 1);
 
-  return result;
+  return for_brightness;
 }
 
 inline uint16_t Framebuffer::MapColor(uint8_t c) {
   uint16_t result;
   if (do_luminance_correct_) {
-    static uint16_t *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-    result = luminance_lookup[c * 100 + (brightness_ - 1)];
+    static ColorLookup *luminance_lookup = CreateLuminanceCIE1931LookupTable();
+    result = luminance_lookup[brightness_ - 1].color[c];
   } else {
     // simple scale down the color value
     c = c * brightness_ / 100;
