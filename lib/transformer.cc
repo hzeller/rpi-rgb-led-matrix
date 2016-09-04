@@ -39,12 +39,6 @@ public:
 private:
   Canvas *delegatee_;
   int angle_;
-  float pivot_x_;
-  float pivot_y_;
-  int cos_;
-  int sin_;
-  int offset_x_;
-  int offset_y_;
 };
 
 RotateTransformer::TransformCanvas::TransformCanvas(int angle)
@@ -53,24 +47,27 @@ RotateTransformer::TransformCanvas::TransformCanvas(int angle)
 }
 
 void RotateTransformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
-  pivot_x_ = (delegatee->width() - 1) / 2;
-  pivot_y_ = (delegatee->height() - 1) / 2;
   delegatee_ = delegatee;
 }
 
 void RotateTransformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  // translate point to origin
-  x -= pivot_x_;
-  y -= pivot_y_;
-
-  float rot_x = x * cos_ - y * sin_;
-  float rot_y = x * sin_ + y * cos_;
-
-  // translate back
-  x = rot_x + pivot_x_ + offset_x_;
-  y = rot_y + pivot_y_ + offset_y_;
-
-  delegatee_->SetPixel(x, y, red, green, blue);
+  switch (angle_) {
+  case 0:
+    delegatee_->SetPixel(x, y, red, green, blue);
+    break;
+  case 90:
+    delegatee_->SetPixel(delegatee_->width() - y - 1, x,
+                         red, green, blue);
+    break;
+  case 180:
+    delegatee_->SetPixel(delegatee_->width() - x - 1,
+                         delegatee_->height() - y - 1,
+                         red, green, blue);
+    break;
+  case 270:
+    delegatee_->SetPixel(y, delegatee_->height() - x - 1, red, green, blue);
+    break;
+  }
 }
 
 int RotateTransformer::TransformCanvas::width() const {
@@ -91,14 +88,7 @@ void RotateTransformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_
 
 void RotateTransformer::TransformCanvas::SetAngle(int angle) {
   assert(angle % 90 == 0);  // We currenlty enforce that for more pretty output
-  angle_ = angle % 360;
-
-  sin_ = (angle_ ==  90 ?  1 : (angle_ == 270 ? -1 : 0));
-  cos_ = (angle_ == 180 ? -1 : (angle_ ==   0 ?  1 : 0));
-
-  // Offset needed cause of little precision errors on 180° and 270°
-  offset_x_ = (angle_ == 90 || angle_ == 180 ? 1 : 0);
-  offset_y_ = (angle_ == 180 || angle_ == 270 ? 1 : 0);
+  angle_ = (angle + 360) % 360;
 }
 
 /**********************/
