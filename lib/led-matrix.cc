@@ -165,7 +165,7 @@ RGBMatrix::Options::Options()
 }
 
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
-  : params_(options), io_(NULL), updater_(NULL) {
+  : params_(options), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL) {
   assert(params_.Validate(NULL));
   SetTransformer(NULL);
   active_ = CreateFrameCanvas();
@@ -175,7 +175,7 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
                      int parallel_displays)
-  : params_(Options()), io_(NULL), updater_(NULL) {
+  : params_(Options()), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL) {
   params_.rows = rows;
   params_.chain_length = chained_displays;
   params_.parallel = parallel_displays;
@@ -198,6 +198,7 @@ RGBMatrix::~RGBMatrix() {
   for (size_t i = 0; i < created_frames_.size(); ++i) {
     delete created_frames_[i];
   }
+  delete shared_pixel_mapper_;
 }
 
 void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
@@ -234,7 +235,8 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
                                               params_.parallel,
                                               params_.scan_mode,
                                               params_.swap_green_blue,
-                                              params_.inverse_colors));
+                                              params_.inverse_colors,
+                                              &shared_pixel_mapper_));
   if (created_frames_.empty()) {
     // First time. Get defaults from initial Framebuffer.
     do_luminance_correct_ = result->framebuffer()->luminance_correct();

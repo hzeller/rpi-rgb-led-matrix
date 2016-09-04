@@ -54,42 +54,25 @@ static PinPulser *sOutputEnablePulser = NULL;
 #  define SUB_PANELS_ 2
 #endif
 
-struct Framebuffer::PixelDesignator {
-  int gpio_word;
-  IoBits r_bit;
-  IoBits g_bit;
-  IoBits b_bit;
-  uint32_t mask;
-};
+inline PixelDesignator *PixelMapper::get(int x, int y) {
+  if (x < 0 || y < 0 || x >= width_ || y >= height_)
+    return NULL;
+  return buffer_ + (y*width_) + x;
+}
 
-class Framebuffer::PixelMapper {
-public:
-  PixelMapper(int width, int height)
-    : width_(width), height_(height),
-      buffer_(new PixelDesignator[width * height]) {
-    for (int i = 0; i < width*height; ++i) {
-      buffer_[i].gpio_word = -1;
-    }
-  }
-  ~PixelMapper() {
-    delete [] buffer_;
-  }
+PixelMapper::PixelMapper(int width, int height)
+  : width_(width), height_(height),
+    buffer_(new PixelDesignator[width * height]) {
+}
 
-  PixelDesignator *get(int x, int y) {
-    if (x < 0 || y < 0 || x >= width_ || y >= height_)
-      return NULL;
-    return buffer_ + (y*width_) + x;
-  }
-
-private:
-  const int width_;
-  const int height_;
-  PixelDesignator *const buffer_;
-};
+PixelMapper::~PixelMapper() {
+  delete [] buffer_;
+}
 
 Framebuffer::Framebuffer(int rows, int columns, int parallel,
                          int scan_mode,
-                         bool swap_green_blue, bool inverse_color)
+                         bool swap_green_blue, bool inverse_color,
+                         PixelMapper **mapper)
   : rows_(rows),
     parallel_(parallel),
     height_(rows * parallel),
@@ -98,9 +81,8 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     swap_green_blue_(swap_green_blue), inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1),
-    mapper_(new PixelMapper(columns_, height_)) {
-  bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
-  Clear();
+    shared_mapper_(mapper) {
+  assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
   assert(rows_ == 8 || rows_ == 16 || rows_ == 32 || rows_ == 64);
   assert(parallel >= 1 && parallel <= 3);
   if (parallel > RGB_PARALLEL_CHAINS) {
@@ -109,11 +91,26 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     assert(parallel == 1);
   }
 
-  for (int y = 0; y < height_; ++y) {
-    for (int x = 0; x < columns_; ++x) {
-      InitDefaultDesignator(x, y, mapper_->get(x, y));
+  bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
+
+  // If we're the first Framebuffer created, the shared PixelMapper is
+  // still NULL, so create one.
+  // The first PixelMapper represents the physical layout of a standard matrix
+  // with the specific knowledge of the framebuffer, setting up PixelDesignators
+  // in a way that they are useful for this Framebuffer.
+  //
+  // Newly created PixelMappers then can just copy around PixelDesignators
+  // from the parent PixelMapper opaquely without having to know the details.
+  if (*shared_mapper_ == NULL) {
+    *shared_mapper_ = new PixelMapper(columns_, height_);
+    for (int y = 0; y < height_; ++y) {
+      for (int x = 0; x < columns_; ++x) {
+        InitDefaultDesignator(x, y, (*shared_mapper_)->get(x, y));
+      }
     }
   }
+
+  Clear();
 }
 
 Framebuffer::~Framebuffer() {
@@ -245,6 +242,7 @@ static inline uint16_t DirectMapColor(uint8_t brightness, uint8_t c) {
 inline void Framebuffer::MapColors(
   uint8_t r, uint8_t g, uint8_t b,
   uint16_t *red, uint16_t *green, uint16_t *blue) {
+
   if (do_luminance_correct_) {
     *red   = CIEMapColor(brightness_, r);
     *green = CIEMapColor(brightness_, g);
@@ -295,11 +293,14 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   }
 }
 
+int Framebuffer::width() const { return (*shared_mapper_)->width(); }
+int Framebuffer::height() const { return (*shared_mapper_)->height(); }
+
 void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-  const PixelDesignator *designator = mapper_->get(x, y);
+  const PixelDesignator *designator = (*shared_mapper_)->get(x, y);
   if (designator == NULL) return;
   const int pos = designator->gpio_word;
-  if (pos < 0) return;
+  if (pos < 0) return;  // non-used pixel marker.
 
   uint16_t red, green, blue;
   if (!swap_green_blue_) {
@@ -311,9 +312,9 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   IoBits *bits = bitplane_buffer_ + pos;
   const int min_bit_plane = kBitPlanes - pwm_bits_;
   bits += (columns_ * min_bit_plane);
-  const uint32_t r_bits = designator->r_bit.raw;
-  const uint32_t g_bits = designator->g_bit.raw;
-  const uint32_t b_bits = designator->b_bit.raw;
+  const uint32_t r_bits = designator->r_bit;
+  const uint32_t g_bits = designator->g_bit;
+  const uint32_t b_bits = designator->b_bit;
   const uint32_t designator_mask = designator->mask;
   for (int b = min_bit_plane; b < kBitPlanes; ++b) {
     const uint16_t mask = 1 << b;
@@ -329,45 +330,45 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 void Framebuffer::InitDefaultDesignator(int x, int y, PixelDesignator *d) {
   IoBits *bits = ValueAt(y & row_mask_, x, 0);
   d->gpio_word = bits - bitplane_buffer_;
-  d->r_bit.raw = d->g_bit.raw = d->b_bit.raw = 0;
+  d->r_bit = d->g_bit = d->b_bit = 0;
   if (y < rows_) {
     if (y < double_rows_) {
-      d->r_bit.bits.p0_r1 = 1;
-      d->g_bit.bits.p0_g1 = 1;
-      d->b_bit.bits.p0_b1 = 1;
+      color_bits(&d->r_bit).bits.p0_r1 = 1;
+      color_bits(&d->g_bit).bits.p0_g1 = 1;
+      color_bits(&d->b_bit).bits.p0_b1 = 1;
     } else {
-      d->r_bit.bits.p0_r2 = 1;
-      d->g_bit.bits.p0_g2 = 1;
-      d->b_bit.bits.p0_b2 = 1;
+      color_bits(&d->r_bit).bits.p0_r2 = 1;
+      color_bits(&d->g_bit).bits.p0_g2 = 1;
+      color_bits(&d->b_bit).bits.p0_b2 = 1;
     }
   }
 #if RGB_PARALLEL_CHAINS >= 2
   else if (y >= rows_ && y < 2 * rows_) {
     if (y - rows_ < double_rows_) {
-      d->r_bit.bits.p1_r1 = 1;
-      d->g_bit.bits.p1_g1 = 1;
-      d->b_bit.bits.p1_b1 = 1;
+      color_bits(&d->r_bit).bits.p1_r1 = 1;
+      color_bits(&d->g_bit).bits.p1_g1 = 1;
+      color_bits(&d->b_bit).bits.p1_b1 = 1;
     } else {
-      d->r_bit.bits.p1_r2 = 1;
-      d->g_bit.bits.p1_g2 = 1;
-      d->b_bit.bits.p1_b2 = 1;
+      color_bits(&d->r_bit).bits.p1_r2 = 1;
+      color_bits(&d->g_bit).bits.p1_g2 = 1;
+      color_bits(&d->b_bit).bits.p1_b2 = 1;
     }
   }
 #endif
 #if RGB_PARALLEL_CHAINS >= 3
   else {
     if (y - 2*rows_ < double_rows_) {
-      d->r_bit.bits.p2_r1 = 1;
-      d->g_bit.bits.p2_g1 = 1;
-      d->b_bit.bits.p2_b1 = 1;
+      color_bits(&d->r_bit).bits.p2_r1 = 1;
+      color_bits(&d->g_bit).bits.p2_g1 = 1;
+      color_bits(&d->b_bit).bits.p2_b1 = 1;
     } else {
-      d->r_bit.bits.p2_r2 = 1;
-      d->g_bit.bits.p2_g2 = 1;
-      d->b_bit.bits.p2_b2 = 1;
+      color_bits(&d->r_bit).bits.p2_r2 = 1;
+      color_bits(&d->g_bit).bits.p2_g2 = 1;
+      color_bits(&d->b_bit).bits.p2_b2 = 1;
     }
   }
 #endif
-  d->mask = ~(d->r_bit.raw | d->g_bit.raw | d->b_bit.raw);
+  d->mask = ~(d->r_bit | d->g_bit | d->b_bit);
 }
 
 void Framebuffer::DumpToMatrix(GPIO *io) {

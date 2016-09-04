@@ -32,7 +32,10 @@
 namespace rgb_matrix {
 class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
-namespace internal { class Framebuffer; }
+namespace internal {
+class Framebuffer;
+class PixelMapper;
+}
 
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
@@ -240,6 +243,7 @@ private:
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
   CanvasTransformer *transformer_;
+  internal::PixelMapper *shared_pixel_mapper_;
 };
 
 class FrameCanvas : public Canvas {
@@ -270,7 +274,7 @@ private:
   friend class RGBMatrix;
 
   FrameCanvas(internal::Framebuffer *frame) : frame_(frame){}
-  virtual ~FrameCanvas();
+  virtual ~FrameCanvas();   // Any FrameCanvas is owned by RGBMatrix.
   internal::Framebuffer *framebuffer() { return frame_; }
 
   internal::Framebuffer *const frame_;

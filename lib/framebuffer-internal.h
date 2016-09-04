@@ -21,6 +21,36 @@ namespace rgb_matrix {
 class GPIO;
 class PinPulser;
 namespace internal {
+
+// An opaque type used within the framebuffer that can be used
+// to copy between PixelMappers.
+struct PixelDesignator {
+  PixelDesignator() : gpio_word(-1), r_bit(0), g_bit(0), b_bit(0), mask(~0){}
+  int gpio_word;
+  uint32_t r_bit;
+  uint32_t g_bit;
+  uint32_t b_bit;
+  uint32_t mask;
+};
+
+class PixelMapper {
+public:
+  PixelMapper(int width, int height);
+  ~PixelMapper();
+
+  // Get a writable version of the PixelDesignator. Outside Framebuffer used
+  // by the RGBMatrix to re-assign mappings to new PixelMappers.
+  PixelDesignator *get(int x, int y);
+
+  inline int width() const { return width_; }
+  inline int height() const { return height_; }
+
+private:
+  const int width_;
+  const int height_;
+  PixelDesignator *const buffer_;
+};
+
 // Internal representation of the frame-buffer that as well can
 // write itself to GPIO.
 // Our internal memory layout mimicks as much as possible what needs to be
@@ -29,7 +59,8 @@ class Framebuffer {
 public:
   Framebuffer(int rows, int columns, int parallel,
               int scan_mode,
-              bool swap_green_blue, bool inverse_color);
+              bool swap_green_blue, bool inverse_color,
+              PixelMapper **mapper);
   ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
@@ -58,8 +89,8 @@ public:
 
   // Canvas-inspired methods, but we're not implementing this interface to not
   // have an unnecessary vtable.
-  inline int width() const { return columns_; }
-  inline int height() const { return height_; }
+  int width() const;
+  int height() const;
   void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
@@ -68,9 +99,6 @@ private:
   // Define the type to do the pin-mapping. These are include fils
   // found in include directory hardware/$(name-of-mapping)
 #include "led-panel-pin-mapping.h"  // see HARDWARE_DESC in lib/Makefile
-
-  class PixelMapper;
-  class PixelDesignator;
 
   void InitDefaultDesignator(int x, int y, PixelDesignator *designator);
   inline void  MapColors(uint8_t r, uint8_t g, uint8_t b,
@@ -99,8 +127,11 @@ private:
   // but it allows easy access in the critical section.
   IoBits *bitplane_buffer_;
   inline IoBits *ValueAt(int double_row, int column, int bit);
+  inline IoBits &color_bits(uint32_t *val) {
+    return *reinterpret_cast<IoBits*>(val);
+  }
 
-  PixelMapper *mapper_;
+  PixelMapper **shared_mapper_;  // Storage in RGBMatrix.
 };
 }  // namespace internal
 }  // namespace rgb_matrix
