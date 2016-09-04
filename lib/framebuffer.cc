@@ -54,6 +54,39 @@ static PinPulser *sOutputEnablePulser = NULL;
 #  define SUB_PANELS_ 2
 #endif
 
+struct Framebuffer::PixelDesignator {
+  int gpio_word;
+  IoBits r_bit;
+  IoBits g_bit;
+  IoBits b_bit;
+  uint32_t mask;
+};
+
+class Framebuffer::PixelMapper {
+public:
+  PixelMapper(int width, int height)
+    : width_(width), height_(height),
+      buffer_(new PixelDesignator[width * height]) {
+    for (int i = 0; i < width*height; ++i) {
+      buffer_[i].gpio_word = -1;
+    }
+  }
+  ~PixelMapper() {
+    delete [] buffer_;
+  }
+
+  PixelDesignator *get(int x, int y) {
+    if (x < 0 || y < 0 || x >= width_ || y >= height_)
+      return NULL;
+    return buffer_ + (y*width_) + x;
+  }
+
+private:
+  const int width_;
+  const int height_;
+  PixelDesignator *const buffer_;
+};
+
 Framebuffer::Framebuffer(int rows, int columns, int parallel,
                          int scan_mode,
                          bool swap_green_blue, bool inverse_color)
@@ -64,7 +97,8 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     scan_mode_(scan_mode),
     swap_green_blue_(swap_green_blue), inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
-    double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1) {
+    double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1),
+    mapper_(new PixelMapper(columns_, height_)) {
   bitplane_buffer_ = new IoBits [double_rows_ * columns_ * kBitPlanes];
   Clear();
   assert(rows_ == 8 || rows_ == 16 || rows_ == 32 || rows_ == 64);
@@ -73,6 +107,12 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     fprintf(stderr, "Parallel of %d is higher than the supported "
             "RGB_PARALLEL_CHAINS of %d\n", parallel, RGB_PARALLEL_CHAINS);
     assert(parallel == 1);
+  }
+
+  for (int y = 0; y < height_; ++y) {
+    for (int x = 0; x < columns_; ++x) {
+      InitDefaultDesignator(x, y, mapper_->get(x, y));
+    }
   }
 }
 
@@ -232,80 +272,75 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-  if (x < 0 || x >= columns_ || y < 0 || y >= height_) return;
+  const PixelDesignator *designator = mapper_->get(x, y);
+  if (designator == NULL) return;
+  const int pos = designator->gpio_word;
+  if (pos < 0) return;
 
   const uint16_t red   = MapColor(r);
   const uint16_t green = MapColor(swap_green_blue_ ? b : g);
   const uint16_t blue  = MapColor(swap_green_blue_ ? g : b);
 
+  IoBits *bits = bitplane_buffer_ + pos;
   const int min_bit_plane = kBitPlanes - pwm_bits_;
-  IoBits *bits = ValueAt(y & row_mask_, x, min_bit_plane);
+  bits += (columns_ * min_bit_plane);
+  const uint32_t r_bits = designator->r_bit.raw;
+  const uint32_t g_bits = designator->g_bit.raw;
+  const uint32_t b_bits = designator->b_bit.raw;
+  const uint32_t designator_mask = designator->mask;
+  for (int b = min_bit_plane; b < kBitPlanes; ++b) {
+    const uint16_t mask = 1 << b;
+    uint32_t color_bits = 0;
+    if (red & mask)   color_bits |= r_bits;
+    if (green & mask) color_bits |= g_bits;
+    if (blue & mask)  color_bits |= b_bits;
+    bits->raw = (bits->raw & designator_mask) | color_bits;
+    bits += columns_;
+  }
+}
 
-  // Manually expand the three cases for better performance.
-  // TODO(hzeller): This is a bit repetetive. Test if it pays off to just
-  // pre-calc rgb mask and apply.
+void Framebuffer::InitDefaultDesignator(int x, int y, PixelDesignator *d) {
+  IoBits *bits = ValueAt(y & row_mask_, x, 0);
+  d->gpio_word = bits - bitplane_buffer_;
+  d->r_bit.raw = d->g_bit.raw = d->b_bit.raw = 0;
   if (y < rows_) {
-    // Parallel chain #1
-    if (y < double_rows_) {   // Upper sub-panel.
-      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p0_r1 = (red & mask) == mask;
-        bits->bits.p0_g1 = (green & mask) == mask;
-        bits->bits.p0_b1 = (blue & mask) == mask;
-        bits += columns_;
-      }
+    if (y < double_rows_) {
+      d->r_bit.bits.p0_r1 = 1;
+      d->g_bit.bits.p0_g1 = 1;
+      d->b_bit.bits.p0_b1 = 1;
     } else {
-      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p0_r2 = (red & mask) == mask;
-        bits->bits.p0_g2 = (green & mask) == mask;
-        bits->bits.p0_b2 = (blue & mask) == mask;
-        bits += columns_;
-      }
+      d->r_bit.bits.p0_r2 = 1;
+      d->g_bit.bits.p0_g2 = 1;
+      d->b_bit.bits.p0_b2 = 1;
     }
+  }
 #if RGB_PARALLEL_CHAINS >= 2
-  } else if (y >= rows_ && y < 2 * rows_) {
-    // Parallel chain #2
-    if (y - rows_ < double_rows_) {   // Upper sub-panel.
-      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p1_r1 = (red & mask) == mask;
-        bits->bits.p1_g1 = (green & mask) == mask;
-        bits->bits.p1_b1 = (blue & mask) == mask;
-        bits += columns_;
-      }
+  else if (y >= rows_ && y < 2 * rows_) {
+    if (y - rows_ < double_rows_) {
+      d->r_bit.bits.p1_r1 = 1;
+      d->g_bit.bits.p1_g1 = 1;
+      d->b_bit.bits.p1_b1 = 1;
     } else {
-      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p1_r2 = (red & mask) == mask;
-        bits->bits.p1_g2 = (green & mask) == mask;
-        bits->bits.p1_b2 = (blue & mask) == mask;
-        bits += columns_;
-      }
+      d->r_bit.bits.p1_r2 = 1;
+      d->g_bit.bits.p1_g2 = 1;
+      d->b_bit.bits.p1_b2 = 1;
     }
+  }
 #endif
 #if RGB_PARALLEL_CHAINS >= 3
-  } else {
-    // Parallel chain #3
-    if (y - 2*rows_ < double_rows_) {   // Upper sub-panel.
-      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p2_r1 = (red & mask) == mask;
-        bits->bits.p2_g1 = (green & mask) == mask;
-        bits->bits.p2_b1 = (blue & mask) == mask;
-        bits += columns_;
-      }
+  else {
+    if (y - 2*rows_ < double_rows_) {
+      d->r_bit.bits.p2_r1 = 1;
+      d->g_bit.bits.p2_g1 = 1;
+      d->b_bit.bits.p2_b1 = 1;
     } else {
-      for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-        const uint16_t mask = 1 << b;
-        bits->bits.p2_r2 = (red & mask) == mask;
-        bits->bits.p2_g2 = (green & mask) == mask;
-        bits->bits.p2_b2 = (blue & mask) == mask;
-        bits += columns_;
-      }
+      d->r_bit.bits.p2_r2 = 1;
+      d->g_bit.bits.p2_g2 = 1;
+      d->b_bit.bits.p2_b2 = 1;
     }
-#endif
   }
+#endif
+  d->mask = ~(d->r_bit.raw | d->g_bit.raw | d->b_bit.raw);
 }
 
 void Framebuffer::DumpToMatrix(GPIO *io) {

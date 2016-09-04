@@ -69,8 +69,12 @@ private:
   // found in include directory hardware/$(name-of-mapping)
 #include "led-panel-pin-mapping.h"  // see HARDWARE_DESC in lib/Makefile
 
+  class PixelMapper;
+  class PixelDesignator;
+
   // Map color
   inline uint16_t MapColor(uint8_t c);
+  void InitDefaultDesignator(int x, int y, PixelDesignator *designator);
 
   const int rows_;     // Number of rows. 16 or 32.
   const int parallel_; // Parallel rows of chains. 1 or 2.
@@ -96,6 +100,8 @@ private:
   // but it allows easy access in the critical section.
   IoBits *bitplane_buffer_;
   inline IoBits *ValueAt(int double_row, int column, int bit);
+
+  PixelMapper *mapper_;
 };
 }  // namespace internal
 }  // namespace rgb_matrix
