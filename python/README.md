@@ -24,25 +24,35 @@ Speed
 -----
 The simplicity of scripting comes at a price: Python is slower than C++ of course.
 If you have to do a lot of pixel updates in your demo, this can be too slow
-depending on what you do. Here are some rough numbers:
+depending on what you do. Here are some rough numbers for calling `SetPixel()`
+in a tight loop:
 
-  * On a Pi-2 and Pi-3, a Python script will be about 1/5 of the speed compared
-    to the corresponding C++ program (pushing 0.5 Megapixels/s Python
-    vs. 2.5 Megapixels/s C++ on a Pi-3 for instance)
-  * On a Pi-1, the difference is even worse: 1/17 of the speed to the
+  * On a Pi-2 and Pi-3, a Python script will be about 1/8 of the speed compared
+    to the corresponding C++ program (pushing ~0.43 Megapixels/s Python
+    vs. ~3.5 Megapixels/s C++ on a Pi-3 for instance)
+  * On a Pi-1, the difference is even worse: 1/24 of the speed to the
     corresponding C++ program. Given that the Pi-1 is already about 1/10 the
     speed of a Pi-3, this almost makes Python unusable on a Pi-1
-    (0.017 Megapixels/s Python vs. 0.3 Megapixels/s C++)
+    (~0.015 Megapixels/s Python vs. ~0.36 Megapixels/s C++)
   * Also interesting: Python3 is about 40% slower than Python2.7 (measured on
     a Pi-3). So if you can, stick with Python2.7 for now.
+  * The good news is, that this is due to overhead per function call. If you
+    can do more per function call, then this is less problematic. For instance
+    if you have an image to be displayed with `SetImage()`, that will be faster
+    per pixel.
+    (Currently, `SetImage()` is still much slower than it could be, because
+    it does not send the raw buffer into the C-side but does individual
+    SetPixel() calls in the interface layer. If you are interested in improving
+    the performance of Python, this would be a good start and welcomed
+    pull request).
 
-The 0.017 Megapixels/s on a Pi-1 means that you can update a 32x32 matrix
-at most with 17Hz. If you have chained 5, then you barely reach 3.5Hz.
-In a Pi-3, you get about 450Hz update rate (90Hz for 5-chain) with a Python
-program (while with C++, you can do the same thing with a comfortable 2600Hz
-(520Hz for 5)). Keep in mind that this is just the time calling `SetPixel()`, it
-does not include any time yet of what you actually want to do in your demo - so
-anything in addition to that will drop your update rate.
+The ~0.015 Megapixels/s on a Pi-1 means that you can update a 32x32 matrix
+at most with ~15Hz. If you have chained 5, then you barely reach 3Hz.
+In a Pi-3, you get about 400Hz update rate (85Hz for 5-chain) with a Python
+program (while with C++, you can do the same thing with a comfortable 3500Hz
+(700Hz for 5)). Keep in mind that this is if all you do is just calling
+`SetPixel()`, it does not include any time of what you actually want to do in
+your demo - so anything in addition to that will drop your update rate.
 
 Using the library
 -----------------
