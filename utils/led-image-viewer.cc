@@ -188,7 +188,9 @@ static int usage(const char *progname) {
           "\t-l<loop-count>            : "
           "For gif animations: number of loops through a full cycle.\n"
           "\t-L                        : 64x64 large display made out of "
-          "chain of four 32x32\n");
+          "chain of four 32x32\n"
+          "\t-R<angle>                 : Rotate output; steps of 90 degrees\n"
+          );
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
   rgb_matrix::PrintMatrixFlags(stderr);
@@ -218,9 +220,10 @@ int main(int argc, char *argv[]) {
   tmillis_t anim_duration_ms = distant_future;
   tmillis_t wait_ms = 1500;
   int loops  = -1;
+  int angle = -361;
 
   int opt;
-  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhC")) != -1) {
+  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:")) != -1) {
     switch (opt) {
     case 'w':
       wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -250,6 +253,9 @@ int main(int argc, char *argv[]) {
       matrix_options.rows = 32;
       matrix_options.chain_length = 4;
       large_display = true;
+      break;
+    case 'R':
+      angle = atoi(optarg);
       break;
     case 'h':
     default:
@@ -281,6 +287,10 @@ int main(int argc, char *argv[]) {
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
     matrix->ApplyStaticTransformer(rgb_matrix::LargeSquare64x64Transformer());
+  }
+
+  if (angle >= -360) {
+    matrix->ApplyStaticTransformer(rgb_matrix::RotateTransformer(angle));
   }
 
   // These parameters are needed once we do scrolling.
