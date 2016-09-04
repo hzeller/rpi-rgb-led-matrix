@@ -37,7 +37,6 @@ using rgb_matrix::GPIO;
 using rgb_matrix::Canvas;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
-using rgb_matrix::CanvasTransformer;
 
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
@@ -65,29 +64,22 @@ namespace {
 class PreprocessedFrame {
 public:
   PreprocessedFrame(const Magick::Image &img, bool do_center,
-                    CanvasTransformer *transformer,
                     rgb_matrix::FrameCanvas *output)
     : canvas_(output) {
     int delay_time = img.animationDelay();  // in 1/100s of a second.
     if (delay_time < 1) delay_time = 1;
     delay_millis_ = delay_time * 10;
 
-    Canvas *const transformed_draw_canvas = transformer->Transform(output);
-    int x_offset = (do_center
-                    ? (transformed_draw_canvas->width() - img.columns()) / 2
-                    : 0);
-    int y_offset = (do_center
-                    ? (transformed_draw_canvas->height() - img.rows()) / 2
-                    : 0);
+    const int x_offset = do_center ? (output->width() - img.columns()) / 2 : 0;
+    const int y_offset = do_center ? (output->height() - img.rows()) / 2 : 0;
     for (size_t y = 0; y < img.rows(); ++y) {
       for (size_t x = 0; x < img.columns(); ++x) {
         const Magick::Color &c = img.pixelColor(x, y);
         if (c.alphaQuantum() < 256) {
-          transformed_draw_canvas
-            ->SetPixel(x + x_offset, y + y_offset,
-                       ScaleQuantumToChar(c.redQuantum()),
-                       ScaleQuantumToChar(c.greenQuantum()),
-                       ScaleQuantumToChar(c.blueQuantum()));
+          output->SetPixel(x + x_offset, y + y_offset,
+                           ScaleQuantumToChar(c.redQuantum()),
+                           ScaleQuantumToChar(c.greenQuantum()),
+                           ScaleQuantumToChar(c.blueQuantum()));
         }
       }
     }
@@ -288,7 +280,7 @@ int main(int argc, char *argv[]) {
 
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    matrix->SetTransformer(new rgb_matrix::LargeSquare64x64Transformer());
+    matrix->ApplyStaticTransformer(rgb_matrix::LargeSquare64x64Transformer());
   }
 
   // These parameters are needed once we do scrolling.
@@ -309,12 +301,11 @@ int main(int argc, char *argv[]) {
       }
 
       PreprocessedList frames;
-      CanvasTransformer *const transformer = matrix->transformer();
       // Convert to preprocessed frames.
       for (size_t i = 0; i < image_sequence.size(); ++i) {
         FrameCanvas *canvas = matrix->CreateFrameCanvas();
         frames.push_back(new PreprocessedFrame(image_sequence[i], do_center,
-                                               transformer, canvas));
+                                               canvas));
       }
       // The 'animation delay' of a single image is the time to the next image.
       if (frames.size() == 1)

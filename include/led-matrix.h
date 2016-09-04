@@ -214,11 +214,36 @@ public:
   // 28Hz animation, nicely locked to the frame-rate).
   FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction = 1);
 
-  // Set image transformer that maps the logical canvas we provide to the
-  // physical canvas (e.g. panel mapping, rotation ...).
-  // Does _not_ take ownership of the transformer.
-  void SetTransformer(CanvasTransformer *transformer);
-  inline CanvasTransformer *transformer() { return transformer_; }
+  // Set image transformer that maps the logical canvas coordinates to the
+  // physical canvas coordinates.
+  // This preprocesses the transformation for static pixel mapping once.
+  //
+  // (In the rate case that you have transformers that dynamically change
+  //  their behavior at runtime or do transformations on the color, you have to
+  //  manually use them to wrap canvases.)
+  void ApplyStaticTransformer(const CanvasTransformer &transformer);
+
+  // Don't use this function anymore, use ApplyStaticTransformer() instead.
+  // See demo-main.cc how.
+  //
+  // This used to somewhat work with dynamic tranformations, but it
+  // was confusing as that didn't apply to FrameCanvases as well.
+  // If you have static transformations that can be done at program start
+  // (such as rotation or creating your particular pysical display mapping),
+  // use ApplyStaticTransformer().
+  // If you use the Transformer concept to modify writes to canvases on-the-fly,
+  // use them directly as such.
+  //
+  // DO NOT USE. WILL BE REMOVED.
+  void SetTransformer(CanvasTransformer *t) __attribute__((deprecated)) {
+    transformer_ = t;
+    if (t) ApplyStaticTransformer(*t);
+  }
+
+  // DO NOT USE. WILL BE REMOVED.
+  CanvasTransformer *transformer() __attribute__((deprecated)) {
+    return transformer_;
+  }
 
   // -- Canvas interface. These write to the active FrameCanvas
   // (see documentation in canvas.h)
@@ -240,9 +265,9 @@ private:
 
   GPIO *io_;
   Mutex active_frame_sync_;
+  CanvasTransformer *transformer_;  // deprecated. To be removed.
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
-  CanvasTransformer *transformer_;
   internal::PixelMapper *shared_pixel_mapper_;
 };
 

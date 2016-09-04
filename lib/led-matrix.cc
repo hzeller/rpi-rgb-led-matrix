@@ -30,14 +30,6 @@
 #include "framebuffer-internal.h"
 
 namespace rgb_matrix {
-
-namespace {
-class NullTransformer : public CanvasTransformer {
-public:
-  virtual Canvas *Transform(Canvas *output) { return output; }
-};
-}  // anonymous namespace
-
 // Pump pixels to screen. Needs to be high priority real-time because jitter
 class RGBMatrix::UpdateThread : public Thread {
 public:
@@ -167,7 +159,6 @@ RGBMatrix::Options::Options()
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   : params_(options), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL) {
   assert(params_.Validate(NULL));
-  SetTransformer(NULL);
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
@@ -180,7 +171,6 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
   params_.chain_length = chained_displays;
   params_.parallel = parallel_displays;
   assert(params_.Validate(NULL));
-  SetTransformer(NULL);
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
@@ -258,15 +248,6 @@ FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other,
   return previous;
 }
 
-void RGBMatrix::SetTransformer(CanvasTransformer *transformer) {
-  if (transformer == NULL) {
-    static NullTransformer null_transformer;   // global instance sufficient.
-    transformer_ = &null_transformer;
-  } else {
-    transformer_ = transformer;
-  }
-}
-
 bool RGBMatrix::SetPWMBits(uint8_t value) {
   const bool success = active_->framebuffer()->SetPWMBits(value);
   if (success) {
@@ -296,23 +277,93 @@ uint8_t RGBMatrix::brightness() {
 
 // -- Implementation of RGBMatrix Canvas: delegation to ContentBuffer
 int RGBMatrix::width() const {
-  return transformer_->Transform(active_)->width();
+  return active_->width();
 }
 
 int RGBMatrix::height() const {
-  return transformer_->Transform(active_)->height();
+  return active_->height();
 }
 
 void RGBMatrix::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  transformer_->Transform(active_)->SetPixel(x, y, red, green, blue);
+  active_->SetPixel(x, y, red, green, blue);
 }
 
 void RGBMatrix::Clear() {
-  transformer_->Transform(active_)->Clear();
+  active_->Clear();
 }
 
 void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
-  transformer_->Transform(active_)->Fill(red, green, blue);
+  active_->Fill(red, green, blue);
+}
+
+namespace {
+// A pixel mapper
+class PixelMapExtractionCanvas : public Canvas {
+public:
+  PixelMapExtractionCanvas(internal::PixelMapper *old_mapper)
+    : old_mapper_(old_mapper), new_mapper_(NULL) {}
+
+  virtual int width() const { return old_mapper_->width(); }
+  virtual int height() const { return old_mapper_->height(); }
+
+  void SetNewMapper(internal::PixelMapper *new_mapper) {
+    new_mapper_ = new_mapper;
+  }
+  void SetNewLocation(int x, int y) {
+    x_new = x;
+    y_new = y;
+  }
+  virtual void SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    const internal::PixelDesignator *orig_designator = old_mapper_->get(x, y);
+    if (orig_designator && new_mapper_) {
+      // Tell the new mapper at the new location what after the mapping was
+      // at the old location.
+      *new_mapper_->get(x_new, y_new) = *orig_designator;
+    }
+  }
+
+  virtual void Clear() {}
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) {}
+
+private:
+  internal::PixelMapper *const old_mapper_;
+  internal::PixelMapper *new_mapper_;
+  int x_new, y_new;
+};
+}  // anonymous namespace
+void RGBMatrix::ApplyStaticTransformer(const CanvasTransformer &transformer) {
+  using internal::PixelMapper;
+  assert(shared_pixel_mapper_);  // Not initialized yet ?
+  PixelMapExtractionCanvas extractor_canvas(shared_pixel_mapper_);
+
+  // These transformers traditionally only a non-const Transform()
+  // method, so that they can modify an instance variable keeping the delegate.
+  //
+  // We can't really change that now as we want to be backwards compatible.
+  //
+  // Having a const-reference as parameter to ApplyStaticTransformer() however
+  // is somewhat neat, so that it is possible to pass ad-hoc instances to
+  // ApplyStaticTransformer() (which are discarded after that all anyway).
+  //
+  // So we're slightly naughty here and cast the const away.
+  CanvasTransformer *non_const_transformer
+    = const_cast<CanvasTransformer*>(&transformer);
+  Canvas *mapped_canvas = non_const_transformer->Transform(&extractor_canvas);
+
+  const int new_width = mapped_canvas->width();
+  const int new_height = mapped_canvas->height();
+  PixelMapper *new_mapper = new PixelMapper(new_width, new_height);
+  extractor_canvas.SetNewMapper(new_mapper);
+  // Learn about the pixel mapping by going through all transformed pixels and
+  // build new PixelDesignator map.
+  for (int y = 0; y < new_height; ++y) {
+    for (int x = 0; x < new_width; ++x) {
+      extractor_canvas.SetNewLocation(x, y);
+      mapped_canvas->SetPixel(x, y, 0, 0, 0); // force copy of designator.
+    }
+  }
+  delete shared_pixel_mapper_;
+  shared_pixel_mapper_ = new_mapper;
 }
 
 // FrameCanvas implementation of Canvas

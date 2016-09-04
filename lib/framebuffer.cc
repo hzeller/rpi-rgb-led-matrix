@@ -54,7 +54,7 @@ static PinPulser *sOutputEnablePulser = NULL;
 #  define SUB_PANELS_ 2
 #endif
 
-inline PixelDesignator *PixelMapper::get(int x, int y) {
+PixelDesignator *PixelMapper::get(int x, int y) {
   if (x < 0 || y < 0 || x >= width_ || y >= height_)
     return NULL;
   return buffer_ + (y*width_) + x;

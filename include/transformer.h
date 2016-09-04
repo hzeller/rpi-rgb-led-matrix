@@ -32,7 +32,7 @@ public:
 
   void SetAngle(int angle);
   inline int angle() { return angle_; }
-  
+
   virtual Canvas *Transform(Canvas *output);
 
 private:
@@ -49,7 +49,7 @@ private:
 class LinkedTransformer : public CanvasTransformer {
 public:
   typedef std::vector<CanvasTransformer*> List;
-  
+
   LinkedTransformer() {}
   LinkedTransformer(List transformer_list) : list_(transformer_list) {}
 

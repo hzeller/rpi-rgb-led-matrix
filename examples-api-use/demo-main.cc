@@ -65,7 +65,7 @@ public:
         g = 255 - c;
         b = c;
       }
-      matrix_->transformer()->Transform(off_screen_canvas_)->Fill(r, g, b);
+      off_screen_canvas_->Fill(r, g, b);
       off_screen_canvas_ = matrix_->SwapOnVSync(off_screen_canvas_);
     }
   }
@@ -279,10 +279,8 @@ public:
   }
 
   void Run() {
-    const int screen_height = matrix_->transformer()->Transform(offscreen_)
-      ->height();
-    const int screen_width = matrix_->transformer()->Transform(offscreen_)
-      ->width();
+    const int screen_height = offscreen_->height();
+    const int screen_width = offscreen_->width();
     while (running() && !interrupt_received) {
       {
         MutexLock l(&mutex_new_image_);
@@ -300,8 +298,7 @@ public:
         for (int y = 0; y < screen_height; ++y) {
           const Pixel &p = current_image_.getPixel(
             (horizontal_position_ + x) % current_image_.width, y);
-          matrix_->transformer()->Transform(offscreen_)->SetPixel(
-            x, y, p.red, p.green, p.blue);
+          offscreen_->SetPixel(x, y, p.red, p.green, p.blue);
         }
       }
       offscreen_ = matrix_->SwapOnVSync(offscreen_);
@@ -1148,16 +1145,13 @@ int main(int argc, char *argv[]) {
   if (matrix == NULL)
     return 1;
 
-  LinkedTransformer *transformer = new LinkedTransformer();
-  matrix->SetTransformer(transformer);
-
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    transformer->AddTransformer(new LargeSquare64x64Transformer());
+    matrix->ApplyStaticTransformer(LargeSquare64x64Transformer());
   }
 
   if (rotation > 0) {
-    transformer->AddTransformer(new RotateTransformer(rotation));
+    matrix->ApplyStaticTransformer(RotateTransformer(rotation));
   }
 
   Canvas *canvas = matrix;
@@ -1251,9 +1245,6 @@ int main(int argc, char *argv[]) {
   // Stop image generating thread. The delete triggers
   delete image_gen;
   delete canvas;
-
-  transformer->DeleteTransformers();
-  delete transformer;
 
   return 0;
 }
