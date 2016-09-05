@@ -98,6 +98,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  // matrix->ApplyStaticTransformer(...);  // Optional
+
   // Do your own command line handling with the remaining options.
 
   //  .. now use matrix
@@ -203,12 +205,25 @@ the boards in a square, we get a logical display of 64x64 pixels:
 <img src="../img/chained-64x64.jpg" width="400px"> In action:
 [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
 
+```
+So the following chain
+    [<][<][<][<] }- Raspbery Pi connector
+
+is arranged in this U-shape
+    [<][<] }----- Raspberry Pi connector
+    [>][>]
+```
+
 How can we make this 'folded' 128x32 screen behave like a 64x64 screen ?
 
 In the API, there is an interface to implement,
-a [`CanvasTransformer`](./include/canvas.h) that allows to program re-arrangements
-of pixels in any way. You can plug such a `CanvasTransformer` into the RGBMatrix
-to use the new layout (`void RGBMatrix::ApplyStaticTransformer(const CanvasTransformer &transformer)`).
+a [`CanvasTransformer`](./include/canvas.h) that allows to program
+re-arrangements of pixels in any way. You can plug such a `CanvasTransformer`
+into the RGBMatrix to use the new layout.
+
+```
+void RGBMatrix::ApplyStaticTransformer(const CanvasTransformer &transformer)
+```
 
 Sometimes you even need this for the panel itself: In newer panels
 (often with 1:4 multiplexing) the pixels are often not mapped in
@@ -228,8 +243,28 @@ the height. So the 128x32 pixel logical arrangement would be a
 ```
 
 In the demo program and the [`led-image-viewer`](../utils#image-viewer), you
-can activate this with the `-L` option. This will also work for longer displays
-that have an even number of panels in a chain.
+can activate this with the `-L` option. Give it the original chain length (so
+for the 64x64 arrangement that would be `--led-chain=4`).
+
+This works for longer and more than one chain as well. Here an arrangement with
+two chains with 8 panels each
+
+```
+   [<][<][<][<]  }--- Pi connector #1
+   [>][>][>][>]
+   [<][<][<][<]  }--- Pi connector #2
+   [>][>][>][>]
+```
+
+(`--led-chain=8 --led-parallel=2 -L`).
+
+Note, if you use the parallel chains in your programs, you need to pass the
+number of parallel chains to the `UArrangementTransformer`. For instance from
+the defaults you used to create the Matrix:
+
+```
+  matrix->ApplyStaticTransformer(UArrangementTransformer(my_defaults.parallel));
+```
 
 [time]: ../img/time-display.jpg
 [run-vid]: ../img/running-vid.jpg
