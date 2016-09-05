@@ -187,8 +187,8 @@ static int usage(const char *progname) {
           "For gif animations: stop after this time.\n"
           "\t-l<loop-count>            : "
           "For gif animations: number of loops through a full cycle.\n"
-          "\t-L                        : 64x64 large display made out of "
-          "chain of four 32x32\n"
+          "\t-L                        : Large display, in which each chain is 'folded down'\n"
+          "\t                            in the middle in an U-arrangement to get more vertical space.\n"
           "\t-R<angle>                 : Rotate output; steps of 90 degrees\n"
           );
 
@@ -250,8 +250,10 @@ int main(int argc, char *argv[]) {
       matrix_options.parallel = atoi(optarg);
       break;
     case 'L':
-      matrix_options.rows = 32;
-      matrix_options.chain_length = 4;
+      if (matrix_options.chain_length == 1) {
+        // If this is still default, force the 64x64 arrangement.
+        matrix_options.chain_length = 4;
+      }
       large_display = true;
       break;
     case 'R':
@@ -285,8 +287,10 @@ int main(int argc, char *argv[]) {
     return 1;
 
   if (large_display) {
-    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    matrix->ApplyStaticTransformer(rgb_matrix::LargeSquare64x64Transformer());
+    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64,
+    // or any other U-shape.
+    matrix->ApplyStaticTransformer(rgb_matrix::UArrangementTransformer(
+                                     matrix_options.parallel));
   }
 
   if (angle >= -360) {

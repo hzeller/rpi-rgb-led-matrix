@@ -1023,10 +1023,12 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n");
   fprintf(stderr,
           "\t-D <demo-nr>              : Always needs to be set\n"
-          "\t-L                        : 'Large' display, composed out of 4 times 32x32\n"
-          "\t-t <seconds>              : Run for these number of seconds, then exit.\n"
+          "\t-L                        : Large display, in which each chain is 'folded down'\n"
+          "\t                            in the middle in an U-arrangement to get more vertical space.\n"
           "\t-R <rotation>             : Sets the rotation of matrix. "
-          "Allowed: 0, 90, 180, 270. Default: 0.\n");
+          "Allowed: 0, 90, 180, 270. Default: 0.\n"
+          "\t-t <seconds>              : Run for these number of seconds, then exit.\n");
+
 
   rgb_matrix::PrintMatrixFlags(stderr);
 
@@ -1090,8 +1092,10 @@ int main(int argc, char *argv[]) {
       break;
 
     case 'L':
-      matrix_options.chain_length = 4;
-      matrix_options.rows = 32;
+      if (matrix_options.chain_length == 1) {
+        // If this is still default, force the 64x64 arrangement.
+        matrix_options.chain_length = 4;
+      }
       large_display = true;
       break;
 
@@ -1146,8 +1150,10 @@ int main(int argc, char *argv[]) {
     return 1;
 
   if (large_display) {
-    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64
-    matrix->ApplyStaticTransformer(LargeSquare64x64Transformer());
+    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64.
+    // Or any other U-arrangement.
+    matrix->ApplyStaticTransformer(UArrangementTransformer(
+                                     matrix_options.parallel));
   }
 
   if (rotation > 0) {

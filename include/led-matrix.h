@@ -48,7 +48,7 @@ class PixelMapper;
 //
 // If you arrange the panels in a different way in the physical space, write
 // a CanvasTransformer that does coordinate remapping and which should be added
-// to the transformers, like with LargeSquare64x64Transformer in demo-main.cc.
+// to the transformers, like with UArrangementTransformer in demo-main.cc.
 class RGBMatrix : public Canvas {
 public:
   // Options to initialize the RGBMatrix. Also see the main README.md for

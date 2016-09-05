@@ -69,10 +69,27 @@ private:
   List list_;
 };
 
-class LargeSquare64x64Transformer : public CanvasTransformer {
+// If we take a long chain of panels and arrange them in a U-shape, so
+// that after half the panels we bend around and continue below. This way
+// we have a panel that has double the height but only uses one chain.
+// A single chain display with four 32x32 panels can then be arranged in this
+// 64x64 display:
+//    [<][<][<][<] }- Raspbery Pi connector
+//
+// can be arranged in this U-shape
+//    [<][<] }----- Raspberry Pi connector
+//    [>][>]
+//
+// This works for more than one chain as well. Here an arrangement with
+// two chains with 8 panels each
+//   [<][<][<][<]  }-- Pi connector #1
+//   [>][>][>][>]
+//   [<][<][<][<]  }--- Pi connector #2
+//   [>][>][>][>]
+class UArrangementTransformer : public CanvasTransformer {
 public:
-  LargeSquare64x64Transformer();
-  virtual ~LargeSquare64x64Transformer();
+  UArrangementTransformer(int parallel = 1);
+  ~UArrangementTransformer();
 
   virtual Canvas *Transform(Canvas *output);
 
@@ -81,6 +98,21 @@ private:
 
   TransformCanvas *const canvas_;
 };
+
+// Something used before, but it had a confusing 180 degree turn and was not
+// ready for multiple parallel chains. So consider using the
+// U-ArrangementTransformer instead.
+class LargeSquare64x64Transformer : public CanvasTransformer {
+public:
+  LargeSquare64x64Transformer();
+  virtual Canvas *Transform(Canvas *output);
+
+private:
+  // This old transformer was a little off and rotated the whole result in
+  // the end. simulated that here.
+  UArrangementTransformer arrange_;
+  RotateTransformer rotated_;
+}  __attribute__((deprecated));
 
 } // namespace rgb_matrix
 

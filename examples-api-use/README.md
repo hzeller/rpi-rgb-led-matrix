@@ -13,9 +13,10 @@ $ sudo ./demo
 usage: ./demo <options> -D <demo-nr> [optional parameter]
 Options:
         -D <demo-nr>              : Always needs to be set
-        -L                        : 'Large' display, composed out of 4 times 32x32
-        -t <seconds>              : Run for these number of seconds, then exit.
+        -L                        : Large display, in which each chain is 'folded down'
+                                    in the middle in an U-arrangement to get more vertical space.
         -R <rotation>             : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.
+        -t <seconds>              : Run for these number of seconds, then exit.
         --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
         --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
         --led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
@@ -207,22 +208,28 @@ How can we make this 'folded' 128x32 screen behave like a 64x64 screen ?
 In the API, there is an interface to implement,
 a [`CanvasTransformer`](./include/canvas.h) that allows to program re-arrangements
 of pixels in any way. You can plug such a `CanvasTransformer` into the RGBMatrix
-to use the new layout (`void RGBMatrix::SetTransformer(CanvasTransformer *transformer)`).
+to use the new layout (`void RGBMatrix::ApplyStaticTransformer(const CanvasTransformer &transformer)`).
 
 Sometimes you even need this for the panel itself: In newer panels
 (often with 1:4 multiplexing) the pixels are often not mapped in
-a straight-forward way, but in a snake arrangement for instance. The CanvasTransformer
-allows you to work around that (sorry, I have not seen these panels myself so that
-I couldn't test that; but if you come accross one, you might want to send a pull-request
-with a new CanvasTransformer).
+a straight-forward way, but in a snake arrangement for instance.
+The CanvasTransformer allows you to work around that (I recently have gotten
+some of these to test myself. This will be a new multiplexing option).
 
 Back to the 64x64 arrangement:
 
-There is a sample implementation `class LargeSquare64x64Transformer` that maps
-the 128x32 pixel logical arrangement into the 64x64 arrangement doing
-the coordinate mapping. In the demo program and the
-[`led-image-viewer`](../utils#image-viewer), you can activate this with
-the `-L` option.
+There is a sample implementation `class UArrangementTransformer` that maps
+any U-arrangement into a logical arrangement with half the width and double
+the height. So the 128x32 pixel logical arrangement would be a
+64x64 arrangement doing the coordinate mapping.
+
+```
+  matrix->ApplyStaticTransformer(UArrangementTransformer());
+```
+
+In the demo program and the [`led-image-viewer`](../utils#image-viewer), you
+can activate this with the `-L` option. This will also work for longer displays
+that have an even number of panels in a chain.
 
 [time]: ../img/time-display.jpg
 [run-vid]: ../img/running-vid.jpg

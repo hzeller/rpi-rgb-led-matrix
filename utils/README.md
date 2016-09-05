@@ -24,15 +24,25 @@ Options:
         -f                        : Forever cycle through the list of files on the command line.
         -t<seconds>               : For gif animations: stop after this time.
         -l<loop-count>            : For gif animations: number of loops through a full cycle.
-        -L                        : 64x64 large display made out of chain of four 32x32
+        -L                        : Large display, in which each chain is 'folded down'
+                                    in the middle in an U-arrangement to get more vertical space.
+        -R<angle>                 : Rotate output; steps of 90 degrees
 
 General LED matrix options:
         --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
         --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
         --led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
-
-   # more options for led matrix ...
-
+        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
+        --led-brightness=<percent>: Brightness in percent (Default: 100).
+        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
+        --led-show-refresh        : Show refresh rate.
+        --led-inverse             : Switch if your matrix has inverse colors on.
+        --led-swap-green-blue     : Switch if your matrix has green/blue swapped on.
+        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
+        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
+        --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
+        --led-daemon              : Make the process run in the background as daemon.
+        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
 Switch time between files: -w for static images; -t/-l for animations
 Animated gifs: If both -l and -t are given, whatever comes first determines duration.
 ```
