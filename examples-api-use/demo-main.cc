@@ -1160,6 +1160,8 @@ int main(int argc, char *argv[]) {
     matrix->ApplyStaticTransformer(RotateTransformer(rotation));
   }
 
+  printf("Size: %dx%d\n", matrix->width(), matrix->height());
+
   Canvas *canvas = matrix;
 
   // The ThreadedCanvasManipulator objects are filling
@@ -1245,12 +1247,13 @@ int main(int argc, char *argv[]) {
     while (!interrupt_received) {
       sleep(1); // Time doesn't really matter. The syscall will be interrupted.
     }
-    fprintf(stderr, "\nReceived interrupt. Stopping.\n");
   }
 
   // Stop image generating thread. The delete triggers
   delete image_gen;
   delete canvas;
 
+  printf("\%s. Exiting.\n",
+         interrupt_received ? "Received CTRL-C" : "Timeout reached");
   return 0;
 }
