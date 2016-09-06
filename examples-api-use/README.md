@@ -200,7 +200,8 @@ You might choose a different physical layout than the wiring provides.
 Say you have 4 displays with 32x32 and only a single output
 like with a Raspberry Pi 1 or the Adafruit HAT -- if we chain
 them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
-the boards in a square, we get a logical display of 64x64 pixels:
+the boards in a U-shape so that they form a square, we get a logical display
+of 64x64 pixels:
 
 <img src="../img/chained-64x64.jpg" width="400px"> In action:
 [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
@@ -209,7 +210,7 @@ the boards in a square, we get a logical display of 64x64 pixels:
 So the following chain
     [<][<][<][<] }- Raspbery Pi connector
 
-is arranged in this U-shape
+is arranged in this U-shape (on its side)
     [<][<] }----- Raspberry Pi connector
     [>][>]
 ```
@@ -229,7 +230,7 @@ Sometimes you even need this for the panel itself: In newer panels
 (often with 1:4 multiplexing) the pixels are often not mapped in
 a straight-forward way, but in a snake arrangement for instance.
 The CanvasTransformer allows you to work around that (I recently have gotten
-some of these to test myself. This will be a new multiplexing option).
+some of these to test myself. This will be a new multiplexing option soon).
 
 Back to the 64x64 arrangement:
 

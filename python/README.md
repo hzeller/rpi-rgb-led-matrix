@@ -6,12 +6,15 @@ Building
 
 In the root directory for the matrix library simply type:
 
+### Python 2
+
 ```shell
 sudo apt-get update && sudo apt-get install python2.7-dev python-pillow -y
 make build-python
 sudo make install-python
 ```
 
+### Python 3
 You can also build for Python 3:
 
 ```shell
@@ -20,8 +23,17 @@ make build-python PYTHON=$(which python3)
 sudo make install-python PYTHON=$(which python3)
 ```
 
-Speed
------
+### PyPy
+The cython binding to PyPy seems to be somewhat working but extremely slow (20x
+slower even than the regular Python binding, 160x slower than C++), so this is
+not recommended. From glancing at the docs, the library might need to
+be bound via **[CFFI](https://cffi.readthedocs.io/)** first. If anyone has
+experience doing that, please consider preparing a pull request (ideally in
+a way that it can be used as well for Python2/3 and does not change the
+interface of the current Python binding).
+
+Performance
+-----------
 The simplicity of scripting comes at a price: Python is slower than C++ of course.
 If you have to do a lot of pixel updates in your demo, this can be too slow
 depending on what you do. Here are some rough numbers for calling `SetPixel()`
@@ -34,8 +46,8 @@ in a tight loop:
     corresponding C++ program. Given that the Pi-1 is already about 1/10 the
     speed of a Pi-3, this almost makes Python unusable on a Pi-1
     (~0.015 Megapixels/s Python vs. ~0.36 Megapixels/s C++)
-  * Also interesting: Python3 is about 40% slower than Python2.7 (measured on
-    a Pi-3). So if you can, stick with Python2.7 for now.
+  * Also interesting: Python3 is a little bit slower than Python2.7.
+    So if you can, stick with Python2.7 for now.
   * The good news is, that this is due to overhead per function call. If you
     can do more per function call, then this is less problematic. For instance
     if you have an image to be displayed with `SetImage()`, that will be faster
