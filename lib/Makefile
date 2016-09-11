@@ -131,10 +131,10 @@ CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES) -Ihardware/$(HARDWARE_DESC)
 all : $(TARGET).a $(TARGET).so.1
 
 $(TARGET).a : $(OBJECTS)
-	ar rcs $@ $^
+	$(AR) rcs $@ $^
 
 $(TARGET).so.1 : $(OBJECTS)
-	g++ -shared -Wl,-soname,$@ -o $@ $^ -lpthread  -lrt -lm -lpthread
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ -lpthread  -lrt -lm -lpthread
 
 led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
 thread.o : thread.cc $(INCDIR)/thread.h
