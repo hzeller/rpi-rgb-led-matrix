@@ -110,15 +110,17 @@ struct RGBLedMatrixOptions {
  * The arguments that have been used from the command line are removed from
  *
  * Usage:
- int main(int argc, char **argv) {
-   struct RGBLedMatrixOptions options;
-   memset(&options, 0, sizeof(options));
-   options.rows = 32;
-   options.chain_length = 1;
-   RGBLedMatrix *matrix = led_matrix_create_from_options(&options,
-                                                         &argc, &argv);
-    // do additional commandline handling; then use matrix...
- }
+ * ----------------
+ * int main(int argc, char **argv) {
+ *   struct RGBLedMatrixOptions options;
+ *   memset(&options, 0, sizeof(options));
+ *   options.rows = 32;
+ *   options.chain_length = 1;
+ *   RGBLedMatrix *matrix = led_matrix_create_from_options(&options,
+ *                                                        &argc, &argv);
+ *   // do additional commandline handling; then use matrix...
+ * }
+ * ----------------
  */
 struct RGBLedMatrix *led_matrix_create_from_options(
              struct RGBLedMatrixOptions *options, int *argc, char ***argv);
