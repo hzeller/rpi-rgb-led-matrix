@@ -121,18 +121,18 @@ RGBMatrix::Options::Options()
     pwm_lsb_nanoseconds(130),
 #endif
 
-#ifdef DISABLE_HARDWARE_PULSES
-    allow_hardware_pulsing(false),
-#else
-    allow_hardware_pulsing(true),
-#endif
-
     brightness(100),
 
 #ifdef RGB_SCAN_INTERLACED
     scan_mode(1),
 #else
     scan_mode(0),
+#endif
+
+#ifdef DISABLE_HARDWARE_PULSES
+    disable_hardware_pulsing(true),
+#else
+    disable_hardware_pulsing(false),
 #endif
 
 #ifdef SHOW_REFRESH_RATE
@@ -197,7 +197,7 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
   if (io != NULL && io_ == NULL) {
     io_ = io;
     internal::Framebuffer::InitGPIO(io_, params_.rows, params_.parallel,
-                                    params_.allow_hardware_pulsing,
+                                    !params_.disable_hardware_pulsing,
                                     params_.pwm_lsb_nanoseconds);
   }
   if (start_thread) {

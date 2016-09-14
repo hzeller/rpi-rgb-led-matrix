@@ -91,11 +91,6 @@ public:
     // Flag: --led-pwm-lsb-nanoseconds
     int pwm_lsb_nanoseconds;
 
-    // Allow to use the hardware subsystem to create pulses. This won't do
-    // anything if output enable is not connected to GPIO 18.
-    // Flag: --led-hardware-pulse
-    bool allow_hardware_pulsing;
-
     // The initial brightness of the panel in percent. Valid range is 1..100
     // Default: 100
     // Flag: --led-brightness
@@ -105,6 +100,14 @@ public:
     // Flag: --led-scan-mode
     int scan_mode;
 
+    // Disable the PWM hardware subsystem to create pulses.
+    // Typically, you don't want to disable hardware pulsing, this is mostly
+    // for debugging and figuring out if there is interference with the
+    // sound system.
+    // This won't do anything if output enable is not connected to GPIO 18 in
+    // non-standard wirings.
+    // Flag: --led-hardware-pulse
+    bool disable_hardware_pulsing;
     bool show_refresh_rate;  // Flag: --led-show-refresh
     bool swap_green_blue;    // Flag: --led-swap-green-blue
     bool inverse_colors;     // Flag: --led-inverse

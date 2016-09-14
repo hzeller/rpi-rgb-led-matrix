@@ -131,8 +131,11 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeBoolFlag("swap-green-blue", it, &mopts->swap_green_blue))
         continue;
-      if (ConsumeBoolFlag("hardware-pulse", it, &mopts->allow_hardware_pulsing))
+      bool allow_hardware_pulsing = !mopts->disable_hardware_pulsing;
+      if (ConsumeBoolFlag("hardware-pulse", it, &allow_hardware_pulsing)) {
+        mopts->disable_hardware_pulsing = !allow_hardware_pulsing;
         continue;
+      }
 
       // Runtime options.
       if (ConsumeIntFlag("slowdown-gpio", it, end, &ropts->gpio_slowdown, &err))
@@ -296,8 +299,8 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
           d.swap_green_blue ? "no-" : "",  d.swap_green_blue ? "off" : "on",
           d.pwm_lsb_nanoseconds,
-          d.allow_hardware_pulsing ? "no-" : "",
-          d.allow_hardware_pulsing ? "Don't u" : "U");
+          !d.disable_hardware_pulsing ? "no-" : "",
+          !d.disable_hardware_pulsing ? "Don't u" : "U");
 
   fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
           "Slowdown GPIO. Needed for faster Pis and/or slower panels "
