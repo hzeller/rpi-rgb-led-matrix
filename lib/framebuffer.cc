@@ -40,6 +40,11 @@ enum {
 # error "Check out https://github.com/hzeller/rpi-rgb-led-matrix#switch-the-pinout"
 #endif
 
+// Remind forgetful Makefile option editors
+#if defined(ADAFRUIT_RGBMATRIX_HAT_PWM) && !FYI_ADAFRUIT_HAT_PIN_MAPPING_INCLUDED_
+#  error "You have defined ADAFRUIT_RGBMATRIX_HAT_PWM which is for the Adafruit HAT. So you also need to set HARDWARE_DESC=adafruit-hat"
+#endif
+
 #ifndef RGB_PARALLEL_CHAINS
 # error "Your pin-mapping.h file should contain an RGB_PARALLEL_CHAINS macro"
 #endif
