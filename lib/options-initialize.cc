@@ -137,7 +137,14 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       }
 
-      // Runtime options.
+      bool request_help = false;
+      if (ConsumeBoolFlag("help", it, &request_help) && request_help) {
+        // In that case, we pretend to have failure in parsing, which will
+        // trigger printing the usage(). Typically :)
+        return false;
+      }
+
+      //-- Runtime options.
       if (ConsumeIntFlag("slowdown-gpio", it, end, &ropts->gpio_slowdown, &err))
         continue;
       if (ropts->daemon >= 0 && ConsumeBoolFlag("daemon", it, &bool_scratch)) {
@@ -222,7 +229,7 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
 
   if (getuid() != 0) {
     fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command");
+            "Prepend 'sudo' to the command\n");
     return NULL;
   }
 
