@@ -16,8 +16,10 @@
 // C-bridge for led matrix.
 #include "led-matrix-c.h"
 
+#include <string.h>
+#include <stdio.h>
+
 #include "led-matrix.h"
-#include "gpio.h"
 
 // Our opaque dummy structs to communicate with the c-world
 struct RGBLedMatrix {};
@@ -37,17 +39,54 @@ static struct LedCanvas *from_canvas(rgb_matrix::FrameCanvas *canvas) {
   return reinterpret_cast<struct LedCanvas*>(canvas);
 }
 
-struct RGBLedMatrix *led_matrix_create(int rows, int chained, int parallel) {
-  static rgb_matrix::GPIO gpio;
-  if (!gpio.Init()) {
-    return NULL;
+struct RGBLedMatrix *led_matrix_create_from_options(
+  struct RGBLedMatrixOptions *opts, int *argc, char ***argv) {
+  rgb_matrix::RuntimeOptions default_rt;
+  default_rt.drop_privileges = 0;  // Usually, this is on, but let user choose.
+  default_rt.daemon = 0;
+
+  rgb_matrix::RGBMatrix::Options default_opts;
+
+  if (opts) {
+    // Copy between C struct and C++ struct. The C++ struct already has a
+    // default constructor that sets some values. These we override with the
+    // C-struct values if available.
+    // We assume everything non-zero has an explicit value.
+#define OPT_COPY_IF_SET(o) if (opts->o) default_opts.o = opts->o
+    OPT_COPY_IF_SET(rows);
+    OPT_COPY_IF_SET(chain_length);
+    OPT_COPY_IF_SET(parallel);
+    OPT_COPY_IF_SET(pwm_bits);
+    OPT_COPY_IF_SET(brightness);
+    OPT_COPY_IF_SET(scan_mode);
+    OPT_COPY_IF_SET(disable_hardware_pulsing);
+    OPT_COPY_IF_SET(show_refresh_rate);
+    OPT_COPY_IF_SET(swap_green_blue);
+    OPT_COPY_IF_SET(inverse_colors);
+#undef OPT_COPY_IF_SET
   }
-  rgb_matrix::RGBMatrix::Options options;
-  options.rows = rows;
-  options.chain_length = chained;
-  options.parallel = parallel;
-  rgb_matrix::RGBMatrix *matrix = new rgb_matrix::RGBMatrix(&gpio, options);
+
+  rgb_matrix::RGBMatrix::Options matrix_options = default_opts;
+  rgb_matrix::RuntimeOptions runtime_opt = default_rt;
+  if (argc != NULL && argv != NULL) {
+    if (!ParseOptionsFromFlags(argc, argv, &matrix_options, &runtime_opt)) {
+      rgb_matrix::PrintMatrixFlags(stderr, default_opts, default_rt);
+      return NULL;
+    }
+  }
+
+  rgb_matrix::RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options,
+                                                          runtime_opt);
   return from_matrix(matrix);
+}
+
+struct RGBLedMatrix *led_matrix_create(int rows, int chained, int parallel) {
+  struct RGBLedMatrixOptions opts;
+  memset(&opts, 0, sizeof(opts));
+  opts.rows = rows;
+  opts.chain_length = chained;
+  opts.parallel = parallel;
+  return led_matrix_create_from_options(&opts, NULL, NULL);
 }
 
 void led_matrix_delete(struct RGBLedMatrix *matrix) {
