@@ -26,11 +26,17 @@ sudo make install-python PYTHON=$(which python3)
 ### PyPy
 The cython binding to PyPy seems to be somewhat working but extremely slow (20x
 slower even than the regular Python binding, 160x slower than C++), so this is
-not recommended. From glancing at the docs, the library might need to
-be bound via **[CFFI](https://cffi.readthedocs.io/)** first. If anyone has
-experience doing that, please consider preparing a pull request (ideally in
-a way that it can be used as well for Python2/3 and does not change the
-interface of the current Python binding).
+not recommended.
+
+So Cython is not good together with PyPy which works best with a
+[CFFI](https://cffi.readthedocs.io/) binding. @Duality4Y did an experiment here
+https://github.com/Duality4Y/rgb-matrix-cffi which works well with PyPy and is
+about twice as fast as running Python3+cython (but Python3+cffi is slower than
+Python3+cython, so we can't just replace everything with cffi).
+
+Of course, it would be nice to have the fastest possible binding to all kinds
+of Python interpreters. If anyone wants to work on that, this would certainly
+be a welcome pull request.
 
 Performance
 -----------
