@@ -102,12 +102,17 @@ struct RGBLedMatrixOptions {
 
 /**
  * Universal way to create and initialize a matrix.
- * The "options" struct (if not NULL) contains all configuration values
+ * The "options" struct (if not NULL) contains all default configuration values
  * chosen by the programmer to create the matrix.
  *
  * If "argc" and "argv" are provided, this function also reads command line
  * flags provided, that then can override any of the defaults given.
  * The arguments that have been used from the command line are removed from
+ * the argv list (and argc is adjusted) - that way these don't mess with your
+ * own command line handling.
+ *
+ * The actual options used are filled back into the "options" struct if not
+ * NULL.
  *
  * Usage:
  * ----------------

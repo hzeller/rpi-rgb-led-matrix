@@ -75,6 +75,21 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     }
   }
 
+  if (opts) {
+#define ACTUAL_VALUE_BACK_TO_OPT(o) opts->o = default_opts.o
+    ACTUAL_VALUE_BACK_TO_OPT(rows);
+    ACTUAL_VALUE_BACK_TO_OPT(chain_length);
+    ACTUAL_VALUE_BACK_TO_OPT(parallel);
+    ACTUAL_VALUE_BACK_TO_OPT(pwm_bits);
+    ACTUAL_VALUE_BACK_TO_OPT(brightness);
+    ACTUAL_VALUE_BACK_TO_OPT(scan_mode);
+    ACTUAL_VALUE_BACK_TO_OPT(disable_hardware_pulsing);
+    ACTUAL_VALUE_BACK_TO_OPT(show_refresh_rate);
+    ACTUAL_VALUE_BACK_TO_OPT(swap_green_blue);
+    ACTUAL_VALUE_BACK_TO_OPT(inverse_colors);
+#undef ACTUAL_VALUE_BACK_TO_OPT
+  }
+
   rgb_matrix::RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options,
                                                           runtime_opt);
   return from_matrix(matrix);
