@@ -61,6 +61,9 @@ public:
     // Returns 'true' if all options look good.
     bool Validate(std::string *err) const;
 
+    // Name of the hardware mapping. Something like "regular" or "adafruit-hat"
+    const char *hardware_mapping;
+
     // The "rows" are the number
     // of rows supported by the display, so 32 or 16. Default: 32.
     // Flag: --led-rows

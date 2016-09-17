@@ -29,6 +29,7 @@ Options:
         -R<angle>                 : Rotate output; steps of 90 degrees
 
 General LED matrix options:
+        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
         --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
         --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
         --led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).

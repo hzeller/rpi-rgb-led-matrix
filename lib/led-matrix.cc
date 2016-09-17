@@ -29,6 +29,22 @@
 #include "thread.h"
 #include "framebuffer-internal.h"
 
+// Leave this in here for a while. Setting things from old defines.
+#if defined(ADAFRUIT_RGBMATRIX_HAT)
+# warning "You are using an old way to select the Adafruit HAT by defining -DADAFRUIT_RGBMATRIX_HAT"
+#  warning "The new way to do this is to set HARDWARE_DESC=adafruit-hat"
+# warning "Check out https://github.com/hzeller/rpi-rgb-led-matrix#switch-the-pinout"
+# undef DEFAULT_HARDWARE
+# define DEFAULT_HARDWARE "adafruit-hat"
+#endif
+
+#if defined(ADAFRUIT_RGBMATRIX_HAT_PWM)
+#  warning "You are using an old way to select the Adafruit HAT with flicker mod by defining -DADAFRUIT_RGBMATRIX_HAT_PWM"
+#  warning "The new way to do this is to set HARDWARE_DESC=adafruit-hat-pwm"
+# undef DEFAULT_HARDWARE
+# define DEFAULT_HARDWARE "adafruit-hat-pwm"
+#endif
+
 namespace rgb_matrix {
 // Pump pixels to screen. Needs to be high priority real-time because jitter
 class RGBMatrix::UpdateThread : public Thread {
@@ -110,11 +126,18 @@ private:
 };
 
 // Some defaults. See options-initialize.cc for the command line parsing.
-RGBMatrix::Options::Options()
-  : rows(32), chain_length(1), parallel(1), pwm_bits(11),
-    // Historically, we provided these options only as #defines. Make sure that
-    // things still behave as before if someone has set these.
-    // At some point: remove them from the Makefile. Later: remove them here.
+RGBMatrix::Options::Options() :
+  // Historically, we provided these options only as #defines. Make sure that
+  // things still behave as before if someone has set these.
+  // At some point: remove them from the Makefile. Later: remove them here.
+#ifdef DEFAULT_HARDWARE
+  hardware_mapping(DEFAULT_HARDWARE),
+#else
+  hardware_mapping("regular"),
+#endif
+
+  rows(32), chain_length(1), parallel(1), pwm_bits(11),
+
 #ifdef LSB_PWM_NANOSECONDS
     pwm_lsb_nanoseconds(LSB_PWM_NANOSECONDS),
 #else
@@ -159,6 +182,7 @@ RGBMatrix::Options::Options()
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   : params_(options), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL) {
   assert(params_.Validate(NULL));
+  internal::Framebuffer::InitHardwareMapping(params_.hardware_mapping);
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
@@ -172,6 +196,7 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
   params_.chain_length = chained_displays;
   params_.parallel = parallel_displays;
   assert(params_.Validate(NULL));
+  internal::Framebuffer::InitHardwareMapping(params_.hardware_mapping);
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);

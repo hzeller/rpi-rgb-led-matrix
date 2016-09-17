@@ -303,6 +303,9 @@ int main(int argc, char *argv[]) {
     matrix->ApplyStaticTransformer(rgb_matrix::RotateTransformer(angle));
   }
 
+  printf("Size: %dx%d. Hardware gpio mapping: %s\n",
+         matrix->width(), matrix->height(), matrix_options.hardware_mapping);
+
   // These parameters are needed once we do scrolling.
   const bool fill_width = false;
   const bool fill_height = false;

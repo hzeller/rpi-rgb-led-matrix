@@ -43,6 +43,12 @@ struct LedCanvas;
  * should zero out this struct before setting anything.
  */
 struct RGBLedMatrixOptions {
+  /*
+   * Name of the hardware mapping used. If passed NULL here, the default
+   * is used.
+   */
+  const char *hardware_mapping;
+
   /* The "rows" are the number of rows supported by the display, so 32 or 16.
    * Default: 32.
    * Corresponding flag: --led-rows

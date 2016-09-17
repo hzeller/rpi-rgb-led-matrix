@@ -5,6 +5,7 @@
  */
 #include "led-matrix-c.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -31,6 +32,10 @@ int main(int argc, char **argv) {
   offscreen_canvas = led_matrix_create_offscreen_canvas(matrix);
 
   led_canvas_get_size(offscreen_canvas, &width, &height);
+
+  fprintf(stderr, "Size: %dx%d. Hardware gpio mapping: %s\n",
+          width, height, options.hardware_mapping);
+
   for (i = 0; i < 1000; ++i) {
     for (y = 0; y < height; ++y) {
       for (x = 0; x < width; ++x) {

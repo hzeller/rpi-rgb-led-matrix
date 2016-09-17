@@ -4,13 +4,14 @@
 #   -lrgbmatrix
 ##
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
-        thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o
+        thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o \
+	hardware-mapping.o
 TARGET=librgbmatrix
 
 # There are several different pinouts for various breakout boards that uses
 # this library. If you are using the described pinout in the toplevel README.md
 # or the standard active-3 breakout board, then 'regular' is the one you'd like
-# to use (there is also a 'classic' one for an early form).
+# to use.
 #
 # Adafruit also made a breakout board, if you want to use that, choose
 # 'adafruit-hat'
@@ -18,15 +19,17 @@ TARGET=librgbmatrix
 # These are the choices
 #   regular            # Following this project wiring and using these PCBs
 #   adafruit-hat       # If you have a RGB matrix HAT from Adafruit
-#   classic            # Not really used anymore
+#   adafruit-hat-pwm   # If you have an Adafruit HAT with PWM hardware mod.
+#   classic            # (deprecated) Classic Pi1/2/. Not used anymore.
+#   classic-pi1        # (deprecated) Classic pinout on Rasperry Pi 1
 HARDWARE_DESC?=regular
 
 ###
 # After you change any of the following DEFINES, make sure to 'make' again.
 #
-# Note, all of these options that don't directly influence the hardware mapping
-# can now can be set programmatically and via command line flags as well.
-# So be prepared for these to be removed in this Makefile.
+# Note, all of these options can now can be set programmatically and
+# via command line flags as well. No real need to change them in the Makefile.
+# (So be prepared for these to be removed at some point)
 ###
 
 # If you see that your display is inverse, you might have a matrix variant
@@ -105,12 +108,9 @@ HARDWARE_DESC?=regular
 # connect GPIO 4 (old OE) with 18 (the new OE); there are
 # convenient solder holes labeled 4 and 18 on the Adafruit HAT, pretty
 # close together.
-# Then uncomment the following define and recompile.
-#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
-
-# If you use HARDWARE_DESC=classic and a Raspberry Pi 1, Revision A,
-# this might be useful (untested).
-#DEFINES+=-DPI_REV1_RGB_PINOUT
+# Then you can set the flag --led-gpio-mapping=adafruit-hat-pwm
+# .. or uncomment the following line.
+#HARDWARE_DESC=adafruit-hat-pwm
 
 # Typically, a Hub75 panel is split in two half displays, so that a 1:16
 # multiplexing actually multiplexes over two half displays and gives 32 lines.
@@ -125,8 +125,10 @@ HARDWARE_DESC?=regular
 # make USER_DEFINES="-DSHOW_REFRESH_RATE"
 DEFINES+=$(USER_DEFINES)
 
+DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
-CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES) -Ihardware/$(HARDWARE_DESC)
+CFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
+CXXFLAGS=$(CFLAGS)
 
 all : $(TARGET).a $(TARGET).so.1
 
@@ -144,11 +146,13 @@ graphics.o: graphics.cc utf8-internal.h
 %.o : %.cc compiler-flags
 	$(CXX) -I$(INCDIR) $(CXXFLAGS) -c -o $@ $<
 
+%.o : %.c compiler-flags
+	$(CC)  -I$(INCDIR) $(CXXFLAGS) -c -o $@ $<
+
 clean:
 	rm -f $(OBJECTS) $(TARGET).a $(TARGET).so.1
 
 compiler-flags: FORCE
-	@if [ ! -d hardware/$(HARDWARE_DESC) ] ; then echo "HARDWARE_DESC='$(HARDWARE_DESC)' is an unsupported hardware description. Typo ?"; exit 1; fi
 	@echo '$(CXX) $(CXXFLAGS)' | cmp -s - $@ || echo '$(CXX) $(CXXFLAGS)' > $@
 
 .PHONY: FORCE

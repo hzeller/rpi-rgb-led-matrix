@@ -84,8 +84,8 @@ This documentation is split into parts that help you through the process
   * <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
     [Wire up the matrix to your Pi](./wiring.md). This document describes what
     goes where. You might also be interested in [breakout boards](./adapter)
-    for that. If you have an [Adafruit HAT], necessary steps are
-    [described below](#if-you-have-an-adafruit-hat)
+    for that. If you have an [Adafruit HAT], you can choose that with
+    a command line option [described below](#if-you-have-an-adafruit-hat)
   * Run a demo. You find that in the
      [examples-api-use/](./examples-api-use#running-some-demos) directory:
 ```
@@ -133,8 +133,22 @@ Some might need to be changed for your particular kind of panel.
 Here is a little run-down of what these command-line flags do and when you'd
 like to change them.
 
+First things first: if you have a different wiring than described in
+[wiring](./wiring.md), for instance if you have an Adafruit HAT, you can
+choose these here:
+
 ```
-# These are the most important
+--led-gpio-mapping=<gpio-mapping>: Name of GPIO mapping used. Default "regular"
+```
+
+This can have values such as
+  - `--led-gpio-mapping=regular` The standard mapping of this library, described in the [wiring](./wiring.md) page.
+  - `--led-gpio-mapping=adafruit-hat` standard Adafruit HAT or
+  - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
+
+The next most important flags describe the type and number of displays connected
+
+```
 --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
 --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
 --led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
@@ -365,16 +379,19 @@ ready-made vs. single-chain tradeoff is worthwhile, then you might go for that
 The Adafruit HAT uses this library but a modified pinout to support other
 features on the HAT. So they forked this library and modified the pinout there.
 However, that fork is _ancient_, so I strongly suggest to use this original
-library instead - which in the meantime also has a way to switch to their pinout.
+library instead. You can choose the Adafruit pinout with a command line flag.
 
-In this library here, you can choose the Adafruit HAT pinout by editing
-`lib/Makefile` and change `HARDWARE_DESC?=regular` to `HARDWARE_DESC=adafruit-hat`.
+Just pass the option `--led-gpio-mapping=adafruit-hat`.
 
-Alternatively, you can prefix the compilation call with this variable like so:
+If you want to have this the default whenever you start (or if you are using
+the Python library that does not support to set this at runtime yet), add the
+following setting in front of your compilation:
 ```
 HARDWARE_DESC=adafruit-hat make
 ```
-Then re-compile and a display connected to the HAT should work.
+(alternatively, you can modify the `lib/Makefile` and change it there directly)
+Then re-compile and the new flag default is now `adafruit-hat`, so
+no need to set it on the command line.
 
 ### Improving flicker
 
@@ -384,14 +401,17 @@ following picture (click to enlarge):
 
 <a href="img/adafruit-mod.jpg"><img src="img/adafruit-mod.jpg" height="80px"></a>
 
-Then, uncomment the following line in the Makefile and recompile.
+Then, start your programs with `--led-gpio-mapping=adafruit-hat-pwm`.
 
+If you want to make this the default setting your program starts with, you can
+also manually choose this with
 ```
-#DEFINES+=-DADAFRUIT_RGBMATRIX_HAT_PWM
+HARDWARE_DESC=adafruit-hat-pwm make
 ```
+to get this as default setting.
 
-Reboot the Pi and you now should have less visible flicker. This essentially
-gives you the hardware pulses feature.
+Now you should have less visible flicker. This essentially
+switches on the hardware pulses feature for the Adafruit HAT.
 
 ### 64x64 with E-line on Adafruit HAT
 There are LED panels that have 64x64 LEDs packed, but they need 5 address lines,

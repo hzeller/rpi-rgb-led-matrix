@@ -95,6 +95,33 @@ static bool ConsumeIntFlag(const char *flag_name,
   return true;  // consumed.
 }
 
+// The resulting value is allocated.
+static bool ConsumeStringFlag(const char *flag_name,
+                              argv_iterator &pos, const argv_iterator end,
+                              const char **result_value, int *error) {
+  const char *option = *pos;
+  if (strncmp(option, OPTION_PREFIX, OPTION_PREFIX_LEN) != 0)
+    return false;
+  option += OPTION_PREFIX_LEN;
+  const size_t flag_len = strlen(flag_name);
+  if (strncmp(option, flag_name, flag_len) != 0)
+    return false;  // not consumed.
+  const char *value;
+  if (option[flag_len] == '=')  // --option=hello  # value in same arg
+    value = option + flag_len + 1;
+  else if (pos + 1 < end) {     // --option hello  # value in next arg
+    value = *(++pos);
+  } else {
+    fprintf(stderr, "Parameter expected after %s%s\n",
+            OPTION_PREFIX, flag_name);
+    ++*error;
+    *result_value = NULL;
+    return true;  // consumed, but error.
+  }
+  *result_value = strdup(value);  // This will leak, but no big deal.
+  return true;
+}
+
 static bool FlagInit(int &argc, char **&argv,
                      RGBMatrix::Options *mopts,
                      RuntimeOptions *ropts) {
@@ -110,6 +137,9 @@ static bool FlagInit(int &argc, char **&argv,
   for (/**/; it < end; ++it) {
     posix_end_option_seen |= (strcmp(*it, "--") == 0);
     if (!posix_end_option_seen) {
+      if (ConsumeStringFlag("gpio-mapping", it, end,
+                            &mopts->hardware_mapping, &err))
+        continue;
       if (ConsumeIntFlag("rows", it, end, &mopts->rows, &err))
         continue;
       if (ConsumeIntFlag("chain", it, end, &mopts->chain_length, &err))
@@ -282,6 +312,7 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
 void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
                       const RuntimeOptions &r) {
   fprintf(out,
+          "\t--led-gpio-mapping=<name> : Name of GPIO mapping used. Default \"%s\"\n"
           "\t--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. "
           "(Default: %d).\n"
           "\t--led-chain=<chained>     : Number of daisy-chained panels. "
@@ -300,6 +331,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB "
           "(Default: %d)\n"
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
+          d.hardware_mapping,
           d.rows, d.chain_length, d.parallel,
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",

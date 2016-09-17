@@ -17,6 +17,7 @@ Options:
                                     in the middle in an U-arrangement to get more vertical space.
         -R <rotation>             : Sets the rotation of matrix. Allowed: 0, 90, 180, 270. Default: 0.
         -t <seconds>              : Run for these number of seconds, then exit.
+        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
         --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
         --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
         --led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
@@ -86,6 +87,7 @@ using rgb_matrix::RGBMatrix;
 int main(int argc, char **argv) {
   // Set some defaults
   RGBMatrix::Options my_defaults;
+  my_defaults.hardware_mapping = "regular";  // or e.g. "adafruit-hat" or "adafruit-hat-pwm"
   my_defaults.chain_length = 3;
   my_defaults.show_refresh_rate = true;
   rgb_matrix::RuntimeOptions runtime_defaults;

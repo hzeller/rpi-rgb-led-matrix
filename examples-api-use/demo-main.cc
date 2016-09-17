@@ -1160,7 +1160,8 @@ int main(int argc, char *argv[]) {
     matrix->ApplyStaticTransformer(RotateTransformer(rotation));
   }
 
-  printf("Size: %dx%d\n", matrix->width(), matrix->height());
+  printf("Size: %dx%d. Hardware gpio mapping: %s\n",
+         matrix->width(), matrix->height(), matrix_options.hardware_mapping);
 
   Canvas *canvas = matrix;
 

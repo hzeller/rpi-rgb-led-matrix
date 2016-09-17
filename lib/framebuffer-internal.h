@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 
+#include "hardware-mapping.h"
+
 namespace rgb_matrix {
 class GPIO;
 class PinPulser;
@@ -64,6 +66,7 @@ public:
   ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
+  static void InitHardwareMapping(const char *named_hardware);
   static void InitGPIO(GPIO *io, int rows, int parallel,
                        bool allow_hardware_pulsing,
                        int pwm_lsb_nanoseconds);
@@ -96,9 +99,7 @@ public:
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
 private:
-  // Define the type to do the pin-mapping. These are include fils
-  // found in include directory hardware/$(name-of-mapping)
-#include "led-panel-pin-mapping.h"  // see HARDWARE_DESC in lib/Makefile
+  static const struct HardwareMapping *hardware_mapping_;
 
   void InitDefaultDesignator(int x, int y, PixelDesignator *designator);
   inline void  MapColors(uint8_t r, uint8_t g, uint8_t b,
@@ -125,11 +126,8 @@ private:
   // Each bitplane-column is pre-filled IoBits, of which the colors are set.
   // Of course, that means that we store unrelated bits in the frame-buffer,
   // but it allows easy access in the critical section.
-  IoBits *bitplane_buffer_;
-  inline IoBits *ValueAt(int double_row, int column, int bit);
-  inline IoBits &color_bits(uint32_t *val) {
-    return *reinterpret_cast<IoBits*>(val);
-  }
+  gpio_bits_t *bitplane_buffer_;
+  inline gpio_bits_t *ValueAt(int double_row, int column, int bit);
 
   PixelMapper **shared_mapper_;  // Storage in RGBMatrix.
 };
