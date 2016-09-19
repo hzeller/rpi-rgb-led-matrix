@@ -53,6 +53,11 @@ cdef class FrameCanvas(Canvas):
 
 cdef class RGBMatrix(Canvas):
     def __cinit__(self, int rows, int chains = 1, int parallel = 1):
+        # TODO(Saij): this should initialize an RGBMatrix::Options and
+        # RuntimeOptions, then call CreateMatrixFromOptions() instead of the
+        # cppinc.RGBMatrix() constructor directly. No __gpio needed anymore.
+        # The options allow to set more things, so they should probably be
+        # available as named parameters in Python ?
         self.__gpio = new cppinc.GPIO()
         if not self.__gpio.Init():
             raise Exception("Error initializing GPIOs")  # will segfault?!
