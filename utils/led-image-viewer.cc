@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
+#include <random>
 #include <vector>
 #include <Magick++.h>
 #include <magick/image.h>
@@ -187,6 +188,7 @@ static int usage(const char *progname) {
           "For gif animations: stop after this time.\n"
           "\t-l<loop-count>            : "
           "For gif animations: number of loops through a full cycle.\n"
+          "\t-s                        : if multiple images are given: shuffle.\n"
           "\t-L                        : Large display, in which each chain is 'folded down'\n"
           "\t                            in the middle in an U-arrangement to get more vertical space.\n"
           "\t-R<angle>                 : Rotate output; steps of 90 degrees\n"
@@ -215,6 +217,7 @@ int main(int argc, char *argv[]) {
 
   bool do_forever = false;
   bool do_center = false;
+  bool do_shuffle = false;
   bool large_display = false;  // 64x64 made out of 4 in sequence.
   const tmillis_t distant_future = (1LL<<40); // that is a while.
   tmillis_t anim_duration_ms = distant_future;
@@ -223,7 +226,7 @@ int main(int argc, char *argv[]) {
   int angle = -361;
 
   int opt;
-  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:")) != -1) {
+  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:s")) != -1) {
     switch (opt) {
     case 'w':
       wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -239,6 +242,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'C':
       do_center = true;
+      break;
+    case 's':
+      do_shuffle = true;
       break;
     case 'r':
       matrix_options.rows = atoi(optarg);
@@ -340,6 +346,9 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, InterruptHandler);
 
   do {
+    if (do_shuffle) {
+      std::random_shuffle(file_imgs.begin(), file_imgs.end());
+    }
     for (size_t i = 0; i < file_imgs.size() && !interrupt_received; ++i) {
       const PreprocessedList frames = file_imgs[i];
 
