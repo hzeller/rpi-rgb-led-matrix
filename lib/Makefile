@@ -147,7 +147,7 @@ graphics.o: graphics.cc utf8-internal.h
 	$(CXX) -I$(INCDIR) $(CXXFLAGS) -c -o $@ $<
 
 %.o : %.c compiler-flags
-	$(CC)  -I$(INCDIR) $(CXXFLAGS) -c -o $@ $<
+	$(CC)  -I$(INCDIR) $(CFLAGS) -c -o $@ $<
 
 clean:
 	rm -f $(OBJECTS) $(TARGET).a $(TARGET).so.1
