@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include <random>
+#include <algorithm>
 #include <vector>
 #include <Magick++.h>
 #include <magick/image.h>
