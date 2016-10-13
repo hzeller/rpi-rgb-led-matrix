@@ -102,14 +102,16 @@ uint32_t GPIO::InitOutputs(uint32_t outputs) {
     return 0;
   }
 
-#ifdef ADAFRUIT_RGBMATRIX_HAT_PWM
   // Hack: the user soldered together GPIO 18 (new OE) with GPIO 4 (old OE).
   // We want to make extra sure that, whatever the outside system set as pinmux,
   // the old OE is not also set as output so that these GPIO outputs don't fight
   // each other.
-  // So explicitly set this particular pin as input.
+  // So explicitly set both of these pins as input initially, so the user
+  // can switch between the two modes without trouble.
+  // (TODO: this really only needs to be done in the Adafruit HAT case, so
+  // we should exclude the other cases).
   INP_GPIO(4);
-#endif
+  INP_GPIO(18);
 
   outputs &= kValidBits;   // Sanitize input.
   output_bits_ = outputs;
