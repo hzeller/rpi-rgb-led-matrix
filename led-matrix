@@ -1,0 +1,8 @@
+#!/bin/bash
+##
+
+echo "This program moved to directory examples-api-use/ and is called 'demo'"
+echo
+echo "See https://github.com/hzeller/rpi-rgb-led-matrix/tree/master/examples-api-use"
+echo
+echo "(You are probably here because you followed some outdated information on the 'net?)"
