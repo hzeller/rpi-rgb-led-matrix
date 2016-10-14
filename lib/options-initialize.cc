@@ -325,7 +325,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "
-          ": Switch if your matrix has inverse colors %s.\n "
+          ": Switch if your matrix has inverse colors %s.\n"
           "\t--led-%sswap-green-blue     : Switch if your matrix has green/blue "
           "swapped %s.\n"
           "\t--led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB "
