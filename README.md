@@ -315,8 +315,8 @@ as both need the same internal hardware sub-system (a first test to see if you
 are affected is to run the progrem with `--led-no-hardware-pulse` and see if
 things work fine then).
 
-If you run `lsmod` and see any modules show up with `snd` in their name,
-this could be causing trouble.
+If you run `lsmod` and see the `snd_bcm2835` module, this could be causing trouble.
+(The library actually exits if it finds this module to be loaded).
 
 In that case, you should create a kernel module blacklist file like the
 following on your system and update your initramfs:
@@ -324,16 +324,12 @@ following on your system and update your initramfs:
 ```
 cat <<EOF | sudo tee /etc/modprobe.d/blacklist-rgb-matrix.conf
 blacklist snd_bcm2835
-blacklist snd_pcm
-blacklist snd_timer
-blacklist snd_pcsp
-blacklist snd
 EOF
 
 sudo update-initramfs -u
 ```
 
-Reboot and confirm that no 'snd' module is running.
+Reboot and confirm that the module is not loaded.
 
 ### Logic level voltage not sufficient
 Some panels don't interpret the 3.3V logic level well, or the RPi output drivers

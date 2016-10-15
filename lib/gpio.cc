@@ -310,9 +310,16 @@ public:
     assert(CanHandle(pins));
 
     if (LinuxHasModuleLoaded("snd_bcm2835")) {
-      fprintf(stderr, "\nsnd_bcm2835: found the sound module to be loaded.\n"
-              "This is known to cause trouble.\n"
-              "See Troubleshooting section in README how to disable.\n\n");
+      fprintf(stderr,
+              "\n%s=== snd_bcm2835: found that the Pi sound module is loaded. ===%s\n"
+              "Don't use the built-in sound of the Pi together with this lib; it is known to be\n"
+	      "incompatible and cause trouble and hangs (you can still use external USB sound adapters).\n\n"
+              "See Troubleshooting section in README how to disable the sound module.\n"
+	      "You can also run with --led-no-hardware-pulse to avoid the incompatibility,\n"
+	      "but you will have more flicker.\n"
+              "Exiting; fix the above first or use --led-no-hardware-pulse\n\n",
+              "\033[1;31m", "\033[0m");
+      exit(1);
     }
 
     for (size_t i = 0; i < specs.size(); ++i) {
