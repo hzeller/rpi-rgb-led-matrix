@@ -214,6 +214,22 @@ private:
   const std::vector<int> nano_specs_;
 };
 
+static bool LinuxHasModuleLoaded(const char *name) {
+  FILE *f = fopen("/proc/modules", "r");
+  if (f == NULL) return false; // don't care.
+  char buf[256];
+  const size_t namelen = strlen(name);
+  bool found = false;
+  while (fgets(buf, sizeof(buf), f) != NULL) {
+    if (strncmp(buf, name, namelen) == 0) {
+      found = true;
+      break;
+    }
+  }
+  fclose(f);
+  return found;
+}
+
 static volatile uint32_t *timer1Mhz = NULL;
 
 static void sleep_nanos_rpi_1(long nanos);
@@ -292,6 +308,12 @@ public:
   HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
     : triggered_(false) {
     assert(CanHandle(pins));
+
+    if (LinuxHasModuleLoaded("snd_bcm2835")) {
+      fprintf(stderr, "\nsnd_bcm2835: found the sound module to be loaded.\n"
+              "This is known to cause trouble.\n"
+              "See Troubleshooting section in README how to disable.\n\n");
+    }
 
     for (size_t i = 0; i < specs.size(); ++i) {
       sleep_hints_.push_back(specs[i] / 1000);

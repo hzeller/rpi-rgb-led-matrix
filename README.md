@@ -297,11 +297,14 @@ Troubleshooting
 Here are some tips in case things don't work as expected.
 
 ### Use minimal Raspbian distribution
-In general, run a minimal configuration on your Pi. There were some
-unconfirmed reports of problems with Pis running GUI systems. Even though the
-Raspberry Pi foundation makes you believe that you can do that: don't. Using it
-with a GUI is a frustratingly slow use of an otherwise perfectly good
-embedded device.
+In general, run a minimal configuration on your Pi.
+
+  * Do not use a graphical user interface (Even though the
+    Raspberry Pi foundation makes you believe that you can do that: don't.
+    Using a Pi with a GUI is a frustratingly slow use of an otherwise
+    perfectly good embedded device.)
+
+  * Switch off on-board sound (external USB sound adapters work).
 
 Everything seems to work well with a **[Raspbian Lite][raspbian-lite]**
 distribution.
