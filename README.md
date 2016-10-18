@@ -331,6 +331,10 @@ sudo update-initramfs -u
 
 Reboot and confirm that the module is not loaded.
 
+### I have a Pi1 Revision1 and top part of Panel doesn't show green
+
+Use `--led-gpio-mapping=regular-pi1`
+
 ### Logic level voltage not sufficient
 Some panels don't interpret the 3.3V logic level well, or the RPi output drivers
 have trouble driving longer cables, in particular with

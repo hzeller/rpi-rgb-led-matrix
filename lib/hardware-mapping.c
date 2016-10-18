@@ -42,7 +42,7 @@ struct HardwareMapping matrix_hardware_mappings[] = {
 
     /* Parallel chain 0, RGB for both sub-panels */
     .p0_r1         = GPIO_BIT(11),  /* masks: SPI0_SCKL  */
-    .p0_g1         = GPIO_BIT(27),  /* Not on RPi1, Rev1 */
+    .p0_g1         = GPIO_BIT(27),  /* Not on RPi1, Rev1; use "regular-pi1" instead */
     .p0_b1         = GPIO_BIT(7),   /* masks: SPI0_CE1   */
     .p0_r2         = GPIO_BIT(8),   /* masks: SPI0_CE0   */
     .p0_g2         = GPIO_BIT(9),   /* masks: SPI0_MISO  */
@@ -112,6 +112,38 @@ struct HardwareMapping matrix_hardware_mappings[] = {
     .p0_r2         = GPIO_BIT(12),
     .p0_g2         = GPIO_BIT(16),
     .p0_b2         = GPIO_BIT(23),
+  },
+
+  /*
+   * The regular pin-out, but for Raspberry Pi1. The very first Pi1 Rev1 uses
+   * the same pin for GPIO-21 as later Pis use GPIO-27. Make it work for both.
+   */
+  {
+    .name          = "regular-pi1",
+
+    .output_enable = GPIO_BIT(18),
+    .clock         = GPIO_BIT(17),
+    .strobe        = GPIO_BIT(4),
+
+    /* Address lines */
+    .a             = GPIO_BIT(22),
+    .b             = GPIO_BIT(23),
+    .c             = GPIO_BIT(24),
+    .d             = GPIO_BIT(25),
+    .e             = GPIO_BIT(15),  /* RxD kept free unless 1:64 */
+
+    /* Parallel chain 0, RGB for both sub-panels */
+    .p0_r1         = GPIO_BIT(11),  /* masks: SPI0_SCKL  */
+    /* On Pi1 Rev1, the pin other Pis have GPIO27, these have GPIO21. So make
+     * this work for both Rev1 and Rev2.
+     */
+    .p0_g1         = GPIO_BIT(21) | GPIO_BIT(27),
+    .p0_b1         = GPIO_BIT(7),   /* masks: SPI0_CE1   */
+    .p0_r2         = GPIO_BIT(8),   /* masks: SPI0_CE0   */
+    .p0_g2         = GPIO_BIT(9),   /* masks: SPI0_MISO  */
+    .p0_b2         = GPIO_BIT(10),  /* masks: SPI0_MOSI  */
+
+    /* No more chains - there are not enough GPIO */
   },
 
   /*

@@ -20,6 +20,7 @@ TARGET=librgbmatrix
 #   regular            # Following this project wiring and using these PCBs
 #   adafruit-hat       # If you have a RGB matrix HAT from Adafruit
 #   adafruit-hat-pwm   # If you have an Adafruit HAT with PWM hardware mod.
+#   regular-pi1        # If you have an old Pi1 and regular didn't work.
 #   classic            # (deprecated) Classic Pi1/2/. Not used anymore.
 #   classic-pi1        # (deprecated) Classic pinout on Rasperry Pi 1
 HARDWARE_DESC?=regular
