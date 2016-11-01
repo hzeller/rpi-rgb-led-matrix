@@ -317,6 +317,9 @@ struct RuntimeOptions {
   RuntimeOptions();
 
   int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
+  // If the following are disabled, the following options will not be offered.
+  // If daemon is disabled, the user has to call StartRefresh() once the
+  // matrix is created.
   int daemon;           // -1 disabled. 0=off, 1=on. Flag: --led-daemon
   int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
 };

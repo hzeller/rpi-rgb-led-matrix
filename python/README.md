@@ -4,7 +4,11 @@ Python bindings for RGB Matrix library
 Building
 --------
 
-In the root directory for the matrix library simply type:
+If you have a different than the standard wiring (for instance if you have an
+Adafruit HAT), edit the [../lib/Makefile](../lib/Makefile#L26) first to choose
+the hardware in question.
+
+Then, in the root directory for the matrix library simply type:
 
 ### Python 2
 

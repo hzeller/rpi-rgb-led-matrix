@@ -392,7 +392,8 @@ following setting in front of your compilation:
 ```
 HARDWARE_DESC=adafruit-hat make
 ```
-(alternatively, you can modify the `lib/Makefile` and change it there directly)
+(alternatively, you can modify the `lib/Makefile` and change it there directly,
+which in particular is useful if you also compile the Python library)
 Then re-compile and the new flag default is now `adafruit-hat`, so
 no need to set it on the command line.
 
