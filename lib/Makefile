@@ -48,6 +48,12 @@ TARGET=librgbmatrix.a
 # this might be useful.
 #DEFINES+=-DONLY_SINGLE_CHAIN
 
+# !!! Only tested with new pinout !!!
+# If the new pinout is used we should be able to set the maximum available
+# PWM bits. Lower available PMW bits will result in better refresh rate.
+# Little sideffect: the smaller the value the darker the LEDs will be.
+DEFINES+=-DEXPERIMENTAL_BITPLANES=4
+
 INCDIR=../include
 CXXFLAGS=-Wall -O3 -g -fPIC $(DEFINES)
 
