@@ -72,7 +72,7 @@ public:
                     rgb_matrix::FrameCanvas *output)
     : canvas_(output) {
     int delay_time = img.animationDelay();  // in 1/100s of a second.
-    if (delay_time < 1) delay_time = 1;
+    if (delay_time < 1) delay_time = 10;
     delay_millis_ = delay_time * 10;
 
     const int x_offset = do_center ? (output->width() - img.columns()) / 2 : 0;
