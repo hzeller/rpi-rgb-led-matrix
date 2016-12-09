@@ -30,7 +30,10 @@
 #include <sys/time.h>
 
 #include <algorithm>
+#include <map>
+#include <string>
 #include <vector>
+
 #include <Magick++.h>
 #include <magick/image.h>
 
@@ -45,6 +48,7 @@ static void InterruptHandler(int signo) {
 }
 
 typedef int64_t tmillis_t;
+static const tmillis_t distant_future = (1LL<<40); // that is a while.
 static tmillis_t GetTimeInMillis() {
     struct timeval tp;
     gettimeofday(&tp, NULL);
@@ -177,7 +181,9 @@ void DisplayAnimation(const PreprocessedList &frames,
 }
 
 static int usage(const char *progname) {
-  fprintf(stderr, "usage: %s [options] <image> [<image> ...]\n", progname);
+  fprintf(stderr, "usage: %s [options] <image> [option] [<image> ...]\n",
+          progname);
+
   fprintf(stderr, "Options:\n"
           "\t-C                        : Center images.\n"
           "\t-w<seconds>               : If multiple images given: "
@@ -188,7 +194,7 @@ static int usage(const char *progname) {
           "For gif animations: stop after this time.\n"
           "\t-l<loop-count>            : "
           "For gif animations: number of loops through a full cycle.\n"
-          "\t-s                        : if multiple images are given: shuffle.\n"
+          "\t-s                        : If multiple images are given: shuffle.\n"
           "\t-L                        : Large display, in which each chain is 'folded down'\n"
           "\t                            in the middle in an U-arrangement to get more vertical space.\n"
           "\t-R<angle>                 : Rotate output; steps of 90 degrees\n"
@@ -198,12 +204,29 @@ static int usage(const char *progname) {
   rgb_matrix::PrintMatrixFlags(stderr);
 
   fprintf(stderr,
-          "Switch time between files: "
+          "\nSwitch time between files: "
           "-w for static images; -t/-l for animations\n"
           "Animated gifs: If both -l and -t are given, "
-          "whatever comes first determines duration.\n");
+          "whatever finishes first determines duration.\n");
+
+  fprintf(stderr, "\nThe -w, -t and -l options apply to the following images "
+          "until a new instance of one of these options is seen.\n"
+          "So you can choose different durations for different images.\n");
+
   return 1;
 }
+
+struct ImageParams {
+  ImageParams() : anim_duration_ms(distant_future), wait_ms(1500), loops(-1){}
+  tmillis_t anim_duration_ms;
+  tmillis_t wait_ms;
+  int loops;
+};
+
+struct FileInfo {
+  ImageParams params;      // Each file might have specific timing settings
+  PreprocessedList frames; // For animations: possibly multiple frames.
+};
 
 int main(int argc, char *argv[]) {
   Magick::InitializeMagick(*argv);
@@ -219,23 +242,34 @@ int main(int argc, char *argv[]) {
   bool do_center = false;
   bool do_shuffle = false;
   bool large_display = false;  // 64x64 made out of 4 in sequence.
-  const tmillis_t distant_future = (1LL<<40); // that is a while.
-  tmillis_t anim_duration_ms = distant_future;
-  tmillis_t wait_ms = 1500;
-  int loops  = -1;
   int angle = -361;
+
+  // We remember ImageParams for each image, which will change whenever
+  // there is a flag modifying them. This map keeps track of filenames
+  // and their image params (also for unrelated elements of argv[], but doesn't
+  // matter).
+  // We map the pointer instad of the string of the argv parameter so that
+  // we can have two times the same image on the commandline list with different
+  // parameters.
+  std::map<const void *, struct ImageParams> filename_params;
+
+  // Set defaults.
+  ImageParams img_param;
+  for (int i = 0; i < argc; ++i) {
+    filename_params[argv[i]] = img_param;
+  }
 
   int opt;
   while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:s")) != -1) {
     switch (opt) {
     case 'w':
-      wait_ms = roundf(atof(optarg) * 1000.0f);
+      img_param.wait_ms = roundf(atof(optarg) * 1000.0f);
       break;
     case 't':
-      anim_duration_ms = roundf(atof(optarg) * 1000.0f);
+      img_param.anim_duration_ms = roundf(atof(optarg) * 1000.0f);
       break;
     case 'l':
-      loops = atoi(optarg);
+      img_param.loops = atoi(optarg);
       break;
     case 'f':
       do_forever = true;
@@ -269,6 +303,12 @@ int main(int argc, char *argv[]) {
     default:
       return usage(argv[0]);
     }
+
+    // Starting from the current file, set all the remaining files to
+    // the latest change.
+    for (int i = optind; i < argc; ++i) {
+      filename_params[argv[i]] = img_param;
+    }
   }
 
   const int filename_count = argc - optind;
@@ -277,17 +317,7 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  if (filename_count == 1) {
-    wait_ms = distant_future;
-  }
-  else if (filename_count > 1 &&
-           loops < 0 && anim_duration_ms == distant_future) {
-    // More than one image but parameters for animations are default ? Set them
-    // to default loop only once, otherwise the first animation would just run
-    // forever, stopping all the images after it.
-    loops = 1;
-  }
-
+  // Prepare matrix
   RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
@@ -312,9 +342,9 @@ int main(int argc, char *argv[]) {
 
   fprintf(stderr, "Load images...\n");
   // Preparing all the images beforehand as the Pi might be too slow to
-  // be quickly switching between these.
-  std::vector<PreprocessedList> file_imgs;
-  for (int imgarg = optind; imgarg < argc && !interrupt_received; ++imgarg) {
+  // be quickly switching between these. So preprocess.
+  std::vector<FileInfo*> file_imgs;
+  for (int imgarg = optind; imgarg < argc; ++imgarg) {
       const char *filename = argv[imgarg];
 
       std::vector<Magick::Image> image_sequence;
@@ -323,24 +353,38 @@ int main(int argc, char *argv[]) {
         continue;
       }
 
-      PreprocessedList frames;
+      FileInfo *file_info = new FileInfo();
+      file_info->params = filename_params[filename];
       // Convert to preprocessed frames.
       for (size_t i = 0; i < image_sequence.size(); ++i) {
         FrameCanvas *canvas = matrix->CreateFrameCanvas();
-        frames.push_back(new PreprocessedFrame(image_sequence[i], do_center,
-                                               canvas));
+        file_info->frames.push_back(
+          new PreprocessedFrame(image_sequence[i], do_center, canvas));
       }
       // The 'animation delay' of a single image is the time to the next image.
-      if (frames.size() == 1)
-        frames.back()->set_delay(wait_ms);
-
-      file_imgs.push_back(frames);
+      if (file_info->frames.size() == 1) {
+        file_info->frames.back()->set_delay(file_info->params.wait_ms);
+      }
+      file_imgs.push_back(file_info);
   }
 
+  // Some parameter sanity adjustments.
   if (file_imgs.empty()) {
     // e.g. if all files could not be interpreted as image.
     fprintf(stderr, "No image could be loaded.\n");
     return 1;
+  } else if (file_imgs.size() == 1) {
+    // Single image: show forever.
+    file_imgs[0]->params.wait_ms = distant_future;
+  } else {
+    for (size_t i = 0; i < file_imgs.size(); ++i) {
+      ImageParams &params = file_imgs[i]->params;
+      // Forever animation ? Set to loop only once, otherwise that animation
+      // would just run forever, stopping all the images after it.
+      if (params.loops < 0 && params.anim_duration_ms == distant_future) {
+        params.loops = 1;
+      }
+    }
   }
 
   fprintf(stderr, "Display.\n");
@@ -353,21 +397,23 @@ int main(int argc, char *argv[]) {
       std::random_shuffle(file_imgs.begin(), file_imgs.end());
     }
     for (size_t i = 0; i < file_imgs.size() && !interrupt_received; ++i) {
-      const PreprocessedList frames = file_imgs[i];
+      const FileInfo *file = file_imgs[i];
 
-      const tmillis_t duration = ((frames.size() == 1)
-                                  ? wait_ms
-                                  : anim_duration_ms);
-      DisplayAnimation(frames, duration , loops, matrix);
+      const tmillis_t duration = ((file->frames.size() == 1)
+                                  ? file->params.wait_ms
+                                  : file->params.anim_duration_ms);
+      DisplayAnimation(file->frames, duration, file->params.loops, matrix);
     }
   } while (do_forever && !interrupt_received);
 
-  if (interrupt_received)
+  if (interrupt_received) {
     fprintf(stderr, "Caught signal. Exiting.\n");
+  }
 
   // Animation finished. Shut down the RGB matrix.
   matrix->Clear();
   delete matrix;
 
+  // Leaking the FileInfos, but don't care at program end.
   return 0;
 }

@@ -17,13 +17,14 @@ make led-image-viewer
 
 The resulting binary has a couple of flags.
 ```
-usage: ./led-image-viewer [options] <image> [<image> ...]
+usage: ./led-image-viewer [options] <image> [option] [<image> ...]
 Options:
         -C                        : Center images.
         -w<seconds>               : If multiple images given: Wait time between in seconds (default: 1.5).
         -f                        : Forever cycle through the list of files on the command line.
         -t<seconds>               : For gif animations: stop after this time.
         -l<loop-count>            : For gif animations: number of loops through a full cycle.
+        -s                        : If multiple images are given: shuffle.
         -L                        : Large display, in which each chain is 'folded down'
                                     in the middle in an U-arrangement to get more vertical space.
         -R<angle>                 : Rotate output; steps of 90 degrees
@@ -44,8 +45,12 @@ General LED matrix options:
         --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
         --led-daemon              : Make the process run in the background as daemon.
         --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+
 Switch time between files: -w for static images; -t/-l for animations
-Animated gifs: If both -l and -t are given, whatever comes first determines duration.
+Animated gifs: If both -l and -t are given, whatever finishes first determines duration.
+
+The -w, -t and -l options apply to the following images until a new instance of one of these options is seen.
+So you can choose different durations for different images.
 ```
 
 Then, you can run it with any common image format, including animated gifs:
@@ -58,9 +63,12 @@ sudo ./led-image-viewer -t5 animated.gif     # Show an animated gif for 5 second
 sudo ./led-image-viewer -l2 animated.gif     # Show an animated gif for 2 loops
 
 sudo ./led-image-viewer    -w3 foo.jpg bar.png  # show two images, wait 3 seconds between. Stop.
+sudo ./led-image-viewer    -w3 foo.jpg -w2 bar.png baz.png  # show images, wait 3 seconds after the first, 2 seconds after the second and third. Stop.
 sudo ./led-image-viewer -f -w3 foo.jpg bar.png  # show images, wait 3sec between, go back and loop forever
 
 sudo ./led-image-viewer -f -w3 *.png *.jpg   # Loop forever through a list of images
+
+sudo ./led-image-viewer -f -s *.png  # Loop forever but randomize (shuffle) each round.
 
 # Show image.png and animated.gif in a loop. Show the static image for 3 seconds
 # while the animation is shown for 5 seconds (-t takes precendence for animated
