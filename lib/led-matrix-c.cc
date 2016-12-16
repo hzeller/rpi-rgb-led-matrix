@@ -106,6 +106,10 @@ struct RGBLedMatrix *led_matrix_create(int rows, int chained, int parallel) {
   return led_matrix_create_from_options(&opts, NULL, NULL);
 }
 
+void led_matrix_print_flags(FILE *out) {
+  rgb_matrix::PrintMatrixFlags(out);
+}
+
 void led_matrix_delete(struct RGBLedMatrix *matrix) {
   delete to_matrix(matrix);
 }

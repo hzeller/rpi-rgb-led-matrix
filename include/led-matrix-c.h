@@ -28,6 +28,7 @@
 #define RPI_RGBMATRIX_C_H
 
 #include <stdint.h>
+#include <stdio.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -127,8 +128,12 @@ struct RGBLedMatrixOptions {
  *   memset(&options, 0, sizeof(options));
  *   options.rows = 32;
  *   options.chain_length = 1;
- *   RGBLedMatrix *matrix = led_matrix_create_from_options(&options,
- *                                                        &argc, &argv);
+ *   struct RGBLedMatrix *matrix = led_matrix_create_from_options(&options,
+ *                                                                &argc, &argv);
+ *   if (matrix == NULL) {
+ *      led_matrix_print_flags(stderr, &options);
+ *      return 1;
+ *   }
  *   // do additional commandline handling; then use matrix...
  * }
  * ----------------
@@ -136,6 +141,11 @@ struct RGBLedMatrixOptions {
 struct RGBLedMatrix *led_matrix_create_from_options(
              struct RGBLedMatrixOptions *options, int *argc, char ***argv);
 
+
+/**
+ * Print available LED matrix options.
+ */
+void led_matrix_print_flags(FILE *out);
 
 /**
  * Simple form of led_matrix_create_from_options() with just the few
