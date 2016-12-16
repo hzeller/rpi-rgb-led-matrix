@@ -107,7 +107,11 @@ struct RGBLedMatrix *led_matrix_create(int rows, int chained, int parallel) {
 }
 
 void led_matrix_print_flags(FILE *out) {
-  rgb_matrix::PrintMatrixFlags(out);
+  rgb_matrix::RGBMatrix::Options defaults;
+  rgb_matrix::RuntimeOptions rt_opt;
+  rt_opt.daemon = -1;
+  rt_opt.drop_privileges = -1;
+  rgb_matrix::PrintMatrixFlags(out, defaults, rt_opt);
 }
 
 void led_matrix_delete(struct RGBLedMatrix *matrix) {
