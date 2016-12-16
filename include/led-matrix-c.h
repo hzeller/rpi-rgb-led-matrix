@@ -126,12 +126,12 @@ struct RGBLedMatrixOptions {
  * int main(int argc, char **argv) {
  *   struct RGBLedMatrixOptions options;
  *   memset(&options, 0, sizeof(options));
- *   options.rows = 32;
+ *   options.rows = 32;            // You can set defaults if you want.
  *   options.chain_length = 1;
  *   struct RGBLedMatrix *matrix = led_matrix_create_from_options(&options,
  *                                                                &argc, &argv);
  *   if (matrix == NULL) {
- *      led_matrix_print_flags(stderr, &options);
+ *      led_matrix_print_flags(stderr);
  *      return 1;
  *   }
  *   // do additional commandline handling; then use matrix...
