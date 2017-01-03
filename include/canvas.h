@@ -41,6 +41,22 @@ public:
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue) = 0;
 
+  // Convenience function to set a large number of pixels at once.
+  // (x,y) is the starting pixel in the top left, width, height are how
+  // large the pixels will cover. So (0,0) is the top left corner, and
+  // width, height (32,16) would fill a horizontal 32x16 panel.
+  // Each color is an array of 8 bit (24bpp), 0 black, 255 brightest.
+  void SetPixels(int x, int y, int width, int height,
+                 const uint8_t *red, const uint8_t *green, const uint8_t *blue);
+
+  // Convenience function to set a large number of pixels at once.
+  // (x,y) is the starting pixel in the top left, width, height are how
+  // large the pixels will cover. So (0,0) is the top left corner, and
+  // width, height (32,16) would fill a horizontal 32x16 panel.
+  // The passed array is a width*height*3 
+  void SetPixels3D(int x, int y, int width, int height,
+                        const uint8_t *pixels);
+
   // Clear screen to be all black.
   virtual void Clear() = 0;
 
