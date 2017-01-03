@@ -35,7 +35,6 @@ cdef class Canvas:
     def _fastSetImage(self, image, int offset_x, int offset_y):
         cdef np.ndarray[np.uint8_t, mode='c', ndim=3] pixels = np.asarray(image, dtype=np.uint8, order='C')
         img_width, img_height = image.size
-        print("Running fastSetImage")
         self.SetPixels3D(offset_x, offset_y, img_width, img_height, &pixels[0,0,0])
 
 cdef class FrameCanvas(Canvas):

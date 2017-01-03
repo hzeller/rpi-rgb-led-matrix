@@ -417,9 +417,10 @@ void FrameCanvas::SetPixels(int x, int y, int width, int height,
 }
 void FrameCanvas::SetPixels3D(int x, int y, int width, int height,
                const uint8_t *pixels) {
-  printf("Running SetPixels3D inside FrameCanvas\n");
   for (int i = 0; i < width; i++) {
     for (int j = 0; j < height; j++) {
+      if (x+i < 0 || x+i > frame_->width() || y+j < 0 || y+j > frame_->height())
+        continue;
       int offset = width*j*3 + i*3;
       frame_->SetPixel(x+i, y+j,
            pixels[offset+0], pixels[offset+1], pixels[offset+2]);

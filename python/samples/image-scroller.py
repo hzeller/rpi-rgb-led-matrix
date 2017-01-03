@@ -7,7 +7,7 @@ from PIL import Image
 class ImageScroller(SampleBase):
     def __init__(self, image_file, *args, **kwargs):
         super(ImageScroller, self).__init__(*args, **kwargs)
-        self.image = Image.open(image_file)
+        self.image = Image.open(image_file).convert('RGB')
 
     def Run(self):
         self.image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
