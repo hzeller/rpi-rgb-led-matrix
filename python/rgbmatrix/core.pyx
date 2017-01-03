@@ -35,7 +35,7 @@ cdef class Canvas:
     def _fastSetImage(self, image, int offset_x, int offset_y):
         cdef np.ndarray[np.uint8_t, mode='c', ndim=3] pixels = np.asarray(image, dtype=np.uint8, order='C')
         img_width, img_height = image.size
-        self.SetPixels3D(offset_x, offset_y, img_width, img_height, &pixels[0,0,0])
+        self.SetPixels3D(offset_x, offset_y, img_width, img_height, pixels)
 
 cdef class FrameCanvas(Canvas):
     def __dealloc__(self):
@@ -60,8 +60,17 @@ cdef class FrameCanvas(Canvas):
                   const uint8_t *red, const uint8_t *green, const uint8_t *blue):
         (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixels(x, y, width, height, red, green, blue)
 
-    def SetPixels3D(self, int x, int y, int width, int height, const uint8_t *pixels):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixels3D(x, y, width, height, pixels)
+    def SetPixels3D(self, int xstart, int ystart, int width, int height, np.ndarray[np.uint8_t, mode='c', ndim=3] pixels):
+        cdef int row, col
+        cdef int frameWidth = self.width
+        cdef int frameHeight = self.height
+
+        for row in range(height):
+            for col in range(width):
+                if xstart+col < 0 or xstart+col > frameWidth or ystart+row < 0 or ystart+row > frameHeight:
+                    continue
+                (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixel(xstart+col, ystart+row,
+                   pixels[row, col, 0], pixels[row, col, 1], pixels[row, col, 2])
 
     property width:
         def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).width()

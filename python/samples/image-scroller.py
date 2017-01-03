@@ -3,6 +3,7 @@ import time
 from samplebase import SampleBase
 from rgbmatrix import RGBMatrix
 from PIL import Image
+import numpy as np
 
 class ImageScroller(SampleBase):
     def __init__(self, image_file, *args, **kwargs):
@@ -10,7 +11,7 @@ class ImageScroller(SampleBase):
         self.image = Image.open(image_file).convert('RGB')
 
     def Run(self):
-        self.image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+        #self.image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
 
         doubleBuffer = self.matrix.CreateFrameCanvas()
         img_width, img_height = self.image.size

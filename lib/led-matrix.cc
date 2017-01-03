@@ -417,15 +417,20 @@ void FrameCanvas::SetPixels(int x, int y, int width, int height,
 }
 void FrameCanvas::SetPixels3D(int x, int y, int width, int height,
                const uint8_t *pixels) {
-  for (int i = 0; i < width; i++) {
-    for (int j = 0; j < height; j++) {
+  printf("\nSetPixels3D! x=%d, y=%d, w=%d, h=%d. Red:\n", x, y, width, height);
+  //strides (144, 3, 1)
+  for (int j = 0; j < height; j++) {
+    for (int i = 0; i < width; i++) {
       if (x+i < 0 || x+i > frame_->width() || y+j < 0 || y+j > frame_->height())
         continue;
-      int offset = width*j*3 + i*3;
+      int offset = (width*j*3 + i*3);
       frame_->SetPixel(x+i, y+j,
            pixels[offset+0], pixels[offset+1], pixels[offset+2]);
+      printf("%02x ", pixels[offset]);
     }
+    printf("\n");
   }
+  printf("\n");
 }
 
 void FrameCanvas::Clear() { return frame_->Clear(); }
