@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 import time
 from samplebase import SampleBase
-from rgbmatrix import RGBMatrix
 from PIL import Image
+
 
 class ImageScroller(SampleBase):
     def __init__(self, image_file, *args, **kwargs):
         super(ImageScroller, self).__init__(*args, **kwargs)
         self.image = Image.open(image_file)
 
-    def Run(self):
+    def run(self):
         self.image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
 
-        doubleBuffer = self.matrix.CreateFrameCanvas()
+        double_buffer = self.matrix.CreateFrameCanvas()
         img_width, img_height = self.image.size
 
         # let's scroll
@@ -22,10 +22,10 @@ class ImageScroller(SampleBase):
             if (xpos > img_width):
                 xpos = 0
                 
-            doubleBuffer.SetImage(self.image, -xpos)
-            doubleBuffer.SetImage(self.image, -xpos + img_width)
+            double_buffer.SetImage(self.image, -xpos)
+            double_buffer.SetImage(self.image, -xpos + img_width)
         
-            doubleBuffer = self.matrix.SwapOnVSync(doubleBuffer)
+            double_buffer = self.matrix.SwapOnVSync(double_buffer)
             time.sleep(0.01)
 
 # Main function
@@ -33,6 +33,6 @@ class ImageScroller(SampleBase):
 #  sudo ./image-scroller.py --chain=4
 # if you have a chain of four
 if __name__ == "__main__":
-    scroller = ImageScroller(image_file = "../../examples-api-use/runtext.ppm")
-    if (not scroller.process()):
-        scroller.print_help()
+    image_scroller = ImageScroller(image_file="../../examples-api-use/runtext.ppm")
+    if (not image_scroller.process()):
+        image_scroller.print_help()
