@@ -14,7 +14,7 @@ class RunText(SampleBase):
         font.LoadFont("../../fonts/7x13.bdf")
         textColor = graphics.Color(255, 255, 0)
         pos = offscreenCanvas.width
-        myText = "Hello World!"
+        myText = self.args["text"]
 
         while True:
             offscreenCanvas.Clear()
