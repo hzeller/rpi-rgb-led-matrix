@@ -3,6 +3,7 @@
 from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t
 from PIL import Image
+import cython
 haveNumpy = False
 try:
     import numpy as np
@@ -35,7 +36,7 @@ cdef class Canvas:
     def _fastSetImage(self, image, int offset_x, int offset_y):
         cdef np.ndarray[np.uint8_t, mode='c', ndim=3] pixels = np.asarray(image, dtype=np.uint8, order='C')
         img_width, img_height = image.size
-        self.SetPixels3D(offset_x, offset_y, img_width, img_height, pixels)
+        self.SetPixelsNumpy(offset_x, offset_y, img_width, img_height, pixels)
 
 cdef class FrameCanvas(Canvas):
     def __dealloc__(self):
@@ -59,6 +60,22 @@ cdef class FrameCanvas(Canvas):
     def SetPixels(self, int x, int y, int width, int height,
                   const uint8_t *red, const uint8_t *green, const uint8_t *blue):
         (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixels(x, y, width, height, red, green, blue)
+
+    @cython.boundscheck(False)
+    @cython.wraparound(False)
+    def SetPixelsNumpy(self, int xstart, int ystart, int width, int height, np.uint8_t[:,:,:]pixels):
+        cdef cppinc.FrameCanvas* my_canvas = <cppinc.FrameCanvas*>self.__getCanvas()
+        cdef int frame_width = my_canvas.width()
+        cdef int frame_height = my_canvas.height()
+        cdef int row, col
+
+        with nogil:
+            for row in range(height):
+                for col in range(width):
+                    if xstart+col < 0 or xstart+col > frame_width or ystart+row < 0 or ystart+row > frame_height:
+                        continue
+                    my_canvas.SetPixel(xstart+col, ystart+row,
+                       pixels[row, col, 0], pixels[row, col, 1], pixels[row, col, 2])
 
     def SetPixels3D(self, int xstart, int ystart, int width, int height, np.ndarray[np.uint8_t, mode='c', ndim=3] pixels):
         cdef int row, col
