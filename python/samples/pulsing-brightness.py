@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 from samplebase import SampleBase
-import time
+
 
 class GrayscaleBlock(SampleBase):
     def __init__(self, *args, **kwargs):
         super(GrayscaleBlock, self).__init__(*args, **kwargs)
 
-    def Run(self):
+    def run(self):
         max_brightness = self.matrix.brightness
         count = 0
         c = 255
@@ -31,6 +31,6 @@ class GrayscaleBlock(SampleBase):
 
 # Main function
 if __name__ == "__main__":
-    parser = GrayscaleBlock()
-    if (not parser.process()):
-        parser.print_help()
+    grayscale_block = GrayscaleBlock()
+    if (not grayscale_block.process()):
+        grayscale_block.print_help()
