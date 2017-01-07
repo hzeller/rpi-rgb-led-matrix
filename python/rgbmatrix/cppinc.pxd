@@ -10,8 +10,8 @@ cdef extern from "canvas.h" namespace "rgb_matrix":
         int width()
         int height()
         void SetPixel(int, int, uint8_t, uint8_t, uint8_t) nogil
-        void Clear()
-        void Fill(uint8_t, uint8_t, uint8_t)
+        void Clear() nogil
+        void Fill(uint8_t, uint8_t, uint8_t) nogil
 
 cdef extern from "gpio.h" namespace "rgb_matrix":
     cdef cppclass GPIO:
