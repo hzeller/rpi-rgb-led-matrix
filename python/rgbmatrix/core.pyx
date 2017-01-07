@@ -34,7 +34,7 @@ cdef class Canvas:
                     self.SetPixel(x + offset_x, y + offset_y, r, g, b)
 
     def _fastSetImage(self, image, int offset_x, int offset_y):
-        cdef np.ndarray[np.uint8_t, mode='c', ndim=3] pixels = np.asarray(image, dtype=np.uint8, order='C')
+        #cdef np.ndarray[np.uint8_t, mode='c', ndim=3] pixels = np.asarray(image, dtype=np.uint8, order='C')
         img_width, img_height = image.size
         #self.SetPixelsNumpy(offset_x, offset_y, img_width, img_height, pixels)
         self.SetPixelsPillow(offset_x, offset_y, img_width, img_height, image)
@@ -82,9 +82,9 @@ cdef class FrameCanvas(Canvas):
                     if xstart+col < 0 or xstart+col > frame_width or ystart+row < 0 or ystart+row > frame_height:
                         continue
                     pixel = image_ptr[row][col]
-                    r = (pixel >> 24) & 0xFF
-                    g = (pixel >> 16) & 0xFF
-                    b = (pixel >> 8) & 0xFF
+                    r = (pixel ) & 0xFF
+                    g = (pixel >> 8) & 0xFF
+                    b = (pixel >> 16) & 0xFF
                     my_canvas.SetPixel(xstart+col, ystart+row, r, g, b)
 
 
