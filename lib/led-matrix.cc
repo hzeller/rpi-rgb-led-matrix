@@ -315,14 +315,6 @@ void RGBMatrix::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue)
   active_->SetPixel(x, y, red, green, blue);
 }
 
-void RGBMatrix::SetPixels(int x, int y, int width, int height,
-                  const uint8_t *red, const uint8_t *green, const uint8_t *blue) {
-  active_->SetPixels(x, y, width, height, red, green, blue);
-}
-void RGBMatrix::SetPixels3D(int x, int y, int width, int height, const uint8_t  *pixels) {
-  active_->SetPixels3D(x, y, width, height, pixels);
-}
-
 void RGBMatrix::Clear() {
   active_->Clear();
 }
@@ -409,30 +401,6 @@ void FrameCanvas::SetPixel(int x, int y,
                          uint8_t red, uint8_t green, uint8_t blue) {
   frame_->SetPixel(x, y, red, green, blue);
 }
-void FrameCanvas::SetPixels(int x, int y, int width, int height,
-               const uint8_t *red, const uint8_t *green, const uint8_t *blue) {
-  for (int i = 0; i < width*height; i++) {
-    frame_->SetPixel(x+(i % width), y+(i / width), red[i], green[i], blue[i]);
-  }
-}
-void FrameCanvas::SetPixels3D(int x, int y, int width, int height,
-               const uint8_t *pixels) {
-  printf("\nSetPixels3D! x=%d, y=%d, w=%d, h=%d. Red:\n", x, y, width, height);
-  //strides (144, 3, 1)
-  for (int j = 0; j < height; j++) {
-    for (int i = 0; i < width; i++) {
-      if (x+i < 0 || x+i > frame_->width() || y+j < 0 || y+j > frame_->height())
-        continue;
-      int offset = (width*j*3 + i*3);
-      frame_->SetPixel(x+i, y+j,
-           pixels[offset+0], pixels[offset+1], pixels[offset+2]);
-      printf("%02x ", pixels[offset]);
-    }
-    printf("\n");
-  }
-  printf("\n");
-}
-
 void FrameCanvas::Clear() { return frame_->Clear(); }
 void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   frame_->Fill(red, green, blue);

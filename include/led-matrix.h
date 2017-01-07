@@ -257,10 +257,6 @@ public:
   virtual int height() const;
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue);
-  void SetPixels(int x, int y, int width, int height,
-                 const uint8_t *red, const uint8_t *green, const uint8_t *blue);
-  void SetPixels3D(int x, int y, int width, int height,
-                           const uint8_t *pixels);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
@@ -302,10 +298,6 @@ public:
   virtual int height() const;
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue);
-  void SetPixels(int x, int y, int width, int height,
-                 const uint8_t *red, const uint8_t *green, const uint8_t *blue);
-  void SetPixels3D(int x, int y, int width, int height,
-                           const uint8_t *pixels);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
