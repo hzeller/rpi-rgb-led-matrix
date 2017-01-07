@@ -16,7 +16,7 @@ class ImageScroller(SampleBase):
         doubleBuffer = self.matrix.CreateFrameCanvas()
         img_width, img_height = self.image.size
       
-        nTries = 10
+        nTries = 100
  
         start = time.time() 
         xpos = 0

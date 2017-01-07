@@ -76,16 +76,13 @@ cdef class FrameCanvas(Canvas):
         ptr_tmp = dict(image.im.unsafe_ptrs)['image32']
         image_ptr = (<uint32_t **>(<uintptr_t>ptr_tmp))
 
-        if True:
-            for row in range(height):
-                for col in range(width):
-                    if xstart+col < 0 or xstart+col > frame_width or ystart+row < 0 or ystart+row > frame_height:
-                        continue
-                    pixel = image_ptr[row][col]
-                    r = (pixel ) & 0xFF
-                    g = (pixel >> 8) & 0xFF
-                    b = (pixel >> 16) & 0xFF
-                    my_canvas.SetPixel(xstart+col, ystart+row, r, g, b)
+        for col in range(max(0, -xstart), min(width, frame_width - xstart)):
+            for row in range(max(0, -ystart), min(height, frame_height - ystart)):
+                pixel = image_ptr[row][col]
+                r = (pixel ) & 0xFF
+                g = (pixel >> 8) & 0xFF
+                b = (pixel >> 16) & 0xFF
+                my_canvas.SetPixel(xstart+col, ystart+row, r, g, b)
 
 
     @cython.boundscheck(False)
