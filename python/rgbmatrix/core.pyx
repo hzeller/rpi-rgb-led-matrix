@@ -9,17 +9,21 @@ cdef class Canvas:
     cdef cppinc.Canvas* __getCanvas(self) except +:
         raise Exception("Not implemented")
 
-    # First implementation of a SetImage(). OPTIMIZE_ME: A more native
-    # implementation that directly reads the buffer and calls the underlying
-    # C functions can certainly be faster.
-    def SetImage(self, image, int offset_x = 0, int offset_y = 0, fastIfPossible=True):
+    def SetImage(self, image, int offset_x = 0, int offset_y = 0, unsafe=True):
         if (image.mode != "RGB"):
             raise Exception("Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB'). Pull requests to support more modes natively are also welcome :)")
 
-        if fastIfPossible:
+        if unsafe:
+            #In unsafe mode we directly access the underlying PIL image array
+            #in cython, which is considered unsafe pointer accecss,
+            #however it's super fast and seems to work fine
+            #https://groups.google.com/forum/#!topic/cython-users/Dc1ft5W6KM4
             img_width, img_height = image.size
             self.SetPixelsPillow(offset_x, offset_y, img_width, img_height, image)
         else:
+            # First implementation of a SetImage(). OPTIMIZE_ME: A more native
+            # implementation that directly reads the buffer and calls the underlying
+            # C functions can certainly be faster.
             img_width, img_height = image.size
             pixels = image.load()
             for x in range(max(0, -offset_x), min(img_width, self.width - offset_x)):
