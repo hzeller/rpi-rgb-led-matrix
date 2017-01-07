@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 from samplebase import SampleBase
 from rgbmatrix import graphics
-import time;
+import time
+
 
 class GraphicsTest(SampleBase):
     def __init__(self, *args, **kwargs):
         super(GraphicsTest, self).__init__(*args, **kwargs)
 
-    def Run(self):
-        canvas = self.matrix;
+    def run(self):
+        canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../fonts/7x13.bdf")
 
@@ -26,6 +27,6 @@ class GraphicsTest(SampleBase):
 
 # Main function
 if __name__ == "__main__":
-    parser = GraphicsTest()
-    if (not parser.process()):
-        parser.print_help()
+    graphics_test = GraphicsTest()
+    if (not graphics_test.process()):
+        graphics_test.print_help()
