@@ -83,18 +83,85 @@ cdef class FrameCanvas(Canvas):
         def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).pwmbits()
         def __set__(self, pwmBits): (<cppinc.FrameCanvas*>self.__getCanvas()).SetPWMBits(pwmBits)
 
+cdef class RGBMatrixOptions:
+    def __cinit__(self):
+        self.__options = cppinc.Options()
+
+    property hardware_mapping:
+        def __get__(self): return self.__options.hardware_mapping
+        def __set__(self, value):
+            self.__py_encoded_hardware_mapping = value.encode('utf-8')
+            self.__options.hardware_mapping = self.__py_encoded_hardware_mapping
+
+    property rows:
+        def __get__(self): return self.__options.rows
+        def __set__(self, uint8_t value): self.__options.rows = value
+
+    property chain_length:
+        def __get__(self): return self.__options.chain_length
+        def __set__(self, uint8_t value): self.__options.chain_length = value
+
+    property parallel:
+        def __get__(self): return self.__options.parallel
+        def __set__(self, uint8_t value): self.__options.parallel = value
+
+    property pwm_bits:
+        def __get__(self): return self.__options.pwm_bits
+        def __set__(self, uint8_t value): self.__options.pwm_bits = value
+
+    property pwm_lsb_nanoseconds:
+        def __get__(self): return self.__options.pwm_lsb_nanoseconds
+        def __set__(self, uint32_t value): self.__options.pwm_lsb_nanoseconds = value
+
+    property brightness:
+        def __get__(self): return self.__options.brightness
+        def __set__(self, uint8_t value): self.__options.brightness = value
+
+    property disable_hardware_pulsing:
+        def __get__(self): return self.__options.disable_hardware_pulsing
+        def __set__(self, value): self.__options.disable_hardware_pulsing = value
+
+    property show_refresh_rate:
+        def __get__(self): return self.__options.show_refresh_rate
+        def __set__(self, value): self.__options.show_refresh_rate = value
+
+    property swap_green_blue:
+        def __get__(self): return self.__options.swap_green_blue
+        def __set__(self, value): self.__options.swap_green_blue = value
+
+    property inverse_colors:
+        def __get__(self): return self.__options.inverse_colors
+        def __set__(self, value): self.__options.inverse_colors = value
+
+cdef class RuntimeOptions:
+    def __cinit__(self):
+        self.__runtime_options = cppinc.RuntimeOptions()
+
+    property gpio_slowdown:
+        def __get__(self): return self.__runtime_options.gpio_slowdown
+        def __set__(self, uint8_t value): self.__runtime_options.gpio_slowdown = value
+
+    property daemon:
+        def __get__(self): return self.__runtime_options.daemon
+        def __set__(self, uint8_t value): self.__runtime_options.daemon = value
+
+    property drop_privileges:
+        def __get__(self): return self.__runtime_options.drop_privileges
+        def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
+
 
 cdef class RGBMatrix(Canvas):
-    def __cinit__(self, int rows, int chains = 1, int parallel = 1):
-        # TODO(Saij): this should initialize an RGBMatrix::Options and
-        # RuntimeOptions, then call CreateMatrixFromOptions() instead of the
-        # cppinc.RGBMatrix() constructor directly. No __gpio needed anymore.
-        # The options allow to set more things, so they should probably be
-        # available as named parameters in Python ?
+
+    def __cinit__(self, RGBMatrixOptions options = RGBMatrixOptions(),
+        RuntimeOptions runtime_options = RuntimeOptions()):
+
+        # For backward compatibility?
         self.__gpio = new cppinc.GPIO()
         if not self.__gpio.Init():
             raise Exception("Error initializing GPIOs")  # will segfault?!
-        self.__matrix = new cppinc.RGBMatrix(self.__gpio, rows, chains, parallel)
+
+        self.__matrix = cppinc.CreateMatrixFromOptions(options.__options,
+            runtime_options.__runtime_options)
 
     def __dealloc__(self):
         self.__matrix.Clear()

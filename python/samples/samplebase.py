@@ -4,7 +4,7 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
-from rgbmatrix import RGBMatrix
+from rgbmatrix import RGBMatrix, RGBMatrixOptions, RuntimeOptions
 
 
 class SampleBase(object):
@@ -18,6 +18,10 @@ class SampleBase(object):
         self.parser.add_argument("-p", "--pwmbits", action="store", help="Bits used for PWM. Something between 1..11. Default: 11", default=11, type=int)
         self.parser.add_argument("-l", "--luminance", action="store_true", help="Don't do luminance correction (CIE1931)")
         self.parser.add_argument("-b", "--brightness", action="store", help="Sets brightness level. Default: 100. Range: 1..100", default=100, type=int)
+        self.parser.add_argument("-m", "--hardware_mapping", help="Hardware Mapping: regular, adafruit-hat, adafruit-hat-pwm" , choices=['regular', 'adafruit-hat', 'adafruit-hat-pwm'], type=str)
+        self.parser.add_argument("--pwm_lsb_nanoseconds", action="store", help="Base time-unit for the on-time in the lowest significant bit in nanoseconds. Default: 130", default=130, type=int)
+        self.parser.add_argument("--show_refresh_rate", action="store_true", help="Shows the current refresh rate of the LED panel")
+        self.parser.add_argument("--gpio_slowdown", action="store", help="Slow down writing to GPIO. Range: 1..100. Default: 1", type=int)
 
     def usleep(self, value):
         time.sleep(value / 1000000.0)
@@ -27,12 +31,25 @@ class SampleBase(object):
 
     def process(self):
         self.args = self.parser.parse_args()
-        
-        # TODO: validate values with RGBmatrix::Options::Validate().
 
-        self.matrix = RGBMatrix(self.args.rows, self.args.chain, self.args.parallel)
-        self.matrix.pwmBits = self.args.pwmbits
-        self.matrix.brightness = self.args.brightness
+        options = RGBMatrixOptions()
+
+        if self.args.hardware_mapping != None:
+          options.hardware_mapping = self.args.hardware_mapping
+        options.rows = self.args.rows
+        options.chain_length = self.args.chain
+        options.parallel = self.args.parallel
+        options.pwm_bits = self.args.pwmbits
+        options.brightness = self.args.brightness
+        options.pwm_lsb_nanoseconds = self.args.pwm_lsb_nanoseconds
+        if self.args.show_refresh_rate:
+          options.show_refresh_rate = 1
+
+        runtime_options = RuntimeOptions()
+        if self.args.gpio_slowdown != None:
+            runtime_options.gpio_slowdown = self.args.gpio_slowdown
+
+        self.matrix = RGBMatrix(options, runtime_options)
 
         if self.args.luminance:
             self.matrix.luminanceCorrect = False

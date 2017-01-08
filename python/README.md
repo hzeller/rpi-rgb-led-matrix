@@ -5,8 +5,8 @@ Building
 --------
 
 If you have a different than the standard wiring (for instance if you have an
-Adafruit HAT), edit the [../lib/Makefile](../lib/Makefile#L26) first to choose
-the hardware in question.
+Adafruit HAT), you can edit the [../lib/Makefile](../lib/Makefile#L26) first to choose
+the hardware in question (see below for setting it via command line argument).
 
 Then, in the root directory for the matrix library simply type:
 
@@ -91,6 +91,12 @@ adapt to your configuration
 ```bash
 cd samples
 sudo ./runtext.py --chain=4
+```
+
+To use different wiring without recompiling the library to change the default,
+you can use `--hardware_mapping` (or `-m`). For example, to use Adafruit HAT:
+```bash
+sudo ./runtext.py --hardware_mapping=adafruit-hat
 ```
 
 Here a complete example how to write an image viewer:
