@@ -3,6 +3,7 @@
 #
 # Please check in modified *.cpp files with distribution to not require cython
 # to be installed on the users' machine.
+# for python3: make PYTHON=$(which python3) CYTHON=$(which cython3)
 CYTHON ?= cython
 
 all : core.cpp graphics.cpp
