@@ -31,25 +31,6 @@ cdef class Canvas:
                     (r, g, b) = pixels[x, y]
                     self.SetPixel(x + offset_x, y + offset_y, r, g, b)
 
-cdef class FrameCanvas(Canvas):
-    def __dealloc__(self):
-        if <void*>self.__canvas != NULL:
-            self.__canvas = NULL
-
-    cdef cppinc.Canvas* __getCanvas(self) except *:
-        if <void*>self.__canvas != NULL:
-            return self.__canvas
-        raise Exception("Canvas was destroyed or not initialized, you cannot use this object anymore")
-
-    def Fill(self, uint8_t red, uint8_t green, uint8_t blue):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).Fill(red, green, blue)
-
-    def Clear(self):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).Clear()
-
-    def SetPixel(self, int x, int y, uint8_t red, uint8_t green, uint8_t blue):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixel(x, y, red, green, blue)
-
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def SetPixelsPillow(self, int xstart, int ystart, int width, int height, image):
@@ -71,6 +52,26 @@ cdef class FrameCanvas(Canvas):
                 g = (pixel >> 8) & 0xFF
                 b = (pixel >> 16) & 0xFF
                 my_canvas.SetPixel(xstart+col, ystart+row, r, g, b)
+
+cdef class FrameCanvas(Canvas):
+    def __dealloc__(self):
+        if <void*>self.__canvas != NULL:
+            self.__canvas = NULL
+
+    cdef cppinc.Canvas* __getCanvas(self) except *:
+        if <void*>self.__canvas != NULL:
+            return self.__canvas
+        raise Exception("Canvas was destroyed or not initialized, you cannot use this object anymore")
+
+    def Fill(self, uint8_t red, uint8_t green, uint8_t blue):
+        (<cppinc.FrameCanvas*>self.__getCanvas()).Fill(red, green, blue)
+
+    def Clear(self):
+        (<cppinc.FrameCanvas*>self.__getCanvas()).Clear()
+
+    def SetPixel(self, int x, int y, uint8_t red, uint8_t green, uint8_t blue):
+        (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixel(x, y, red, green, blue)
+
 
     property width:
         def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).width()
