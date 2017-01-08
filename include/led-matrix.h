@@ -362,11 +362,14 @@ int main(int argc, char **argv) {
 }
 */
 // This parses the flags from argv and updates the structs with the parsed-out
-// values. The recongized flags are removed from argv.
+// values. Structs can be NULL if you are not interested in it.
+// The recongized flags are removed from argv if "remove_consumed_flags"
+// is true; this simplifies your command line processing.
 // Returns 'true' on success, 'false' if there was flag parsing problem.
 bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RGBMatrix::Options *default_options,
-                           RuntimeOptions *runtime_options);
+                           RuntimeOptions *rt_options,
+                           bool remove_consumed_flags = true);
 
 // Factory to create a matrix and possibly other things such as dropping
 // privileges and becoming a daemon.
@@ -381,7 +384,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
 // Returns NULL, if there was a problem (a message then is written to stderr).
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
                                  RGBMatrix::Options *default_options = NULL,
-                                 RuntimeOptions *default_runtime_opts = NULL);
+                                 RuntimeOptions *default_runtime_opts = NULL,
+                                 bool remove_consumed_flags = true);
 
 // Show all the available options for CreateMatrixFromFlags().
 void PrintMatrixFlags(FILE *out,

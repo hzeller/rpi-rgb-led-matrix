@@ -124,7 +124,8 @@ static bool ConsumeStringFlag(const char *flag_name,
 
 static bool FlagInit(int &argc, char **&argv,
                      RGBMatrix::Options *mopts,
-                     RuntimeOptions *ropts) {
+                     RuntimeOptions *ropts,
+                     bool remove_consumed_options) {
   argv_iterator it = &argv[0];
   argv_iterator end = it + argc;
 
@@ -198,10 +199,12 @@ static bool FlagInit(int &argc, char **&argv,
     return false;
   }
 
-  // Success. Re-arrange flags to only include the ones not consumed.
-  argc = (int) unused_options.size();
-  for (int i = 0; i < argc; ++i) {
-    argv[i] = unused_options[i];
+  if (remove_consumed_options) {
+    // Success. Re-arrange flags to only include the ones not consumed.
+    argc = (int) unused_options.size();
+    for (int i = 0; i < argc; ++i) {
+      argv[i] = unused_options[i];
+    }
   }
   return true;
 }
@@ -238,7 +241,8 @@ static bool drop_privs(const char *priv_user, const char *priv_group) {
 
 bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RGBMatrix::Options *m_opt_in,
-                           RuntimeOptions *rt_opt_in) {
+                           RuntimeOptions *rt_opt_in,
+                           bool remove_consumed_options) {
   // Replace NULL arguments with some scratch-space.
   RGBMatrix::Options scratch_matrix;
   RGBMatrix::Options *mopt = (m_opt_in != NULL) ? m_opt_in : &scratch_matrix;
@@ -246,7 +250,7 @@ bool ParseOptionsFromFlags(int *argc, char ***argv,
   RuntimeOptions scratch_rt;
   RuntimeOptions *ropt = (rt_opt_in != NULL) ? rt_opt_in : &scratch_rt;
 
-  return FlagInit(*argc, *argv, mopt, ropt);
+  return FlagInit(*argc, *argv, mopt, ropt, remove_consumed_options);
 }
 
 RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
@@ -297,14 +301,15 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
 // Public interface.
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
                                  RGBMatrix::Options *m_opt_in,
-                                 RuntimeOptions *rt_opt_in) {
+                                 RuntimeOptions *rt_opt_in,
+                                 bool remove_consumed_options) {
   RGBMatrix::Options scratch_matrix;
   RGBMatrix::Options *mopt = (m_opt_in != NULL) ? m_opt_in : &scratch_matrix;
 
   RuntimeOptions scratch_rt;
   RuntimeOptions *ropt = (rt_opt_in != NULL) ? rt_opt_in : &scratch_rt;
 
-  if (!ParseOptionsFromFlags(argc, argv, mopt, ropt))
+  if (!ParseOptionsFromFlags(argc, argv, mopt, ropt, remove_consumed_options))
     return NULL;
   return CreateMatrixFromOptions(*mopt, *ropt);
 }
@@ -406,6 +411,28 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   }
 
   return success;
+}
+
+// Linker trick: is someone was linking the old library that didn't have the
+// optional parameter defined, the linking will fail it wouldn't find the symbol
+// with less parameters. But we don't want to clutter the header with simple
+// delegation calls.
+//
+// So we define this symbol here and doing the delegation call until
+// really everyone had recompiled their code with the new header.
+//
+// Should be removed in a couple of months (March 2017ish)
+bool ParseOptionsFromFlags(int *argc, char ***argv,
+                           RGBMatrix::Options *default_options,
+                           RuntimeOptions *rt_options) {
+  return ParseOptionsFromFlags(argc, argv, default_options, rt_options,
+                               true);
+}
+RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
+                                 RGBMatrix::Options *default_options,
+                                 RuntimeOptions *default_rt_opts) {
+  return CreateMatrixFromFlags(argc, argv, default_options, default_rt_opts,
+                               true);
 }
 
 }  // namespace rgb_matrix
