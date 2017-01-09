@@ -4,7 +4,7 @@ import sys
 import os
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, RuntimeOptions
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
 
 class SampleBase(object):
@@ -45,11 +45,10 @@ class SampleBase(object):
         if self.args.show_refresh_rate:
           options.show_refresh_rate = 1
 
-        runtime_options = RuntimeOptions()
         if self.args.gpio_slowdown != None:
-            runtime_options.gpio_slowdown = self.args.gpio_slowdown
+            options.gpio_slowdown = self.args.gpio_slowdown
 
-        self.matrix = RGBMatrix(options, runtime_options)
+        self.matrix = RGBMatrix(options = options)
 
         if self.args.luminance:
             self.matrix.luminanceCorrect = False

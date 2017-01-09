@@ -86,7 +86,9 @@ cdef class FrameCanvas(Canvas):
 cdef class RGBMatrixOptions:
     def __cinit__(self):
         self.__options = cppinc.Options()
+        self.__runtime_options = cppinc.RuntimeOptions()
 
+    # RGBMatrix::Options properties
     property hardware_mapping:
         def __get__(self): return self.__options.hardware_mapping
         def __set__(self, value):
@@ -133,9 +135,7 @@ cdef class RGBMatrixOptions:
         def __get__(self): return self.__options.inverse_colors
         def __set__(self, value): self.__options.inverse_colors = value
 
-cdef class RuntimeOptions:
-    def __cinit__(self):
-        self.__runtime_options = cppinc.RuntimeOptions()
+    # RuntimeOptions properties
 
     property gpio_slowdown:
         def __get__(self): return self.__runtime_options.gpio_slowdown
@@ -151,9 +151,24 @@ cdef class RuntimeOptions:
 
 
 cdef class RGBMatrix(Canvas):
+    def __cinit__(self, int rows = 0, int chains = 0, int parallel = 0,
+        RGBMatrixOptions options = None):
 
-    def __cinit__(self, RGBMatrixOptions options = RGBMatrixOptions(),
-        RuntimeOptions runtime_options = RuntimeOptions()):
+        # If RGBMatrixOptions not provided, create defaults and set any optional
+        # parameters supplied
+        if options == None:
+            options = RGBMatrixOptions()
+            if rows > 0:
+                options.rows = rows
+            if chains > 0:
+                options.chain_length = chains
+            if parallel > 0:
+                options.parallel = parallel
+        # If RGBMatrixOptions provided with also any of rows/chains/parallel
+        # use either RGBMatrixOptions OR rows/chains/parallel
+        elif options != None and (rows > 0 or chains > 0 or parallel > 0):
+            raise Exception("Providing RGBMatrixOptions with rows/chains/parallel parameters not supported.")
+
 
         # For backward compatibility?
         self.__gpio = new cppinc.GPIO()
@@ -161,7 +176,7 @@ cdef class RGBMatrix(Canvas):
             raise Exception("Error initializing GPIOs")  # will segfault?!
 
         self.__matrix = cppinc.CreateMatrixFromOptions(options.__options,
-            runtime_options.__runtime_options)
+            options.__runtime_options)
 
     def __dealloc__(self):
         self.__matrix.Clear()
