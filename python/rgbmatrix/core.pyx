@@ -158,22 +158,13 @@ cdef class RGBMatrix(Canvas):
         # parameters supplied
         if options == None:
             options = RGBMatrixOptions()
-            if rows > 0:
-                options.rows = rows
-            if chains > 0:
-                options.chain_length = chains
-            if parallel > 0:
-                options.parallel = parallel
-        # If RGBMatrixOptions provided with also any of rows/chains/parallel
-        # use either RGBMatrixOptions OR rows/chains/parallel
-        elif options != None and (rows > 0 or chains > 0 or parallel > 0):
-            raise Exception("Providing RGBMatrixOptions with rows/chains/parallel parameters not supported.")
 
-
-        # For backward compatibility?
-        self.__gpio = new cppinc.GPIO()
-        if not self.__gpio.Init():
-            raise Exception("Error initializing GPIOs")  # will segfault?!
+        if rows > 0:
+            options.rows = rows
+        if chains > 0:
+            options.chain_length = chains
+        if parallel > 0:
+            options.parallel = parallel
 
         self.__matrix = cppinc.CreateMatrixFromOptions(options.__options,
             options.__runtime_options)
@@ -181,7 +172,6 @@ cdef class RGBMatrix(Canvas):
     def __dealloc__(self):
         self.__matrix.Clear()
         del self.__matrix
-        del self.__gpio
 
     cdef cppinc.Canvas* __getCanvas(self) except *:
         if <void*>self.__matrix != NULL:
