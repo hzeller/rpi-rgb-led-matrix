@@ -119,6 +119,10 @@ cdef class RGBMatrixOptions:
         def __get__(self): return self.__options.brightness
         def __set__(self, uint8_t value): self.__options.brightness = value
 
+    property scan_mode:
+        def __get__(self): return self.__options.scan_mode
+        def __set__(self, uint8_t value): self.__options.scan_mode = value
+
     property disable_hardware_pulsing:
         def __get__(self): return self.__options.disable_hardware_pulsing
         def __set__(self, value): self.__options.disable_hardware_pulsing = value
