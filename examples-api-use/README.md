@@ -220,7 +220,7 @@ is arranged in this U-shape (on its side)
 How can we make this 'folded' 128x32 screen behave like a 64x64 screen ?
 
 In the API, there is an interface to implement,
-a [`CanvasTransformer`](./include/canvas.h) that allows to program
+a [`CanvasTransformer`](../include/canvas.h) that allows to program
 re-arrangements of pixels in any way. You can plug such a `CanvasTransformer`
 into the RGBMatrix to use the new layout.
 
