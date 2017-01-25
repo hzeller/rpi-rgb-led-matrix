@@ -85,18 +85,18 @@ Therefore you will need to run all you python scripts as using sudo.
 You find examples in the [samples/](./samples) subdirectory.
 The examples all use the [samplebase.py](./samples/samplebase.py) that provides
 some utility to all example programs, such as command-line parsing: all
-sample-programs accept `--rows`, `--chain` and `--parallel` as options to
-adapt to your configuration
+sample-programs accept `--led-rows`, `--led-chain` and `--led-parallel` as
+command line options to adapt to your configuration
 
 ```bash
 cd samples
-sudo ./runtext.py --chain=4
+sudo ./runtext.py --led-chain=4
 ```
 
 To use different wiring without recompiling the library to change the default,
-you can use `--hardware_mapping` (or `-m`). For example, to use Adafruit HAT:
+you can use `--led-gpio-mapping` (or `-m`). For example, to use Adafruit HAT:
 ```bash
-sudo ./runtext.py --hardware_mapping=adafruit-hat
+sudo ./runtext.py --led-gpio-mapping=adafruit-hat
 ```
 
 Here a complete example how to write an image viewer:
