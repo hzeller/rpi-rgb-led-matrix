@@ -44,7 +44,8 @@ be a welcome pull request.
 
 Performance
 -----------
-The simplicity of scripting comes at a price: Python is slower than C++ of course.
+The simplicity of scripting comes at a price: Python is slower than C++ of
+course.
 If you have to do a lot of pixel updates in your demo, this can be too slow
 depending on what you do. Here are some rough numbers for calling `SetPixel()`
 in a tight loop:
@@ -60,21 +61,21 @@ in a tight loop:
     So if you can, stick with Python2.7 for now.
   * The good news is, that this is due to overhead per function call. If you
     can do more per function call, then this is less problematic. For instance
-    if you have an image to be displayed with `SetImage()`, that will be faster
-    per pixel.
-    (Currently, `SetImage()` is still much slower than it could be, because
-    it does not send the raw buffer into the C-side but does individual
-    SetPixel() calls in the interface layer. If you are interested in improving
-    the performance of Python, this would be a good start and welcomed
-    pull request).
+    if you have an image to be displayed with `SetImage()`, that will much faster
+    per pixel (internally this then copies the pixels natively).
 
 The ~0.015 Megapixels/s on a Pi-1 means that you can update a 32x32 matrix
-at most with ~15Hz. If you have chained 5, then you barely reach 3Hz.
-In a Pi-3, you get about 400Hz update rate (85Hz for 5-chain) with a Python
-program (while with C++, you can do the same thing with a comfortable 3500Hz
-(700Hz for 5)). Keep in mind that this is if all you do is just calling
+at most with ~15fps. If you have chained 5, then you barely reach 3fps.
+In a Pi-3, you get about 400fps update rate (85fps for 5-chain) with a Python
+program (while with C++, you can do the same thing with a comfortable 3500fps
+(700fps for 5)). Keep in mind that this is if all you do is just calling
 `SetPixel()`, it does not include any time of what you actually want to do in
 your demo - so anything in addition to that will drop your update rate.
+
+If you can prepare the animation you want to show, then you can either prepare
+images and then use the much faster call to `SetImage()`, or can fill
+entire offscreen-frames (create with `CreateFrameCanvas()`) and then
+swap with `SwapOnVSync()` (this is the fastest method).
 
 Using the library
 -----------------
@@ -105,7 +106,7 @@ Here a complete example how to write an image viewer:
 import time
 import sys
 
-from rgbmatrix import RGBMatrix
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from PIL import Image
 
 if len(sys.argv) < 2:
@@ -115,10 +116,14 @@ else:
 
 image = Image.open(image_file)
 
-rows = 32
-chain = 1
-parallel = 1
-matrix = RGBMatrix(rows, chain, parallel)
+# Configuration for the matrix
+options = RGBMatrixOptions()
+options.rows = 32
+options.chain_length = 1
+options.parallel = 1
+options.hardware_mapping = 'regular'  # If you have an Adafruit HAT: 'adafruit-hat'
+
+matrix = RGBMatrix(options = options)
 
 # Make image fit our screen.
 image.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
