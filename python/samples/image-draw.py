@@ -19,10 +19,16 @@
 from PIL import Image
 from PIL import ImageDraw
 import time
-from rgbmatrix import RGBMatrix
+from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
-# Rows and chain length are both required parameters:
-matrix = RGBMatrix(32, 1, 1)
+# Configuration for the matrix
+options = RGBMatrixOptions()
+options.rows = 32
+options.chain_length = 1
+options.parallel = 1
+options.hardware_mapping = 'regular'  # If you have an Adafruit HAT: 'adafruit-hat'
+
+matrix = RGBMatrix(options = options)
 
 # RGB example w/graphics prims.
 # Note, only "RGB" mode is supported currently.
