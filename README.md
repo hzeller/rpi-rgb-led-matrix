@@ -385,16 +385,16 @@ features on the HAT. So they forked this library and modified the pinout there.
 However, that fork is _ancient_, so I strongly suggest to use this original
 library instead. You can choose the Adafruit pinout with a command line flag.
 
-Just pass the option `--led-gpio-mapping=adafruit-hat`.
+Just pass the option `--led-gpio-mapping=adafruit-hat`. This works on the C++
+and Python examples.
 
-If you want to have this the default whenever you start (or if you are using
-the Python library that does not support to set this at runtime yet), add the
-following setting in front of your compilation:
+If you want to have this a compiled-in default, add the following setting in
+front of your compilation:
 ```
 HARDWARE_DESC=adafruit-hat make
 ```
-(alternatively, you can modify the `lib/Makefile` and change it there directly,
-which in particular is useful if you also compile the Python library)
+(alternatively, you can modify the `lib/Makefile` and change it there directly)
+
 Then re-compile and the new flag default is now `adafruit-hat`, so
 no need to set it on the command line.
 
