@@ -242,7 +242,8 @@ the height. So the 128x32 pixel logical arrangement would be a
 64x64 arrangement doing the coordinate mapping.
 
 ```
-  matrix->ApplyStaticTransformer(UArrangementTransformer());
+  // One chain arranged in a U
+  matrix->ApplyStaticTransformer(UArrangementTransformer(1));
 ```
 
 In the demo program and the [`led-image-viewer`](../utils#image-viewer), you
