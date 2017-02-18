@@ -83,6 +83,11 @@ cdef class FrameCanvas(Canvas):
         def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).pwmbits()
         def __set__(self, pwmBits): (<cppinc.FrameCanvas*>self.__getCanvas()).SetPWMBits(pwmBits)
 
+    property brightness:
+        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).brightness()
+        def __set__(self, val): (<cppinc.FrameCanvas*>self.__getCanvas()).SetBrightness(val)
+
+
 cdef class RGBMatrixOptions:
     def __cinit__(self):
         self.__options = cppinc.Options()
