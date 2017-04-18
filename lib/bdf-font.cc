@@ -28,8 +28,9 @@ typedef uint32_t rowbitmap_t;
 
 namespace rgb_matrix {
 struct Font::Glyph {
+  int device_width, device_height;
   int width, height;
-  int y_offset;
+  int x_offset,y_offset;
   rowbitmap_t bitmap[0];  // contains 'height' elements.
 };
 
@@ -53,7 +54,7 @@ bool Font::LoadFont(const char *path) {
   Glyph tmp;
   Glyph *current_glyph = NULL;
   int row = 0;
-  int x_offset = 0;
+  
   int bitmap_shift = 0;
   while (fgets(buffer, sizeof(buffer), f)) {
     if (sscanf(buffer, "FONTBOUNDINGBOX %d %d %d %d",
@@ -63,15 +64,20 @@ bool Font::LoadFont(const char *path) {
     else if (sscanf(buffer, "ENCODING %ud", &codepoint) == 1) {
       // parsed.
     }
+    else if (sscanf(buffer, "DWIDTH %d %d", &tmp.device_width, &tmp.device_height
+                    ) == 2) {
+      // parsed.
+    }
     else if (sscanf(buffer, "BBX %d %d %d %d", &tmp.width, &tmp.height,
-                    &x_offset, &tmp.y_offset) == 4) {
+                    &tmp.x_offset, &tmp.y_offset) == 4) {
       current_glyph = (Glyph*) malloc(sizeof(Glyph)
                                       + tmp.height * sizeof(rowbitmap_t));
       *current_glyph = tmp;
       // We only get number of bytes large enough holding our width. We want
       // it always left-aligned.
       bitmap_shift =
-        8 * (sizeof(rowbitmap_t) - ((current_glyph->width + 7) / 8)) + x_offset;
+        8 * (sizeof(rowbitmap_t) - ((current_glyph->width + 7) / 8)) - 
+              current_glyph->x_offset;
       row = -1;  // let's not start yet, wait for BITMAP
     }
     else if (strncmp(buffer, "BITMAP", strlen("BITMAP")) == 0) {
@@ -116,7 +122,7 @@ int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
   for (int y = 0; y < g->height; ++y) {
     const rowbitmap_t row = g->bitmap[y];
     rowbitmap_t x_mask = 0x80000000;
-    for (int x = 0; x < g->width; ++x, x_mask >>= 1) {
+    for (int x = 0; x < g->device_width; ++x, x_mask >>= 1) {
       if (row & x_mask) {
         c->SetPixel(x_pos + x, y_pos + y, color.r, color.g, color.b);
       } else if (bgcolor) {
@@ -124,7 +130,7 @@ int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
       }
     }
   }
-  return g->width;
+  return g->device_width;
 }
 
 int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos, const Color &color,
