@@ -26,7 +26,8 @@ static int usage(const char *progname) {
           "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
           "\t-x <x-origin>     : X-Origin of displaying text (Default: 0)\n"
           "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
-          "\t-C <r,g,b>        : Color. Default 255,255,0\n");
+          "\t-C <r,g,b>        : Color. Default 255,255,0\n"
+          "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n");
   return 1;
 }
 
@@ -38,13 +39,14 @@ int main(int argc, char *argv[]) {
   RGBMatrix *canvas = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
 
   Color color(255, 255, 0);
+  Color bg_color(0, 0, 0);
   const char *bdf_font_file = NULL;
   int x_orig = 0;
   int y_orig = -1;
   int brightness = 100;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:b:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:b:")) != -1) {
     switch (opt) {
     case 'b': brightness = atoi(optarg); break;
     case 'x': x_orig = atoi(optarg); break;
@@ -52,7 +54,13 @@ int main(int argc, char *argv[]) {
     case 'f': bdf_font_file = strdup(optarg); break;
     case 'C':
       if (!parseColor(&color, optarg)) {
-        fprintf(stderr, "Invalid color spec.\n");
+        fprintf(stderr, "Invalid color spec: %s\n", optarg);
+        return usage(argv[0]);
+      }
+      break;
+    case 'B':
+      if (!parseColor(&bg_color, optarg)) {
+        fprintf(stderr, "Invalid background color spec: %s\n", optarg);
         return usage(argv[0]);
       }
       break;
@@ -112,7 +120,8 @@ int main(int argc, char *argv[]) {
     }
     if (line_empty)
       continue;
-    rgb_matrix::DrawText(canvas, font, x, y + font.baseline(), color, line);
+    rgb_matrix::DrawText(canvas, font, x, y + font.baseline(),
+                         color, &bg_color, line);
     y += font.height();
   }
 
