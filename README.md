@@ -305,10 +305,22 @@ In general, run a minimal configuration on your Pi.
     Using a Pi with a GUI is a frustratingly slow use of an otherwise
     perfectly good embedded device.)
 
-  * Switch off on-board sound (external USB sound adapters work).
+  * Switch off on-board sound (`dtparam=audio=off` in `/boot/config.txt`).
+    External USB sound adapters work, and are much better quality anyway,
+    so that is recommended if you happen to need sound. The on-board sound
+    uses a timing circuit that the RGB-Matrix needs.
 
-Everything seems to work well with a **[Raspbian Lite][raspbian-lite]**
-distribution.
+  * Don't run anything that messes in parallel with the GPIO pins, e.g.
+    PiGPIO library/daemon.
+
+  * I have also seen reports that on some Pis, the one-wire protocol is
+    enabled (w1-gpio). This will also not work (disable by removing
+    `dtoverlay=w1-gpio` in `/boot/config.txt`; or using `raspi-config`,
+    Interface Options -> 1-Wire)
+
+The default install of **[Raspbian Lite][raspbian-lite]** seems to be a good
+starting point, as it has a reasonable minimal configuration to begin with.
+So I strongly recommend using that.
 
 ### Bad interaction with Sound
 If sound is enabled on your Pi, this will not work together with the LED matrix,
