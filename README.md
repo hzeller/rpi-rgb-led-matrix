@@ -98,9 +98,9 @@ sudo examples-api-use/demo -D0
 
 ### Utilities
 
-The [utils directory](./utils) is meant for ready utilities to show images,
-animated gifs, text and video. Read the [README](./utils/README.md) there
-for instructions how to compile.
+The [utils directory](./utils) is meant for ready utilities to show images or
+animated gifs. Read the [README](./utils/README.md) there for instructions
+how to compile.
 
 There are external projects that use this library and provide higher level
 network protocols, such as the
