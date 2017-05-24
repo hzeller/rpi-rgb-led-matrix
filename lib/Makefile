@@ -38,12 +38,6 @@ HARDWARE_DESC?=regular
 # Flag: --led-inverse
 #DEFINES+=-DINVERSE_RGB_DISPLAY_COLORS
 
-# Some panels out there seem to have Green and Blue swapped (even though the
-# writing on connector looks correct). This option will swap these colors if
-# you happen to have gotten such panel.
-# Flag: --led-swap-green-blue
-#DEFINES+=-DRGB_SWAP_GREEN_BLUE
-
 # For curiosity reasons and while tweaking values for LSB_PWM_NANOSECONDS,
 # uncomment to see refresh rate in terminal.
 # Flag: --led-show-refresh

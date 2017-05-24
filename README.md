@@ -286,12 +286,12 @@ You might want this if started from an init script at boot-time.
 
 ```
 --led-inverse             : Switch if your matrix has inverse colors on.
---led-swap-green-blue     : Switch if your matrix has green/blue swapped on.
+--led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
 ```
 
 These are if you have a different kind of LED panel in which the logic of the
-color bits is reversed (`--led-inverse`) or where the green and blue colors
-are swapped (`--led-swap-green-blue`). You know it when you see it.
+color bits is reversed (`--led-inverse`) or where the Red, Green and Blue LEDs
+are mixed up (`--led-rgb-sequence`). You know it when you see it.
 
 Troubleshooting
 ---------------

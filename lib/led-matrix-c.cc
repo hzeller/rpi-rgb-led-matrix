@@ -62,7 +62,7 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     OPT_COPY_IF_SET(scan_mode);
     OPT_COPY_IF_SET(disable_hardware_pulsing);
     OPT_COPY_IF_SET(show_refresh_rate);
-    OPT_COPY_IF_SET(swap_green_blue);
+    OPT_COPY_IF_SET(led_rgb_sequence);
     OPT_COPY_IF_SET(inverse_colors);
 #undef OPT_COPY_IF_SET
   }
@@ -87,7 +87,7 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     ACTUAL_VALUE_BACK_TO_OPT(scan_mode);
     ACTUAL_VALUE_BACK_TO_OPT(disable_hardware_pulsing);
     ACTUAL_VALUE_BACK_TO_OPT(show_refresh_rate);
-    ACTUAL_VALUE_BACK_TO_OPT(swap_green_blue);
+    ACTUAL_VALUE_BACK_TO_OPT(led_rgb_sequence);
     ACTUAL_VALUE_BACK_TO_OPT(inverse_colors);
 #undef ACTUAL_VALUE_BACK_TO_OPT
   }

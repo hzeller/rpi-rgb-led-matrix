@@ -10,3 +10,6 @@ all : core.cpp graphics.cpp
 
 %.cpp : %.pyx
 	$(CYTHON) --cplus -o $@ $^
+
+clean:
+	rm -rf core.cpp graphics.cpp

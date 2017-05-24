@@ -709,6 +709,7 @@ struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions {
   struct rgb_matrix::RGBMatrix::Options __pyx___options;
   struct rgb_matrix::RuntimeOptions __pyx___runtime_options;
   PyObject *__pyx___py_encoded_hardware_mapping;
+  PyObject *__pyx___py_encoded_led_rgb_sequence;
 };
 
 
@@ -1064,7 +1065,7 @@ static const char __pyx_k_DrawCircle[] = "DrawCircle";
 static const char __pyx_k_pyx_vtable[] = "__pyx_vtable__";
 static const char __pyx_k_Couldn_t_load_font[] = "Couldn't load font ";
 static const char __pyx_k_rgbmatrix_graphics[] = "rgbmatrix.graphics";
-static const char __pyx_k_home_nick_codes_rpi_rgb_led_mat[] = "/home/nick/codes/rpi-rgb-led-matrix/python/rgbmatrix/graphics.pyx";
+static const char __pyx_k_home_pi_rpi_rgb_led_matrix_pyth[] = "/home/pi/rpi-rgb-led-matrix/python/rgbmatrix/graphics.pyx";
 static PyObject *__pyx_kp_s_Couldn_t_load_font;
 static PyObject *__pyx_n_s_DrawCircle;
 static PyObject *__pyx_n_s_DrawLine;
@@ -1076,7 +1077,7 @@ static PyObject *__pyx_n_s_color;
 static PyObject *__pyx_n_s_encode;
 static PyObject *__pyx_n_s_f;
 static PyObject *__pyx_n_s_green;
-static PyObject *__pyx_kp_s_home_nick_codes_rpi_rgb_led_mat;
+static PyObject *__pyx_kp_s_home_pi_rpi_rgb_led_matrix_pyth;
 static PyObject *__pyx_n_s_main;
 static PyObject *__pyx_n_s_pyx_vtable;
 static PyObject *__pyx_n_s_r;
@@ -2643,7 +2644,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_encode, __pyx_k_encode, sizeof(__pyx_k_encode), 0, 0, 1, 1},
   {&__pyx_n_s_f, __pyx_k_f, sizeof(__pyx_k_f), 0, 0, 1, 1},
   {&__pyx_n_s_green, __pyx_k_green, sizeof(__pyx_k_green), 0, 0, 1, 1},
-  {&__pyx_kp_s_home_nick_codes_rpi_rgb_led_mat, __pyx_k_home_nick_codes_rpi_rgb_led_mat, sizeof(__pyx_k_home_nick_codes_rpi_rgb_led_mat), 0, 0, 1, 0},
+  {&__pyx_kp_s_home_pi_rpi_rgb_led_matrix_pyth, __pyx_k_home_pi_rpi_rgb_led_matrix_pyth, sizeof(__pyx_k_home_pi_rpi_rgb_led_matrix_pyth), 0, 0, 1, 0},
   {&__pyx_n_s_main, __pyx_k_main, sizeof(__pyx_k_main), 0, 0, 1, 1},
   {&__pyx_n_s_pyx_vtable, __pyx_k_pyx_vtable, sizeof(__pyx_k_pyx_vtable), 0, 0, 1, 1},
   {&__pyx_n_s_r, __pyx_k_r, sizeof(__pyx_k_r), 0, 0, 1, 1},
@@ -2700,7 +2701,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__3 = PyTuple_Pack(6, __pyx_n_s_c, __pyx_n_s_f, __pyx_n_s_x, __pyx_n_s_y, __pyx_n_s_color, __pyx_n_s_text); if (unlikely(!__pyx_tuple__3)) __PYX_ERR(0, 43, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__3);
   __Pyx_GIVEREF(__pyx_tuple__3);
-  __pyx_codeobj__4 = (PyObject*)__Pyx_PyCode_New(6, 0, 6, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__3, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_nick_codes_rpi_rgb_led_mat, __pyx_n_s_DrawText, 43, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__4)) __PYX_ERR(0, 43, __pyx_L1_error)
+  __pyx_codeobj__4 = (PyObject*)__Pyx_PyCode_New(6, 0, 6, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__3, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_pi_rpi_rgb_led_matrix_pyth, __pyx_n_s_DrawText, 43, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__4)) __PYX_ERR(0, 43, __pyx_L1_error)
 
   /* "rgbmatrix/graphics.pyx":46
  *     return cppinc.DrawText(c.__getCanvas(), f.__font, x, y, color.__color, text.encode('utf-8'))
@@ -2712,7 +2713,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__5 = PyTuple_Pack(5, __pyx_n_s_c, __pyx_n_s_x, __pyx_n_s_y, __pyx_n_s_r, __pyx_n_s_color); if (unlikely(!__pyx_tuple__5)) __PYX_ERR(0, 46, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__5);
   __Pyx_GIVEREF(__pyx_tuple__5);
-  __pyx_codeobj__6 = (PyObject*)__Pyx_PyCode_New(5, 0, 5, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__5, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_nick_codes_rpi_rgb_led_mat, __pyx_n_s_DrawCircle, 46, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__6)) __PYX_ERR(0, 46, __pyx_L1_error)
+  __pyx_codeobj__6 = (PyObject*)__Pyx_PyCode_New(5, 0, 5, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__5, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_pi_rpi_rgb_led_matrix_pyth, __pyx_n_s_DrawCircle, 46, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__6)) __PYX_ERR(0, 46, __pyx_L1_error)
 
   /* "rgbmatrix/graphics.pyx":49
  *     cppinc.DrawCircle(c.__getCanvas(), x, y, r, color.__color)
@@ -2724,7 +2725,7 @@ static int __Pyx_InitCachedConstants(void) {
   __pyx_tuple__7 = PyTuple_Pack(6, __pyx_n_s_c, __pyx_n_s_x1, __pyx_n_s_y1, __pyx_n_s_x2, __pyx_n_s_y2, __pyx_n_s_color); if (unlikely(!__pyx_tuple__7)) __PYX_ERR(0, 49, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__7);
   __Pyx_GIVEREF(__pyx_tuple__7);
-  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(6, 0, 6, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_nick_codes_rpi_rgb_led_mat, __pyx_n_s_DrawLine, 49, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) __PYX_ERR(0, 49, __pyx_L1_error)
+  __pyx_codeobj__8 = (PyObject*)__Pyx_PyCode_New(6, 0, 6, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__7, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_pi_rpi_rgb_led_matrix_pyth, __pyx_n_s_DrawLine, 49, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__8)) __PYX_ERR(0, 49, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;

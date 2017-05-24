@@ -95,6 +95,11 @@ struct RGBLedMatrixOptions {
    */
   int scan_mode;
 
+  /* In case the internal sequence of mapping is not "RGB", this contains the
+   * real mapping. Some panels mix up these colors.
+   */
+  const char *led_rgb_sequence;     /* Corresponding flag: --led-rgb-sequence */
+
   /** The following are boolean flags, all off by default **/
 
   /* Allow to use the hardware subsystem to create pulses. This won't do
@@ -103,7 +108,7 @@ struct RGBLedMatrixOptions {
    */
   unsigned disable_hardware_pulsing:1;
   unsigned show_refresh_rate:1;  /* Corresponding flag: --led-show-refresh    */
-  unsigned swap_green_blue:1;    /* Corresponding flag: --led-swap-green-blue */
+  // unsigned swap_green_blue:1; /* deprecated, use led_sequence instead */
   unsigned inverse_colors:1;     /* Corresponding flag: --led-inverse         */
 };
 

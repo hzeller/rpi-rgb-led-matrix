@@ -26,7 +26,7 @@ Options:
         --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
         --led-show-refresh        : Show refresh rate.
         --led-inverse             : Switch if your matrix has inverse colors on.
-        --led-swap-green-blue     : Switch if your matrix has green/blue swapped on.
+        --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
         --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
         --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
         --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).

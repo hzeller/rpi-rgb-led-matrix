@@ -61,7 +61,7 @@ class Framebuffer {
 public:
   Framebuffer(int rows, int columns, int parallel,
               int scan_mode,
-              bool swap_green_blue, bool inverse_color,
+              const char* led_sequence, bool inverse_color,
               PixelMapper **mapper);
   ~Framebuffer();
 
@@ -101,6 +101,13 @@ public:
 private:
   static const struct HardwareMapping *hardware_mapping_;
 
+  // This returns the gpio-bit for given color (one of 'R', 'G', 'B'). This is
+  // returning the right value in case led_sequence_ is _not_ "RGB"
+  gpio_bits_t GetGpioFromLedSequence(char col,
+                                     gpio_bits_t default_r,
+                                     gpio_bits_t default_g,
+                                     gpio_bits_t default_b);
+
   void InitDefaultDesignator(int x, int y, PixelDesignator *designator);
   inline void  MapColors(uint8_t r, uint8_t g, uint8_t b,
                          uint16_t *red, uint16_t *green, uint16_t *blue);
@@ -110,7 +117,7 @@ private:
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
   const int scan_mode_;
-  const bool swap_green_blue_;
+  const char *const led_sequence_;  // Some LEDs are mapped differently.
   const bool inverse_color_;
 
   uint8_t pwm_bits_;   // PWM bits to display.

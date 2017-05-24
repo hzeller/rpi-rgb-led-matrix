@@ -136,13 +136,15 @@ cdef class RGBMatrixOptions:
         def __get__(self): return self.__options.show_refresh_rate
         def __set__(self, value): self.__options.show_refresh_rate = value
 
-    property swap_green_blue:
-        def __get__(self): return self.__options.swap_green_blue
-        def __set__(self, value): self.__options.swap_green_blue = value
-
     property inverse_colors:
         def __get__(self): return self.__options.inverse_colors
         def __set__(self, value): self.__options.inverse_colors = value
+
+    property led_rgb_sequence:
+        def __get__(self): return self.__options.led_rgb_sequence
+        def __set__(self, value):
+            self.__py_encoded_led_rgb_sequence = value.encode('utf-8')
+            self.__options.led_rgb_sequence = self.__py_encoded_led_rgb_sequence
 
     # RuntimeOptions properties
 

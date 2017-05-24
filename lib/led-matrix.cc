@@ -164,17 +164,12 @@ RGBMatrix::Options::Options() :
     show_refresh_rate(false),
 #endif
 
-#ifdef RGB_SWAP_GREEN_BLUE
-    swap_green_blue(true),
-#else
-    swap_green_blue(false),
-#endif
-
 #ifdef INVERSE_RGB_DISPLAY_COLORS
-    inverse_colors(true)
+    inverse_colors(true),
 #else
-    inverse_colors(false)
+    inverse_colors(false),
 #endif
+  led_rgb_sequence("RGB")
 {
   // Nothing to see here.
 }
@@ -251,7 +246,7 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
                                               32 * params_.chain_length,
                                               params_.parallel,
                                               params_.scan_mode,
-                                              params_.swap_green_blue,
+                                              params_.led_rgb_sequence,
                                               params_.inverse_colors,
                                               &shared_pixel_mapper_));
   if (created_frames_.empty()) {

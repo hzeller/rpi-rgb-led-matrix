@@ -57,9 +57,9 @@ cdef extern from "led-matrix.h" namespace "rgb_matrix::RGBMatrix":
 
         bool disable_hardware_pulsing
         bool show_refresh_rate
-        bool swap_green_blue
         bool inverse_colors
 
+        const char *led_rgb_sequence
 
 cdef extern from "graphics.h" namespace "rgb_matrix":
     cdef struct Color:

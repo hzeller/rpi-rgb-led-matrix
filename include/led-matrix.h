@@ -111,9 +111,13 @@ public:
     // non-standard wirings.
     // Flag: --led-hardware-pulse
     bool disable_hardware_pulsing;
-    bool show_refresh_rate;  // Flag: --led-show-refresh
-    bool swap_green_blue;    // Flag: --led-swap-green-blue
-    bool inverse_colors;     // Flag: --led-inverse
+    bool show_refresh_rate;    // Flag: --led-show-refresh
+    // bool swap_green_blue; (Deprecated: use led_sequence instead)
+    bool inverse_colors;       // Flag: --led-inverse
+
+    // In case the internal sequence of mapping is not "RGB", this contains the
+    // real mapping. Some panels mix up these colors.
+    const char *led_rgb_sequence;  // Flag: --led-rgb-sequence
   };
 
   // Create an RGBMatrix.
