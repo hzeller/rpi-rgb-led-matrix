@@ -313,8 +313,7 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   const uint32_t g_bits = designator->g_bit;
   const uint32_t b_bits = designator->b_bit;
   const uint32_t designator_mask = designator->mask;
-  for (int b = min_bit_plane; b < kBitPlanes; ++b) {
-    const uint16_t mask = 1 << b;
+  for (uint16_t mask = 1<<min_bit_plane; mask != 1<<kBitPlanes; mask <<=1 ) {
     uint32_t color_bits = 0;
     if (red & mask)   color_bits |= r_bits;
     if (green & mask) color_bits |= g_bits;
