@@ -56,17 +56,17 @@ static void InterruptHandler(int signo) {
 typedef int64_t tmillis_t;
 static const tmillis_t distant_future = (1LL<<40); // that is a while.
 static tmillis_t GetTimeInMillis() {
-    struct timeval tp;
-    gettimeofday(&tp, NULL);
-    return tp.tv_sec * 1000 + tp.tv_usec / 1000;
+  struct timeval tp;
+  gettimeofday(&tp, NULL);
+  return tp.tv_sec * 1000 + tp.tv_usec / 1000;
 }
 
 static void SleepMillis(tmillis_t milli_seconds) {
-    if (milli_seconds <= 0) return;
-    struct timespec ts;
-    ts.tv_sec = milli_seconds / 1000;
-    ts.tv_nsec = (milli_seconds % 1000) * 1000000;
-    nanosleep(&ts, NULL);
+  if (milli_seconds <= 0) return;
+  struct timespec ts;
+  ts.tv_sec = milli_seconds / 1000;
+  ts.tv_nsec = (milli_seconds % 1000) * 1000000;
+  nanosleep(&ts, NULL);
 }
 
 static void StoreInStream(const Magick::Image &img, int delay_time_us,
@@ -105,54 +105,54 @@ static bool LoadImageAndScale(const char *filename,
                               int target_width, int target_height,
                               bool fill_width, bool fill_height,
                               std::vector<Magick::Image> *result) {
-    std::vector<Magick::Image> frames;
-    try {
-        readImages(&frames, filename);
-    } catch (std::exception& e) {
-        return false;
-    }
-    if (frames.size() == 0) {
-        fprintf(stderr, "No image found.");
-        return false;
-    }
+  std::vector<Magick::Image> frames;
+  try {
+    readImages(&frames, filename);
+  } catch (std::exception& e) {
+    return false;
+  }
+  if (frames.size() == 0) {
+    fprintf(stderr, "No image found.");
+    return false;
+  }
 
-    // Put together the animation from single frames. GIFs can have nasty
-    // disposal modes, but they are handled nicely by coalesceImages()
-    if (frames.size() > 1) {
-        Magick::coalesceImages(result, frames.begin(), frames.end());
-    } else {
-        result->push_back(frames[0]);   // just a single still image.
-    }
+  // Put together the animation from single frames. GIFs can have nasty
+  // disposal modes, but they are handled nicely by coalesceImages()
+  if (frames.size() > 1) {
+    Magick::coalesceImages(result, frames.begin(), frames.end());
+  } else {
+    result->push_back(frames[0]);   // just a single still image.
+  }
 
-    const int img_width = (*result)[0].columns();
-    const int img_height = (*result)[0].rows();
-    const float width_fraction = (float)target_width / img_width;
-    const float height_fraction = (float)target_height / img_height;
-    if (fill_width && fill_height) {
-        // Scrolling diagonally. Fill as much as we can get in available space.
-        // Largest scale fraction determines that.
-        const float larger_fraction = (width_fraction > height_fraction)
-            ? width_fraction
-            : height_fraction;
-        target_width = (int) roundf(larger_fraction * img_width);
-        target_height = (int) roundf(larger_fraction * img_height);
-    }
-    else if (fill_height) {
-        // Horizontal scrolling: Make things fit in vertical space.
-        // While the height constraint stays the same, we can expand to full
-        // width as we scroll along that axis.
-        target_width = (int) roundf(height_fraction * img_width);
-    }
-    else if (fill_width) {
-        // dito, vertical. Make things fit in horizontal space.
-        target_height = (int) roundf(width_fraction * img_height);
-    }
+  const int img_width = (*result)[0].columns();
+  const int img_height = (*result)[0].rows();
+  const float width_fraction = (float)target_width / img_width;
+  const float height_fraction = (float)target_height / img_height;
+  if (fill_width && fill_height) {
+    // Scrolling diagonally. Fill as much as we can get in available space.
+    // Largest scale fraction determines that.
+    const float larger_fraction = (width_fraction > height_fraction)
+      ? width_fraction
+      : height_fraction;
+    target_width = (int) roundf(larger_fraction * img_width);
+    target_height = (int) roundf(larger_fraction * img_height);
+  }
+  else if (fill_height) {
+    // Horizontal scrolling: Make things fit in vertical space.
+    // While the height constraint stays the same, we can expand to full
+    // width as we scroll along that axis.
+    target_width = (int) roundf(height_fraction * img_width);
+  }
+  else if (fill_width) {
+    // dito, vertical. Make things fit in horizontal space.
+    target_height = (int) roundf(width_fraction * img_height);
+  }
 
-    for (size_t i = 0; i < result->size(); ++i) {
-        (*result)[i].scale(Magick::Geometry(target_width, target_height));
-    }
+  for (size_t i = 0; i < result->size(); ++i) {
+    (*result)[i].scale(Magick::Geometry(target_width, target_height));
+  }
 
-    return true;
+  return true;
 }
 
 void DisplayAnimation(rgb_matrix::StreamIO *io,
@@ -348,15 +348,15 @@ int main(int argc, char *argv[]) {
   // In case the output to stream is requested, set up the stream object.
   rgb_matrix::StreamIO *stream_io = NULL;
   rgb_matrix::StreamWriter *global_stream_writer = NULL;
-    if (stream_output) {
-        int fd = open(stream_output, O_CREAT|O_WRONLY, 0644);
-        if (fd < 0) {
-            perror("Couldn't open output stream");
-            return 1;
-        }
-        stream_io = new rgb_matrix::FileStreamIO(fd);
-        global_stream_writer = new rgb_matrix::StreamWriter(stream_io);
+  if (stream_output) {
+    int fd = open(stream_output, O_CREAT|O_WRONLY, 0644);
+    if (fd < 0) {
+      perror("Couldn't open output stream");
+      return 1;
     }
+    stream_io = new rgb_matrix::FileStreamIO(fd);
+    global_stream_writer = new rgb_matrix::StreamWriter(stream_io);
+  }
 
   const tmillis_t start_load = GetTimeInMillis();
   fprintf(stderr, "Loading %d files...\n", argc - optind);
@@ -364,56 +364,56 @@ int main(int argc, char *argv[]) {
   // be quickly switching between these. So preprocess.
   std::vector<FileInfo*> file_imgs;
   for (int imgarg = optind; imgarg < argc; ++imgarg) {
-      const char *filename = argv[imgarg];
-      FileInfo *file_info = NULL;
+    const char *filename = argv[imgarg];
+    FileInfo *file_info = NULL;
 
-      std::vector<Magick::Image> image_sequence;
-      if (LoadImageAndScale(filename, matrix->width(), matrix->height(),
-                            fill_width, fill_height, &image_sequence)) {
+    std::vector<Magick::Image> image_sequence;
+    if (LoadImageAndScale(filename, matrix->width(), matrix->height(),
+                          fill_width, fill_height, &image_sequence)) {
+      file_info = new FileInfo();
+      file_info->params = filename_params[filename];
+      file_info->content_stream = new rgb_matrix::MemStreamIO();
+      file_info->is_multi_frame = image_sequence.size() > 1;
+      rgb_matrix::StreamWriter out(file_info->content_stream);
+      for (size_t i = 0; i < image_sequence.size(); ++i) {
+        const Magick::Image &img = image_sequence[i];
+        int64_t delay_time_us;
+        if (file_info->is_multi_frame) {
+          delay_time_us = img.animationDelay() * 10000; // unit in 1/100s
+        } else {
+          delay_time_us = file_info->params.wait_ms * 1000;  // single image.
+        }
+        if (delay_time_us <= 0) delay_time_us = 100 * 1000;  // 1/10sec
+        StoreInStream(img, delay_time_us, do_center, offscreen_canvas,
+                      global_stream_writer ? global_stream_writer : &out);
+      }
+    } else {
+      // Ok, not an image. Let's see if it is one of our streams.
+      int fd = open(filename, O_RDONLY);
+      if (fd >= 0) {
         file_info = new FileInfo();
         file_info->params = filename_params[filename];
-        file_info->content_stream = new rgb_matrix::MemStreamIO();
-        file_info->is_multi_frame = image_sequence.size() > 1;
-        rgb_matrix::StreamWriter out(file_info->content_stream);
-        for (size_t i = 0; i < image_sequence.size(); ++i) {
-          const Magick::Image &img = image_sequence[i];
-          int64_t delay_time_us;
-          if (file_info->is_multi_frame) {
-            delay_time_us = img.animationDelay() * 10000; // unit in 1/100s
-          } else {
-            delay_time_us = file_info->params.wait_ms * 1000;  // single image.
+        file_info->content_stream = new rgb_matrix::FileStreamIO(fd);
+        StreamReader reader(file_info->content_stream);
+        if (reader.GetNext(offscreen_canvas, NULL)) {  // header+size ok
+          file_info->is_multi_frame = reader.GetNext(offscreen_canvas, NULL);
+          reader.Rewind();
+          if (global_stream_writer) {
+            CopyStream(&reader, global_stream_writer, offscreen_canvas);
           }
-          if (delay_time_us <= 0) delay_time_us = 100 * 1000;  // 1/10sec
-          StoreInStream(img, delay_time_us, do_center, offscreen_canvas,
-                        global_stream_writer ? global_stream_writer : &out);
-        }
-      } else {
-        // Ok, not an image. Let's see if it is one of our streams.
-        int fd = open(filename, O_RDONLY);
-        if (fd >= 0) {
-          file_info = new FileInfo();
-          file_info->params = filename_params[filename];
-          file_info->content_stream = new rgb_matrix::FileStreamIO(fd);
-          StreamReader reader(file_info->content_stream);
-          if (reader.GetNext(offscreen_canvas, NULL)) {  // header+size ok
-            file_info->is_multi_frame = reader.GetNext(offscreen_canvas, NULL);
-            reader.Rewind();
-            if (global_stream_writer) {
-              CopyStream(&reader, global_stream_writer, offscreen_canvas);
-            }
-          } else {
-            delete file_info->content_stream;
-            delete file_info;
-            file_info = NULL;
-          }
+        } else {
+          delete file_info->content_stream;
+          delete file_info;
+          file_info = NULL;
         }
       }
+    }
 
-      if (file_info) {
-        file_imgs.push_back(file_info);
-      } else {
-        fprintf(stderr, "%s: not a readable image format.\n", filename);
-      }
+    if (file_info) {
+      file_imgs.push_back(file_info);
+    } else {
+      fprintf(stderr, "%s: not a readable image format.\n", filename);
+    }
   }
 
   if (stream_output) {
