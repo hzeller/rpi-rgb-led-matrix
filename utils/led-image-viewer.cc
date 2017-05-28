@@ -48,13 +48,29 @@ using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::StreamReader;
 
+typedef int64_t tmillis_t;
+static const tmillis_t distant_future = (1LL<<40); // that is a while.
+
+struct ImageParams {
+  ImageParams() : anim_duration_ms(distant_future), wait_ms(1500),
+                  anim_delay_ms(-1), loops(-1) {}
+  tmillis_t anim_duration_ms;  // If this is an animation, duration to show.
+  tmillis_t wait_ms;           // Regular image: duration to show.
+  tmillis_t anim_delay_ms;     // Animation delay override.
+  int loops;
+};
+
+struct FileInfo {
+  ImageParams params;      // Each file might have specific timing settings
+  bool is_multi_frame;
+  rgb_matrix::StreamIO *content_stream;
+};
+
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
   interrupt_received = true;
 }
 
-typedef int64_t tmillis_t;
-static const tmillis_t distant_future = (1LL<<40); // that is a while.
 static tmillis_t GetTimeInMillis() {
   struct timeval tp;
   gettimeofday(&tp, NULL);
@@ -155,11 +171,16 @@ static bool LoadImageAndScale(const char *filename,
   return true;
 }
 
-void DisplayAnimation(rgb_matrix::StreamIO *io,
-                      tmillis_t duration_ms, int loops,
-                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas) {
-  rgb_matrix::StreamReader reader(io);
+void DisplayAnimation(const FileInfo *file,
+                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas,
+                      int vsync_multiple) {
+  const tmillis_t duration_ms = (file->is_multi_frame
+                                 ? file->params.anim_duration_ms
+                                 : file->params.wait_ms);
+  rgb_matrix::StreamReader reader(file->content_stream);
+  int loops = file->params.loops;
   const tmillis_t end_time_ms = GetTimeInMillis() + duration_ms;
+  const tmillis_t override_anim_delay = file->params.anim_delay_ms;
   for (int k = 0;
        (loops < 0 || k < loops)
          && !interrupt_received
@@ -168,8 +189,12 @@ void DisplayAnimation(rgb_matrix::StreamIO *io,
     uint32_t delay_us = 0;
     while (!interrupt_received && GetTimeInMillis() <= end_time_ms
            && reader.GetNext(offscreen_canvas, &delay_us)) {
-      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
-      SleepMillis(delay_us / 1000);  // TODO: substract SwapOnVSync() wait time.
+      const tmillis_t anim_delay_ms =
+        override_anim_delay >= 0 ? override_anim_delay : delay_us / 1000;
+      const tmillis_t start_wait_ms = GetTimeInMillis();
+      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, vsync_multiple);
+      const tmillis_t time_already_spent = GetTimeInMillis() - start_wait_ms;
+      SleepMillis(anim_delay_ms - time_already_spent);
     }
     reader.Rewind();
   }
@@ -180,20 +205,29 @@ static int usage(const char *progname) {
           progname);
 
   fprintf(stderr, "Options:\n"
+          "\t-O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).\n"
           "\t-C                        : Center images.\n"
-          "\t-w<seconds>               : If multiple images given: "
-          "Wait time between in seconds (default: 1.5).\n"
-          "\t-f                        : "
-          "Forever cycle through the list of files on the command line.\n"
+
+          "\nThese options affect images following them on the command line:\n"
+          "\t-w<seconds>               : Regular image: "
+          "Wait time in seconds before next image is shown (default: 1.5).\n"
           "\t-t<seconds>               : "
           "For animations: stop after this time.\n"
           "\t-l<loop-count>            : "
           "For animations: number of loops through a full cycle.\n"
+          "\t-D<animation-delay-ms>    : "
+          "For animations: override the delay between frames given in the\n"
+          "\t                            gif/stream animation with this value. Use -1 to use default value.\n"
+
+          "\nOptions affecting display of multiple images:\n"
+          "\t-f                        : "
+          "Forever cycle through the list of files on the command line.\n"
           "\t-s                        : If multiple images are given: shuffle.\n"
+          "\nDisplay Options:\n"
+          "\t-V<vsync-multiple>        : Expert: Only do frame vsync-swaps on multiples of refresh (default: 1)\n"
           "\t-L                        : Large display, in which each chain is 'folded down'\n"
           "\t                            in the middle in an U-arrangement to get more vertical space.\n"
           "\t-R<angle>                 : Rotate output; steps of 90 degrees\n"
-          "\t-O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).\n"
           );
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
@@ -212,19 +246,6 @@ static int usage(const char *progname) {
   return 1;
 }
 
-struct ImageParams {
-  ImageParams() : anim_duration_ms(distant_future), wait_ms(1500), loops(-1){}
-  tmillis_t anim_duration_ms;  // If this is an animation, duration to show.
-  tmillis_t wait_ms;           // Regular image: duration to show.
-  int loops;
-};
-
-struct FileInfo {
-  ImageParams params;      // Each file might have specific timing settings
-  bool is_multi_frame;
-  rgb_matrix::StreamIO *content_stream;
-};
-
 int main(int argc, char *argv[]) {
   Magick::InitializeMagick(*argv);
 
@@ -235,6 +256,7 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
+  int vsync_multiple = 1;
   bool do_forever = false;
   bool do_center = false;
   bool do_shuffle = false;
@@ -259,7 +281,7 @@ int main(int argc, char *argv[]) {
   const char *stream_output = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:")) != -1) {
+  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:")) != -1) {
     switch (opt) {
     case 'w':
       img_param.wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -269,6 +291,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'l':
       img_param.loops = atoi(optarg);
+      break;
+    case 'D':
+      img_param.anim_delay_ms = atoi(optarg);
       break;
     case 'f':
       do_forever = true;
@@ -300,6 +325,10 @@ int main(int argc, char *argv[]) {
       break;
     case 'O':
       stream_output = strdup(optarg);
+      break;
+    case 'V':
+      vsync_multiple = atoi(optarg);
+      if (vsync_multiple < 1) vsync_multiple = 1;
       break;
     case 'h':
     default:
@@ -412,7 +441,7 @@ int main(int argc, char *argv[]) {
     if (file_info) {
       file_imgs.push_back(file_info);
     } else {
-      fprintf(stderr, "%s: not a readable image format.\n", filename);
+      fprintf(stderr, "%s: not a usable image format.\n", filename);
     }
   }
 
@@ -459,13 +488,7 @@ int main(int argc, char *argv[]) {
       std::random_shuffle(file_imgs.begin(), file_imgs.end());
     }
     for (size_t i = 0; i < file_imgs.size() && !interrupt_received; ++i) {
-      const FileInfo *file = file_imgs[i];
-
-      const tmillis_t duration = (file->is_multi_frame
-                                  ? file->params.anim_duration_ms
-                                  : file->params.wait_ms);
-      DisplayAnimation(file->content_stream, duration, file->params.loops,
-                       matrix, offscreen_canvas);
+      DisplayAnimation(file_imgs[i], matrix, offscreen_canvas, vsync_multiple);
     }
   } while (do_forever && !interrupt_received);
 

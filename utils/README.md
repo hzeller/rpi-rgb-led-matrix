@@ -28,15 +28,24 @@ The resulting binary has a couple of flags.
 usage: ./led-image-viewer [options] <image> [option] [<image> ...]
 Options:
         -C                        : Center images.
-        -w<seconds>               : If multiple images given: Wait time between in seconds (default: 1.5).
-        -f                        : Forever cycle through the list of files on the command line.
+        -O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).
+
+These options affect images following them on the command line:
+        -w<seconds>               : Regular image: Wait time in seconds before next image is shown (default: 1.5).
         -t<seconds>               : For animations: stop after this time.
         -l<loop-count>            : For animations: number of loops through a full cycle.
+        -D<animation-delay-ms>    : For animations: override the delay between frames given in the
+                                    gif/stream animation with this value. Use -1 to use default value.
+
+Options affecting display of multiple images:
+        -f                        : Forever cycle through the list of files on the command line.
         -s                        : If multiple images are given: shuffle.
+
+Display Options:
+        -V<vsync-multiple>        : Expert: Only do frame vsync-swaps on multiples of refresh (default: 1)
         -L                        : Large display, in which each chain is 'folded down'
                                     in the middle in an U-arrangement to get more vertical space.
         -R<angle>                 : Rotate output; steps of 90 degrees
-        -O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).
 
 General LED matrix options:
         --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
@@ -70,6 +79,12 @@ sudo ./led-image-viewer some-image.jpg       # Display an image.
 sudo ./led-image-viewer animated.gif         # Show an animated gif
 sudo ./led-image-viewer -t5 animated.gif     # Show an animated gif for 5 seconds
 sudo ./led-image-viewer -l2 animated.gif     # Show an animated gif for 2 loops
+sudo ./led-image-viewer -D16 animated.gif    # Play animated gif, use 16ms frame delay
+
+# If you want to have an even frame rate, that is depending on your
+# refresh rate, use the following. Note, your refresh rate is dependent on
+# factors such as chain length and rows; use --led-show-refresh to get an idea.
+sudo ./led-image-viewer -D0 -V12 animated.gif # Frame rate = 1/12 refresh rate
 
 sudo ./led-image-viewer    -w3 foo.jpg bar.png  # show two images, wait 3 seconds between. Stop.
 sudo ./led-image-viewer    -w3 foo.jpg -w2 bar.png baz.png  # show images, wait 3 seconds after the first, 2 seconds after the second and third. Stop.
@@ -91,7 +106,7 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 #  o We have to supply all the options (rows, chain, parallel,
 #    hardware-mapping etc), that we would supply to the real viewer later.
 #  o We don't need to be root, as we don't write to the matrix
-./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 -w0.01666 *.png -Oanimation-out.stream
+./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 -w0.016667 *.png -Oanimation-out.stream
 
 # Now, play back this animation.
 sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-out.stream
@@ -154,6 +169,7 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
 #  o We don't need to be root, as we don't write to the matrix
 ./video-viewer --led-chain=5 --led-parallel=3 myvideo.webm -O/tmp/vid.stream
 
-#.. now play it with led-image-viewer
+#.. now play it with led-image-viewer. Also try using -D or -V to replay with
+# different frame rate.
 sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```
