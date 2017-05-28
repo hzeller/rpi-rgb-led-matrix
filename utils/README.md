@@ -7,6 +7,14 @@ to write any code.
 ### Image Viewer ###
 
 The image viewer reads all kinds of image formats, including animated gifs.
+
+To speed up lengthy loading of image files or animations, you also can also
+pre-process images or animations and write them to a 'stream' file that then
+later can be loaded very quickly by this viewer (at the expense of disk-space
+as these are not compressed). This is in particular useful for large panels
+and animations with many frames: less loading time and less RAM used.
+See `-O` example below in the example section.
+
 To compile, you first need to install the GraphicsMagick dependencies first:
 
 ```
@@ -22,12 +30,13 @@ Options:
         -C                        : Center images.
         -w<seconds>               : If multiple images given: Wait time between in seconds (default: 1.5).
         -f                        : Forever cycle through the list of files on the command line.
-        -t<seconds>               : For gif animations: stop after this time.
-        -l<loop-count>            : For gif animations: number of loops through a full cycle.
+        -t<seconds>               : For animations: stop after this time.
+        -l<loop-count>            : For animations: number of loops through a full cycle.
         -s                        : If multiple images are given: shuffle.
         -L                        : Large display, in which each chain is 'folded down'
                                     in the middle in an U-arrangement to get more vertical space.
         -R<angle>                 : Rotate output; steps of 90 degrees
+        -O<streamfile>            : Output to stream-flie instead of matrix (Don't need to be root).
 
 General LED matrix options:
         --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
@@ -74,8 +83,16 @@ sudo ./led-image-viewer -f -s *.png  # Loop forever but randomize (shuffle) each
 # while the animation is shown for 5 seconds (-t takes precendence for animated
 # images over -w)
 sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
-```
 
-It also supports the standard options to specify the connected
-displays (e.g. `--led-rows`, `--led-chain`, `--led-parallel` and
-[all other led-libray flags](../README.md#changing-parameters-via-command-line-flags))
+# Create a fast animation from a bunch of *.png files
+# with 16.6ms frame time (=60Hz) and write to a raw animation stream
+# animation-out.stream (beware, uncompressed, uses lots of disk).
+# Note:
+#  o We do have to supply all the options (rows, chain, parallel,
+#    hardware-mapping etc), that we would supply to the real viewer later.
+#  o We don't need to be root, as we don't write to the matrix
+./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 -w0.01666 *.png -Oanimation-out.stream
+
+# Now, play back this animation.
+sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-out.stream
+```
