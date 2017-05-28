@@ -33,7 +33,8 @@ RuntimeOptions::RuntimeOptions() :
   gpio_slowdown(1),
 #endif
   daemon(0),            // Don't become a daemon by default.
-  drop_privileges(1)    // Encourage good practice: drop privileges by default.
+  drop_privileges(1),    // Encourage good practice: drop privileges by default.
+  do_gpio_init(true)
 {
   // Nothing to see here.
 }
@@ -275,7 +276,7 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
     return NULL;
   }
 
-  if (getuid() != 0) {
+  if (runtime_options.do_gpio_init && getuid() != 0) {
     fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
             "Prepend 'sudo' to the command\n");
     return NULL;
@@ -288,7 +289,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
   }
 
   static GPIO io;  // This static var is a little bit icky.
-  if (!io.Init(runtime_options.gpio_slowdown)) {
+  if (runtime_options.do_gpio_init &&
+      !io.Init(runtime_options.gpio_slowdown)) {
     return NULL;
   }
 
@@ -299,7 +301,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
   RGBMatrix *result = new RGBMatrix(NULL, options);
   // Allowing daemon also means we are allowed to start the thread now.
   const bool allow_daemon = !(runtime_options.daemon < 0);
-  result->SetGPIO(&io, allow_daemon);
+  if (runtime_options.do_gpio_init)
+    result->SetGPIO(&io, allow_daemon);
 
   // TODO(hzeller): if we disallow daemon, then we might also disallow
   // drop privileges: we can't drop privileges until we have created the

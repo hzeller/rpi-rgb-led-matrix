@@ -410,4 +410,11 @@ bool FrameCanvas::luminance_correct() const { return frame_->luminance_correct()
 void FrameCanvas::SetBrightness(uint8_t brightness) { frame_->SetBrightness(brightness); }
 uint8_t FrameCanvas::brightness() { return frame_->brightness(); }
 
+void FrameCanvas::Serialize(const char **data, size_t *len) const {
+  frame_->Serialize(data, len);
+}
+bool FrameCanvas::Deserialize(const char *data, size_t len) {
+  return frame_->Deserialize(data, len);
+}
+
 }  // end namespace rgb_matrix

@@ -297,6 +297,27 @@ public:
   void SetBrightness(uint8_t brightness);
   uint8_t brightness();
 
+  //-- Serialize()/Deserialize() are fast ways to store and re-create a canvas.
+
+  // Provides a pointer to a buffer of the internal representation to
+  // be copied out for later Deserialize().
+  //
+  // Returns a "data" pointer and the data "len" in the given out-paramters;
+  // the content can be copied from there by the caller.
+  //
+  // Note, the content is not simply RGB, it is the opaque and platform
+  // specific representation which allows to make deserialization very fast.
+  // It is also bigger than just RGB; if you want to store it somewhere,
+  // using compression is a good idea.
+  void Serialize(const char **data, size_t *len) const;
+
+  // Load data previously stored with Serialize(). Needs to be restored into
+  // a FrameCanvas with exactly the same settings (rows, chain, transformer,...)
+  // as serialized.
+  // Returns 'false' if size is unexpected.
+  // This method should only be called if FrameCanvas is off-screen.
+  bool Deserialize(const char *data, size_t len);
+
   // -- Canvas interface.
   virtual int width() const;
   virtual int height() const;
@@ -321,11 +342,20 @@ struct RuntimeOptions {
   RuntimeOptions();
 
   int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
-  // If the following are disabled, the following options will not be offered.
-  // If daemon is disabled, the user has to call StartRefresh() once the
-  // matrix is created.
+  // If the following options are set to disabled (=-1), they are not offered
+  // the command line (and not the help).
+
+  // If daemon is disabled (=-1), the user has to call StartRefresh() manually
+  // once the matrix is created, as the caller indicates that they manage
+  // thread-lifetime manually (only after we have become a daemon,
+  // StartRefresh() can be called; see above)
   int daemon;           // -1 disabled. 0=off, 1=on. Flag: --led-daemon
   int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
+
+  // By default, the gpio is initialized for you, but if you want to manually
+  // do that yourself, set this flag to false.
+  // Then, you have to initialize the matrix yourself with SetGPIO().
+  bool do_gpio_init;
 };
 
 // Convenience utility functions to read standard rgb-matrix flags and create

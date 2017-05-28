@@ -74,6 +74,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     led_sequence_(led_sequence), inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1),
+    buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
   assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
@@ -384,6 +385,17 @@ void Framebuffer::InitDefaultDesignator(int x, int y, PixelDesignator *d) {
   }
 
   d->mask = ~(d->r_bit | d->g_bit | d->b_bit);
+}
+
+void Framebuffer::Serialize(const char **data, size_t *len) const {
+  *data = reinterpret_cast<const char*>(bitplane_buffer_);
+  *len = buffer_size_;
+}
+
+bool Framebuffer::Deserialize(const char *data, size_t len) {
+  if (len != buffer_size_) return false;
+  memcpy(bitplane_buffer_, data, len);
+  return true;
 }
 
 void Framebuffer::DumpToMatrix(GPIO *io) {

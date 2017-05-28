@@ -16,6 +16,7 @@
 #define RPI_RGBMATRIX_FRAMEBUFFER_INTERNAL_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "hardware-mapping.h"
 
@@ -90,6 +91,9 @@ public:
 
   void DumpToMatrix(GPIO *io);
 
+  void Serialize(const char **data, size_t *len) const;
+  bool Deserialize(const char *data, size_t len);
+
   // Canvas-inspired methods, but we're not implementing this interface to not
   // have an unnecessary vtable.
   int width() const;
@@ -126,6 +130,7 @@ private:
 
   const int double_rows_;
   const uint8_t row_mask_;
+  const size_t buffer_size_;
 
   // The frame-buffer is organized in bitplanes.
   // Highest level (slowest to cycle through) are double rows.

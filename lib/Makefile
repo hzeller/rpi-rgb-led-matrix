@@ -5,7 +5,7 @@
 ##
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
         thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o \
-	hardware-mapping.o
+	hardware-mapping.o content-streamer.o
 TARGET=librgbmatrix
 
 # There are several different pinouts for various breakout boards that uses
