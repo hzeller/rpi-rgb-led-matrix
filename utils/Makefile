@@ -2,6 +2,9 @@ CXXFLAGS=-Wall -O3 -g
 OBJECTS=led-image-viewer.o
 BINARIES=led-image-viewer
 
+OPTIONAL_OBJECTS=video-viewer.o
+OPTIONAL_BINARIES=video-viewer
+
 # Where our library resides. You mostly only need to change the
 # RGB_LIB_DISTRIBUTION, this is where the library is checked out.
 RGB_LIB_DISTRIBUTION=..
@@ -39,7 +42,7 @@ video-viewer.o: video-viewer.cc
 	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -Wno-deprecated-declarations -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTS) $(BINARIES)
+	rm -f $(OBJECTS) $(BINARIES) $(OPTIONAL_OBJECTS) $(OPTIONAL_BINARIES)
 
 FORCE:
 .PHONY: FORCE
