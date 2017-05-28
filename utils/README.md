@@ -36,7 +36,7 @@ Options:
         -L                        : Large display, in which each chain is 'folded down'
                                     in the middle in an U-arrangement to get more vertical space.
         -R<angle>                 : Rotate output; steps of 90 degrees
-        -O<streamfile>            : Output to stream-flie instead of matrix (Don't need to be root).
+        -O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).
 
 General LED matrix options:
         --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
@@ -88,11 +88,72 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 # with 16.6ms frame time (=60Hz) and write to a raw animation stream
 # animation-out.stream (beware, uncompressed, uses lots of disk).
 # Note:
-#  o We do have to supply all the options (rows, chain, parallel,
+#  o We have to supply all the options (rows, chain, parallel,
 #    hardware-mapping etc), that we would supply to the real viewer later.
 #  o We don't need to be root, as we don't write to the matrix
 ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 -w0.01666 *.png -Oanimation-out.stream
 
 # Now, play back this animation.
 sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-out.stream
+```
+
+### Video Viewer ###
+
+The video viewer allows to play common video formats on the RGB matrix.
+
+Note, this is CPU intensive and decoding can result in an output that is not
+smooth. If you observe that, it is suggested to do one of these:
+
+  - Transcode the video first to the width and height of the final output size.
+  - Prepare an animation stream that you then later watch with led-image-viewer
+    (see example below).
+
+```
+sudo apt-get update
+sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev
+make video-viewer
+```
+
+```
+usage: ./video-viewer [options] <video>
+Options:
+        -O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).
+        -v                 : verbose.
+
+General LED matrix options:
+        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
+        --led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
+        --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
+        --led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
+        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
+        --led-brightness=<percent>: Brightness in percent (Default: 100).
+        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
+        --led-show-refresh        : Show refresh rate.
+        --led-inverse             : Switch if your matrix has inverse colors on.
+        --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
+        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
+        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
+        --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
+        --led-daemon              : Make the process run in the background as daemon.
+        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+```
+
+Examples:
+```bash
+# Play video. If you observe that the Pi has trouble to keep up (extensive
+# flickering), transcode the video first to the exact size of your display.
+sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
+
+# Another way to avoid flicker playback with best possible results even with
+# very high framerate: create a preprocessed stream first, then replay it with
+# led-image-viewer. This results in best quality (no CPU use at play-time), but
+# comes with a caveat: It can use _A LOT_ of disk, as it is not compressed.
+# Note:
+#  o We have to supply all the options (rows, chain, parallel,
+#    hardware-mapping etc), that we would supply to the real viewer later.
+#  o We don't need to be root, as we don't write to the matrix
+./video-viewer --led-chain=5 --led-parallel=3 myvideo.webm -O/tmp/vid.stream
+
+#.. now play it with led-image-viewer
+sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```

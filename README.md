@@ -93,14 +93,14 @@ make -C examples-api-use
 sudo examples-api-use/demo -D0
 ```
   * Use the utilities. The [utils](./utils) directory has some ready-made
-    useful utilities to show image or text. [Go there](./utils) to see how to
+    useful utilities to show content. [Go there](./utils) to see how to
     compile and run these.
 
 ### Utilities
 
 The [utils directory](./utils) is meant for ready utilities to show images or
-animated gifs. Read the [README](./utils/README.md) there for instructions
-how to compile.
+animated gifs or videos. Read the [README](./utils/README.md) there for
+instructions how to compile.
 
 There are external projects that use this library and provide higher level
 network protocols, such as the

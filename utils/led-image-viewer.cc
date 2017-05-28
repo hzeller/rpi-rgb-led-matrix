@@ -193,7 +193,7 @@ static int usage(const char *progname) {
           "\t-L                        : Large display, in which each chain is 'folded down'\n"
           "\t                            in the middle in an U-arrangement to get more vertical space.\n"
           "\t-R<angle>                 : Rotate output; steps of 90 degrees\n"
-          "\t-O<streamfile>            : Output to stream-flie instead of matrix (Don't need to be root).\n"
+          "\t-O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).\n"
           );
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
