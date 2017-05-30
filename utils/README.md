@@ -103,8 +103,8 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 # with 16.6ms frame time (=60Hz) and write to a raw animation stream
 # animation-out.stream (beware, uncompressed, uses lots of disk).
 # Note:
-#  o We have to supply all the options (rows, chain, parallel,
-#    hardware-mapping etc), that we would supply to the real viewer later.
+#  o We have to supply all the options (rows, chain, parallel, hardware-mapping,
+#    rotation etc), that we would supply to the real viewer later.
 #  o We don't need to be root, as we don't write to the matrix
 ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 -w0.016667 *.png -Oanimation-out.stream
 
@@ -133,6 +133,9 @@ make video-viewer
 usage: ./video-viewer [options] <video>
 Options:
         -O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).
+        -L                 : Large display, in which each chain is 'folded down'
+                             in the middle in an U-arrangement to get more vertical space.
+        -R<angle>          : Rotate output; steps of 90 degrees
         -v                 : verbose.
 
 General LED matrix options:
@@ -164,8 +167,8 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
 # led-image-viewer. This results in best quality (no CPU use at play-time), but
 # comes with a caveat: It can use _A LOT_ of disk, as it is not compressed.
 # Note:
-#  o We have to supply all the options (rows, chain, parallel,
-#    hardware-mapping etc), that we would supply to the real viewer later.
+#  o We have to supply all the options (rows, chain, parallel, hardware-mapping,
+#    rotation etc), that we would supply to the real viewer later.
 #  o We don't need to be root, as we don't write to the matrix
 ./video-viewer --led-chain=5 --led-parallel=3 myvideo.webm -O/tmp/vid.stream
 
