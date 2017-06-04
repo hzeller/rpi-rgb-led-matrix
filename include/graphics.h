@@ -55,6 +55,15 @@ public:
   // Same without background. Deprecated, use the one above instead.
   int DrawGlyph(Canvas *c, int x, int y, const Color &color,
                 uint32_t unicode_codepoint) const;
+
+  // Create a new font derived from this font, which represents an outline
+  // of the original font, essentially pixels tracing around the original
+  // letter.
+  // This can be used in situations in which it is desirable to frame a letter
+  // in a different color to increase contrast.
+  // The ownership of the returned pointer is passed to the caller.
+  Font *CreateOutlineFont() const;
+
 private:
   Font(const Font& x);  // No copy constructor. Use references or pointer instead.
 
