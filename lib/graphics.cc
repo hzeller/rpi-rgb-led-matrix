@@ -37,6 +37,16 @@ int DrawText(Canvas *c, const Font &font,
   return x - start_x;
 }
 
+// There used to be a symbol without the optional extra_spacing parameter. Let's
+// define this here so that people linking against an old library will still
+// have their code usable. Now: 2017-06-04; can probably be removed in a couple
+// of months.
+int DrawText(Canvas *c, const Font &font,
+             int x, int y, const Color &color, const Color *background_color,
+             const char *utf8_text) {
+  return DrawText(c, font, x, y, color, background_color, utf8_text, 0);
+}
+
 int VerticalDrawText(Canvas *c, const Font &font, int x, int y,
                      const Color &color, const Color *background_color,
                      const char *utf8_text, int extra_spacing) {
