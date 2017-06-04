@@ -70,9 +70,11 @@ private:
 
 // -- Some utility functions.
 
-// Draw text, encoded in UTF-8, with given "font" at "x","y" with "color".
-// "background_color" can be NULL for transparency.
-// Returns how far we advance on the screen.
+// Draw text, a standard NUL terminated C-string encoded in UTF-8,
+// with given "font" at "x","y" with "color".
+// "color" always needs to be set (hence it is a reference),
+// "background_color" is a pointer to optionally be NULL for transparency.
+// Returns how many pixels we advanced on the screen.
 int DrawText(Canvas *c, const Font &font, int x, int y,
              const Color &color, const Color *background_color,
              const char *utf8_text);
