@@ -27,15 +27,27 @@ int DrawText(Canvas *c, const Font &font,
 
 int DrawText(Canvas *c, const Font &font,
              int x, int y, const Color &color, const Color *background_color,
-             const char *utf8_text) {
+             const char *utf8_text, int extra_spacing) {
   const int start_x = x;
   while (*utf8_text) {
     const uint32_t cp = utf8_next_codepoint(utf8_text);
     x += font.DrawGlyph(c, x, y, color, background_color, cp);
+    x += extra_spacing;
   }
   return x - start_x;
 }
 
+int VerticalDrawText(Canvas *c, const Font &font, int x, int y,
+                     const Color &color, const Color *background_color,
+                     const char *utf8_text, int extra_spacing) {
+  const int start_y = y;
+  while (*utf8_text) {
+    const uint32_t cp = utf8_next_codepoint(utf8_text);
+    font.DrawGlyph(c, x, y, color, background_color, cp);
+    y += font.height() + extra_spacing;
+  }
+  return y - start_y;
+}
 
 void DrawCircle(Canvas *c, int x0, int y0, int radius, const Color &color) {
   int x = radius, y = 0;

@@ -83,14 +83,28 @@ private:
 // with given "font" at "x","y" with "color".
 // "color" always needs to be set (hence it is a reference),
 // "background_color" is a pointer to optionally be NULL for transparency.
+// "kerning_offset" allows for additional spacing between characters (can be
+// negative)
 // Returns how many pixels we advanced on the screen.
 int DrawText(Canvas *c, const Font &font, int x, int y,
              const Color &color, const Color *background_color,
-             const char *utf8_text);
+             const char *utf8_text, int kerning_offset = 0);
 
 // Same without background. Deprecated, use the one above instead.
 int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color,
              const char *utf8_text);
+
+// Draw text, a standard NUL terminated C-string encoded in UTF-8,
+// with given "font" at "x","y" with "color".
+// Draw text as above, but vertically (top down).
+// The text is a standard NUL terminated C-string encoded in UTF-8.
+// "font, "x", "y", "color" and "background_color" are same as DrawText().
+// "kerning_offset" allows for additional spacing between characters (can be
+// negative).
+// Returns font height to advance up on the screen.
+int VerticalDrawText(Canvas *c, const Font &font, int x, int y,
+                     const Color &color, const Color *background_color,
+                     const char *utf8_text, int kerning_offset = 0);
 
 // Draw a circle centered at "x", "y", with a radius of "radius" and with "color"
 void DrawCircle(Canvas *c, int xx, int y, int radius, const Color &color);

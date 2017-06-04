@@ -113,6 +113,8 @@ Font *Font::CreateOutlineFont() const {
     Glyph *const tmp_glyph = (Glyph*) calloc(1, alloc_size);
     tmp_glyph->width  = orig->width  + 2*kBorder;
     tmp_glyph->height = height;
+    tmp_glyph->device_width  = orig->device_width;
+    tmp_glyph->device_height = height;
     tmp_glyph->y_offset = orig->y_offset - kBorder;
     // TODO: we don't really need bounding box, right ?
     const rowbitmap_t fill_pattern = 0b111;
