@@ -120,11 +120,13 @@ static void CopyStream(rgb_matrix::StreamReader *r,
 static bool LoadImageAndScale(const char *filename,
                               int target_width, int target_height,
                               bool fill_width, bool fill_height,
-                              std::vector<Magick::Image> *result) {
+                              std::vector<Magick::Image> *result,
+                              std::string *err_msg) {
   std::vector<Magick::Image> frames;
   try {
     readImages(&frames, filename);
   } catch (std::exception& e) {
+    if (e.what()) *err_msg = e.what();
     return false;
   }
   if (frames.size() == 0) {
@@ -396,9 +398,10 @@ int main(int argc, char *argv[]) {
     const char *filename = argv[imgarg];
     FileInfo *file_info = NULL;
 
+    std::string err_msg;
     std::vector<Magick::Image> image_sequence;
     if (LoadImageAndScale(filename, matrix->width(), matrix->height(),
-                          fill_width, fill_height, &image_sequence)) {
+                          fill_width, fill_height, &image_sequence, &err_msg)) {
       file_info = new FileInfo();
       file_info->params = filename_params[filename];
       file_info->content_stream = new rgb_matrix::MemStreamIO();
@@ -441,15 +444,18 @@ int main(int argc, char *argv[]) {
     if (file_info) {
       file_imgs.push_back(file_info);
     } else {
-      fprintf(stderr, "%s: not a usable image format.\n", filename);
+      fprintf(stderr, "%s skipped: Unable to open (%s)\n",
+              filename, err_msg.c_str());
     }
   }
 
   if (stream_output) {
     delete global_stream_writer;
     delete stream_io;
-    fprintf(stderr, "Done: Output to stream %s; "
-            "this can now be opened with led-image-viewer with the exact same panel configuration settings such as rows, chain, parallel and hardware-mapping\n", stream_output);
+    if (file_imgs.size()) {
+      fprintf(stderr, "Done: Output to stream %s; "
+              "this can now be opened with led-image-viewer with the exact same panel configuration settings such as rows, chain, parallel and hardware-mapping\n", stream_output);
+    }
     if (do_shuffle)
       fprintf(stderr, "Note: -s (shuffle) does not have an effect when generating streams.\n");
     if (do_forever)
