@@ -52,7 +52,7 @@ The 26 pin models can drive one chain of RGB panels, the 40 pin models
 
 The Raspberry Pi 2 and 3 are faster than older models (and the Pi Zero) and
 sometimes the cabeling can't keep up with the speed; check out
-this [troubleshooting section](#help-some-pixels-are-not-displayed-properly)
+this [troubleshooting section](#troubleshooting)
 what to do.
 
 The [Raspbian Lite][raspbian-lite] distribution is recommended.
