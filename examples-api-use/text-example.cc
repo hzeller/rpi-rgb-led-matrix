@@ -36,7 +36,12 @@ static bool parseColor(Color *c, const char *str) {
 }
 
 int main(int argc, char *argv[]) {
-  RGBMatrix *canvas = rgb_matrix::CreateMatrixFromFlags(&argc, &argv);
+  RGBMatrix::Options matrix_options;
+  rgb_matrix::RuntimeOptions runtime_opt;
+  if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
+                                         &matrix_options, &runtime_opt)) {
+    return usage(argv[0]);
+  }
 
   Color color(255, 255, 0);
   Color bg_color(0, 0, 0);
@@ -74,22 +79,24 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  if (canvas == NULL)
-    return 1;
-
   /*
    * Load font. This needs to be a filename with a bdf bitmap font.
    */
   rgb_matrix::Font font;
   if (!font.LoadFont(bdf_font_file)) {
     fprintf(stderr, "Couldn't load font '%s'\n", bdf_font_file);
-    return usage(argv[0]);
+    return 1;
   }
 
   if (brightness < 1 || brightness > 100) {
     fprintf(stderr, "Brightness is outside usable range.\n");
     return 1;
   }
+
+  RGBMatrix *canvas = rgb_matrix::CreateMatrixFromOptions(matrix_options,
+                                                          runtime_opt);
+  if (canvas == NULL)
+    return 1;
 
   canvas->SetBrightness(brightness);
 
