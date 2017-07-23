@@ -173,7 +173,7 @@ Framebuffer::~Framebuffer() {
     all_used_bits |= h.p2_r1 | h.p2_g1 | h.p2_b1 | h.p2_r2 | h.p2_g2 | h.p2_b2;
   }
 
-  const int double_rows = rows / 2;
+  const int double_rows = rows / SUB_PANELS_;
   if (double_rows >= 32) all_used_bits |= h.e;
   if (double_rows >= 16) all_used_bits |= h.d;
   if (double_rows >=  8) all_used_bits |= h.c;
