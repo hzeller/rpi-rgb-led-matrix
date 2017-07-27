@@ -308,7 +308,9 @@ In general, run a minimal configuration on your Pi.
   * Switch off on-board sound (`dtparam=audio=off` in `/boot/config.txt`).
     External USB sound adapters work, and are much better quality anyway,
     so that is recommended if you happen to need sound. The on-board sound
-    uses a timing circuit that the RGB-Matrix needs.
+    uses a timing circuit that the RGB-Matrix needs (it seems in some
+    distributions, such as arch-linux, this is not enough and you need
+    to explicitly blacklist the snd_bcm2835 module).
 
   * Don't run anything that messes in parallel with the GPIO pins, e.g.
     PiGPIO library/daemon.
