@@ -116,6 +116,10 @@ HARDWARE_DESC?=regular
 # some oddball old (typically one-colored) display, such as Hub12.
 #DEFINES+=-DONLY_SINGLE_SUB_PANEL
 
+# Experimental: Disable realtime throttling of the Linux kernel. Uncomment
+# if you see periodic flickering in particular with longer display chains.
+#DEFINES+=-DDISABLE_RT_THROTTLE
+
 # If someone gives additional values on the make commandline e.g.
 # make USER_DEFINES="-DSHOW_REFRESH_RATE"
 DEFINES+=$(USER_DEFINES)

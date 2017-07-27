@@ -236,6 +236,21 @@ static void sleep_nanos_rpi_1(long nanos);
 static void sleep_nanos_rpi_2(long nanos);
 static void (*busy_sleep_impl)(long) = sleep_nanos_rpi_1;
 
+// By default, the kernel applies some throtteling for realtime
+// threads to prevent starvation of non-RT threads. But we
+// really want all we can get iff the machine has more cores and
+// our RT-thread is locked onto one of these.
+// So let's tell it not to do that.
+// Only call if there is more than one core available.
+static void DisableRealtimeThrottling() {
+#ifdef DISABLE_RT_THROTTLE
+  const int out = open("/proc/sys/kernel/sched_rt_runtime_us", O_WRONLY);
+  if (out < 0) return;
+  write(out, "-1", 2);
+  close(out);
+#endif
+}
+
 bool Timers::Init() {
   const bool isRPi2 = IsRaspberryPi2();
   uint32_t *timereg = mmap_bcm_register(isRPi2, COUNTER_1Mhz_REGISTER_OFFSET);
@@ -245,6 +260,7 @@ bool Timers::Init() {
   timer1Mhz = timereg + 1;
 
   busy_sleep_impl = isRPi2 ? sleep_nanos_rpi_2 : sleep_nanos_rpi_1;
+  if (isRPi2) DisableRealtimeThrottling();
   return true;
 }
 
