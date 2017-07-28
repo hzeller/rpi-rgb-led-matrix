@@ -137,8 +137,7 @@ How about a clock ?
 ```
 sudo ./clock -f ../fonts/7x13.bdf --led-chain=2 -d "%H:%M:%S"
 ```
-
-![](../img/time-display.jpg)
+<img src="../img/time-display.jpg" height="100px">
 
 Integrating in your own application
 -----------------------------------
