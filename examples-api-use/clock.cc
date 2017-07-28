@@ -24,7 +24,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n");
   rgb_matrix::PrintMatrixFlags(stderr);
   fprintf(stderr,
-          "\t-d <time-format>  : Default '%%H:%%M:%%S'. See strftime()\n"
+          "\t-d <time-format>  : Default '%%H:%%M'. See strftime()\n"
           "\t-f <font-file>    : Use given font.\n"
           "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
           "\t-x <x-origin>     : X-Origin of displaying text (Default: 0)\n"
@@ -56,7 +56,7 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  const char *time_format = "%H:%M:%S";
+  const char *time_format = "%H:%M";
   Color color(255, 255, 0);
   Color bg_color(0, 0, 0);
   Color outline_color(0,0,0);
