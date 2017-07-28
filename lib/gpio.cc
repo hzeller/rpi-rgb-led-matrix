@@ -27,6 +27,34 @@
 #include <time.h>
 #include <unistd.h>
 
+/*
+ * nanosleep() takes longer than requested because of OS jitter.
+ * In about 99.9% of the cases, this is <= 25 microcseconds on
+ * the Raspberry Pi (empirically determined with a Raspbian kernel), so
+ * we substract this value whenever we do nanosleep(); the remaining time
+ * we then busy wait to get a good accurate result.
+ *
+ * You can measure the overhead using DEBUG_SLEEP_JITTER below.
+ *
+ * Note: A higher value here will result in more CPU use because of more busy
+ * waiting inching towards the real value (for all the cases that nanosleep()
+ * actually was better than this overhead) so you might consider defining
+ * DISABLE_RT_THROTTLE as well (see lib/Makefile)
+ *
+ * This might be interesting to tweak in particular if you have a realtime
+ * kernel with different characteristics.
+ */
+#define EMPIRICAL_NANOSLEEP_OVERHEAD_US 25
+
+/* In order to determine useful values for above, set this to 1 and use the
+ * hardware pin-pulser.
+ * It will output a histogram atexit() of how much how often we were over
+ * the requested time.
+ * (The full histogram will be shifted by the EMPIRICAL_NANOSLEEP_OVERHEAD_US
+ *  value above. To get a full histogram of OS overhead, set it to 0 first).
+ */
+#define DEBUG_SLEEP_JITTER 0
+
 // Raspberry 1 and 2 have different base addresses for the periphery
 #define BCM2708_PERI_BASE        0x20000000
 #define BCM2709_PERI_BASE        0x3F000000
@@ -272,14 +300,16 @@ void Timers::sleep_nanos(long nanos) {
   // However, these timings have a lot of jitter, so we do a two way
   // approach: we use nanosleep(), but for some shorter time period so
   // that we can tolerate some jitter (also, we need at least an offset of
-  // 20usec as the nanosleep implementations on RPi actually have such offset).
+  // EMPIRICAL_NANOSLEEP_OVERHEAD_US as the nanosleep implementations on RPi
+  // actually have such offset).
   //
   // We use the global 1Mhz hardware timer to measure the actual time period
   // that has passed, and then inch forward for the remaining time with
   // busy wait.
-  if (nanos > 30000) {
+  if (nanos > EMPIRICAL_NANOSLEEP_OVERHEAD_US * 1000 + 5000) {
     const uint32_t before = *timer1Mhz;
-    struct timespec sleep_time = { 0, nanos - 25000 };
+    struct timespec sleep_time
+      = { 0, nanos - EMPIRICAL_NANOSLEEP_OVERHEAD_US * 1000 };
     nanosleep(&sleep_time, NULL);
     const uint32_t after = *timer1Mhz;
     const long nanoseconds_passed = 1000 * (uint32_t)(after - before);
@@ -309,6 +339,26 @@ static void sleep_nanos_rpi_2(long nanos) {
   }
 }
 
+#if DEBUG_SLEEP_JITTER
+static int overshoot_histogram_us[256] = {0};
+static void print_overshoot_histogram() {
+  fprintf(stderr, "Overshoot histogram >= EMPIRICAL_NANOSLEEP_OVERHEAD_US=%d\n"
+          "%6s | %7s | %7s\n",
+          EMPIRICAL_NANOSLEEP_OVERHEAD_US, "usec", "count", "accum");
+  int total_count = 0;
+  for (int i = 0; i < 256; ++i) total_count += overshoot_histogram_us[i];
+  int running_count = 0;
+  for (int us = 0; us < 256; ++us) {
+    const int count = overshoot_histogram_us[us];
+    if (count > 0) {
+      running_count += count;
+      fprintf(stderr, "%s%3dus: %8d %7.3f%%\n", (us == 0) ? "<=" : " +",
+              us, count, 100.0 * running_count / total_count);
+    }
+  }
+}
+#endif
+
 // A PinPulser that uses the PWM hardware to create accurate pulses.
 // It only works on GPIO-18 though.
 class HardwarePinPulser : public PinPulser {
@@ -324,6 +374,9 @@ public:
   HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
     : triggered_(false) {
     assert(CanHandle(pins));
+#if DEBUG_SLEEP_JITTER
+    atexit(print_overshoot_histogram);
+#endif
 
     if (LinuxHasModuleLoaded("snd_bcm2835")) {
       fprintf(stderr,
@@ -339,8 +392,10 @@ public:
     }
 
     for (size_t i = 0; i < specs.size(); ++i) {
-      sleep_hints_.push_back(specs[i] / 1000);
+      // Hints how long to nanosleep, already corrected for system overhead.
+      sleep_hints_.push_back(specs[i] / 1000 - EMPIRICAL_NANOSLEEP_OVERHEAD_US);
     }
+
     const int base = specs[0];
     // Get relevant registers
     const bool isPI2 = IsRaspberryPi2();
@@ -406,16 +461,32 @@ public:
     if (!triggered_) return;
     // Determine how long we already spent and sleep to get close to the
     // actual end-time of our sleep period.
-    // (substract 25 usec, as this is the OS overhead).
+    //
     // TODO(hzeller): find if it is possible to get some sort of interrupt from
     //   the hardware once it is done with the pulse. Sounds silly that there is
     //   not.
-    const uint32_t elapsed_usec = *timer1Mhz - start_time_;
-    const int to_sleep = sleep_hint_ - elapsed_usec - 25;
-    if (to_sleep > 0) {
-      struct timespec sleep_time = { 0, 1000 * to_sleep };
-      nanosleep(&sleep_time, NULL);
+    if (sleep_hint_ > 0) {
+      const uint32_t already_elapsed_usec = *timer1Mhz - start_time_;
+      const int to_sleep = sleep_hint_ - already_elapsed_usec;
+      if (to_sleep > 0) {
+        struct timespec sleep_time = { 0, 1000 * to_sleep };
+        nanosleep(&sleep_time, NULL);
+
+#if DEBUG_SLEEP_JITTER
+        {
+          // Record histogram of realtime jitter how much longer we actually
+          // took.
+          const int total_us = *timer1Mhz - start_time_;
+          const int nanoslept = total_us - already_elapsed_usec;
+          int overshoot = nanoslept - (to_sleep + EMPIRICAL_NANOSLEEP_OVERHEAD_US);
+          if (overshoot < 0) overshoot = 0;
+          if (overshoot > 255) overshoot = 255;
+          overshoot_histogram_us[overshoot]++;
+        }
+#endif
+      }
     }
+
     while ((pwm_reg_[PWM_STA] & PWM_STA_EMPT1) == 0) {
       // busy wait until done.
     }
