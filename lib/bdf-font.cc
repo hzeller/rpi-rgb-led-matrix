@@ -24,7 +24,7 @@ static const uint32_t kUnicodeReplacementCodepoint = 0xFFFD;
 
 // Bitmap for one row. This limits the number of available columns.
 // Make wider if running into trouble.
-typedef uint32_t rowbitmap_t;
+typedef uint64_t rowbitmap_t;
 
 namespace rgb_matrix {
 struct Font::Glyph {
@@ -84,7 +84,7 @@ bool Font::LoadFont(const char *path) {
       row = 0;
     }
     else if (current_glyph && row >= 0 && row < current_glyph->height
-             && (sscanf(buffer, "%x", &current_glyph->bitmap[row]) == 1)) {
+             && (sscanf(buffer, "%llx", &current_glyph->bitmap[row]) == 1)) {
       current_glyph->bitmap[row] <<= bitmap_shift;
       row++;
     }
@@ -162,7 +162,7 @@ int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
   y_pos = y_pos - g->height - g->y_offset;
   for (int y = 0; y < g->height; ++y) {
     const rowbitmap_t row = g->bitmap[y];
-    rowbitmap_t x_mask = 0x80000000;
+    rowbitmap_t x_mask = (1LL<<63);
     for (int x = 0; x < g->device_width; ++x, x_mask >>= 1) {
       if (row & x_mask) {
         c->SetPixel(x_pos + x, y_pos + y, color.r, color.g, color.b);
