@@ -132,6 +132,14 @@ hello
 
 <img src="../img/text-no-ghosting.jpg" height="100px">
 
+How about a clock ?
+
+```
+sudo ./clock -f ../fonts/7x13.bdf --led-chain=2 -d "%H:%M:%S"
+```
+
+![](../img/time-display.jpg)
+
 Integrating in your own application
 -----------------------------------
 Until this library shows up in your favorite Linux distribution, you can just
@@ -270,7 +278,6 @@ the defaults you used to create the Matrix:
   matrix->ApplyStaticTransformer(UArrangementTransformer(my_defaults.parallel));
 ```
 
-[time]: ../img/time-display.jpg
 [run-vid]: ../img/running-vid.jpg
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher

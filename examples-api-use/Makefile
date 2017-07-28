@@ -1,7 +1,7 @@
 CFLAGS=-Wall -O3 -g
 CXXFLAGS=$(CFLAGS)
-OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o
-BINARIES=demo minimal-example c-example text-example
+OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o clock.o
+BINARIES=demo minimal-example c-example text-example clock
 
 # Where our library resides. You mostly only need to change the
 # RGB_LIB_DISTRIBUTION, this is where the library is checked out.
@@ -20,11 +20,10 @@ $(RGB_LIBRARY): FORCE
 demo : demo-main.o $(RGB_LIBRARY)
 	$(CXX) $< -o $@ $(LDFLAGS)
 
-minimal-example : minimal-example.o $(RGB_LIBRARY)
+# All the binaries that have the same name as the object file.q
+% : %.o $(RGB_LIBRARY)
 	$(CXX) $< -o $@ $(LDFLAGS)
 
-text-example : text-example.o $(RGB_LIBRARY)
-	$(CXX) $< -o $@ $(LDFLAGS)
 
 # Since the C example uses the C++ library underneath, which depends on C++
 # runtime stuff, you still have to also link -lstdc++
