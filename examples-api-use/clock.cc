@@ -152,15 +152,15 @@ int main(int argc, char *argv[]) {
   for (;;) {
       localtime_r(&next_time.tv_sec, &tm);
       strftime(text_buffer, sizeof(text_buffer), time_format, &tm);
-      offscreen->Clear();
+      offscreen->Fill(bg_color.r, bg_color.g, bg_color.b);
       if (outline_font) {
           rgb_matrix::DrawText(offscreen, *outline_font,
                                x - 1, y + font.baseline(),
-                               outline_color, &bg_color, text_buffer,
+                               outline_color, NULL, text_buffer,
                                letter_spacing - 2);
       }
       rgb_matrix::DrawText(offscreen, font, x, y + font.baseline(),
-                           color, outline_font ? NULL : &bg_color, text_buffer,
+                           color, NULL, text_buffer,
                            letter_spacing);
 
       // Wait until we're ready to show it.
