@@ -20,6 +20,10 @@ $(RGB_LIBRARY): FORCE
 demo : demo-main.o $(RGB_LIBRARY)
 	$(CXX) $< -o $@ $(LDFLAGS)
 
+minimal-example : minimal-example.o
+text-example: text-example.o
+clock : clock.o
+
 # All the binaries that have the same name as the object file.q
 % : %.o $(RGB_LIBRARY)
 	$(CXX) $< -o $@ $(LDFLAGS)
