@@ -9,13 +9,19 @@
 #include "graphics.h"
 
 #include <getopt.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
+#include <unistd.h>
 
 using namespace rgb_matrix;
+
+volatile bool interrupt_received = false;
+static void InterruptHandler(int signo) {
+  interrupt_received = true;
+}
 
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options]\n", progname);
@@ -149,7 +155,10 @@ int main(int argc, char *argv[]) {
   next_time.tv_nsec = 0;
   struct tm tm;
 
-  for (;;) {
+  signal(SIGTERM, InterruptHandler);
+  signal(SIGINT, InterruptHandler);
+
+  while (!interrupt_received) {
       localtime_r(&next_time.tv_sec, &tm);
       strftime(text_buffer, sizeof(text_buffer), time_format, &tm);
       offscreen->Fill(bg_color.r, bg_color.g, bg_color.b);
@@ -176,5 +185,6 @@ int main(int argc, char *argv[]) {
   matrix->Clear();
   delete matrix;
 
+  write(STDOUT_FILENO, "\n", 1);  // Create a fresh new line after ^C on screen
   return 0;
 }
