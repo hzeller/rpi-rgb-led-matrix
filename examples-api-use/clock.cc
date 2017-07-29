@@ -32,7 +32,7 @@ static int usage(const char *progname) {
           "\t-S <spacing>      : Spacing pixels between letters (Default: 0)\n"
           "\t-C <r,g,b>        : Color. Default 255,255,0\n"
           "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
-          "\t-O <r,g,b>        : Outline-Color. Default 0,0,0\n"
+          "\t-O <r,g,b>        : Outline-Color, e.g. to increase contrast.\n"
           );
 
   return 1;
