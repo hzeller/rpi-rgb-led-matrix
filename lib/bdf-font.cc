@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 
 // The little question-mark box "�" for unknown code.
 static const uint32_t kUnicodeReplacementCodepoint = 0xFFFD;
@@ -84,7 +85,7 @@ bool Font::LoadFont(const char *path) {
       row = 0;
     }
     else if (current_glyph && row >= 0 && row < current_glyph->height
-             && (sscanf(buffer, "%llx", &current_glyph->bitmap[row]) == 1)) {
+             && (sscanf(buffer, "%" PRIx64, &current_glyph->bitmap[row]) == 1)) {
       current_glyph->bitmap[row] <<= bitmap_shift;
       row++;
     }
