@@ -397,6 +397,11 @@ bool Framebuffer::Deserialize(const char *data, size_t len) {
   return true;
 }
 
+void Framebuffer::CopyFrom(const Framebuffer *other) {
+  if (other == this) return;
+  memcpy(bitplane_buffer_, other->bitplane_buffer_, buffer_size_);
+}
+
 void Framebuffer::DumpToMatrix(GPIO *io) {
   const struct HardwareMapping &h = *hardware_mapping_;
   gpio_bits_t color_clk_mask = 0;  // Mask of bits while clocking in.

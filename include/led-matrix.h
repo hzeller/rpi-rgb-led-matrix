@@ -318,6 +318,9 @@ public:
   // This method should only be called if FrameCanvas is off-screen.
   bool Deserialize(const char *data, size_t len);
 
+  // Copy content from other FrameCanvas owned by the same RGBMatrix.
+  void CopyFrom(const FrameCanvas &other);
+
   // -- Canvas interface.
   virtual int width() const;
   virtual int height() const;

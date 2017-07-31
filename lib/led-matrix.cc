@@ -416,5 +416,7 @@ void FrameCanvas::Serialize(const char **data, size_t *len) const {
 bool FrameCanvas::Deserialize(const char *data, size_t len) {
   return frame_->Deserialize(data, len);
 }
-
+void FrameCanvas::CopyFrom(const FrameCanvas &other) {
+  frame_->CopyFrom(other.frame_);
+}
 }  // end namespace rgb_matrix

@@ -93,6 +93,7 @@ public:
 
   void Serialize(const char **data, size_t *len) const;
   bool Deserialize(const char *data, size_t len);
+  void CopyFrom(const Framebuffer *other);
 
   // Canvas-inspired methods, but we're not implementing this interface to not
   // have an unnecessary vtable.
