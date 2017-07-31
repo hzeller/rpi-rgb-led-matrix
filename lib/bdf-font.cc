@@ -31,7 +31,7 @@ namespace rgb_matrix {
 struct Font::Glyph {
   int device_width, device_height;
   int width, height;
-  int x_offset,y_offset;
+  int x_offset, y_offset;
   rowbitmap_t bitmap[0];  // contains 'height' elements.
 };
 
