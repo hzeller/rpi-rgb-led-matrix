@@ -13,13 +13,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
+// Some old g++ installations need this macro to be defined for PRIx64.
+#ifndef __STDC_FORMAT_MACROS
+#  define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
+
 #include "graphics.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <cinttypes>
 
 // The little question-mark box "�" for unknown code.
 static const uint32_t kUnicodeReplacementCodepoint = 0xFFFD;
