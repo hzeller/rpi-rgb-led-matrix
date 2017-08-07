@@ -43,6 +43,7 @@ class SampleBase(object):
         options.pwm_bits = self.args.led_pwm_bits
         options.brightness = self.args.led_brightness
         options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
+        options.led_rgb_sequence = self.args.led_rgb_sequence        
         if self.args.led_show_refresh:
           options.show_refresh_rate = 1
 
