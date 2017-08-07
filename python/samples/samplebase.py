@@ -22,7 +22,7 @@ class SampleBase(object):
         self.parser.add_argument("--led-show-refresh", action="store_true", help="Shows the current refresh rate of the LED panel")
         self.parser.add_argument("--led-slowdown-gpio", action="store", help="Slow down writing to GPIO. Range: 1..100. Default: 1", choices=range(3), type=int)
         self.parser.add_argument("--led-no-hardware-pulse", action="store", help="Don't use hardware pin-pulse generation")
-
+        self.parser.add_argument("--led-rgb-sequence", action="store", help="Switch if your matrix has led colors swapped. Default: RGB", default="RGB", type=str)
 
     def usleep(self, value):
         time.sleep(value / 1000000.0)
@@ -43,6 +43,7 @@ class SampleBase(object):
         options.pwm_bits = self.args.led_pwm_bits
         options.brightness = self.args.led_brightness
         options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
+        options.led_rgb_sequence = self.args.led_rgb_sequence        
         if self.args.led_show_refresh:
           options.show_refresh_rate = 1
 
