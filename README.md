@@ -320,6 +320,14 @@ In general, run a minimal configuration on your Pi.
     `dtoverlay=w1-gpio` in `/boot/config.txt`; or using `raspi-config`,
     Interface Options -> 1-Wire)
 
+  * If you see some regular flickering, make sure that there is no other
+    process running on the system that could cause that. For instance, it is
+    known that merely running `top` creates a faint flicker every second it
+    updates. Or a regular ntp run can also cause flicker once a minute
+    (switch off with `timedatectl set-ntp false`). This is why starting with
+    a minimal installation is a good idea: there is simply less cruft that
+    you have to disable.
+
 The default install of **[Raspbian Lite][raspbian-lite]** seems to be a good
 starting point, as it has a reasonable minimal configuration to begin with.
 So I strongly recommend using that.
