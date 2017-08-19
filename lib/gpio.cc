@@ -163,7 +163,7 @@ static bool IsRaspberryPi2() {
   uint64_t mem_size = 0;
   if ((mem_size_key = strstr(buffer, "mem_size=")) != NULL
       && (sscanf(mem_size_key + strlen("mem_size="), "%" PRIx64, &mem_size) == 1)
-      && (mem_size == 0x3F000000)) {
+      && (mem_size >= 0x3F000000)) {
     return true;
   }
   return false;
