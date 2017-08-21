@@ -1,6 +1,7 @@
 *.o
 *.a
 *~
+*.so
 led-image-viewer
 demo
 minimal-example
