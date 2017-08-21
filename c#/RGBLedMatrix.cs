@@ -64,8 +64,6 @@ namespace rpi_rgb_led_matrix_sharp
 
                 // free unmanaged resources (unmanaged objects) and override a finalizer below.
                 led_matrix_delete(matrix);
-                
-                // TODO: set large fields to null.
                 disposedValue = true;
             }
         }
@@ -77,11 +75,9 @@ namespace rpi_rgb_led_matrix_sharp
 
         // This code added to correctly implement the disposable pattern.
         public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-            // TODO: uncomment the following line if the finalizer is overridden above.
-            // GC.SuppressFinalize(this);
+        {            
+            Dispose(true);            
+            GC.SuppressFinalize(this);
         }
         #endregion
     }
