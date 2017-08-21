@@ -7,30 +7,82 @@ using System.Threading.Tasks;
 
 namespace rpi_rgb_led_matrix_sharp
 {
-    public class RGBLedMatrixSharp
+    public class RGBLedMatrix : IDisposable
     {
+        #region DLLImports
         [DllImport("librgbmatrix.so")]
-        public static extern IntPtr led_matrix_create(int rows, int chained, int parallel);
+        internal static extern IntPtr led_matrix_create(int rows, int chained, int parallel);
 
         [DllImport("librgbmatrix.so")]
-        public static extern void led_matrix_delete(IntPtr matrix);
+        internal static extern void led_matrix_delete(IntPtr matrix);
 
         [DllImport("librgbmatrix.so")]
-        public static extern void led_canvas_get_size(IntPtr canvas, out int width, out int height);
+        internal static extern IntPtr led_matrix_create_offscreen_canvas(IntPtr matrix);
 
         [DllImport("librgbmatrix.so")]
-        public static extern void led_canvas_set_pixel(IntPtr canvas, int x, int y, byte r, byte g, byte b);
+        internal static extern IntPtr led_matrix_swap_on_vsync(IntPtr matrix, IntPtr canvas);
 
         [DllImport("librgbmatrix.so")]
-        public static extern void led_canvas_clear(IntPtr canvas);
+        internal static extern IntPtr led_matrix_get_canvas(IntPtr matrix);
+        #endregion
 
-        [DllImport("librgbmatrix.so")]
-        public static extern void led_canvas_fill(IntPtr canvas, byte r, byte g, byte b);
+        public RGBLedMatrix(int rows, int chained, int parallel)
+        {
+            matrix= led_matrix_create(rows, chained, parallel);            
+        }
 
-        [DllImport("librgbmatrix.so")]
-        public static extern IntPtr led_matrix_create_offscreen_canvas(IntPtr matrix);
+        private IntPtr matrix;
 
-        [DllImport("librgbmatrix.so")]
-        public static extern IntPtr led_matrix_swap_on_vsync(IntPtr matrix, IntPtr canvas);
+        public RGBLedCanvas CreateOffscreenCanvas()
+        {
+            var canvas=led_matrix_create_offscreen_canvas(matrix);
+            return new RGBLedCanvas(canvas);
+        }
+
+        public RGBLedCanvas GetCanvas()
+        {
+            var canvas = led_matrix_get_canvas(matrix);
+            return new RGBLedCanvas(canvas);
+        }
+
+        public RGBLedCanvas SwapOnVsync(RGBLedCanvas canvas)
+        {
+            canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
+            return canvas;
+        }
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects).
+                }
+
+                // free unmanaged resources (unmanaged objects) and override a finalizer below.
+                led_matrix_delete(matrix);
+                
+                // TODO: set large fields to null.
+                disposedValue = true;
+            }
+        }
+        
+        // free unmanaged resources
+        ~RGBLedMatrix() {           
+           Dispose(false);
+        }
+
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+            // TODO: uncomment the following line if the finalizer is overridden above.
+            // GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

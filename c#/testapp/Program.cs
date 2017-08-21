@@ -12,27 +12,21 @@ namespace testapp
         static int Main(string[] args)
         {
 
-            var matrix= RGBLedMatrixSharp.led_matrix_create(32, 2, 1);
-            if (matrix == null) return 1;
-
-            var canvas = RGBLedMatrixSharp.led_matrix_create_offscreen_canvas(matrix);
-            int width;
-            int height;
-            RGBLedMatrixSharp.led_canvas_get_size(canvas, out width, out height);
+            var matrix= new RGBLedMatrix(32, 2, 1);           
+            var canvas = matrix.CreateOffscreenCanvas();
 
             for (var i = 0; i < 1000; ++i)
             {
-                for (var y = 0; y < height; ++y)
+                for (var y = 0; y < canvas.Height; ++y)
                 {
-                    for (var x = 0; x < width; ++x)
+                    for (var x = 0; x < canvas.Width; ++x)
                     {
-                        RGBLedMatrixSharp.led_canvas_set_pixel(canvas, x, y, (byte)(i & 0xff), (byte)x, (byte)y);
+                        canvas.SetPixel(x, y, new Color(i & 0xff, x, y));
                     }
                 }
-                canvas = RGBLedMatrixSharp.led_matrix_swap_on_vsync(matrix, canvas);
+                canvas = matrix.SwapOnVsync(canvas);
             }
 
-            RGBLedMatrixSharp.led_matrix_delete(matrix);
             return 0; 
         }
     }
