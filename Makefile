@@ -13,7 +13,7 @@ RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
 PYTHON_LIB_DIR=python
-CSHARP_LIB_DIR=c#
+CSHARP_LIB_DIR=c\#
 
 # Imagemagic flags, only needed if actually compiled.
 MAGICK_CXXFLAGS=`GraphicsMagick++-config --cppflags --cxxflags`
@@ -26,7 +26,6 @@ $(RGB_LIBRARY): FORCE
 
 clean:
 	$(MAKE) -C lib clean
-	$(MAKE) -C examples-api-use clean
 	$(MAKE) -C utils clean
 	$(MAKE) -C $(PYTHON_LIB_DIR) clean
 

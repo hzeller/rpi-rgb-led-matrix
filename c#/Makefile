@@ -1,10 +1,18 @@
-all:
-	mkdir -p bin
-	cp ../lib/librgbmatrix.so.1 ./bin/librgbmatrix.so
-	mcs -target:library -out:bin/RGBLedMatrix.dll *.cs
-	mcs -r:./bin/RGBLedMatrix.dll -out:bin/testapp.exe ./testapp/Program.cs
-	
-clean: @ -rm -f ./bin
+CSHARP_LIB=RGBLedMatrix.dll
+SOURCES=RGBLedCanvas.cs RGBLedMatrix.cs
+CSHARP_COMPILER=mcs
 
-remake: @ $(MAKE) clean
-	@ $(MAKE)
+RGB_LIBDIR=../lib
+RGB_LIBRARY_NAME=rgbmatrix
+RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).so.1
+
+EXAMPLES_DIR=examples
+
+$(CSHARP_LIB) : $(SOURCES) $(RGB_LIBRARY)
+	$(CSHARP_COMPILER) -target:library -out:$@ $(SOURCES)
+
+$(RGB_LIBRARY):
+	$(MAKE) -C $(RGB_LIBDIR)
+
+build: $(CSHARP_LIB)
+	$(MAKE) -C $(EXAMPLES_DIR)	

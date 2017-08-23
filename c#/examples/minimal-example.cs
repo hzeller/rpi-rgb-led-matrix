@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using rpi_rgb_led_matrix_sharp;
+﻿using rpi_rgb_led_matrix_sharp;
 
-namespace testapp
+namespace minimal_example
 {
     class Program
     {

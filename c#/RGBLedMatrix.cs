@@ -51,29 +51,19 @@ namespace rpi_rgb_led_matrix_sharp
             return canvas;
         }
         #region IDisposable Support
-        private bool disposedValue = false; // To detect redundant calls
+        private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects).
-                }
-
-                // free unmanaged resources (unmanaged objects) and override a finalizer below.
                 led_matrix_delete(matrix);
                 disposedValue = true;
             }
         }
-        
-        // free unmanaged resources
         ~RGBLedMatrix() {           
            Dispose(false);
         }
-
-        // This code added to correctly implement the disposable pattern.
         public void Dispose()
         {            
             Dispose(true);            
