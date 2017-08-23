@@ -6,17 +6,4 @@ led-image-viewer
 demo
 minimal-example
 text-example
-
-# visual studio
-*.suo
-*.sln
-*.csproj
-[Dd]ebug/
-[Rr]elease/
-x64/
-x86/
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-.vs/
-AssemblyInfo.cs
+*.dll
