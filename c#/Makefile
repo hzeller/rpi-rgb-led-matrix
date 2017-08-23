@@ -15,4 +15,4 @@ $(RGB_LIBRARY):
 	$(MAKE) -C $(RGB_LIBDIR)
 
 build: $(CSHARP_LIB)
-	$(MAKE) -C $(EXAMPLES_DIR)	
+	$(MAKE) -C $(EXAMPLES_DIR) all	
