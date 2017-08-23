@@ -1,7 +1,10 @@
 *.o
 *.a
 *~
+*.so
 led-image-viewer
 demo
 minimal-example
 text-example
+*.dll
+*.exe
