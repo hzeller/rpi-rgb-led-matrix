@@ -13,7 +13,7 @@ TXTTOMAN := a2x -f manpage
 
 # Where our library resides. It is split between includes and the binary
 # library in lib
-RGB_LIBDIR=../lib
+RGB_LIBDIR=../../lib
 RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 
