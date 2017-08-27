@@ -225,6 +225,7 @@ struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
 
 
 struct LedFont *load_font(const char *bdf_font_file);
+void delete_font(struct LedFont *font);
 
 int draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
 	uint8_t r, uint8_t g, uint8_t b,
