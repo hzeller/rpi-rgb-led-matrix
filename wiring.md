@@ -55,9 +55,12 @@ visual inspection.
 
 For each of the up to three chains, you have to connect `GND`, `strobe`,
 `clock`, `OE-`, `A`, `B`, `C`, `D` to all of these (the `D` line is needed
-for 32x32 displays; 32x16 displays don't need it); you find the positions
-below (there are more GND pins on the Raspberry Pi, but they are left out
-for simplicity).
+for 32x32 displays; 32x16 displays don't need it). If you have a 64x64 display,
+these have an additional `E` line which is typically on Pin 4 or 8 on the
+matrix connector.
+You find the positions of the pins on the Raspberry Pi and the corresponding
+logical connections in the table below (there are more GND pins on the
+Raspberry Pi, but they are left out for simplicity).
 
 Then for each panel, there is a set of (R1, G1, B1, R2, G2, B2) that you have
 to connect to the corresponding pins that are marked `[1]`, `[2]` and `[3]` for
