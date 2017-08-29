@@ -7,7 +7,7 @@ from PIL import Image
 class ImageScroller(SampleBase):
     def __init__(self, *args, **kwargs):
         super(ImageScroller, self).__init__(*args, **kwargs)
-        self.parser.add_argument("-i", "--image", help="The image to display", default="../../examples-api-use/runtext.ppm")
+        self.parser.add_argument("-i", "--image", help="The image to display", default="../../../examples-api-use/runtext.ppm")
 
     def run(self):
         if not 'image' in self.__dict__:
@@ -23,10 +23,10 @@ class ImageScroller(SampleBase):
             xpos += 1
             if (xpos > img_width):
                 xpos = 0
-                
+
             double_buffer.SetImage(self.image, -xpos)
             double_buffer.SetImage(self.image, -xpos + img_width)
-        
+
             double_buffer = self.matrix.SwapOnVSync(double_buffer)
             time.sleep(0.01)
 
