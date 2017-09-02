@@ -45,16 +45,16 @@ namespace rpi_rgb_led_matrix_sharp
                 // pass in options to interal data structure           
                 opt.chain_length = options.ChainLength;
                 opt.rows = options.Rows;
-                opt.hardware_mapping = options.HardwareMapping != null ? Marshal.StringToHGlobalUni(options.HardwareMapping) : IntPtr.Zero;
+                opt.hardware_mapping = options.HardwareMapping != null ? Marshal.StringToHGlobalAnsi(options.HardwareMapping) : IntPtr.Zero;
                 opt.inverse_colors = (uint)(options.InverseColors ? 0 : 1);  
-                opt.led_rgb_sequence = options.LedRgbSequence != null ? Marshal.StringToHGlobalUni(options.LedRgbSequence) : IntPtr.Zero;
+                opt.led_rgb_sequence = options.LedRgbSequence != null ? Marshal.StringToHGlobalAnsi(options.LedRgbSequence) : IntPtr.Zero;
                 opt.parallel = options.Parallel;
                 opt.pwm_bits = options.PwmBits;
                 opt.pwm_lsb_nanoseconds = options.PwmLsbNanoseconds;
                 opt.scan_mode = options.ScanMode;
                 opt.show_refresh_rate = (uint)(options.ShowRefreshRate ? 0 : 1);
                 opt.brightness = options.Brightness;
-                opt.disable_hardware_pulsing = (uint)(options.DisableHardwarePulsing ? 0 : 1);
+                opt.disable_hardware_pulsing = (uint)(options.DisableHardwarePulsing ? 1 : 0);
 
                 // dont care about these
                 var argc = IntPtr.Zero;
