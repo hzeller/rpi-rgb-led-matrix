@@ -11,7 +11,7 @@ class GraphicsTest(SampleBase):
     def run(self):
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../fonts/7x13.bdf")
+        font.LoadFont("../../../fonts/7x13.bdf")
 
         red = graphics.Color(255, 0, 0)
         graphics.DrawLine(canvas, 5, 5, 22, 13, red)
