@@ -36,6 +36,7 @@ extern "C" {
 
 struct RGBLedMatrix;
 struct LedCanvas;
+struct LedFont;
 
 /**
  * Parameters to create a new matrix.
@@ -221,6 +222,21 @@ struct LedCanvas *led_matrix_create_offscreen_canvas(struct RGBLedMatrix *matrix
  */
 struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
                                            struct LedCanvas *canvas);
+
+
+struct LedFont *load_font(const char *bdf_font_file);
+void delete_font(struct LedFont *font);
+
+int draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
+	uint8_t r, uint8_t g, uint8_t b,
+	const char *utf8_text, int kerning_offset);
+
+int vertical_draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
+	uint8_t r, uint8_t g, uint8_t b, const char *utf8_text, int kerning_offset);
+
+void draw_circle(struct LedCanvas *c, int xx, int y, int radius, uint8_t r, uint8_t g, uint8_t b);
+
+void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1, uint8_t r, uint8_t g, uint8_t b);
 
 #ifdef  __cplusplus
 }  // extern C
