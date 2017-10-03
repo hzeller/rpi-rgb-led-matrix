@@ -69,7 +69,7 @@ While there is the demo program and the [utilities](../utils), this code can
 be used independently as a library to be used in your own programs.
 The includes are in `include/`, the library to link is built
 in `lib/`. This is a C++ also with C bindings. There is also a
-[Python](../bindings/python) anc [c#](../bindings/c#) bindings.
+[Python](../bindings/python) and [c#](../bindings/c%23) bindings.
 
 Getting started
 ---------------
