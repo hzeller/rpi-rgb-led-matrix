@@ -39,7 +39,7 @@ to control these. You can use this as a library in your own projects or just
 use the demo binary provided here which provides some useful examples.
 
 Check out [utils/ directory for some ready-made tools](./utils) to get started
-using the library, or the [example-api-use/](./examples-api-use) directory if
+using the library, or the [examples-api-use/](./examples-api-use) directory if
 you want to get started programming your own utils.
 
 All Raspberry Pi versions supported
