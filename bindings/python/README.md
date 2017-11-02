@@ -5,7 +5,7 @@ Building
 --------
 
 If you have a different than the standard wiring (for instance if you have an
-Adafruit HAT), you can edit the [../lib/Makefile](../lib/Makefile#L26) first to choose
+Adafruit HAT), you can edit the [../../lib/Makefile](../../lib/Makefile#L26) first to choose
 the hardware in question (see below for setting it via command line argument).
 
 Then, in the root directory for the matrix library simply type:
