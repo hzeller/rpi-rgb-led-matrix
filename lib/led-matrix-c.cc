@@ -217,28 +217,23 @@ void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1, uint8_t r, u
 	DrawLine(to_canvas(c), x0, y0, x1, y1, col);
 }
 
-bool led_matrix_update_options(const struct RGBLedMatrix *ledMatrix, const struct RGBLedMatrixOptions *newOptions)
+bool led_matrix_update_options(struct RGBLedMatrix *ledMatrix, struct RGBLedMatrixOptions *newOptions)
 {
-  if (!ledMatrix || !newOptions)
-    return;
-
-    rgb_matrix::RGBMatrix::Options param = rgb_matrix::RGBMatrix::Options(matrix->params_);
-
-    if(newOptions.pwm_bits) param.pwm_bits = newO
-#define COPY_OPT(o) if(newOptions.o) param.o = newOptions.o;
-    COPY_OPT(pwm_bits);
-    COPY_OPT(brightness);
-    // COPY_OPT(show_refresh_rate);
-    // COPY_OPT(led_rgb_sequence);
-    COPY_OPT(inverse_colors);
-#undef COPY_OPT
-    
-    if(param.Validate(null))
-    {
-      rgb_matrix::RGBMatrix * matrix = to_matrix(ledMatrix);
-      matrix.params_ = param;
-      return true;
-    }
-
+  if (!ledMatrix || !newOptions) {
     return false;
+  }
+  rgb_matrix::RGBMatrix * matrix = to_matrix(ledMatrix);
+  
+  rgb_matrix::RGBMatrix::Options param = rgb_matrix::RGBMatrix::Options();
+#define COPY_OPT(o) if(newOptions->o) param.o = newOptions->o;
+  COPY_OPT(brightness);
+#undef COPY_OPT
+  
+  if(!param.Validate(NULL)) {
+    return false;
+  }
+
+  matrix->SetBrightness(param.brightness);
+
+  return false;
 }
