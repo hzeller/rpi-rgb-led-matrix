@@ -227,6 +227,7 @@ bool led_matrix_update_options(struct RGBLedMatrix *ledMatrix, struct RGBLedMatr
   rgb_matrix::RGBMatrix::Options param = rgb_matrix::RGBMatrix::Options();
 #define COPY_OPT(o) if(newOptions->o) param.o = newOptions->o;
   COPY_OPT(brightness);
+  COPY_OPT(pwm_bits);
 #undef COPY_OPT
   
   if(!param.Validate(NULL)) {
@@ -234,6 +235,7 @@ bool led_matrix_update_options(struct RGBLedMatrix *ledMatrix, struct RGBLedMatr
   }
 
   matrix->SetBrightness(param.brightness);
+  matrix->SetPWMBits(param.pwm_bits);
 
   return false;
 }
