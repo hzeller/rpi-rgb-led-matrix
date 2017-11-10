@@ -237,5 +237,5 @@ bool led_matrix_update_options(struct RGBLedMatrix *ledMatrix, struct RGBLedMatr
   matrix->SetBrightness(param.brightness);
   matrix->SetPWMBits(param.pwm_bits);
 
-  return false;
+  return true;
 }
