@@ -238,6 +238,8 @@ void draw_circle(struct LedCanvas *c, int xx, int y, int radius, uint8_t r, uint
 
 void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1, uint8_t r, uint8_t g, uint8_t b);
 
+void led_matrix_update_options(const struct RGBLedMatrix *matrix, const struct RGBLedMatrixOptions *newOptions);
+
 #ifdef  __cplusplus
 }  // extern C
 #endif
