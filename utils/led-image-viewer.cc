@@ -42,6 +42,9 @@
 #include <Magick++.h>
 #include <magick/image.h>
 
+#include "Config.h"
+#include "GridTransformer.h"
+
 using rgb_matrix::GPIO;
 using rgb_matrix::Canvas;
 using rgb_matrix::FrameCanvas;
@@ -230,6 +233,7 @@ static int usage(const char *progname) {
           "\t-L                        : Large display, in which each chain is 'folded down'\n"
           "\t                            in the middle in an U-arrangement to get more vertical space.\n"
           "\t-R<angle>                 : Rotate output; steps of 90 degrees\n"
+          "\t-F                        : Load specified Configuration File.\n"
           );
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
@@ -282,8 +286,10 @@ int main(int argc, char *argv[]) {
 
   const char *stream_output = NULL;
 
+  const char *config_file = "/dev/null";
+
   int opt;
-  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:")) != -1) {
+  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:F:")) != -1) {
     switch (opt) {
     case 'w':
       img_param.wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -332,6 +338,9 @@ int main(int argc, char *argv[]) {
       vsync_multiple = atoi(optarg);
       if (vsync_multiple < 1) vsync_multiple = 1;
       break;
+    case 'F':
+      config_file = optarg;
+      break;
     case 'h':
     default:
       return usage(argv[0]);
@@ -344,6 +353,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  Config config(&matrix_options, config_file);
+
   const int filename_count = argc - optind;
   if (filename_count == 0) {
     fprintf(stderr, "Expected image filename.\n");
@@ -355,6 +366,10 @@ int main(int argc, char *argv[]) {
   RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
+
+  if (config.hasTransformer()) {
+    matrix->ApplyStaticTransformer(config.getGridTransformer());
+  }
 
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64,

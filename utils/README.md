@@ -19,7 +19,7 @@ To compile, you first need to install the GraphicsMagick dependencies first:
 
 ```
 sudo apt-get update
-sudo apt-get install libgraphicsmagick++-dev libwebp-dev -y
+sudo apt-get install libgraphicsmagick++-dev libwebp-dev libconfig++-dev -y
 make led-image-viewer
 ```
 
