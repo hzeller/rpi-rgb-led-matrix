@@ -165,12 +165,13 @@ public:
   //   matrix->StartRefresh();          // Now start thread.
   // -------------
   // (Note, that there is a convenience function (CreateMatrixFromOptions())
-  // that does these things).
+  // that does all these things).
   void SetGPIO(GPIO *io, bool start_thread = true);
 
   // Start thread. Typically, you don't need to call this, see SetGPIO()
   // description when you might want it.
-  // It doesn't harm to call if the thread is already started.
+  // It doesn't harm to call if the thread is already started, it is a no-op
+  // then.
   // Returns 'false' if it couldn't start because GPIO was not set yet.
   bool StartRefresh();
 
@@ -345,14 +346,21 @@ struct RuntimeOptions {
   RuntimeOptions();
 
   int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
-  // If the following options are set to disabled (=-1), they are not offered
-  // the command line (and not the help).
 
-  // If daemon is disabled (=-1), the user has to call StartRefresh() manually
-  // once the matrix is created, as the caller indicates that they manage
-  // thread-lifetime manually (only after we have become a daemon,
-  // StartRefresh() can be called; see above)
+  // ----------
+  // If the following options are set to disabled with -1, they are not
+  // even offered via the command line flags.
+  // ----------
+
+  // If daemon is disabled (= -1), the user has to call StartRefresh() manually
+  // once the matrix is created, to leave the decision to become a daemon
+  // after the call (which requires that no threads have been started yet).
+  // In the other cases (off or on), the choice is already made, so the thread
+  // is conveniently already started for you.
   int daemon;           // -1 disabled. 0=off, 1=on. Flag: --led-daemon
+
+  // Drop privileges from 'root' to 'daemon' once the hardware is initialized.
+  // This is usually a good idea unless you need to stay on elevated privs.
   int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
 
   // By default, the gpio is initialized for you, but if you want to manually
@@ -400,8 +408,10 @@ int main(int argc, char **argv) {
 */
 // This parses the flags from argv and updates the structs with the parsed-out
 // values. Structs can be NULL if you are not interested in it.
-// The recongized flags are removed from argv if "remove_consumed_flags"
-// is true; this simplifies your command line processing.
+//
+// The recongized flags are removed from argv if "remove_consumed_flags" is
+// true; this simplifies your command line processing for the remaining options.
+//
 // Returns 'true' on success, 'false' if there was flag parsing problem.
 bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RGBMatrix::Options *default_options,
@@ -418,6 +428,14 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
 // you can pass in option structs with a couple of defaults. A matrix is
 // created and returned; also the options structs are updated to reflect
 // the values that were used.
+//
+// If you allow the user to start a daemon with --led-daemon, make sure to
+// call this function before you have started any threads, so early on in
+// main() (see RuntimeOptions doc above).
+//
+// Note, the permissions are dropped by default from 'root' to 'daemon', so
+// if you are required to stay root after this, disable this option in
+// the default RuntimeOptions (set drop_privileges = -1).
 // Returns NULL, if there was a problem (a message then is written to stderr).
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
                                  RGBMatrix::Options *default_options = NULL,
