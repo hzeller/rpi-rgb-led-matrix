@@ -189,7 +189,9 @@ static uint32_t *mmap_bcm_register(bool isRPi2, off_t register_offset) {
   close(mem_fd);
 
   if (result == MAP_FAILED) {
-    fprintf(stderr, "mmap error %p\n", (void*)result);
+    perror("mmap error: ");
+    fprintf(stderr, "%s: MMapping from base 0x%lx, offset 0x%lx\n",
+            isRPi2 ? "RPi2,3" : "RPi1", base, register_offset);
     return NULL;
   }
   return result;
