@@ -216,3 +216,26 @@ void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1, uint8_t r, u
 	const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
 	DrawLine(to_canvas(c), x0, y0, x1, y1, col);
 }
+
+bool led_matrix_update_options(struct RGBLedMatrix *ledMatrix, struct RGBLedMatrixOptions *newOptions)
+{
+  if (!ledMatrix || !newOptions) {
+    return false;
+  }
+  rgb_matrix::RGBMatrix * matrix = to_matrix(ledMatrix);
+  
+  rgb_matrix::RGBMatrix::Options param = rgb_matrix::RGBMatrix::Options();
+#define COPY_OPT(o) if(newOptions->o) param.o = newOptions->o;
+  COPY_OPT(brightness);
+  COPY_OPT(pwm_bits);
+#undef COPY_OPT
+  
+  if(!param.Validate(NULL)) {
+    return false;
+  }
+
+  matrix->SetBrightness(param.brightness);
+  matrix->SetPWMBits(param.pwm_bits);
+
+  return true;
+}
