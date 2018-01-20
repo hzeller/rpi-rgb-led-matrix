@@ -20,9 +20,10 @@
 
 namespace rgb_matrix {
 namespace internal {
-class StripeTransformer::TransformCanvas : public Canvas {
+// They mostly look the same.
+class BasicMultiplexCanvas : public Canvas {
 public:
-  TransformCanvas(int panel_rows, int panel_cols)
+  BasicMultiplexCanvas(int panel_rows, int panel_cols)
     : panel_cols_(panel_cols), panel_rows_(panel_rows) {
     if (panel_rows_ % 4 != 0 || panel_cols_ % 2 != 0) {
       printf("For this multiplexing to work, we'd expect the number of "
@@ -48,9 +49,7 @@ public:
   virtual int width() const { return width_; }
   virtual int height() const { return height_; }
 
-  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
-
-private:
+protected:
   const int panel_cols_;
   const int panel_rows_;
   int width_;
@@ -58,24 +57,29 @@ private:
   Canvas *delegatee_;
 };
 
-void StripeTransformer::TransformCanvas::SetPixel(
-  int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
+class StripeTransformer::TransformCanvas : public BasicMultiplexCanvas {
+public:
+  TransformCanvas(int panel_rows, int panel_cols)
+    : BasicMultiplexCanvas(panel_rows, panel_cols) {}
 
-  const int chained_panel  = x / panel_cols_;
-  const int parallel_panel = y / panel_rows_;
+  virtual void SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
 
-  const int within_panel_x = x % panel_cols_;
-  const int within_panel_y = y % panel_rows_;
+    const int chained_panel  = x / panel_cols_;
+    const int parallel_panel = y / panel_rows_;
 
-  const bool is_top_stripe = (within_panel_y % (panel_rows_/2)) < panel_rows_/4;
-  int new_x = is_top_stripe ? within_panel_x + panel_cols_ : within_panel_x;
-  int new_y = (within_panel_y / (panel_rows_/2)) * (panel_rows_/4)
+    const int within_panel_x = x % panel_cols_;
+    const int within_panel_y = y % panel_rows_;
+
+    const bool is_top_stripe = (within_panel_y % (panel_rows_/2)) < panel_rows_/4;
+    int new_x = is_top_stripe ? within_panel_x + panel_cols_ : within_panel_x;
+    int new_y = (within_panel_y / (panel_rows_/2)) * (panel_rows_/4)
                 + within_panel_y % (panel_rows_/4);
-  delegatee_->SetPixel(chained_panel * 2*panel_cols_ + new_x,
-                       parallel_panel * panel_rows_/2 + new_y,
-                       red, green, blue);
-}
+    delegatee_->SetPixel(chained_panel * 2*panel_cols_ + new_x,
+                         parallel_panel * panel_rows_/2 + new_y,
+                         r, g, b);
+  }
+};
 
 StripeTransformer::StripeTransformer(int panel_cols, int panel_rows)
     : canvas_(new TransformCanvas(panel_cols, panel_rows)) {
@@ -94,68 +98,35 @@ Canvas *StripeTransformer::Transform(Canvas *output) {
 
 // ------------------------
 
-class CheckeredTransformer::TransformCanvas : public Canvas {
+class CheckeredTransformer::TransformCanvas : public BasicMultiplexCanvas {
 public:
   TransformCanvas(int panel_rows, int panel_cols)
-    : panel_cols_(panel_cols), panel_rows_(panel_rows) {
-    if (panel_rows_ % 4 != 0 || panel_cols_ % 2 != 0) {
-      printf("For this multiplexing to work, we'd expect the number of "
-             "panel rows to be divisible by 4 and the columsn to be "
-             "divisible by two. But is %dx%d\n", panel_rows_, panel_cols_);
-      assert(0);
+    : BasicMultiplexCanvas(panel_rows, panel_cols) {}
+
+  virtual void SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
+
+    const int chained_panel  = x / panel_cols_;
+    const int parallel_panel = y / panel_rows_;
+
+    const int within_panel_x = x % panel_cols_;
+    const int within_panel_y = y % panel_rows_;
+
+    const bool is_top_check = (within_panel_y % (panel_rows_/2)) < panel_rows_/4;
+    const bool is_left_check = (within_panel_x < panel_cols_/2);
+    int new_x, new_y;
+    if (is_top_check) {
+      new_x = is_left_check ? within_panel_x+panel_cols_/2 : within_panel_x+panel_cols_;
+    } else {
+      new_x = is_left_check ? within_panel_x : within_panel_x + panel_cols_/2;
     }
-  }
-
-  void SetDelegatee(Canvas* delegatee) {
-    // The delegatee is already stretched double long and half-heighted.
-    width_ = delegatee->width() / 2;
-    height_ = delegatee->height() * 2;
-    assert(width_ % panel_cols_ == 0);
-    assert(height_ % panel_rows_ == 0);
-    delegatee_ = delegatee;
-  }
-
-  virtual void Clear() { delegatee_->Clear(); }
-  virtual void Fill(uint8_t r, uint8_t g, uint8_t b) {
-    delegatee_->Fill(r, g, b);
-  }
-  virtual int width() const { return width_; }
-  virtual int height() const { return height_; }
-
-  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
-
-private:
-  const int panel_cols_;
-  const int panel_rows_;
-  int width_;
-  int height_;
-  Canvas *delegatee_;
-};
-
-void CheckeredTransformer::TransformCanvas::SetPixel(
-  int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
-
-  const int chained_panel  = x / panel_cols_;
-  const int parallel_panel = y / panel_rows_;
-
-  const int within_panel_x = x % panel_cols_;
-  const int within_panel_y = y % panel_rows_;
-
-  const bool is_top_check = (within_panel_y % (panel_rows_/2)) < panel_rows_/4;
-  const bool is_left_check = (within_panel_x < panel_cols_/2);
-  int new_x, new_y;
-  if (is_top_check) {
-    new_x = is_left_check ? within_panel_x+panel_cols_/2 : within_panel_x+panel_cols_;
-  } else {
-    new_x = is_left_check ? within_panel_x : within_panel_x + panel_cols_/2;
-  }
-  new_y = (within_panel_y / (panel_rows_/2)) * (panel_rows_/4)
+    new_y = (within_panel_y / (panel_rows_/2)) * (panel_rows_/4)
       + within_panel_y % (panel_rows_/4);
-  delegatee_->SetPixel(chained_panel * 2*panel_cols_ + new_x,
-                       parallel_panel * panel_rows_/2 + new_y,
-                       red, green, blue);
-}
+    delegatee_->SetPixel(chained_panel * 2*panel_cols_ + new_x,
+                         parallel_panel * panel_rows_/2 + new_y,
+                         r, g, b);
+  }
+};
 
 CheckeredTransformer::CheckeredTransformer(int panel_cols, int panel_rows)
     : canvas_(new TransformCanvas(panel_cols, panel_rows)) {
