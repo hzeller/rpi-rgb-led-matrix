@@ -28,6 +28,7 @@
 #include "gpio.h"
 #include "thread.h"
 #include "framebuffer-internal.h"
+#include "multiplex-transformers-internal.h"
 
 // Leave this in here for a while. Setting things from old defines.
 #if defined(ADAFRUIT_RGBMATRIX_HAT)
@@ -152,6 +153,9 @@ RGBMatrix::Options::Options() :
     scan_mode(0),
 #endif
 
+  row_address_type(0),
+  multiplexing(0),
+
 #ifdef DISABLE_HARDWARE_PULSES
     disable_hardware_pulsing(true),
 #else
@@ -169,8 +173,7 @@ RGBMatrix::Options::Options() :
 #else
     inverse_colors(false),
 #endif
-  led_rgb_sequence("RGB"),
-  row_address_type(0)
+  led_rgb_sequence("RGB")
 {
   // Nothing to see here.
 }
@@ -178,11 +181,23 @@ RGBMatrix::Options::Options() :
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   : params_(options), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL) {
   assert(params_.Validate(NULL));
+  if (params_.multiplexing != 0) {
+    params_.rows /= 2;
+    params_.cols *= 2;
+  }
   internal::Framebuffer::InitHardwareMapping(params_.hardware_mapping);
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
-  // ApplyStaticTransformer(...);  // TODO: add 1:8 multiplex for outdoor panels
+  switch (params_.multiplexing) {
+  case 1:
+    ApplyStaticTransformer(internal::StripeTransformer(params_.rows * 2,
+                                                       params_.cols / 2));
+    break;
+  case 2:
+    ApplyStaticTransformer(internal::CheckeredTransformer(params_.rows * 2,
+                                                          params_.cols / 2));
+  }
 }
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
@@ -196,7 +211,6 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
-  // ApplyStaticTransformer(...);  // TODO: add 1:8 multiplex for outdoor panels
 }
 
 RGBMatrix::~RGBMatrix() {

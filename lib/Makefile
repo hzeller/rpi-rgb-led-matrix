@@ -5,7 +5,7 @@
 ##
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
         thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o \
-	hardware-mapping.o content-streamer.o
+	hardware-mapping.o content-streamer.o multiplex-transformers.o
 TARGET=librgbmatrix
 
 # There are several different pinouts for various breakout boards that uses
@@ -140,6 +140,7 @@ $(TARGET).so.1 : $(OBJECTS)
 led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
 thread.o : thread.cc $(INCDIR)/thread.h
 framebuffer.o: framebuffer.cc framebuffer-internal.h
+multiplex-transformers.o : multiplex-transformers.cc multiplex-transformers-internal.h
 graphics.o: graphics.cc utf8-internal.h
 
 %.o : %.cc compiler-flags

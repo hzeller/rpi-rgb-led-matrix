@@ -70,6 +70,7 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     OPT_COPY_IF_SET(cols);
     OPT_COPY_IF_SET(chain_length);
     OPT_COPY_IF_SET(parallel);
+    OPT_COPY_IF_SET(multiplexing);
     OPT_COPY_IF_SET(pwm_bits);
     OPT_COPY_IF_SET(brightness);
     OPT_COPY_IF_SET(scan_mode);
@@ -97,6 +98,7 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     ACTUAL_VALUE_BACK_TO_OPT(cols);
     ACTUAL_VALUE_BACK_TO_OPT(chain_length);
     ACTUAL_VALUE_BACK_TO_OPT(parallel);
+    ACTUAL_VALUE_BACK_TO_OPT(multiplexing);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_bits);
     ACTUAL_VALUE_BACK_TO_OPT(brightness);
     ACTUAL_VALUE_BACK_TO_OPT(scan_mode);

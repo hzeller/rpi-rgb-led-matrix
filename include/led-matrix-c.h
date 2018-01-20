@@ -105,16 +105,20 @@ struct RGBLedMatrixOptions {
    */
   int scan_mode;
 
-  /* In case the internal sequence of mapping is not "RGB", this contains the
-   * real mapping. Some panels mix up these colors.
-   */
-  const char *led_rgb_sequence;     /* Corresponding flag: --led-rgb-sequence */
-
   /* Default row address type is 0, corresponding to direct setting of the
    * row, while row address type 1 is used for panels that only have A/B,
    * typically some 64x64 panels
    */
   int row_address_type;  /* Corresponding flag: --led-row-addr-type */
+
+  /*  Type of multiplexing. 0 = direct, 1 = stripe, 2 = checker (typical 1:8)
+   */
+  int multiplexing;
+
+  /* In case the internal sequence of mapping is not "RGB", this contains the
+   * real mapping. Some panels mix up these colors.
+   */
+  const char *led_rgb_sequence;     /* Corresponding flag: --led-rgb-sequence */
 
   /** The following are boolean flags, all off by default **/
 

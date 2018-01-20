@@ -153,6 +153,8 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("parallel", it, end, &mopts->parallel, &err))
         continue;
+      if (ConsumeIntFlag("multiplexing", it, end, &mopts->multiplexing, &err))
+        continue;
       if (ConsumeIntFlag("brightness", it, end, &mopts->brightness, &err))
         continue;
       if (ConsumeIntFlag("scan-mode", it, end, &mopts->scan_mode, &err))
@@ -348,6 +350,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel "
           "chains. range=1..3 (Default: %d).\n"
+          "\t--led-multiplex=<0..2>    : Multiplexing type: 0=direct; 1=outdoor stripe mapping; 2=outdoor checkered mapping (Default: 0)\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
@@ -408,6 +411,11 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
 
   if (chain_length < 1) {
     err->append("Chain-length outside usable range.\n");
+    success = false;
+  }
+
+  if (multiplexing < 0 || multiplexing > 2) {
+    err->append("Multiplexing can only be one of 0 (normal), 1 (snake), 2 (checkered)\n");
     success = false;
   }
 
