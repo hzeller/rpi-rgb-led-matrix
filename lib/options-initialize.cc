@@ -160,6 +160,9 @@ static bool FlagInit(int &argc, char **&argv,
       if (ConsumeIntFlag("pwm-lsb-nanoseconds", it, end,
                          &mopts->pwm_lsb_nanoseconds, &err))
         continue;
+      if (ConsumeIntFlag("row-addr-type", it, end,
+                         &mopts->row_address_type, &err))
+        continue;
       if (ConsumeBoolFlag("show-refresh", it, &mopts->show_refresh_rate))
         continue;
       if (ConsumeBoolFlag("inverse", it, &mopts->inverse_colors))
@@ -345,6 +348,8 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
+          "\t--led-row-addr-type=<0..1>: 0 = default; 1=AB-addressed panels "
+          "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "
           ": Switch if your matrix has inverse colors %s.\n"

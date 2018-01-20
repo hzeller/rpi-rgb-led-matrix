@@ -65,6 +65,7 @@ They vary in the way the multiplexing is happening.
 Type  | Scan Multiplexing | Program Option               | Remark
 -----:|:-----------------:|:-----------------------------|-------
 64x64 |  1:32             | --led-rows=64 --led-chain=2  | For displays with E line.
+64x64 |  1:32             | --led-rows=64 --led-chain=2 --led-row-addr-type=1 | for displays with AB lines.
 32x32 |  1:16             | --led-rows=32                |
 32x64 |  1:16             | --led-rows=32 --led-chain=2  | internally two chained 32x32
 16x32 |  1:8              | --led-rows=16                |
