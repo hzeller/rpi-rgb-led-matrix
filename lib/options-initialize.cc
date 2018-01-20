@@ -147,6 +147,8 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("rows", it, end, &mopts->rows, &err))
         continue;
+      if (ConsumeIntFlag("cols", it, end, &mopts->cols, &err))
+        continue;
       if (ConsumeIntFlag("chain", it, end, &mopts->chain_length, &err))
         continue;
       if (ConsumeIntFlag("parallel", it, end, &mopts->parallel, &err))
@@ -338,7 +340,9 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
                       const RuntimeOptions &r) {
   fprintf(out,
           "\t--led-gpio-mapping=<name> : Name of GPIO mapping used. Default \"%s\"\n"
-          "\t--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. "
+          "\t--led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64."
+          " (Default: %d).\n"
+          "\t--led-cols=<cols>         : Panel columns. Typically 32 or 64. "
           "(Default: %d).\n"
           "\t--led-chain=<chained>     : Number of daisy-chained panels. "
           "(Default: %d).\n"
@@ -359,7 +363,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d)\n"
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
           d.hardware_mapping,
-          d.rows, d.chain_length, d.parallel,
+          d.rows, d.cols, d.chain_length, d.parallel,
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
@@ -390,9 +394,15 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   std::string scratch;
   std::string *err = err_in ? err_in : &scratch;
   bool success = true;
-  if (rows != 8 && rows != 16 && rows != 32 && rows != 64) {
-    err->append("Invalid number or panel rows. "
-                "Should be one of 8, 16, 32 or 64\n");
+  if (rows < 8 || rows > 64 || rows % 2 != 0) {
+    err->append("Invalid number or rows per panel (--led-rows). "
+                "Should be in range of [8..64] and divisible by 2.\n");
+    success = false;
+  }
+
+  if (cols < 16) {
+    err->append("Invlid number of columns for panel (--led-cols). "
+                "Typically that is something like 32 or 64\n");
     success = false;
   }
 

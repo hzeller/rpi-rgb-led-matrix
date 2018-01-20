@@ -133,7 +133,6 @@ private:
   uint8_t brightness_;
 
   const int double_rows_;
-  const uint8_t row_mask_;
   const size_t buffer_size_;
 
   // The frame-buffer is organized in bitplanes.

@@ -64,10 +64,10 @@ They vary in the way the multiplexing is happening.
 
 Type  | Scan Multiplexing | Program Option               | Remark
 -----:|:-----------------:|:-----------------------------|-------
-64x64 |  1:32             | --led-rows=64 --led-chain=2  | For displays with E line.
-64x64 |  1:32             | --led-rows=64 --led-chain=2 --led-row-addr-type=1 | for displays with AB lines.
+64x64 |  1:32             | --led-rows=64 --led-cols=64  | For displays with E line.
+64x64 |  1:32             | --led-rows=64 --led-cols=64 --led-row-addr-type=1 | for displays with AB lines.
 32x32 |  1:16             | --led-rows=32                |
-32x64 |  1:16             | --led-rows=32 --led-chain=2  | internally two chained 32x32
+32x64 |  1:16             | --led-rows=32 --led-cols=64  | internally two chained 32x32
 16x32 |  1:8              | --led-rows=16                |
 ?     |  1:4              | --led-rows=8                 | (not tested myself)
 
@@ -151,9 +151,10 @@ This can have values such as
 The next most important flags describe the type and number of displays connected
 
 ```
---led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. (Default: 32).
---led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
---led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
+--led-rows=<rows>        : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
+--led-cols=<cols>        : Panel columns. Typically 32 or 64. (Default: 32).
+--led-chain=<chained>    : Number of daisy-chained panels. (Default: 1).
+--led-parallel=<parallel>: For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
 ```
 
 These are the most important ones: here you choose how many panels you have

@@ -161,12 +161,12 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     scan_mode_(scan_mode),
     led_sequence_(led_sequence), inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
-    double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1),
+    double_rows_(rows / SUB_PANELS_),
     buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
   assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
-  assert(rows_ == 8 || rows_ == 16 || rows_ == 32 || rows_ == 64);
+  assert(rows_ >=8 && rows_ <= 64 && rows_ % 2 == 0);
   if (parallel > hardware_mapping_->max_parallel_chains) {
     fprintf(stderr, "The %s GPIO mapping only supports %d parallel chain%s, "
             "but %d was requested.\n", hardware_mapping_->name,
@@ -442,7 +442,7 @@ gpio_bits_t Framebuffer::GetGpioFromLedSequence(char col,
 
 void Framebuffer::InitDefaultDesignator(int x, int y, PixelDesignator *d) {
   const struct HardwareMapping &h = *hardware_mapping_;
-  uint32_t *bits = ValueAt(y & row_mask_, x, 0);
+  uint32_t *bits = ValueAt(y % double_rows_, x, 0);
   d->gpio_word = bits - bitplane_buffer_;
   d->r_bit = d->g_bit = d->b_bit = 0;
   if (y < rows_) {
@@ -511,15 +511,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
 
   color_clk_mask |= h.clock;
 
-  // info needed for interlace mode.
-  uint8_t rot_bits = 0;
-  switch (double_rows_) {
-  case  4: rot_bits = 1; break;
-  case  8: rot_bits = 2; break;
-  case 16: rot_bits = 3; break;
-  case 32: rot_bits = 4; break;
-  }
-
+  const uint8_t half_double = double_rows_/2;
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
     uint8_t d_row;
@@ -530,7 +522,9 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       break;
 
     case 1:  // interlaced
-      d_row = ((row_loop << 1) | (row_loop >> rot_bits)) & row_mask_;
+      d_row = ((row_loop < half_double)
+               ? (row_loop << 1)
+               : ((row_loop - half_double) << 1) + 1);
     }
 
     // Rows can't be switched very quickly without ghosting, so we do the

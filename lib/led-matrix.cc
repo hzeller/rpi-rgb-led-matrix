@@ -136,7 +136,7 @@ RGBMatrix::Options::Options() :
   hardware_mapping("regular"),
 #endif
 
-  rows(32), chain_length(1), parallel(1), pwm_bits(11),
+  rows(32), cols(32), chain_length(1), parallel(1), pwm_bits(11),
 
 #ifdef LSB_PWM_NANOSECONDS
     pwm_lsb_nanoseconds(LSB_PWM_NANOSECONDS),
@@ -245,7 +245,8 @@ bool RGBMatrix::StartRefresh() {
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {
   FrameCanvas *result =
     new FrameCanvas(new internal::Framebuffer(params_.rows,
-                                              32 * params_.chain_length,
+                                              params_.cols
+                                              * params_.chain_length,
                                               params_.parallel,
                                               params_.scan_mode,
                                               params_.led_rgb_sequence,
