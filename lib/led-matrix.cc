@@ -169,7 +169,8 @@ RGBMatrix::Options::Options() :
 #else
     inverse_colors(false),
 #endif
-  led_rgb_sequence("RGB")
+  led_rgb_sequence("RGB"),
+  row_address_type(0)
 {
   // Nothing to see here.
 }
@@ -218,7 +219,8 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
     io_ = io;
     internal::Framebuffer::InitGPIO(io_, params_.rows, params_.parallel,
                                     !params_.disable_hardware_pulsing,
-                                    params_.pwm_lsb_nanoseconds);
+                                    params_.pwm_lsb_nanoseconds,
+                                    params_.row_address_type);
   }
   if (start_thread) {
     StartRefresh();

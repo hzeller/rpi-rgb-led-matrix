@@ -24,6 +24,7 @@ namespace rgb_matrix {
 class GPIO;
 class PinPulser;
 namespace internal {
+class RowAddressSetter;
 
 // An opaque type used within the framebuffer that can be used
 // to copy between PixelMappers.
@@ -70,7 +71,8 @@ public:
   static void InitHardwareMapping(const char *named_hardware);
   static void InitGPIO(GPIO *io, int rows, int parallel,
                        bool allow_hardware_pulsing,
-                       int pwm_lsb_nanoseconds);
+                       int pwm_lsb_nanoseconds,
+                       int row_address_type);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.
@@ -105,6 +107,7 @@ public:
 
 private:
   static const struct HardwareMapping *hardware_mapping_;
+  static RowAddressSetter *row_setter_;
 
   // This returns the gpio-bit for given color (one of 'R', 'G', 'B'). This is
   // returning the right value in case led_sequence_ is _not_ "RGB"
