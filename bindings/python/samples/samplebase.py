@@ -12,6 +12,7 @@ class SampleBase(object):
         self.parser = argparse.ArgumentParser()
 
         self.parser.add_argument("-r", "--led-rows", action="store", help="Display rows. 16 for 16x32, 32 for 32x32. Default: 32", default=32, type=int)
+        self.parser.add_argument("--led-cols", action="store", help="Panel columns. Typically 32 or 64. (Default: 32)", default=32, type=int)
         self.parser.add_argument("-c", "--led-chain", action="store", help="Daisy-chained boards. Default: 1.", default=1, type=int)
         self.parser.add_argument("-P", "--led-parallel", action="store", help="For Plus-models or RPi2: parallel chains. 1..3. Default: 1", default=1, type=int)
         self.parser.add_argument("-p", "--led-pwm-bits", action="store", help="Bits used for PWM. Something between 1..11. Default: 11", default=11, type=int)
@@ -23,6 +24,8 @@ class SampleBase(object):
         self.parser.add_argument("--led-slowdown-gpio", action="store", help="Slow down writing to GPIO. Range: 1..100. Default: 1", choices=range(3), type=int)
         self.parser.add_argument("--led-no-hardware-pulse", action="store", help="Don't use hardware pin-pulse generation")
         self.parser.add_argument("--led-rgb-sequence", action="store", help="Switch if your matrix has led colors swapped. Default: RGB", default="RGB", type=str)
+        self.parser.add_argument("--led-row-addr-type", action="store", help="0 = default; 1=AB-addressed panels", default=0, type=int, choices=[0,1])
+        self.parser.add_argument("--led-multiplexing", action="store", help="Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral (Default: 0)", default=0, type=int, choices=[0,1,2,3])
 
     def usleep(self, value):
         time.sleep(value / 1000000.0)
@@ -38,12 +41,15 @@ class SampleBase(object):
         if self.args.led_gpio_mapping != None:
           options.hardware_mapping = self.args.led_gpio_mapping
         options.rows = self.args.led_rows
+        options.cols = self.args.led_cols
         options.chain_length = self.args.led_chain
         options.parallel = self.args.led_parallel
+        options.row_address_type = self.args.led_row_addr_type
+        options.multiplexing = self.args.led_multiplexing
         options.pwm_bits = self.args.led_pwm_bits
         options.brightness = self.args.led_brightness
         options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
-        options.led_rgb_sequence = self.args.led_rgb_sequence        
+        options.led_rgb_sequence = self.args.led_rgb_sequence
         if self.args.led_show_refresh:
           options.show_refresh_rate = 1
 
