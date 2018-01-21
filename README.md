@@ -357,7 +357,8 @@ In general, run a minimal configuration on your Pi.
     to explicitly blacklist the snd_bcm2835 module).
 
   * Don't run anything that messes in parallel with the GPIO pins, e.g.
-    PiGPIO library/daemon.
+    PiGPIO library/daemon or devices that use the i2c or 1-wire interface if
+    they are on the same pins you need for the panel.
 
   * I have also seen reports that on some Pis, the one-wire protocol is
     enabled (w1-gpio). This will also not work (disable by removing
@@ -368,13 +369,31 @@ In general, run a minimal configuration on your Pi.
     process running on the system that could cause that. For instance, it is
     known that merely running `top` creates a faint flicker every second it
     updates. Or a regular ntp run can also cause flicker once a minute
-    (switch off with `timedatectl set-ntp false`). This is why starting with
-    a minimal installation is a good idea: there is simply less cruft that
-    you have to disable.
+    (switch off with `sudo timedatectl set-ntp false`). Maybe instead you
+    might want to run ntp at system start-up but then not regularly updating.
+
+  * There are probably other processes that are running that you don't need
+    and remove them; I usually remove right away stuff I really don't need e.g.
+    ```
+    sudo apt-get remove bluez bluez-firmware pi-bluetooth triggerhappy pigpio
+    ```
+    Take a close look at your systemd (`systemctl`) and see if there are other
+    things running you don't need. If you have seen packages in standard
+    Raspbians that interfere with the matrix code, let me know to include it
+    here.
+    In general: This is why starting with a minimal installation is a good
+    idea: there is simply less cruft that you have to disable.
+
+  * It seems that more recent version of Raspbian Lite result in some faint
+    brightness fluctuations of the displays and it is not quite clear why (see
+    issue [#483](https://github.com/hzeller/rpi-rgb-led-matrix/issues/483)). If you are a Kernel person and can help figuring out what is
+    happening that would be very appreciated. Also, you might know a minimal
+    Linux distribution that is more suited for near realtime applications ?
 
 The default install of **[Raspbian Lite][raspbian-lite]** seems to be a good
 starting point, as it has a reasonable minimal configuration to begin with.
-So I strongly recommend using that.
+It recently has the issue of more interference with the matrix, so if you can
+recommend a more lightweight, realtime focused distribution, let me know.
 
 ### Bad interaction with Sound
 If sound is enabled on your Pi, this will not work together with the LED matrix,
@@ -543,7 +562,8 @@ reserve one core just for the refresh of the display:
 isolcpus=3
 ```
 
-.. at the end of the line of `/boot/cmdline.txt`. This will use the last core
+.. at the end of the line of `/boot/cmdline.txt` (needs to be in the same as
+the other arguments, no newline). This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
 
