@@ -17,6 +17,10 @@
 
 #include "canvas.h"
 
+// A couple of 1:8 multiplexing mappings found on some common led matrices.
+// There are constantly new ones coming out, so please help adding one if your
+// matrix is different.
+
 namespace rgb_matrix {
 namespace internal {
 class StripeTransformer : public CanvasTransformer {
@@ -36,6 +40,18 @@ class CheckeredTransformer : public CanvasTransformer {
 public:
   CheckeredTransformer(int panel_rows, int panel_cols);
   virtual ~CheckeredTransformer();
+
+  virtual Canvas *Transform(Canvas *output);
+
+private:
+  class TransformCanvas;
+  TransformCanvas *const canvas_;
+};
+
+class SpiralTransformer : public CanvasTransformer {
+public:
+  SpiralTransformer(int panel_rows, int panel_cols);
+  virtual ~SpiralTransformer();
 
   virtual Canvas *Transform(Canvas *output);
 

@@ -197,6 +197,11 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   case 2:
     ApplyStaticTransformer(internal::CheckeredTransformer(params_.rows * 2,
                                                           params_.cols / 2));
+    break;
+  case 3:
+    ApplyStaticTransformer(internal::SpiralTransformer(params_.rows * 2,
+                                                       params_.cols / 2));
+    break;
   }
 }
 

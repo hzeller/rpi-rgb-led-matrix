@@ -143,5 +143,52 @@ Canvas *CheckeredTransformer::Transform(Canvas *output) {
   return canvas_;
 }
 
+// ------------------------
+
+class SpiralTransformer::TransformCanvas : public BasicMultiplexCanvas {
+public:
+  TransformCanvas(int panel_rows, int panel_cols)
+    : BasicMultiplexCanvas(panel_rows, panel_cols) {}
+
+  virtual void SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
+
+    const int chained_panel  = x / panel_cols_;
+    const int parallel_panel = y / panel_rows_;
+
+    const int within_panel_x = x % panel_cols_;
+    const int within_panel_y = y % panel_rows_;
+
+    const bool is_top_stripe = (within_panel_y % (panel_rows_/2)) < panel_rows_/4;
+    const int panel_quarter = panel_cols_/4;
+    const int quarter = within_panel_x / panel_quarter;
+    const int offset = within_panel_x % panel_quarter;
+    const int new_x = ((2*quarter*panel_quarter)
+                       + (is_top_stripe
+                          ? panel_quarter - 1 - offset
+                          : panel_quarter + offset));
+    const int new_y = ((within_panel_y / (panel_rows_/2)) * (panel_rows_/4)
+                       + within_panel_y % (panel_rows_/4));
+    delegatee_->SetPixel(chained_panel * 2*panel_cols_ + new_x,
+                         parallel_panel * panel_rows_/2 + new_y,
+                         r, g, b);
+  }
+};
+
+SpiralTransformer::SpiralTransformer(int panel_cols, int panel_rows)
+    : canvas_(new TransformCanvas(panel_cols, panel_rows)) {
+}
+
+SpiralTransformer::~SpiralTransformer() {
+  delete canvas_;
+}
+
+Canvas *SpiralTransformer::Transform(Canvas *output) {
+  assert(output != NULL);
+
+  canvas_->SetDelegatee(output);
+  return canvas_;
+}
+
 }  // namespace internal
 }  // namespace rgb_matrix
