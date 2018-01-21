@@ -17,7 +17,6 @@
 
 #include <sched.h>
 #include <stdio.h>
-#include <string.h>
 #include <assert.h>
 
 namespace rgb_matrix {
@@ -35,7 +34,7 @@ void Thread::WaitStopped() {
   if (!started_) return;
   int result = pthread_join(thread_, NULL);
   if (result != 0) {
-    fprintf(stderr, "err code: %d %s\n", result, strerror(result));
+    perror("Issue joining thread");
   }
   started_ = false;
 }
@@ -47,7 +46,9 @@ void Thread::Start(int priority, uint32_t affinity_mask) {
   if (priority > 0) {
     struct sched_param p;
     p.sched_priority = priority;
-    pthread_setschedparam(thread_, SCHED_FIFO, &p);
+    if (pthread_setschedparam(thread_, SCHED_FIFO, &p) != 0) {
+      perror("FYI: Can't set realtime thread priority");
+    }
   }
 
   if (affinity_mask != 0) {
@@ -58,7 +59,9 @@ void Thread::Start(int priority, uint32_t affinity_mask) {
         CPU_SET(i, &cpu_mask);
       }
     }
-    pthread_setaffinity_np(thread_, sizeof(cpu_mask), &cpu_mask);
+    if (pthread_setaffinity_np(thread_, sizeof(cpu_mask), &cpu_mask) != 0) {
+      perror("FYI: Couldn't set affinity");
+    }
   }
 
   started_ = true;
