@@ -28,7 +28,8 @@ HARDWARE_DESC?=regular
 ###
 # After you change any of the following DEFINES, make sure to 'make' again.
 #
-# Note, all of these options can now can be set programmatically and
+# ###########      NOTE     ###########
+# all of these options can now can be set programmatically and
 # via command line flags as well. No real need to change them in the Makefile.
 # (So be prepared for these to be removed at some point)
 ###

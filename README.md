@@ -5,28 +5,22 @@ A library to control commonly available 32x32 or 16x32 RGB LED panels with the
 Raspberry Pi. Can support PWM up to 11Bit per channel, providing true 24bpp
 color with CIE1931 profile.
 
-Supports 3 chains with many 32x32-panels each.
-On a Raspberry Pi 2, you can easily chain 12 panels in that chain (so 36 panels total),
-but you can stretch that to up to 96-ish panels (32 chain length) and still reach
-around 100Hz refresh rate with full 24Bit color (theoretical - never tested this;
-there might likely be timing problems with the panels that will creep up then).
-With fewer colors you can control even more, faster.
+Supports 3 chains with many panels each.
+On a Raspberry Pi 2 or 3, you can easily chain 12 panels in that chain
+(so 36 panels total), but you can theoretically stretch that to up
+to 96-ish panels (32 chain length) and still reach
+around 100Hz refresh rate with full 24Bit color (theoretical - never tested
+this; there might likely be timing problems with the panels that will creep
+up then).
+
+With fewer colors or so-called 'outdoor panels' you can control even more,
+faster.
 
 The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org>, licensed with
 [GNU General Public License Version 2.0](http://www.gnu.org/licenses/gpl-2.0.txt)
 (which means, if you use it in a product somewhere, you need to make the
 source and all your modifications available to the receiver of such product so
 that they have the freedom to adapt and improve).
-
-Note to Old Time Users: Several changes in defines and flags
-------------------------------------------------------------
-If you have checked out this library before, you might find that some
-files are re-organized in different directories (e.g. there is now a separation
-for library examples and utilities), and that the flags to binaries are now
-long and unified. Also, for the most part, you don't need to tweak paramters
-in `lib/Makefile` anymore as they are now exposed via command line flags.
-
-Choosing a different pinout, e.g. for the Adafruit HAT is also a little different.
 
 Overview
 --------
@@ -62,40 +56,52 @@ Types of Displays
 There are various types of displays that come all with the same Hub75 connector.
 They vary in the way the multiplexing is happening.
 
-Type  | Scan Multiplexing | Program Option               | Remark
+Type w*h | Scan Multiplexing | Program commandline flags    | Remark
 -----:|:-----------------:|:-----------------------------|-------
-64x64 |  1:32             | --led-rows=64 --led-cols=64  | For displays with E line.
-64x64 |  1:32             | --led-rows=64 --led-cols=64 --led-row-addr-type=1 | for displays with AB lines.
+64x64 |  1:32             | --led-rows=64 --led-cols=64  | For displays with A,B,C,D,E line.
+64x64 |  1:32             | --led-rows=64 --led-cols=64 --led-row-addr-type=1 | For displays with A,B lines.
+64x32 |  1:16             | --led-rows=32 --led-cols=64  |
+64x32 |  1:8              | --led-rows=32 --led-cols=64 --led-multiplexing=1 | few mux choices
 32x32 |  1:16             | --led-rows=32                |
-32x64 |  1:16             | --led-rows=32 --led-cols=64  | internally two chained 32x32
-16x32 |  1:8              | --led-rows=16                |
-?     |  1:4              | --led-rows=8                 | (not tested myself)
+32x32 |  1:8              | --led-rows=32 --led-multiplexing=1 | few mux choices
+32x16 |  1:8              | --led-rows=16                |
+32x16 |  1:4              | --led-rows=16 --led-multiplexing=1 | few mux choices
+...   |
 
 These can be chained by connecting the output of one panel to the input of
 the next panel. You can chain quite a few together.
 
-The 64x64 matrixes typically have 5 address lines (A, B, C, D, E). There are
-also 64x64 panels out there that only seem to have 1:4 multiplexing (there
-is A and B), but I have not had these in my lab yet to test.
+The 64x64 matrixes typically come in two kinds: with 5 address
+lines (A, B, C, D, E), or (A, B); the latter needs a `--led-row-addr-type=1`
+parameter. So-called 'outdoor panels' are typically brighter and allow for
+faster refresh-rate for the same size, but do some multiplexing internally
+of which there are a few types out there; they can be chosen with
+the `--led-multiplexing` parameter.
+
+Generally, the higher scan-rate (e.g. 1:8), a.k.a. outdoor panels generally
+allow faster refresh rate, but you might need to figure out the multiplexing
+mapping if one of the three provided does not work.
 
 Let's do it
 ------------
 This documentation is split into parts that help you through the process
 
-  * <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
-    [Wire up the matrix to your Pi](./wiring.md). This document describes what
-    goes where. You might also be interested in [breakout boards](./adapter)
-    for that. If you have an [Adafruit HAT], you can choose that with
+  1. <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
+    [**Wire up the matrix to your Pi**](./wiring.md). This document describes
+    what goes where. You might also be interested
+    in [breakout boards](./adapter) for that.
+    If you have an [Adafruit HAT], you can choose that with
     a command line option [described below](#if-you-have-an-adafruit-hat)
-  * Run a demo. You find that in the
+  2. Run a demo. You find that in the
      [examples-api-use/](./examples-api-use#running-some-demos) directory:
 ```
 make -C examples-api-use
 sudo examples-api-use/demo -D0
 ```
-  * Use the utilities. The [utils](./utils) directory has some ready-made
+  3. Use the utilities. The [utils](./utils) directory has some ready-made
     useful utilities to show content. [Go there](./utils) to see how to
     compile and run these.
+  4. Write your own programs using the Matrix in C++ or Python.
 
 ### Utilities
 
@@ -145,7 +151,7 @@ choose these here:
 
 This can have values such as
   - `--led-gpio-mapping=regular` The standard mapping of this library, described in the [wiring](./wiring.md) page.
-  - `--led-gpio-mapping=adafruit-hat` standard Adafruit HAT or
+  - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT, that uses this library or
   - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
 
 The next most important flags describe the type and number of displays connected
@@ -168,6 +174,40 @@ many there are.
 This illustrates what each of these parameters mean:
 
 <a href="wiring.md#chaining-parallel-chains-and-coordinate-system"><img src="img/coordinates.png"></a>
+
+##### Multiplexing
+If you have some 'outdoor' panels or panels with different multiplexing,
+the following will be useful:
+
+```
+--led-multiplexing=<0..3> : Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral (Default: 0)
+```
+The outdoor panels have different multiplexing which allows them to be faster
+and brighter, but by default their output looks jumbled up.
+They require some pixel-mapping of which there are a few
+types you can try and hopefully one of them works for your panel; The default=0
+is no mapping ('standard' panels), while 1, 2, or 3 are different mappings
+to try with. If your panel has a different mapping, please send a pull request.
+
+Note that you have to set the `--led-rows` and `--led-cols` to the rows and
+columns that are physically on each chained panel so that the multiplexing
+option can work properly. For instance a `32x16` panel with `1:4` multiplexing
+would be controlled with `--led-rows=16 --led-cols=32 --led-multiplexing=1` (or
+whatever multiplexing type your panel is, so it can also be `--led-multiplexing=2`, or 3).
+
+For `64x32` panels with `1:8` multiplexing, this would typically be
+`--led-rows=32 --led-cols=64 --led-multiplexing=1`;
+however, there are some panels that internally behave like
+two chained panels, so then you'd use
+`--led-rows=32 --led-cols=32 --led-chain=2 --led-multiplexing=1`;
+
+```
+--led-row-addr-type=<0..1>: 0 = default; 1=AB-addressed panels (Default: 0).
+```
+
+This option is useful for certain 64x64 panels, that only have an `A` and `B`
+address line. This is only tested with one panel so far, so if it doesn't work
+for you, please send a pull request.
 
 ```
 --led-brightness=<percent>: Brightness in percent (Default: 100).
@@ -214,7 +254,9 @@ parameters, showing the refresh rate can be a useful tool.
 ```
 
 This switches from progressive scan and interlaced scan. The latter might
-look be a little nicer when you have a very low refresh rate.
+look be a little nicer when you have a very low refresh rate, but typically
+it is more annoying because of the comb-effect (remember 80ies TV ?).
+
 
 ```
 --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
@@ -355,6 +397,15 @@ sudo update-initramfs -u
 ```
 
 Reboot and confirm that the module is not loaded.
+
+### I have followed the Adafruit Tutorial and it doesn't work
+
+Well, if you use this library, please read the documentation provided _here_,
+not on some other website. Most important for you to get started
+is the [wiring guide](./wiring.md).
+
+Adafruit has some outdated tutorial based on a super-ancient version of this
+library. It won't work.
 
 ### I have a Pi1 Revision1 and top part of Panel doesn't show green
 
@@ -510,6 +561,13 @@ dropped due to its slow speed..
 
 There is an upper limit in how fast the GPIO pins can be controlled, which
 limits the frame-rate. Raspberry Pi 2's and newer are generally faster.
+
+Even with everything in place, you might see faint brightness fluctuations
+in particular if there is something going on on the network or in a terminal
+on the Pi; this could probably be mitigated with some more real-time
+kernel for the Pi; maybe there are also hardware limitations (memory bus
+contention?). Anyway, if you have a realtime kernel configuration that you
+have optimized for this application, let me know.
 
 Fun
 ---
