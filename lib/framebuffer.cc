@@ -60,7 +60,95 @@ PixelMapper::~PixelMapper() {
   delete [] buffer_;
 }
 
+// Different panel types use different techniques to set the row address.
+// We abstract that away with different implementations of RowAddressSetter
+class RowAddressSetter {
+public:
+  virtual ~RowAddressSetter() {}
+  virtual gpio_bits_t need_bits() const = 0;
+  virtual void SetRowAddress(GPIO *io, int row) = 0;
+};
+
+namespace {
+
+// The default DirectRowAddressSetter just sets the address in parallel
+// output lines ABCDE with A the LSB and E the MSB.
+class DirectRowAddressSetter : public RowAddressSetter {
+public:
+  DirectRowAddressSetter(int double_rows, const HardwareMapping &h)
+    : row_mask_(0), last_row_(-1) {
+    assert(double_rows <= 32);  // need to resize row_lookup_
+    if (double_rows >= 32) row_mask_ |= h.e;
+    if (double_rows >= 16) row_mask_ |= h.d;
+    if (double_rows >=  8) row_mask_ |= h.c;
+    if (double_rows >=  4) row_mask_ |= h.b;
+    row_mask_ |= h.a;
+    for (int i = 0; i < double_rows; ++i) {
+      // To avoid the bit-fiddle in the critical path, utilize
+      // a lookup-table for all possible rows.
+      gpio_bits_t row_address = (i & 0x01) ? h.a : 0;
+      row_address |= (i & 0x02) ? h.b : 0;
+      row_address |= (i & 0x04) ? h.c : 0;
+      row_address |= (i & 0x08) ? h.d : 0;
+      row_address |= (i & 0x10) ? h.e : 0;
+      row_lookup_[i] = row_address;
+    }
+  }
+
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    io->WriteMaskedBits(row_lookup_[row], row_mask_);
+    last_row_ = row;
+  }
+
+private:
+  gpio_bits_t row_mask_;
+  gpio_bits_t row_lookup_[32];
+  int last_row_;
+};
+
+// This is mostly experimental at this point. It works with the one panel I have
+// seen that does AB, but might need smallish tweaks to work with all panels
+// that do this.
+class ShiftRegisterRowAddressSetter : public RowAddressSetter {
+public:
+  ShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
+    : double_rows_(double_rows),
+      row_mask_(h.a | h.b), clock_(h.a), data_(h.b),
+      last_row_(-1) {
+  }
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    for (int activate = 0; activate < double_rows_; ++activate) {
+      io->ClearBits(clock_);
+      if (activate == double_rows_ - 1 - row) {
+        io->ClearBits(data_);
+      } else {
+        io->SetBits(data_);
+      }
+      io->SetBits(clock_);
+    }
+    io->ClearBits(clock_);
+    io->SetBits(clock_);
+    last_row_ = row;
+  }
+
+private:
+  const int double_rows_;
+  const gpio_bits_t row_mask_;
+  const gpio_bits_t clock_;
+  const gpio_bits_t data_;
+  int last_row_;
+};
+
+}
+
 const struct HardwareMapping *Framebuffer::hardware_mapping_ = NULL;
+RowAddressSetter *Framebuffer::row_setter_ = NULL;
 
 Framebuffer::Framebuffer(int rows, int columns, int parallel,
                          int scan_mode,
@@ -73,12 +161,12 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     scan_mode_(scan_mode),
     led_sequence_(led_sequence), inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
-    double_rows_(rows / SUB_PANELS_), row_mask_(double_rows_ - 1),
+    double_rows_(rows / SUB_PANELS_),
     buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
   assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
-  assert(rows_ == 8 || rows_ == 16 || rows_ == 32 || rows_ == 64);
+  assert(rows_ >=8 && rows_ <= 64 && rows_ % 2 == 0);
   if (parallel > hardware_mapping_->max_parallel_chains) {
     fprintf(stderr, "The %s GPIO mapping only supports %d parallel chain%s, "
             "but %d was requested.\n", hardware_mapping_->name,
@@ -155,7 +243,8 @@ Framebuffer::~Framebuffer() {
 
 /* static */ void Framebuffer::InitGPIO(GPIO *io, int rows, int parallel,
                                         bool allow_hardware_pulsing,
-                                        int pwm_lsb_nanoseconds) {
+                                        int pwm_lsb_nanoseconds,
+                                        int row_address_type) {
   if (sOutputEnablePulser != NULL)
     return;  // already initialized.
 
@@ -174,11 +263,18 @@ Framebuffer::~Framebuffer() {
   }
 
   const int double_rows = rows / SUB_PANELS_;
-  if (double_rows >= 32) all_used_bits |= h.e;
-  if (double_rows >= 16) all_used_bits |= h.d;
-  if (double_rows >=  8) all_used_bits |= h.c;
-  if (double_rows >=  4) all_used_bits |= h.b;
-  all_used_bits |= h.a;
+  switch (row_address_type) {
+  case 0:
+    row_setter_ = new DirectRowAddressSetter(double_rows, h);
+    break;
+  case 1:
+    row_setter_ = new ShiftRegisterRowAddressSetter(double_rows, h);
+    break;
+  default:
+    assert(0);  // unexpected type.
+  }
+
+  all_used_bits |= row_setter_->need_bits();
 
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io->InitOutputs(all_used_bits);
@@ -346,7 +442,7 @@ gpio_bits_t Framebuffer::GetGpioFromLedSequence(char col,
 
 void Framebuffer::InitDefaultDesignator(int x, int y, PixelDesignator *d) {
   const struct HardwareMapping &h = *hardware_mapping_;
-  uint32_t *bits = ValueAt(y & row_mask_, x, 0);
+  uint32_t *bits = ValueAt(y % double_rows_, x, 0);
   d->gpio_word = bits - bitplane_buffer_;
   d->r_bit = d->g_bit = d->b_bit = 0;
   if (y < rows_) {
@@ -415,19 +511,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
 
   color_clk_mask |= h.clock;
 
-  const gpio_bits_t row_mask = h.a | h.b | h.c | h.d | h.e;
-
-  gpio_bits_t row_address;
-
-  // info needed for interlace mode.
-  uint8_t rot_bits = 0;
-  switch (double_rows_) {
-  case  4: rot_bits = 1; break;
-  case  8: rot_bits = 2; break;
-  case 16: rot_bits = 3; break;
-  case 32: rot_bits = 4; break;
-  }
-
+  const uint8_t half_double = double_rows_/2;
   const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
     uint8_t d_row;
@@ -438,14 +522,10 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       break;
 
     case 1:  // interlaced
-      d_row = ((row_loop << 1) | (row_loop >> rot_bits)) & row_mask_;
+      d_row = ((row_loop < half_double)
+               ? (row_loop << 1)
+               : ((row_loop - half_double) << 1) + 1);
     }
-
-    row_address =  (d_row & 0x01) ? h.a : 0;
-    row_address |= (d_row & 0x02) ? h.b : 0;
-    row_address |= (d_row & 0x04) ? h.c : 0;
-    row_address |= (d_row & 0x08) ? h.d : 0;
-    row_address |= (d_row & 0x10) ? h.e : 0;
 
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
@@ -464,7 +544,8 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
       sOutputEnablePulser->WaitPulseFinished();
 
       // Setting address and strobing needs to happen in dark time.
-      io->WriteMaskedBits(row_address, row_mask);  // Set row address
+      row_setter_->SetRowAddress(io, d_row);
+
       io->SetBits(h.strobe);   // Strobe in the previously clocked in row.
       io->ClearBits(h.strobe);
 

@@ -67,8 +67,10 @@ struct RGBLedMatrix *led_matrix_create_from_options(
 #define OPT_COPY_IF_SET(o) if (opts->o) default_opts.o = opts->o
     OPT_COPY_IF_SET(hardware_mapping);
     OPT_COPY_IF_SET(rows);
+    OPT_COPY_IF_SET(cols);
     OPT_COPY_IF_SET(chain_length);
     OPT_COPY_IF_SET(parallel);
+    OPT_COPY_IF_SET(multiplexing);
     OPT_COPY_IF_SET(pwm_bits);
     OPT_COPY_IF_SET(brightness);
     OPT_COPY_IF_SET(scan_mode);
@@ -76,6 +78,7 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     OPT_COPY_IF_SET(show_refresh_rate);
     OPT_COPY_IF_SET(led_rgb_sequence);
     OPT_COPY_IF_SET(inverse_colors);
+    OPT_COPY_IF_SET(row_address_type);
 #undef OPT_COPY_IF_SET
   }
 
@@ -92,8 +95,10 @@ struct RGBLedMatrix *led_matrix_create_from_options(
 #define ACTUAL_VALUE_BACK_TO_OPT(o) opts->o = default_opts.o
     ACTUAL_VALUE_BACK_TO_OPT(hardware_mapping);
     ACTUAL_VALUE_BACK_TO_OPT(rows);
+    ACTUAL_VALUE_BACK_TO_OPT(cols);
     ACTUAL_VALUE_BACK_TO_OPT(chain_length);
     ACTUAL_VALUE_BACK_TO_OPT(parallel);
+    ACTUAL_VALUE_BACK_TO_OPT(multiplexing);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_bits);
     ACTUAL_VALUE_BACK_TO_OPT(brightness);
     ACTUAL_VALUE_BACK_TO_OPT(scan_mode);
@@ -101,6 +106,7 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     ACTUAL_VALUE_BACK_TO_OPT(show_refresh_rate);
     ACTUAL_VALUE_BACK_TO_OPT(led_rgb_sequence);
     ACTUAL_VALUE_BACK_TO_OPT(inverse_colors);
+    ACTUAL_VALUE_BACK_TO_OPT(row_address_type);
 #undef ACTUAL_VALUE_BACK_TO_OPT
   }
 

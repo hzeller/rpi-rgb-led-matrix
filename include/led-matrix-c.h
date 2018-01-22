@@ -57,6 +57,15 @@ struct RGBLedMatrixOptions {
    */
   int rows;
 
+  /* The "cols" are the number of columns per panel. Typically something
+   * like 32, but also 64 is possible. Sometimes even 40.
+   * cols * chain_length is the total length of the display, so you can
+   * represent a 64 wide display as cols=32, chain=2 or cols=64, chain=1;
+   * same thing.
+   * Flag: --led-cols
+   */
+  int cols;
+
   /* The chain_length is the number of displays daisy-chained together
    * (output of one connected to input of next). Default: 1
    * Corresponding flag: --led-chain
@@ -95,6 +104,16 @@ struct RGBLedMatrixOptions {
    * Corresponding flag: --led-scan-mode
    */
   int scan_mode;
+
+  /* Default row address type is 0, corresponding to direct setting of the
+   * row, while row address type 1 is used for panels that only have A/B,
+   * typically some 64x64 panels
+   */
+  int row_address_type;  /* Corresponding flag: --led-row-addr-type */
+
+  /*  Type of multiplexing. 0 = direct, 1 = stripe, 2 = checker (typical 1:8)
+   */
+  int multiplexing;
 
   /* In case the internal sequence of mapping is not "RGB", this contains the
    * real mapping. Some panels mix up these colors.

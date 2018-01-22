@@ -104,6 +104,10 @@ cdef class RGBMatrixOptions:
         def __get__(self): return self.__options.rows
         def __set__(self, uint8_t value): self.__options.rows = value
 
+    property cols:
+        def __get__(self): return self.__options.cols
+        def __set__(self, uint8_t value): self.__options.cols = value
+
     property chain_length:
         def __get__(self): return self.__options.chain_length
         def __set__(self, uint8_t value): self.__options.chain_length = value
@@ -127,6 +131,14 @@ cdef class RGBMatrixOptions:
     property scan_mode:
         def __get__(self): return self.__options.scan_mode
         def __set__(self, uint8_t value): self.__options.scan_mode = value
+
+    property multiplexing:
+        def __get__(self): return self.__options.multiplexing
+        def __set__(self, uint8_t value): self.__options.multiplexing = value
+
+    property row_address_type:
+        def __get__(self): return self.__options.row_address_type
+        def __set__(self, uint8_t value): self.__options.row_address_type = value
 
     property disable_hardware_pulsing:
         def __get__(self): return self.__options.disable_hardware_pulsing

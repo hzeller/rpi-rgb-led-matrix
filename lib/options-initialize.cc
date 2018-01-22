@@ -147,9 +147,13 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("rows", it, end, &mopts->rows, &err))
         continue;
+      if (ConsumeIntFlag("cols", it, end, &mopts->cols, &err))
+        continue;
       if (ConsumeIntFlag("chain", it, end, &mopts->chain_length, &err))
         continue;
       if (ConsumeIntFlag("parallel", it, end, &mopts->parallel, &err))
+        continue;
+      if (ConsumeIntFlag("multiplexing", it, end, &mopts->multiplexing, &err))
         continue;
       if (ConsumeIntFlag("brightness", it, end, &mopts->brightness, &err))
         continue;
@@ -159,6 +163,9 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("pwm-lsb-nanoseconds", it, end,
                          &mopts->pwm_lsb_nanoseconds, &err))
+        continue;
+      if (ConsumeIntFlag("row-addr-type", it, end,
+                         &mopts->row_address_type, &err))
         continue;
       if (ConsumeBoolFlag("show-refresh", it, &mopts->show_refresh_rate))
         continue;
@@ -335,16 +342,21 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
                       const RuntimeOptions &r) {
   fprintf(out,
           "\t--led-gpio-mapping=<name> : Name of GPIO mapping used. Default \"%s\"\n"
-          "\t--led-rows=<rows>         : Panel rows. 8, 16, 32 or 64. "
+          "\t--led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64."
+          " (Default: %d).\n"
+          "\t--led-cols=<cols>         : Panel columns. Typically 32 or 64. "
           "(Default: %d).\n"
           "\t--led-chain=<chained>     : Number of daisy-chained panels. "
           "(Default: %d).\n"
           "\t--led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel "
           "chains. range=1..3 (Default: %d).\n"
+          "\t--led-multiplexing=<0..3> : Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral (Default: 0)\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
+          "\t--led-row-addr-type=<0..1>: 0 = default; 1=AB-addressed panels "
+          "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "
           ": Switch if your matrix has inverse colors %s.\n"
@@ -354,7 +366,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d)\n"
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
           d.hardware_mapping,
-          d.rows, d.chain_length, d.parallel,
+          d.rows, d.cols, d.chain_length, d.parallel,
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
@@ -385,14 +397,30 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   std::string scratch;
   std::string *err = err_in ? err_in : &scratch;
   bool success = true;
-  if (rows != 8 && rows != 16 && rows != 32 && rows != 64) {
-    err->append("Invalid number or panel rows. "
-                "Should be one of 8, 16, 32 or 64\n");
+  if (rows < 8 || rows > 64 || rows % 2 != 0) {
+    err->append("Invalid number or rows per panel (--led-rows). "
+                "Should be in range of [8..64] and divisible by 2.\n");
+    success = false;
+  }
+
+  if (cols < 16) {
+    err->append("Invlid number of columns for panel (--led-cols). "
+                "Typically that is something like 32 or 64\n");
     success = false;
   }
 
   if (chain_length < 1) {
     err->append("Chain-length outside usable range.\n");
+    success = false;
+  }
+
+  if (multiplexing < 0 || multiplexing > 3) {
+    err->append("Multiplexing can only be one of 0 (normal), 1 (snake), 2 (checkered), 3 (spiral)\n");
+    success = false;
+  }
+
+  if (row_address_type < 0 || row_address_type > 1) {
+    err->append("Row address type values can be 0 (default), 1 (AB addressing)\n");
     success = false;
   }
 

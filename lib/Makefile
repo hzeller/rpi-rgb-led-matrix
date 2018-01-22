@@ -5,7 +5,7 @@
 ##
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
         thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o \
-	hardware-mapping.o content-streamer.o
+	hardware-mapping.o content-streamer.o multiplex-transformers.o
 TARGET=librgbmatrix
 
 # There are several different pinouts for various breakout boards that uses
@@ -28,7 +28,8 @@ HARDWARE_DESC?=regular
 ###
 # After you change any of the following DEFINES, make sure to 'make' again.
 #
-# Note, all of these options can now can be set programmatically and
+# ###########      NOTE     ###########
+# all of these options can now can be set programmatically and
 # via command line flags as well. No real need to change them in the Makefile.
 # (So be prepared for these to be removed at some point)
 ###
@@ -116,10 +117,6 @@ HARDWARE_DESC?=regular
 # some oddball old (typically one-colored) display, such as Hub12.
 #DEFINES+=-DONLY_SINGLE_SUB_PANEL
 
-# Experimental: Disable realtime throttling of the Linux kernel. Uncomment
-# if you see periodic flickering in particular with longer display chains.
-#DEFINES+=-DDISABLE_RT_THROTTLE
-
 # If someone gives additional values on the make commandline e.g.
 # make USER_DEFINES="-DSHOW_REFRESH_RATE"
 DEFINES+=$(USER_DEFINES)
@@ -140,6 +137,7 @@ $(TARGET).so.1 : $(OBJECTS)
 led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
 thread.o : thread.cc $(INCDIR)/thread.h
 framebuffer.o: framebuffer.cc framebuffer-internal.h
+multiplex-transformers.o : multiplex-transformers.cc multiplex-transformers-internal.h
 graphics.o: graphics.cc utf8-internal.h
 
 %.o : %.cc compiler-flags
