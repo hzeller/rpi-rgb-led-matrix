@@ -348,14 +348,14 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-chain=<chained>     : Number of daisy-chained panels. "
           "(Default: %d).\n"
-          "\t--led-parallel=<parallel> : For A/B+ models or RPi2,3b: parallel "
-          "chains. range=1..3 (Default: %d).\n"
-          "\t--led-multiplexing=<0..3> : Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral (Default: 0)\n"
+          "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
+          "(Default: %d).\n"
+          "\t--led-multiplexing=<0..3> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral (Default: 0)\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
-          "\t--led-row-addr-type=<0..1>: 0 = default; 1=AB-addressed panels "
+          "\t--led-row-addr-type=<0..1>: 0 = default; 1 = AB-addressed panels "
           "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "
@@ -375,7 +375,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           !d.disable_hardware_pulsing ? "Don't u" : "U");
 
   fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
-          "Slowdown GPIO. Needed for faster Pis and/or slower panels "
+          "Slowdown GPIO. Needed for faster Pis/slower panels "
           "(Default: %d).\n", r.gpio_slowdown);
   if (r.daemon >= 0) {
     const bool on = (r.daemon > 0);
