@@ -1,4 +1,4 @@
-CXXFLAGS=-Wall -O3 -g
+CXXFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter
 OBJECTS=led-image-viewer.o
 BINARIES=led-image-viewer
 
