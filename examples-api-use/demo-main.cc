@@ -969,10 +969,10 @@ private:
       const float sexuallyActive = 1.0 - eliteRate;
       const int p1 = rand() % (int)(popSize_ * sexuallyActive);
       const int p2 = rand() % (int)(popSize_ * sexuallyActive);
-      const int matingMask = (~0) << (rand() % bitsPerPixel);
+      const unsigned matingMask = (~0u) << (rand() % bitsPerPixel);
 
       // Make a baby
-      int baby = (parents_[p1].dna & matingMask)
+      unsigned baby = (parents_[p1].dna & matingMask)
         | (parents_[p2].dna & ~matingMask);
       children_[i].dna = baby;
 
