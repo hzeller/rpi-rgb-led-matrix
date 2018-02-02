@@ -1106,6 +1106,8 @@ int main(int argc, char *argv[]) {
       break;
 
     case 'r':
+      fprintf(stderr, "Instead of deprecated -r, use --led-rows=%s instead.\n",
+              optarg);
       matrix_options.rows = atoi(optarg);
       break;
 
@@ -1114,6 +1116,8 @@ int main(int argc, char *argv[]) {
       break;
 
     case 'c':
+      fprintf(stderr, "Instead of deprecated -c, use --led-chain=%s instead.\n",
+              optarg);
       matrix_options.chain_length = atoi(optarg);
       break;
 
