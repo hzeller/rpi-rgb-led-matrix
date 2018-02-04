@@ -276,8 +276,11 @@ Framebuffer::~Framebuffer() {
 
   all_used_bits |= row_setter_->need_bits();
 
+  // Adafruit HAT identified by the same prefix.
+  const bool is_some_adafruit_hat = (0 == strncmp(h.name, "adafruit-hat",
+                                                  strlen("adafruit-hat")));
   // Initialize outputs, make sure that all of these are supported bits.
-  const uint32_t result = io->InitOutputs(all_used_bits);
+  const uint32_t result = io->InitOutputs(all_used_bits, is_some_adafruit_hat);
   assert(result == all_used_bits);  // Impl: all bits declared in gpio.cc ?
 
   std::vector<int> bitplane_timings;

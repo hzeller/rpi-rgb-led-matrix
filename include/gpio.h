@@ -43,7 +43,7 @@ class GPIO {
 
   // Initialize outputs.
   // Returns the bits that are actually set.
-  uint32_t InitOutputs(uint32_t outputs);
+  uint32_t InitOutputs(uint32_t outputs, bool adafruit_hack_needed = false);
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(uint32_t value) {

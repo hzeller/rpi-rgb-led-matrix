@@ -135,22 +135,26 @@ namespace rgb_matrix {
 GPIO::GPIO() : output_bits_(0), slowdown_(1), gpio_port_(NULL) {
 }
 
-uint32_t GPIO::InitOutputs(uint32_t outputs) {
+uint32_t GPIO::InitOutputs(uint32_t outputs,
+                           bool adafruit_pwm_transition_hack_needed) {
   if (gpio_port_ == NULL) {
     fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
     return 0;
   }
 
-  // Hack: the user soldered together GPIO 18 (new OE) with GPIO 4 (old OE).
-  // We want to make extra sure that, whatever the outside system set as pinmux,
-  // the old OE is not also set as output so that these GPIO outputs don't fight
-  // each other.
+  // Hack: for the PWM mod, the user soldered together GPIO 18 (new OE)
+  // with GPIO 4 (old OE).
+  // Since they are connected inside the HAT, want to make extra sure that,
+  // whatever the outside system set as pinmux, the old OE is _not_ also
+  // set as output so that these GPIO outputs don't fight each other.
+  //
   // So explicitly set both of these pins as input initially, so the user
-  // can switch between the two modes without trouble.
-  // (TODO: this really only needs to be done in the Adafruit HAT case, so
-  // we should exclude the other cases).
-  INP_GPIO(4);
-  INP_GPIO(18);
+  // can switch between the two modes "adafruit-hat" and "adafruit-hat-pwm"
+  // without trouble.
+  if (adafruit_pwm_transition_hack_needed) {
+    INP_GPIO(4);
+    INP_GPIO(18);
+  }
 
   outputs &= kValidBits;   // Sanitize input.
   output_bits_ = outputs;
