@@ -145,6 +145,46 @@ private:
   int last_row_;
 };
 
+// The DirectABCDRowAddressSetter sets the address by one of 
+// row pin ABCD for 32х16 matrix 1:4 multiplexing. The matrix has
+// 4 addressable rows. Row is selected by a low level on the 
+// corresponding row address pin. Other row address pins must be in high level.
+//
+// Row addr| 0 | 1 | 2 | 3
+// --------+---+---+---+---
+// Line A  | 0 | 1 | 1 | 1
+// Line B  | 1 | 0 | 1 | 1
+// Line C  | 1 | 1 | 0 | 1
+// Line D  | 1 | 1 | 1 | 0
+class DirectABCDLineRowAddressSetter : public RowAddressSetter {
+public:
+  DirectABCDLineRowAddressSetter(int double_rows, const HardwareMapping &h)
+    : last_row_(-1) {
+	row_mask_ = h.a | h.b | h.c | h.d;
+		
+	row_lines_[0] = /*h.a |*/ h.b | h.c | h.d;
+	row_lines_[1] = h.a /*| h.b*/ | h.c | h.d;
+	row_lines_[2] = h.a | h.b /*| h.c */| h.d;
+	row_lines_[3] = h.a | h.b | h.c /*| h.d*/;
+  }
+
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+     
+    gpio_bits_t row_address = row_lines_[row % 4];
+
+    io->WriteMaskedBits(row_address, row_mask_);
+    last_row_ = row;
+  }
+
+private:
+  gpio_bits_t row_lines_[4];
+  gpio_bits_t row_mask_;  
+  int last_row_;
+};
+
 }
 
 const struct HardwareMapping *Framebuffer::hardware_mapping_ = NULL;
@@ -269,6 +309,9 @@ Framebuffer::~Framebuffer() {
     break;
   case 1:
     row_setter_ = new ShiftRegisterRowAddressSetter(double_rows, h);
+    break;
+  case 2:
+    row_setter_ = new DirectABCDLineRowAddressSetter(double_rows, h);
     break;
   default:
     assert(0);  // unexpected type.

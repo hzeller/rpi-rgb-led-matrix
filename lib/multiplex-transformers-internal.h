@@ -60,6 +60,19 @@ private:
   TransformCanvas *const canvas_;
 };
 
+// 1:4 scan Z scan stripe transformer
+//  
+class ZStripeTransformer : public CanvasTransformer {
+public:
+  ZStripeTransformer(int panel_rows, int panel_cols);
+  virtual ~ZStripeTransformer();
+
+  virtual Canvas *Transform(Canvas *output);
+
+private:
+  class TransformCanvas;
+  TransformCanvas *const canvas_;
+};
 
 }  // namespace internal
 }  // namespace rgb_matrix
