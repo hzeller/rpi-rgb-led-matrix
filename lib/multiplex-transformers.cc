@@ -190,5 +190,69 @@ Canvas *SpiralTransformer::Transform(Canvas *output) {
   return canvas_;
 }
 
+// -----------------------------------------------------
+// ZStripe 1:4 transformer
+class ZStripeTransformer::TransformCanvas : public Canvas {
+public:
+  TransformCanvas() : delegatee_(NULL) {}
+
+  void SetDelegatee(Canvas* delegatee);
+
+  virtual void Clear();
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  virtual int width() const;
+  virtual int height() const;
+  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+
+private:
+  Canvas *delegatee_;
+};
+
+void ZStripeTransformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
+  delegatee_ = delegatee;
+}
+
+void ZStripeTransformer::TransformCanvas::Clear() {
+  delegatee_->Clear();
+}
+
+void ZStripeTransformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
+  delegatee_->Fill(red, green, blue);
+}
+
+int ZStripeTransformer::TransformCanvas::width() const {
+  return delegatee_->width() / 2;
+}
+
+int ZStripeTransformer::TransformCanvas::height() const {
+  return delegatee_->height() * 2;
+}
+
+void ZStripeTransformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
+  int new_x = x;
+  int new_y = y; 
+  int xoffset =8 * (x / 8);
+  int yoffset = (y % 8) / 4;
+  new_x = x + 8 * yoffset + xoffset;
+  new_y = (y % 4) + 4 * (y / 8);  
+
+  delegatee_->SetPixel(new_x, new_y, red, green, blue);
+}
+
+ZStripeTransformer::ZStripeTransformer(int panel_rows, int panel_cols)
+  : canvas_(new TransformCanvas()) {
+}
+
+ZStripeTransformer::~ZStripeTransformer() {
+  delete canvas_;
+}
+
+Canvas *ZStripeTransformer::Transform(Canvas *output) {
+  assert(output != NULL);
+
+  canvas_->SetDelegatee(output);
+  return canvas_;
+}
+
 }  // namespace internal
 }  // namespace rgb_matrix
