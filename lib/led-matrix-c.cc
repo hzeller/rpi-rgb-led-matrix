@@ -72,6 +72,7 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     OPT_COPY_IF_SET(parallel);
     OPT_COPY_IF_SET(multiplexing);
     OPT_COPY_IF_SET(pwm_bits);
+    OPT_COPY_IF_SET(pwm_lsb_nanoseconds);
     OPT_COPY_IF_SET(brightness);
     OPT_COPY_IF_SET(scan_mode);
     OPT_COPY_IF_SET(disable_hardware_pulsing);
@@ -100,6 +101,7 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     ACTUAL_VALUE_BACK_TO_OPT(parallel);
     ACTUAL_VALUE_BACK_TO_OPT(multiplexing);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_bits);
+    ACTUAL_VALUE_BACK_TO_OPT(pwm_lsb_nanoseconds);
     ACTUAL_VALUE_BACK_TO_OPT(brightness);
     ACTUAL_VALUE_BACK_TO_OPT(scan_mode);
     ACTUAL_VALUE_BACK_TO_OPT(disable_hardware_pulsing);
