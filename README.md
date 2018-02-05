@@ -371,6 +371,8 @@ In general, run a minimal configuration on your Pi.
     updates. Or a regular ntp run can also cause flicker once a minute
     (switch off with `sudo timedatectl set-ntp false`). Maybe instead you
     might want to run ntp at system start-up but then not regularly updating.
+    There might be other things running regularly you don't need;
+    consider a `sudo systemctl stop cron` for instance.
 
   * There are probably other processes that are running that you don't need
     and remove them; I usually remove right away stuff I really don't need e.g.

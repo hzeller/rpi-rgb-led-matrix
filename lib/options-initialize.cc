@@ -435,7 +435,7 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   }
 
   if (pwm_bits <= 0 || pwm_bits > 11) {
-    err->append("Invalid range of pwm-bits (0..11 allowed).\n");
+    err->append("Invalid range of pwm-bits (1..11 allowed).\n");
     success = false;
   }
 
