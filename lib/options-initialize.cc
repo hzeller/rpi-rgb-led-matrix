@@ -350,12 +350,12 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
           "(Default: %d).\n"
-          "\t--led-multiplexing=<0..4> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=strip 1:4 (Default: 0)\n"
+          "\t--led-multiplexing=<0..4> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip (Default: 0)\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
-          "\t--led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct "
+          "\t--led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct row select"
           "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "
@@ -415,12 +415,12 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   }
 
   if (multiplexing < 0 || multiplexing > 4) {
-    err->append("Multiplexing can only be one of 0 (normal), 1 (snake), 2 (checkered), 3 (spiral), 4 (stripe 1:4)\n");
+    err->append("Multiplexing can only be one of 0 (normal), 1 (snake), 2 (checkered), 3 (spiral), 4 (Z-stripe)\n");
     success = false;
   }
 
   if (row_address_type < 0 || row_address_type > 2) {
-    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct select)\n");
+    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select)\n");
     success = false;
   }
 

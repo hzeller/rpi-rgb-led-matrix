@@ -192,55 +192,36 @@ Canvas *SpiralTransformer::Transform(Canvas *output) {
 
 // -----------------------------------------------------
 // ZStripe 1:4 transformer
-class ZStripeTransformer::TransformCanvas : public Canvas {
+class ZStripeTransformer::TransformCanvas : public BasicMultiplexCanvas {
 public:
-  TransformCanvas() : delegatee_(NULL) {}
-
-  void SetDelegatee(Canvas* delegatee);
-
-  virtual void Clear();
-  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-  virtual int width() const;
-  virtual int height() const;
-  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
-
-private:
-  Canvas *delegatee_;
+  TransformCanvas(int panel_rows, int panel_cols)
+    : BasicMultiplexCanvas(panel_rows, panel_cols) {}
+    
+  virtual void SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+	// Transform from logic coords in panel coords  
+    if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
+	
+    const int chained_panel  = x / panel_cols_;
+    const int parallel_panel = y / panel_rows_;
+	
+    const int within_panel_x = x % panel_cols_;
+    const int within_panel_y = y % panel_rows_;
+	
+    const int xoffset =8 * (within_panel_x / 8);
+    const int yoffset = (within_panel_y % 8) / 4;
+    
+    const int new_x = within_panel_x  + 8 * yoffset + xoffset;
+    const int new_y = (within_panel_y % 4) + 4 * (within_panel_y / 8);
+	
+    const int display_new_x = chained_panel * 2 * panel_cols_ + new_x;
+    const int display_new_y = parallel_panel * panel_rows_ / 2 + new_y;
+    
+    delegatee_->SetPixel(display_new_x, display_new_y, r, g, b);                       
+  }    
 };
 
-void ZStripeTransformer::TransformCanvas::SetDelegatee(Canvas* delegatee) {
-  delegatee_ = delegatee;
-}
-
-void ZStripeTransformer::TransformCanvas::Clear() {
-  delegatee_->Clear();
-}
-
-void ZStripeTransformer::TransformCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
-  delegatee_->Fill(red, green, blue);
-}
-
-int ZStripeTransformer::TransformCanvas::width() const {
-  return delegatee_->width() / 2;
-}
-
-int ZStripeTransformer::TransformCanvas::height() const {
-  return delegatee_->height() * 2;
-}
-
-void ZStripeTransformer::TransformCanvas::SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  int new_x = x;
-  int new_y = y; 
-  int xoffset =8 * (x / 8);
-  int yoffset = (y % 8) / 4;
-  new_x = x + 8 * yoffset + xoffset;
-  new_y = (y % 4) + 4 * (y / 8);  
-
-  delegatee_->SetPixel(new_x, new_y, red, green, blue);
-}
-
 ZStripeTransformer::ZStripeTransformer(int panel_rows, int panel_cols)
-  : canvas_(new TransformCanvas()) {
+  : canvas_(new TransformCanvas(panel_rows, panel_cols)) {
 }
 
 ZStripeTransformer::~ZStripeTransformer() {

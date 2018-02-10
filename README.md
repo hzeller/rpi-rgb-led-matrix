@@ -66,6 +66,7 @@ Type w*h | Scan Multiplexing | Program commandline flags    | Remark
 32x32 |  1:8              | --led-rows=32 --led-multiplexing=1 | few mux choices
 32x16 |  1:8              | --led-rows=16                |
 32x16 |  1:4              | --led-rows=16 --led-multiplexing=1 | few mux choices
+32x16 |  1:4              | --led-rows=16 --led-row-addr-type=2 --led-multiplexing=4 | For displays with A,B,С,D lines. 
 ...   |
 
 These can be chained by connecting the output of one panel to the input of
@@ -81,6 +82,12 @@ the `--led-multiplexing` parameter.
 Generally, the higher scan-rate (e.g. 1:8), a.k.a. outdoor panels generally
 allow faster refresh rate, but you might need to figure out the multiplexing
 mapping if one of the three provided does not work.
+
+Some 32x16 outdoor matrixes with 1:4 scan (e.g. [Qiangli Q10(1/4) or X10(1/4)](http://qiangliled.com/products-63.html)) 
+have 4 address line (A, B, C, D). For such matrices is necessary to 
+use `--led-row-addr-type=2` parameter. Also the matrix Qiangli Q10(1/4)
+have "Z"-stripe pixel mapping and in this case, you'd use two parameters 
+at the same time `--led-row-addr-type=2 --led-multiplexing=4`.
 
 Let's do it
 ------------
@@ -180,13 +187,13 @@ If you have some 'outdoor' panels or panels with different multiplexing,
 the following will be useful:
 
 ```
---led-multiplexing=<0..3> : Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral (Default: 0)
+--led-multiplexing=<0..4> : Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip (Default: 0)
 ```
 The outdoor panels have different multiplexing which allows them to be faster
 and brighter, but by default their output looks jumbled up.
 They require some pixel-mapping of which there are a few
 types you can try and hopefully one of them works for your panel; The default=0
-is no mapping ('standard' panels), while 1, 2, or 3 are different mappings
+is no mapping ('standard' panels), while 1, 2, 3 or 4 are different mappings
 to try with. If your panel has a different mapping, please send a pull request.
 
 Note that you have to set the `--led-rows` and `--led-cols` to the rows and
@@ -202,12 +209,15 @@ two chained panels, so then you'd use
 `--led-rows=32 --led-cols=32 --led-chain=2 --led-multiplexing=1`;
 
 ```
---led-row-addr-type=<0..1>: 0 = default; 1=AB-addressed panels (Default: 0).
+--led-row-addr-type=<0..2>: 0 = default; 1=AB-addressed panels; 2=direct row select (Default: 0).
 ```
+This option is useful for certain 64x64 or 32x16 panels. For 64x64 panels, 
+that only have an `A` and `B` address line, you`d use `--led-row-addr-type=1`. 
+This is only tested with one panel so far, so if it doesn't work for you, 
+please send a pull request.
 
-This option is useful for certain 64x64 panels, that only have an `A` and `B`
-address line. This is only tested with one panel so far, so if it doesn't work
-for you, please send a pull request.
+For 32x16 outdoor panels, that have have 4 address line (A, B, C, D), it is  
+necessary to use `--led-row-addr-type=2`.
 
 ```
 --led-brightness=<percent>: Brightness in percent (Default: 100).
