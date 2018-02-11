@@ -202,6 +202,10 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
     ApplyStaticTransformer(internal::SpiralTransformer(params_.rows * 2,
                                                        params_.cols / 2));
     break;
+  case 4:
+    ApplyStaticTransformer(internal::ZStripeTransformer(params_.rows * 2,
+                                                        params_.cols / 2));
+    break;														
   }
 }
 
