@@ -7,7 +7,10 @@
 #include "led-matrix.h"
 #include "graphics.h"
 
+#include <string>
+
 #include <getopt.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,21 +18,29 @@
 
 using namespace rgb_matrix;
 
+volatile bool interrupt_received = false;
+static void InterruptHandler(int signo) {
+  interrupt_received = true;
+}
+
 static int usage(const char *progname) {
-  fprintf(stderr, "usage: %s [options]\n", progname);
-  fprintf(stderr, "Reads text from the -t command line argument and scrolls it.\n");
+  fprintf(stderr, "usage: %s [options] <text>\n", progname);
+  fprintf(stderr, "Takes text and scrolls it with speed -s\n");
   fprintf(stderr, "Options:\n");
   rgb_matrix::PrintMatrixFlags(stderr);
   fprintf(stderr,
+          "\t-s <speed>        : Approximate letters per second.\n"
+          "\t-l <loop-count>   : Number of loops through the text. "
+          "-1 for endless (default)\n"
           "\t-f <font-file>    : Use given font.\n"
           "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
           "\t-x <x-origin>     : X-Origin of displaying text (Default: 0)\n"
           "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
           "\t-S <spacing>      : Spacing pixels between letters (Default: 0)\n"
+          "\n"
           "\t-C <r,g,b>        : Color. Default 255,255,0\n"
           "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
           "\t-O <r,g,b>        : Outline-Color, e.g. to increase contrast.\n"
-          "\t-t <text>         : Text to display.\n"
           );
   return 1;
 }
@@ -39,9 +50,9 @@ static bool parseColor(Color *c, const char *str) {
 }
 
 static bool FullSaturation(const Color &c) {
-    return (c.r == 0 || c.r == 255)
-        && (c.g == 0 || c.g == 255)
-        && (c.b == 0 || c.b == 255);
+  return (c.r == 0 || c.r == 255)
+    && (c.g == 0 || c.g == 255)
+    && (c.b == 0 || c.b == 255);
 }
 
 int main(int argc, char *argv[]) {
@@ -58,23 +69,25 @@ int main(int argc, char *argv[]) {
   bool with_outline = false;
 
   const char *bdf_font_file = NULL;
-  const char *line = NULL;
-  /* x_origin is set to be off the screen, chain length * number of rows
-     we pad a small gap, 5 below, to create a gap after the text before the text is re-scrolled */
-  int x_orig = (matrix_options.chain_length * matrix_options.rows) + 5;
+  std::string line;
+  /* x_origin is set just right of the screen */
+  int x_orig = (matrix_options.chain_length * matrix_options.cols) + 5;
   int y_orig = 0;
   int brightness = 100;
   int letter_spacing = 0;
+  float speed = 1.0f;
+  int loops = -1;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:t:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:s:l:")) != -1) {
     switch (opt) {
+    case 's': speed = atof(optarg); break;
+    case 'l': loops = atoi(optarg); break;
     case 'b': brightness = atoi(optarg); break;
     case 'x': x_orig = atoi(optarg); break;
     case 'y': y_orig = atoi(optarg); break;
     case 'f': bdf_font_file = strdup(optarg); break;
     case 'S': letter_spacing = atoi(optarg); break;
-    case 't': line = strdup(optarg); break;
     case 'C':
       if (!parseColor(&color, optarg)) {
         fprintf(stderr, "Invalid color spec: %s\n", optarg);
@@ -99,8 +112,12 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (line == NULL) {
-    fprintf(stderr, "Need to specify some text to scroll with -t\n");
+  for (int i = optind; i < argc; ++i) {
+    line.append(argv[i]).append(" ");
+  }
+
+  if (line.empty()) {
+    fprintf(stderr, "Add the text you want to print on the command-line.\n");
     return usage(argv[0]);
   }
 
@@ -124,7 +141,7 @@ int main(int argc, char *argv[]) {
    */
   rgb_matrix::Font *outline_font = NULL;
   if (with_outline) {
-      outline_font = font.CreateOutlineFont();
+    outline_font = font.CreateOutlineFont();
   }
 
   if (brightness < 1 || brightness > 100) {
@@ -140,9 +157,9 @@ int main(int argc, char *argv[]) {
   canvas->SetBrightness(brightness);
 
   const bool all_extreme_colors = (brightness == 100)
-      && FullSaturation(color)
-      && FullSaturation(bg_color)
-      && FullSaturation(outline_color);
+    && FullSaturation(color)
+    && FullSaturation(bg_color)
+    && FullSaturation(outline_color);
   if (all_extreme_colors)
     canvas->SetPWMBits(1);
 
@@ -150,13 +167,18 @@ int main(int argc, char *argv[]) {
   int y = y_orig;
   int length = 0;
 
+  signal(SIGTERM, InterruptHandler);
+  signal(SIGINT, InterruptHandler);
+
   printf("CTRL-C for exit.\n");
 
   // Create a new canvas to be used with led_matrix_swap_on_vsync
   FrameCanvas *offscreen_canvas = canvas->CreateFrameCanvas();
 
-  // infinte loop
-  while (1){
+  int delay_speed_usec = 1000000 / speed / font.CharacterWidth('W');
+  if (delay_speed_usec < 0) delay_speed_usec = 2000;
+
+  while (!interrupt_received && loops != 0) {
     offscreen_canvas->Clear(); // clear canvas
 
     if (outline_font) {
@@ -165,18 +187,22 @@ int main(int argc, char *argv[]) {
       // we then write on top.
       rgb_matrix::DrawText(offscreen_canvas, *outline_font,
                            x - 1, y + font.baseline(),
-                           outline_color, &bg_color, line, letter_spacing - 2);
+                           outline_color, &bg_color,
+                           line.c_str(), letter_spacing - 2);
     }
 
     // length = holds how many pixels our text takes up
     length = rgb_matrix::DrawText(offscreen_canvas, font,
-                               x, y + font.baseline(),
-                               color, outline_font ? NULL : &bg_color, line, letter_spacing);
+                                  x, y + font.baseline(),
+                                  color, outline_font ? NULL : &bg_color,
+                                  line.c_str(), letter_spacing);
 
-    if (--x + length < 0)
+    if (--x + length < 0) {
       x = x_orig;
+      if (loops > 0) --loops;
+    }
 
-    usleep(20000);
+    usleep(delay_speed_usec);
     // Swap the offscreen_canvas with canvas on vsync, avoids flickering
     offscreen_canvas = canvas->SwapOnVSync(offscreen_canvas);
   }
