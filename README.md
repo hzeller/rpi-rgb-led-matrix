@@ -137,6 +137,7 @@ The library comes as an API that you can use for your own utilities and use-case
   * There are a couple of external bindings, such as
       * [Nodejs binding] by Maxime Journaux.
       * [Go binding] by Máximo Cuadros
+      * [Rust binding] by Vincent Pasquier
 
 ### Changing parameters via command-line flags
 
@@ -617,3 +618,4 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [Adafruit HAT]: https://www.adafruit.com/products/2345
 [Nodejs binding]: https://github.com/zeitungen/node-rpi-rgb-led-matrix
 [Go binding]: https://github.com/mcuadros/go-rpi-rgb-led-matrix
+[Rust binding]: https://crates.io/crates/rpi-led-matrix
