@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
   int y_orig = 0;
   int brightness = 100;
   int letter_spacing = 0;
-  float speed = 1.0f;
+  float speed = 7.0f;
   int loops = -1;
 
   int opt;
