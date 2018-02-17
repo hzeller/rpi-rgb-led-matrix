@@ -66,7 +66,7 @@ Type w*h | Scan Multiplexing | Program commandline flags    | Remark
 32x32 |  1:8              | --led-rows=32 --led-multiplexing=1 | few mux choices
 32x16 |  1:8              | --led-rows=16                |
 32x16 |  1:4              | --led-rows=16 --led-multiplexing=1 | few mux choices
-32x16 |  1:4              | --led-rows=16 --led-row-addr-type=2 --led-multiplexing=4 | For displays with A,B,С,D lines. 
+32x16 |  1:4              | --led-rows=16 --led-row-addr-type=2 --led-multiplexing=4 | For direct A..D address panels.
 ...   |
 
 These can be chained by connecting the output of one panel to the input of
@@ -83,10 +83,10 @@ Generally, the higher scan-rate (e.g. 1:8), a.k.a. outdoor panels generally
 allow faster refresh rate, but you might need to figure out the multiplexing
 mapping if one of the three provided does not work.
 
-Some 32x16 outdoor matrixes with 1:4 scan (e.g. [Qiangli Q10(1/4) or X10(1/4)](http://qiangliled.com/products-63.html)) 
-have 4 address line (A, B, C, D). For such matrices is necessary to 
+Some 32x16 outdoor matrixes with 1:4 scan (e.g. [Qiangli Q10(1/4) or X10(1/4)](http://qiangliled.com/products-63.html))
+have 4 address line (A, B, C, D). For such matrices is necessary to
 use `--led-row-addr-type=2` parameter. Also the matrix Qiangli Q10(1/4)
-have "Z"-stripe pixel mapping and in this case, you'd use two parameters 
+have "Z"-stripe pixel mapping and in this case, you'd use two parameters
 at the same time `--led-row-addr-type=2 --led-multiplexing=4`.
 
 Let's do it
@@ -211,12 +211,12 @@ two chained panels, so then you'd use
 ```
 --led-row-addr-type=<0..2>: 0 = default; 1=AB-addressed panels; 2=direct row select (Default: 0).
 ```
-This option is useful for certain 64x64 or 32x16 panels. For 64x64 panels, 
-that only have an `A` and `B` address line, you`d use `--led-row-addr-type=1`. 
-This is only tested with one panel so far, so if it doesn't work for you, 
+This option is useful for certain 64x64 or 32x16 panels. For 64x64 panels,
+that only have an `A` and `B` address line, you`d use `--led-row-addr-type=1`.
+This is only tested with one panel so far, so if it doesn't work for you,
 please send a pull request.
 
-For 32x16 outdoor panels, that have have 4 address line (A, B, C, D), it is  
+For 32x16 outdoor panels, that have have 4 address line (A, B, C, D), it is
 necessary to use `--led-row-addr-type=2`.
 
 ```
