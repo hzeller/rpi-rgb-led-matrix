@@ -350,7 +350,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
           "(Default: %d).\n"
-          "\t--led-multiplexing=<0..4> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip 5=TransformSet (Default: 0)\n"
+          "\t--led-multiplexing=<0..5> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip 5=TransformSet (Default: 0)\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
