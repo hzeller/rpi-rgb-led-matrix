@@ -192,17 +192,39 @@ void UArrangementTransformer::TransformCanvas::Fill(
 
 void UArrangementTransformer::TransformCanvas::SetPixel(
   int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-  if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
-  const int slab_height = 2*panel_height_;   // one folded u-shape
-  const int base_y = (y / slab_height) * panel_height_;
-  y %= slab_height;
-  if (y < panel_height_) {
-    x += delegatee_->width() / 2;
-  } else {
-    x = width_ - x - 1;
-    y = slab_height - y - 1;
+
+// --- Orginal hzeller TransformSet
+//  if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
+//  const int slab_height = 2*panel_height_;   // one folded u-shape
+//  const int base_y = (y / slab_height) * panel_height_;
+//  y %= slab_height;
+//  if (y < panel_height_) {
+//    x += delegatee_->width() / 2;
+//  } else {
+//    x = width_ - x - 1;
+//    y = slab_height - y - 1;
+//  }
+//  delegatee_->SetPixel(x, base_y + y, red, green, blue);
+
+int new_x = 0;
+int new_y = 0;
+
+//Panel COREMAN SMD3535 RGB OS-P6-32x32-8S
+if ((y <= 7) || ((y >= 16) && (y <= 23)) || ((y >= 32) && (y <= 39)) || ((y >= 48) && (y <= 55)) || ((y >= 64) && (y <= 71)) || ((y >= 80) && (y <= 87))) {
+  new_x = ((x / 16) * 32) + (x % 16);
+  if ((y & 8) == 1) {
+    new_x += 16;
   }
-  delegatee_->SetPixel(x, base_y + y, red, green, blue);
+  new_y = ((y / 16) * 8) + (y % 8);
+  }else {
+    new_x = ((x / 16) * 32) + (x % 16);
+    y -= 8;
+    if ((y & 8) == 0) {
+      new_x += 16;
+    }
+    new_y = ((y / 16) * 8) + (y % 8);
+  }
+delegatee_->SetPixel(new_x, new_y, red, green, blue);
 }
 
 UArrangementTransformer::UArrangementTransformer(int parallel)
