@@ -205,7 +205,7 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   case 4:
     ApplyStaticTransformer(internal::ZStripeTransformer(params_.rows * 2,
                                                         params_.cols / 2));
-    break;														
+    break;
   }
 }
 
@@ -315,7 +315,8 @@ bool RGBMatrix::luminance_correct() const {
 }
 
 void RGBMatrix::SetBrightness(uint8_t brightness) {
-  active_->framebuffer()->SetBrightness(brightness);
+  for(auto frame : created_frames_)
+    frame->framebuffer()->SetBrightness(brightness);	
   params_.brightness = brightness;
 }
 
