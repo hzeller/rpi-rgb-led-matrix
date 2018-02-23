@@ -192,7 +192,6 @@ void UArrangementTransformer::TransformCanvas::Fill(
 
 void UArrangementTransformer::TransformCanvas::SetPixel(
   int x, int y, uint8_t red, uint8_t green, uint8_t blue) {
-
   if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
   const int slab_height = 2*panel_height_;   // one folded u-shape
   const int base_y = (y / slab_height) * panel_height_;
