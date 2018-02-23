@@ -315,8 +315,9 @@ bool RGBMatrix::luminance_correct() const {
 }
 
 void RGBMatrix::SetBrightness(uint8_t brightness) {
-  for(auto frame : created_frames_)
-    frame->framebuffer()->SetBrightness(brightness);	
+  for (size_t i = 0; i < created_frames_.size(); ++i) {
+    created_frames_[i]->framebuffer()->SetBrightness(brightness);
+  }	
   params_.brightness = brightness;
 }
 
