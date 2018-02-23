@@ -196,28 +196,28 @@ class ZStripeTransformer::TransformCanvas : public BasicMultiplexCanvas {
 public:
   TransformCanvas(int panel_rows, int panel_cols)
     : BasicMultiplexCanvas(panel_rows, panel_cols) {}
-    
+
   virtual void SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
-	// Transform from logic coords in panel coords  
+	// Transform from logic coords in panel coords
     if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
-	
+
     const int chained_panel  = x / panel_cols_;
     const int parallel_panel = y / panel_rows_;
-	
+
     const int within_panel_x = x % panel_cols_;
     const int within_panel_y = y % panel_rows_;
-	
+
     const int xoffset =8 * (within_panel_x / 8);
     const int yoffset = (within_panel_y % 8) / 4;
-    
+
     const int new_x = within_panel_x  + 8 * yoffset + xoffset;
     const int new_y = (within_panel_y % 4) + 4 * (within_panel_y / 8);
-	
+
     const int display_new_x = chained_panel * 2 * panel_cols_ + new_x;
     const int display_new_y = parallel_panel * panel_rows_ / 2 + new_y;
-    
-    delegatee_->SetPixel(display_new_x, display_new_y, r, g, b);                       
-  }    
+
+    delegatee_->SetPixel(display_new_x, display_new_y, r, g, b);
+  }
 };
 
 ZStripeTransformer::ZStripeTransformer(int panel_rows, int panel_cols)
