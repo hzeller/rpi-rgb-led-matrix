@@ -350,7 +350,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
           "(Default: %d).\n"
-          "\t--led-multiplexing=<0..5> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip 5=TransformSet (Default: 0)\n"
+          "\t--led-multiplexing=<0..6> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip; 5=coreman 6=TransformSet (Default: 0)\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
@@ -414,8 +414,8 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (multiplexing < 0 || multiplexing > 5) {
-    err->append("Multiplexing can only be one of 0 (normal), 1 (snake), 2 (checkered), 3 (spiral), 4 (Z-stripe) 4 (TransformSet) \n");
+  if (multiplexing < 0 || multiplexing > 6) {
+    err->append("Multiplexing can only be one of 0 (normal), 1 (snake), 2 (checkered), 3 (spiral), 4 (Z-stripe), 5(coreman), 6 (TransformSet) \n");
     success = false;
   }
 

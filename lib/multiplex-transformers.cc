@@ -235,5 +235,63 @@ Canvas *ZStripeTransformer::Transform(Canvas *output) {
   return canvas_;
 }
 
+// ------------------------
+// Coreman Panel 1:8 32x32
+
+class CoremanTransformer::TransformCanvas : public BasicMultiplexCanvas {
+public:
+  TransformCanvas(int panel_rows, int panel_cols)
+    : BasicMultiplexCanvas(panel_rows, panel_cols) {}
+
+  virtual void SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
+    if (x < 0 || x >= width_ || y < 0 || y >= height_) return;
+
+    const int chained_panel  = x / panel_cols_;
+    const int parallel_panel = y / panel_rows_;
+
+    const int within_panel_x = x % panel_cols_;
+    const int within_panel_y = y % panel_rows_;
+
+    const bool is_top_check = (within_panel_y % (panel_rows_/2)) < panel_rows_/4;
+    const bool is_left_check = (within_panel_x < panel_cols_/2);
+    int new_x, new_y;
+    if (is_top_check) {
+      new_x = is_left_check ? within_panel_x+panel_cols_/2 : within_panel_x+panel_cols_;
+    } else {
+      new_x = is_left_check ? within_panel_x : within_panel_x + panel_cols_/2;
+    }
+    new_y = (within_panel_y / (panel_rows_/2)) * (panel_rows_/4)
+      + within_panel_y % (panel_rows_/4);
+
+   if ((y <= 7) || ((y >= 16) && (y <= 23)) || ((y >= 32) && (y <= 39)) || ((y >= 48) && (y <= 55)) || ((y >= 64) && (y <= 71)) || ((y >= 80) && (y <= 87))) {
+       new_y = new_y + 8; 
+    }else{
+       new_y = new_y - 8;
+    }
+    
+    delegatee_->SetPixel(chained_panel * 2*panel_cols_ + new_x,
+                         parallel_panel * panel_rows_/2 + new_y,
+                         r, g, b);
+  }
+};
+
+CoremanTransformer::CoremanTransformer(int panel_cols, int panel_rows)
+    : canvas_(new TransformCanvas(panel_cols, panel_rows)) {
+}
+
+CoremanTransformer::~CoremanTransformer() {
+  delete canvas_;
+}
+
+Canvas *CoremanTransformer::Transform(Canvas *output) {
+  assert(output != NULL);
+
+  canvas_->SetDelegatee(output);
+  return canvas_;
+}
+
+// ------------------------
+
+
 }  // namespace internal
 }  // namespace rgb_matrix

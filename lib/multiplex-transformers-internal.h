@@ -74,6 +74,19 @@ private:
   TransformCanvas *const canvas_;
 };
 
+// 1:8 multiplexing for Coreman Panel patches.
+class CoremanTransformer : public CanvasTransformer {
+public:
+  CoremanTransformer(int panel_rows, int panel_cols);
+  virtual ~CoremanTransformer();
+
+  virtual Canvas *Transform(Canvas *output);
+
+private:
+  class TransformCanvas;
+  TransformCanvas *const canvas_;
+};
+
 }  // namespace internal
 }  // namespace rgb_matrix
 #endif  // RPI_RGBMATRIX_MULTIPLEX_TRANSFORMERS_INTERNAL_H

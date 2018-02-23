@@ -64,6 +64,7 @@ Type w*h | Scan Multiplexing | Program commandline flags    | Remark
 64x32 |  1:8              | --led-rows=32 --led-cols=64 --led-multiplexing=1 | few mux choices
 32x32 |  1:16             | --led-rows=32                |
 32x32 |  1:8              | --led-rows=32 --led-multiplexing=1 | few mux choices
+32x32 |  1:8              | --led-rows=32 --led-cols=32 --led-multiplexing=5 | Outdoor Panel 
 32x16 |  1:8              | --led-rows=16                |
 32x16 |  1:4              | --led-rows=16 --led-multiplexing=1 | few mux choices
 32x16 |  1:4              | --led-rows=16 --led-row-addr-type=2 --led-multiplexing=4 | For direct A..D address panels.
@@ -188,14 +189,16 @@ If you have some 'outdoor' panels or panels with different multiplexing,
 the following will be useful:
 
 ```
---led-multiplexing=<0..4> : Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip (Default: 0)
+--led-multiplexing=<0..4> : Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip; 5=coreman 6=Transform (Default: 0)
 ```
 The outdoor panels have different multiplexing which allows them to be faster
 and brighter, but by default their output looks jumbled up.
 They require some pixel-mapping of which there are a few
 types you can try and hopefully one of them works for your panel; The default=0
-is no mapping ('standard' panels), while 1, 2, 3 or 4 are different mappings
-to try with. If your panel has a different mapping, please send a pull request.
+is no mapping ('standard' panels), while 1, 2, 3, 4, 5 and 6 are different mappings
+to try with. Option 6 is to enable the Transformer mode, where you can define you own
+Pixel-mapping Transformer. 
+If your panel has a different mapping, please send a pull request.
 
 Note that you have to set the `--led-rows` and `--led-cols` to the rows and
 columns that are physically on each chained panel so that the multiplexing
