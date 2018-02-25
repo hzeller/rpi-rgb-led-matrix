@@ -203,9 +203,7 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   Clear();
   SetGPIO(io, true);
 
-  if (multiplex_mapper) {
-    ApplyPixelMapper(*multiplex_mapper);
-  }
+  ApplyPixelMapper(multiplex_mapper);
 }
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
@@ -344,12 +342,13 @@ void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   active_->Fill(red, green, blue);
 }
 
-bool RGBMatrix::ApplyPixelMapper(const PixelMapper &mapper) {
+bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper) {
+  if (mapper == NULL) return true;
   using internal::PixelDesignatorMap;
   const int old_width = shared_pixel_mapper_->width();
   const int old_height = shared_pixel_mapper_->height();
   int new_width, new_height;
-  if (!mapper.GetSizeMapping(old_width, old_height, &new_width, &new_height)) {
+  if (!mapper->GetSizeMapping(old_width, old_height, &new_width, &new_height)) {
     return false;
   }
   PixelDesignatorMap *new_mapper = new PixelDesignatorMap(new_width,
@@ -357,8 +356,8 @@ bool RGBMatrix::ApplyPixelMapper(const PixelMapper &mapper) {
   for (int y = 0; y < new_height; ++y) {
     for (int x = 0; x < new_width; ++x) {
       int x_new = -1, y_new = -1;
-      mapper.MapVisibleToMatrix(old_width, old_height, x, y,
-                                &x_new, &y_new);
+      mapper->MapVisibleToMatrix(old_width, old_height, x, y,
+                                 &x_new, &y_new);
       if (x_new >= 0 && y_new >= 0) {
         const internal::PixelDesignator *orig_designator;
         orig_designator = shared_pixel_mapper_->get(x, y);

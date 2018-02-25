@@ -27,11 +27,12 @@
 #include "gpio.h"
 #include "canvas.h"
 #include "thread.h"
-#include "transformer.h"
+#include "pixel-mapper.h"
 
 namespace rgb_matrix {
 class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
+
 namespace internal {
 class Framebuffer;
 class PixelDesignatorMap;
@@ -242,9 +243,10 @@ public:
   FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction = 1);
 
   // Apply a pixel mapper. This is used to re-map pixels according to some
-  // scheme implemented by the PixelMapper.
+  // scheme implemented by the PixelMapper. Does not take ownership of the
+  // mapper. Mapper can be NULL, in which case nothing happens.
   // Returns a boolean indicating if this was successful.
-  bool ApplyPixelMapper(const PixelMapper &mapper);
+  bool ApplyPixelMapper(const PixelMapper *mapper);
 
   // -- Canvas interface. These write to the active FrameCanvas
   // (see documentation in canvas.h)
@@ -286,7 +288,9 @@ private:
 
   GPIO *io_;
   Mutex active_frame_sync_;
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
   CanvasTransformer *transformer_;  // deprecated. To be removed.
+#endif
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
   internal::PixelDesignatorMap *shared_pixel_mapper_;

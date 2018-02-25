@@ -31,8 +31,9 @@ public:
   // so that it can be referred to with command line flags.
   virtual const char *GetName() const = 0;
 
-  // Pixel mappers might receive optional parameters, e.g. from command
-  // line flags.
+  // Pixel mappers receive the chain and parallel information and
+  // might receive optional user-parameters, e.g. from command line flags.
+  //
   // This is a single string containing the parameters.
   // You can be used from simple scalar parameters, such as the angle for
   // the rotate transformer, or more complex parameters that describe a mapping
@@ -46,8 +47,9 @@ public:
   // And the parameter that is passed to SetParameter() is "90".
   //
   // Returns 'true' if parameter was parsed successfully.
-  virtual bool SetParameter(const std::string &parameter_string) {
-    return parameter_string.empty();  // Default: expecting no parameter.
+  virtual bool SetParameters(int chain, int parallel,
+                             const char *parameter_string) {
+    return true;
   }
 
   // Given a underlying matrix (width, height), returns the
@@ -79,6 +81,24 @@ public:
                                   int *matrix_x, int *matrix_y) const = 0;
 };
 
+// This is a place to register PixelMappers globally. If you register your
+// PixelMapper before calling CreateMatrixFromFlags(), the named PixelMapper
+// is available in the --led-pixel-mapper options.
+//
+// Note, you don't _have_ to register your mapper, you can always call
+// RGBMatrix::ApplyPixelMapper() directly. Registering is for convenience and
+// commandline-flag support.
+//
+// There are a few standard mappers registered by default.
+void RegisterPixelMapper(PixelMapper *mapper);
+
+// Given a name (e.g. "rotate") and a parameter (e.g. "90"), return the
+// parametrized PixelMapper with that name. Returns NULL if mapper
+// can not be found or parameter is invalid.
+// Ownership of the returned object is _NOT_ transferred to the caller.
+const PixelMapper *FindPixelMapper(const char *name,
+                                   int chain, int parallel,
+                                   const char *parameter = NULL);
 }  // namespace rgb_matrix
 
 #endif  // RGBMATRIX_PIXEL_MAPPER

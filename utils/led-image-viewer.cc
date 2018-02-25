@@ -20,7 +20,7 @@
 // $ make led-image-viewer
 
 #include "led-matrix.h"
-#include "transformer.h"
+#include "pixel-mapper.h"
 #include "content-streamer.h"
 
 #include <fcntl.h>
@@ -263,7 +263,7 @@ int main(int argc, char *argv[]) {
   bool do_center = false;
   bool do_shuffle = false;
   bool large_display = false;  // 64x64 made out of 4 in sequence.
-  int angle = -361;
+  const char *angle = NULL;
 
   // We remember ImageParams for each image, which will change whenever
   // there is a flag modifying them. This map keeps track of filenames
@@ -327,7 +327,7 @@ int main(int argc, char *argv[]) {
       large_display = true;
       break;
     case 'R':
-      angle = atoi(optarg);
+      angle = strdup(optarg);
       break;
     case 'O':
       stream_output = strdup(optarg);
@@ -361,14 +361,20 @@ int main(int argc, char *argv[]) {
     return 1;
 
   if (large_display) {
-    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64,
-    // or any other U-shape.
-    matrix->ApplyStaticTransformer(rgb_matrix::UArrangementTransformer(
-                                     matrix_options.parallel));
+    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64.
+    // Or any other U-arrangement.
+    matrix->ApplyPixelMapper(
+      rgb_matrix::FindPixelMapper("U-mapper",
+                                  matrix_options.chain_length,
+                                  matrix_options.parallel));
   }
 
-  if (angle >= -360) {
-    matrix->ApplyStaticTransformer(rgb_matrix::RotateTransformer(angle));
+  if (angle != NULL) {
+    matrix->ApplyPixelMapper(
+      rgb_matrix::FindPixelMapper("Rotate",
+                                  matrix_options.chain_length,
+                                  matrix_options.parallel,
+                                  angle));
   }
 
   FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();

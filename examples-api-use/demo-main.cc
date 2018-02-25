@@ -7,7 +7,7 @@
 // This is a grab-bag of various demos and not very readable.
 #include "led-matrix.h"
 #include "threaded-canvas-manipulator.h"
-#include "transformer.h"
+#include "pixel-mapper.h"
 #include "graphics.h"
 
 #include <assert.h>
@@ -17,6 +17,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -1054,7 +1055,7 @@ int main(int argc, char *argv[]) {
   int runtime_seconds = -1;
   int demo = -1;
   int scroll_ms = 30;
-  int rotation = 0;
+  const char *rotation = NULL;
   bool large_display = false;
 
   const char *demo_parameter = NULL;
@@ -1088,7 +1089,7 @@ int main(int argc, char *argv[]) {
       break;
 
     case 'R':
-      rotation = atoi(optarg);
+      rotation = strdup(optarg);
       break;
 
     case 'L':
@@ -1143,12 +1144,6 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  if (rotation % 90 != 0) {
-    fprintf(stderr, TERM_ERR "Rotation %d not allowed! "
-            "Only 0, 90, 180 and 270 are possible.\n" TERM_NORM, rotation);
-    return 1;
-  }
-
   RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
@@ -1156,12 +1151,16 @@ int main(int argc, char *argv[]) {
   if (large_display) {
     // Mapping the coordinates of a 32x128 display mapped to a square of 64x64.
     // Or any other U-arrangement.
-    matrix->ApplyStaticTransformer(UArrangementTransformer(
-                                     matrix_options.parallel));
+    matrix->ApplyPixelMapper(FindPixelMapper("U-mapper",
+                                             matrix_options.chain_length,
+                                             matrix_options.parallel));
   }
 
-  if (rotation > 0) {
-    matrix->ApplyStaticTransformer(RotateTransformer(rotation));
+  if (rotation != NULL) {
+    matrix->ApplyPixelMapper(FindPixelMapper("Rotate",
+                                             matrix_options.chain_length,
+                                             matrix_options.parallel,
+                                             rotation));
   }
 
   printf("Size: %dx%d. Hardware gpio mapping: %s\n",
