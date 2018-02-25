@@ -25,6 +25,8 @@
 
 #include <vector>
 
+#include "multiplex-mappers-internal.h"
+
 namespace rgb_matrix {
 RuntimeOptions::RuntimeOptions() :
 #ifdef RGB_SLOWDOWN_GPIO
@@ -322,6 +324,18 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
   return result;
 }
 
+static std::string CreateAvailableMultiplexString(
+  const internal::MuxMapperList &m) {
+  std::string result;
+  char buffer[256];
+  for (size_t i = 0; i < m.size(); ++i) {
+    if (i != 0) result.append("; ");
+    snprintf(buffer, sizeof(buffer), "%d=%s", (int) i+1, m[i]->GetName());
+    result.append(buffer);
+  }
+  return result;
+}
+
 // Public interface.
 RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
                                  RGBMatrix::Options *m_opt_in,
@@ -340,6 +354,8 @@ RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
 
 void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
                       const RuntimeOptions &r) {
+  const internal::MuxMapperList &muxers
+    = internal::GetRegisteredMultiplexMappers();
   fprintf(out,
           "\t--led-gpio-mapping=<name> : Name of GPIO mapping used. Default \"%s\"\n"
           "\t--led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64."
@@ -350,7 +366,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
           "(Default: %d).\n"
-          "\t--led-multiplexing=<0..4> : Mux type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip (Default: 0)\n"
+          "\t--led-multiplexing=<0..%d> : Mux type: 0=direct; %s (Default: 0)\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
@@ -367,6 +383,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
+          (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
@@ -414,8 +431,11 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (multiplexing < 0 || multiplexing > 4) {
-    err->append("Multiplexing can only be one of 0 (normal), 1 (snake), 2 (checkered), 3 (spiral), 4 (Z-stripe)\n");
+  const internal::MuxMapperList &muxers
+    = internal::GetRegisteredMultiplexMappers();
+  if (multiplexing < 0 || multiplexing > (int)muxers.size()) {
+    err->append("Multiplexing can only be one of 0=normal; ")
+      .append(CreateAvailableMultiplexString(muxers));
     success = false;
   }
 

@@ -28,7 +28,7 @@
 #include "gpio.h"
 #include "thread.h"
 #include "framebuffer-internal.h"
-#include "multiplex-transformers-internal.h"
+#include "multiplex-mappers-internal.h"
 
 // Leave this in here for a while. Setting things from old defines.
 #if defined(ADAFRUIT_RGBMATRIX_HAT)
@@ -47,6 +47,8 @@
 #endif
 
 namespace rgb_matrix {
+using namespace internal;
+
 // Pump pixels to screen. Needs to be high priority real-time because jitter
 class RGBMatrix::UpdateThread : public Thread {
 public:
@@ -181,31 +183,28 @@ RGBMatrix::Options::Options() :
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   : params_(options), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL) {
   assert(params_.Validate(NULL));
-  if (params_.multiplexing != 0) {
-    params_.rows /= 2;
-    params_.cols *= 2;
+  const MultiplexMapper *multiplex_mapper = NULL;
+  if (params_.multiplexing > 0) {
+    const MuxMapperList &multiplexers = GetRegisteredMultiplexMappers();
+    if (params_.multiplexing <= (int) multiplexers.size()) {
+      // TODO: we could also do a find-by-name here, but not sure if worthwhile
+      multiplex_mapper = multiplexers[params_.multiplexing - 1];
+    }
   }
-  internal::Framebuffer::InitHardwareMapping(params_.hardware_mapping);
+
+  if (multiplex_mapper) {
+    // The multiplexers might choose to have a different physical layout.
+    // We need to configure that first before setting up the hardware.
+    multiplex_mapper->EditColsRows(&params_.cols, &params_.rows);
+  }
+
+  Framebuffer::InitHardwareMapping(params_.hardware_mapping);
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
-  switch (params_.multiplexing) {
-  case 1:
-    ApplyStaticTransformer(internal::StripeTransformer(params_.rows * 2,
-                                                       params_.cols / 2));
-    break;
-  case 2:
-    ApplyStaticTransformer(internal::CheckeredTransformer(params_.rows * 2,
-                                                          params_.cols / 2));
-    break;
-  case 3:
-    ApplyStaticTransformer(internal::SpiralTransformer(params_.rows * 2,
-                                                       params_.cols / 2));
-    break;
-  case 4:
-    ApplyStaticTransformer(internal::ZStripeTransformer(params_.rows * 2,
-                                                        params_.cols / 2));
-    break;
+
+  if (multiplex_mapper) {
+    ApplyPixelMapper(*multiplex_mapper);
   }
 }
 
@@ -216,7 +215,7 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
   params_.chain_length = chained_displays;
   params_.parallel = parallel_displays;
   assert(params_.Validate(NULL));
-  internal::Framebuffer::InitHardwareMapping(params_.hardware_mapping);
+  Framebuffer::InitHardwareMapping(params_.hardware_mapping);
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
@@ -240,10 +239,10 @@ RGBMatrix::~RGBMatrix() {
 void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
   if (io != NULL && io_ == NULL) {
     io_ = io;
-    internal::Framebuffer::InitGPIO(io_, params_.rows, params_.parallel,
-                                    !params_.disable_hardware_pulsing,
-                                    params_.pwm_lsb_nanoseconds,
-                                    params_.row_address_type);
+    Framebuffer::InitGPIO(io_, params_.rows, params_.parallel,
+                          !params_.disable_hardware_pulsing,
+                          params_.pwm_lsb_nanoseconds,
+                          params_.row_address_type);
   }
   if (start_thread) {
     StartRefresh();
@@ -267,14 +266,13 @@ bool RGBMatrix::StartRefresh() {
 
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {
   FrameCanvas *result =
-    new FrameCanvas(new internal::Framebuffer(params_.rows,
-                                              params_.cols
-                                              * params_.chain_length,
-                                              params_.parallel,
-                                              params_.scan_mode,
-                                              params_.led_rgb_sequence,
-                                              params_.inverse_colors,
-                                              &shared_pixel_mapper_));
+    new FrameCanvas(new Framebuffer(params_.rows,
+                                    params_.cols * params_.chain_length,
+                                    params_.parallel,
+                                    params_.scan_mode,
+                                    params_.led_rgb_sequence,
+                                    params_.inverse_colors,
+                                    &shared_pixel_mapper_));
   if (created_frames_.empty()) {
     // First time. Get defaults from initial Framebuffer.
     do_luminance_correct_ = result->framebuffer()->luminance_correct();
@@ -317,7 +315,7 @@ bool RGBMatrix::luminance_correct() const {
 void RGBMatrix::SetBrightness(uint8_t brightness) {
   for (size_t i = 0; i < created_frames_.size(); ++i) {
     created_frames_[i]->framebuffer()->SetBrightness(brightness);
-  }	
+  }
   params_.brightness = brightness;
 }
 
@@ -346,17 +344,45 @@ void RGBMatrix::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   active_->Fill(red, green, blue);
 }
 
+bool RGBMatrix::ApplyPixelMapper(const PixelMapper &mapper) {
+  using internal::PixelDesignatorMap;
+  const int old_width = shared_pixel_mapper_->width();
+  const int old_height = shared_pixel_mapper_->height();
+  int new_width, new_height;
+  if (!mapper.GetSizeMapping(old_width, old_height, &new_width, &new_height)) {
+    return false;
+  }
+  PixelDesignatorMap *new_mapper = new PixelDesignatorMap(new_width,
+                                                          new_height);
+  for (int y = 0; y < new_height; ++y) {
+    for (int x = 0; x < new_width; ++x) {
+      int x_new = -1, y_new = -1;
+      mapper.MapVisibleToMatrix(old_width, old_height, x, y,
+                                &x_new, &y_new);
+      if (x_new >= 0 && y_new >= 0) {
+        const internal::PixelDesignator *orig_designator;
+        orig_designator = shared_pixel_mapper_->get(x, y);
+        *new_mapper->get(x_new, y_new) = *orig_designator;
+      }
+    }
+  }
+  delete shared_pixel_mapper_;
+  shared_pixel_mapper_ = new_mapper;
+  return true;
+}
+
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
 namespace {
 // A pixel mapper
 class PixelMapExtractionCanvas : public Canvas {
 public:
-  PixelMapExtractionCanvas(internal::PixelMapper *old_mapper)
+  PixelMapExtractionCanvas(internal::PixelDesignatorMap *old_mapper)
     : old_mapper_(old_mapper), new_mapper_(NULL) {}
 
   virtual int width() const { return old_mapper_->width(); }
   virtual int height() const { return old_mapper_->height(); }
 
-  void SetNewMapper(internal::PixelMapper *new_mapper) {
+  void SetNewMapper(internal::PixelDesignatorMap *new_mapper) {
     new_mapper_ = new_mapper;
   }
   void SetNewLocation(int x, int y) {
@@ -376,13 +402,15 @@ public:
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) {}
 
 private:
-  internal::PixelMapper *const old_mapper_;
-  internal::PixelMapper *new_mapper_;
+  internal::PixelDesignatorMap *const old_mapper_;
+  internal::PixelDesignatorMap *new_mapper_;
   int x_new, y_new;
 };
 }  // anonymous namespace
-void RGBMatrix::ApplyStaticTransformer(const CanvasTransformer &transformer) {
-  using internal::PixelMapper;
+
+void RGBMatrix::ApplyStaticTransformerDeprecated(
+  const CanvasTransformer &transformer) {
+  using internal::PixelDesignatorMap;
   assert(shared_pixel_mapper_);  // Not initialized yet ?
   PixelMapExtractionCanvas extractor_canvas(shared_pixel_mapper_);
 
@@ -402,7 +430,7 @@ void RGBMatrix::ApplyStaticTransformer(const CanvasTransformer &transformer) {
 
   const int new_width = mapped_canvas->width();
   const int new_height = mapped_canvas->height();
-  PixelMapper *new_mapper = new PixelMapper(new_width, new_height);
+  PixelDesignatorMap *new_mapper = new PixelDesignatorMap(new_width, new_height);
   extractor_canvas.SetNewMapper(new_mapper);
   // Learn about the pixel mapping by going through all transformed pixels and
   // build new PixelDesignator map.
@@ -415,6 +443,7 @@ void RGBMatrix::ApplyStaticTransformer(const CanvasTransformer &transformer) {
   delete shared_pixel_mapper_;
   shared_pixel_mapper_ = new_mapper;
 }
+#endif  // REMOVE_DEPRECATED_TRANSFORMERS
 
 // FrameCanvas implementation of Canvas
 FrameCanvas::~FrameCanvas() { delete frame_; }

@@ -14,13 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
+/*
+ * NOTE:
+ *
+ * Transformers are deprecated. For the kind of mappings they were be
+ * used by they turned out to be too complicated.
+ *
+ * They have been superseeded by the simpler PixelMapper, see pixel-mapper.h
+ */
 #ifndef RPI_TRANSFORMER_H
 #define RPI_TRANSFORMER_H
+
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
 
 #include <vector>
 #include <cstddef>
 
 #include "canvas.h"
+#include "pixel-mapper.h"
 
 namespace rgb_matrix {
 
@@ -116,4 +127,5 @@ private:
 
 } // namespace rgb_matrix
 
-#endif // RPI_TRANSFORMER_H
+#endif  // REMOVE_DEPRECATED_TRANSFORMERS
+#endif  // RPI_TRANSFORMER_H

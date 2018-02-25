@@ -37,13 +37,13 @@ struct PixelDesignator {
   uint32_t mask;
 };
 
-class PixelMapper {
+class PixelDesignatorMap {
 public:
-  PixelMapper(int width, int height);
-  ~PixelMapper();
+  PixelDesignatorMap(int width, int height);
+  ~PixelDesignatorMap();
 
   // Get a writable version of the PixelDesignator. Outside Framebuffer used
-  // by the RGBMatrix to re-assign mappings to new PixelMappers.
+  // by the RGBMatrix to re-assign mappings to new PixelDesignatorMappers.
   PixelDesignator *get(int x, int y);
 
   inline int width() const { return width_; }
@@ -64,7 +64,7 @@ public:
   Framebuffer(int rows, int columns, int parallel,
               int scan_mode,
               const char* led_sequence, bool inverse_color,
-              PixelMapper **mapper);
+              PixelDesignatorMap **mapper);
   ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
@@ -144,7 +144,7 @@ private:
   gpio_bits_t *bitplane_buffer_;
   inline gpio_bits_t *ValueAt(int double_row, int column, int bit);
 
-  PixelMapper **shared_mapper_;  // Storage in RGBMatrix.
+  PixelDesignatorMap **shared_mapper_;  // Storage in RGBMatrix.
 };
 }  // namespace internal
 }  // namespace rgb_matrix

@@ -34,7 +34,7 @@ class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
 namespace internal {
 class Framebuffer;
-class PixelMapper;
+class PixelDesignatorMap;
 }
 
 // The RGB matrix provides the framebuffer and the facilities to constantly
@@ -241,36 +241,10 @@ public:
   // 28Hz animation, nicely locked to the frame-rate).
   FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction = 1);
 
-  // Set image transformer that maps the logical canvas coordinates to the
-  // physical canvas coordinates.
-  // This preprocesses the transformation for static pixel mapping once.
-  //
-  // (In the rate case that you have transformers that dynamically change
-  //  their behavior at runtime or do transformations on the color, you have to
-  //  manually use them to wrap canvases.)
-  void ApplyStaticTransformer(const CanvasTransformer &transformer);
-
-  // Don't use this function anymore, use ApplyStaticTransformer() instead.
-  // See demo-main.cc how.
-  //
-  // This used to somewhat work with dynamic tranformations, but it
-  // was confusing as that didn't apply to FrameCanvases as well.
-  // If you have static transformations that can be done at program start
-  // (such as rotation or creating your particular pysical display mapping),
-  // use ApplyStaticTransformer().
-  // If you use the Transformer concept to modify writes to canvases on-the-fly,
-  // use them directly as such.
-  //
-  // DO NOT USE. WILL BE REMOVED.
-  void SetTransformer(CanvasTransformer *t) __attribute__((deprecated)) {
-    transformer_ = t;
-    if (t) ApplyStaticTransformer(*t);
-  }
-
-  // DO NOT USE. WILL BE REMOVED.
-  CanvasTransformer *transformer() __attribute__((deprecated)) {
-    return transformer_;
-  }
+  // Apply a pixel mapper. This is used to re-map pixels according to some
+  // scheme implemented by the PixelMapper.
+  // Returns a boolean indicating if this was successful.
+  bool ApplyPixelMapper(const PixelMapper &mapper);
 
   // -- Canvas interface. These write to the active FrameCanvas
   // (see documentation in canvas.h)
@@ -281,9 +255,29 @@ public:
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
+
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+  //--- deprecated section: transformers. Use PixelMapper instead.
+  void ApplyStaticTransformer(const CanvasTransformer &transformer) __attribute__((deprecated)) {
+    ApplyStaticTransformerDeprecated(transformer);
+  }
+  void SetTransformer(CanvasTransformer *t) __attribute__((deprecated)) {
+    transformer_ = t;
+    if (t) ApplyStaticTransformerDeprecated(*t);
+  }
+  CanvasTransformer *transformer() __attribute__((deprecated)) {
+    return transformer_;
+  }
+  // --- end deprecated section.
+#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
+
 private:
   class UpdateThread;
   friend class UpdateThread;
+
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+  void ApplyStaticTransformerDeprecated(const CanvasTransformer &transformer);
+#endif  // REMOVE_DEPRECATED_TRANSFORMERS
 
   Options params_;
   bool do_luminance_correct_;
@@ -295,7 +289,7 @@ private:
   CanvasTransformer *transformer_;  // deprecated. To be removed.
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
-  internal::PixelMapper *shared_pixel_mapper_;
+  internal::PixelDesignatorMap *shared_pixel_mapper_;
 };
 
 class FrameCanvas : public Canvas {

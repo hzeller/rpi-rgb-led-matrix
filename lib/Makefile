@@ -5,7 +5,8 @@
 ##
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
         thread.o bdf-font.o graphics.o transformer.o led-matrix-c.o \
-	hardware-mapping.o content-streamer.o multiplex-transformers.o
+	hardware-mapping.o content-streamer.o multiplex-mappers.o
+
 TARGET=librgbmatrix
 
 # There are several different pinouts for various breakout boards that uses
@@ -94,6 +95,12 @@ HARDWARE_DESC?=regular
 # a good choice.
 # Flag: --led-no-hardware-pulses
 #DEFINES+=-DDISABLE_HARDWARE_PULSES
+
+# If defined, remove deprecated transformers from the API.
+# This will eventually be disabled by default and at some point removed
+# from the code-base, so don't use transformers. Use PixelMappers
+# instead (include/pixel-mapper.h)
+#DEFINES+=-DREMOVE_DEPRECATED_TRANSFORMERS
 
 # ---- Pinout options for hardware variants; usually no change needed here ----
 

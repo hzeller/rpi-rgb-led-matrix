@@ -48,26 +48,15 @@ public:
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) = 0;
 };
 
-// A canvas transformer is an object that, given a Canvas, returns a
-// canvas that applies transformations before writing to the original
-// Canvas.
+#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+// Canvas Transformer used to be a way to map pixels in the LED matrix.
+// It was an overdesigned concept and required some confusing boilerplate
+// to set-up, but was too compilcated for what it was used for: mapping
+// pixels from some logical mapping to some physical mapping.
 //
-// To simplify assumptions for implementations and users of implementations,
-// the following conditions and constraints apply:
+// These days, this is done by rgb_matrix::PixelMapper, see pixel-mapper.h
 //
-//   1) The CanvasTransformer _never_ takes ownership of the delegatee.
-//   2) The ownership of the returned Canvas is _not_ passed to the caller.
-//   3) The returned Canvas can only be assumed to be valid for the lifetime
-//      of the CanvasTranformer and the lifetime of the original canvas.
-//   4) The returned canvas is only valid up to the next call of Transform().
-//
-//   * Point 2)-4) imply that the CanvasTransformer can hand out the same
-//     canvas object every time, just configured to write to the new
-//     delegatee.
-//   * Point 4) implies that one instance of CanvasTransformer cannot be used in
-//     parallel in multiple threads calling Transform().
-//   * The constraints also imply that it is valid for a CanvasTransformer to
-//     return the passed in canvas itself.
+// Don't use CanvasTransformer in new code.
 class CanvasTransformer {
 public:
   virtual ~CanvasTransformer() {}
@@ -76,6 +65,7 @@ public:
   // the output canvas.
   virtual Canvas *Transform(Canvas *output) = 0;
 };
+#endif
 
 }  // namespace rgb_matrix
 #endif  // RPI_CANVAS_H
