@@ -212,6 +212,22 @@ Read the [`minimal-example.cc`](./minimal-example.cc) to get started, then
 have a look into [`demo-main.cc`](./demo-main.cc).
 
 ## Remapping coordinates ##
+
+----
+
+### TBD: Needs to be re-written for PixelMapper
+   * Distinguish
+     * [PixelMapper for regular mapping](../include/pixel-mapper.h)
+     * and [MultiplexMapper](../lib/multiplex-mappers-internal.h) to provide new multiplex options.
+   * Describe the registering process, so that it is clear that things
+     only need to change in one place.
+   * Describe how parameters work and how they can be used from the
+     command line.
+   * Overall better description of each of the available existing modes and
+     how to get into coding these.
+
+----
+
 You might choose a different physical layout than the wiring provides.
 
 Say you have 4 displays with 32x32 and only a single output
