@@ -33,16 +33,15 @@ public:
         panel_rows_ = *rows;
         panel_cols_ = *cols;
 
-        *rows *= panel_stretch_factor_;
-        *cols /= panel_stretch_factor_;
+        *rows /= panel_stretch_factor_;
+        *cols *= panel_stretch_factor_;
     }
 
-    // The typical multiplex mapper maps a double-long/half-high logical
-    // layout to the physical visible panel.
     virtual bool GetSizeMapping(int matrix_width, int matrix_height,
                                 int *visible_width, int *visible_height) const {
+        // Matrix width has been altered. Alter it back.
         *visible_width = matrix_width / panel_stretch_factor_;
-        *visible_height = panel_stretch_factor_ * matrix_height;
+        *visible_height = matrix_height * panel_stretch_factor_;
         return true;
     }
 

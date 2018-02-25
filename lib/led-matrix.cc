@@ -355,14 +355,18 @@ bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper) {
                                                           new_height);
   for (int y = 0; y < new_height; ++y) {
     for (int x = 0; x < new_width; ++x) {
-      int x_new = -1, y_new = -1;
-      mapper->MapVisibleToMatrix(old_width, old_height, x, y,
-                                 &x_new, &y_new);
-      if (x_new >= 0 && y_new >= 0) {
-        const internal::PixelDesignator *orig_designator;
-        orig_designator = shared_pixel_mapper_->get(x, y);
-        *new_mapper->get(x_new, y_new) = *orig_designator;
+      int orig_x = -1, orig_y = -1;
+      mapper->MapVisibleToMatrix(old_width, old_height,
+                                 x, y, &orig_x, &orig_y);
+      if (orig_x < 0 || orig_y < 0 ||
+          orig_x >= old_width || orig_y >= old_height) {
+        fprintf(stderr, "Error in PixelMapper: (%d, %d) -> (%d, %d) [range: "
+                "%dx%d]\n", x, y, orig_x, orig_y, old_width, old_height);
+        continue;
       }
+      const internal::PixelDesignator *orig_designator;
+      orig_designator = shared_pixel_mapper_->get(orig_x, orig_y);
+      *new_mapper->get(x, y) = *orig_designator;
     }
   }
   delete shared_pixel_mapper_;

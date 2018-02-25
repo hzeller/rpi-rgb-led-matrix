@@ -104,7 +104,7 @@ public:
     virtual bool GetSizeMapping(int matrix_width, int matrix_height,
                                 int *visible_width, int *visible_height)
         const {
-        *visible_width = (matrix_width/ 64) * 32;   // Div at 32px boundary
+        *visible_width = (matrix_width / 64) * 32;   // Div at 32px boundary
         *visible_height = 2 * matrix_height;
         if (matrix_height % parallel_ != 0) {
             fprintf(stderr, "%s For parallel=%d we would expect the height=%d "
@@ -119,13 +119,14 @@ public:
                                     int x, int y,
                                     int *matrix_x, int *matrix_y) const {
         const int panel_height = matrix_height / parallel_;
+        const int visible_width = (matrix_width / 64) * 32;
         const int slab_height = 2 * panel_height;   // one folded u-shape
         const int base_y = (y / slab_height) * panel_height;
         y %= slab_height;
         if (y < panel_height) {
             x += matrix_width / 2;
         } else {
-            x = matrix_width - x - 1;
+            x = visible_width - x - 1;
             y = slab_height - y - 1;
         }
         *matrix_x = x;
