@@ -210,9 +210,6 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
     ApplyStaticTransformer(internal::CoremanTransformer(params_.rows * 2,
                                                           params_.cols / 2));
     break;
-  case 6:
-    ApplyStaticTransformer(UArrangementTransformer());
-    break;		
   }
 }
 
