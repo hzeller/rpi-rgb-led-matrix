@@ -136,15 +136,25 @@ public:
 
 class ZStripeMultiplexMapper : public MultiplexMapperBase {
 public:
-  ZStripeMultiplexMapper() : MultiplexMapperBase("ZStripe", 2) {}
+  ZStripeMultiplexMapper(const char *name, int even_vblock_offset, int odd_vblock_offset) 
+  : MultiplexMapperBase(name, 2), 
+    even_vblock_offset_(even_vblock_offset),
+    odd_vblock_offset_(odd_vblock_offset) {}
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
-    const int xoffset = 8 * (x / 8);
-    const int yoffset = (y % 8) / 4;
+    const int vert_block_is_odd = ((y / tile_height_) % 2); 
+    
+    const int even_vblock_shift = (1 - vert_block_is_odd) * even_vblock_offset_;
+    const int odd_vblock_shitf = vert_block_is_odd * odd_vblock_offset_;
 
-    *matrix_x = x + 8 * yoffset + xoffset;
-    *matrix_y = (y % 4) + 4 * (y / 8);
+    *matrix_x = x + ((x + even_vblock_shift) / tile_width_) * tile_width_ + odd_vblock_shitf;
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
   }
+protected:
+  const int tile_width_ = 8;
+  const int tile_height_ = 4;
+  int even_vblock_offset_ = 0;
+  int odd_vblock_offset_ = 0;
 };
 
 /*
@@ -159,7 +169,8 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new StripeMultiplexMapper());
   result->push_back(new CheckeredMultiplexMapper());
   result->push_back(new SpiralMultiplexMapper());
-  result->push_back(new ZStripeMultiplexMapper());
+  result->push_back(new ZStripeMultiplexMapper("ZStripe", 0, 8));
+  result->push_back(new ZStripeMultiplexMapper("ZnMirrorZStripe", 4, 4));
 
   return result;
 }
