@@ -7,10 +7,13 @@
 
 #include "led-matrix.h"
 
-#include <unistd.h>
 #include <math.h>
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
+
+#define FPS 60
 
 using rgb_matrix::GPIO;
 using rgb_matrix::RGBMatrix;
@@ -42,6 +45,9 @@ int main(int argc, char *argv[]) {
   uint8_t buf[frame_size];
 
   while (1) {
+    struct timespec start;
+    timespec_get(&start, TIME_UTC);
+
     ssize_t nread;
     ssize_t total_nread = 0;
     while ((nread = read(STDIN_FILENO, &buf[total_nread], frame_size - total_nread)) > 0) {
@@ -61,7 +67,13 @@ int main(int argc, char *argv[]) {
         canvas->SetPixel(x, y, r, g, b);
       }
     }
-    usleep((1000 * 1000) / 60);
+
+    struct timespec end;
+    timespec_get(&end, TIME_UTC);
+    long tudiff = (end.tv_nsec / 1000 + end.tv_sec * 1000000) - (start.tv_nsec / 1000 + start.tv_sec * 1000000);
+    if (tudiff < 1000000l / FPS) {
+      usleep(1000000l / FPS - tudiff);
+    }
   }
 
   // Animation finished. Shut down the RGB matrix.
