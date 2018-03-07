@@ -136,25 +136,27 @@ public:
 
 class ZStripeMultiplexMapper : public MultiplexMapperBase {
 public:
-  ZStripeMultiplexMapper(const char *name, int even_vblock_offset, int odd_vblock_offset) 
-  : MultiplexMapperBase(name, 2), 
+  ZStripeMultiplexMapper(const char *name, int even_vblock_offset, int odd_vblock_offset)
+  : MultiplexMapperBase(name, 2),
     even_vblock_offset_(even_vblock_offset),
     odd_vblock_offset_(odd_vblock_offset) {}
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
-    const int vert_block_is_odd = ((y / tile_height_) % 2); 
-    
+    static const int tile_width = 8;
+    static const int tile_height = 4;
+
+    const int vert_block_is_odd = ((y / tile_height) % 2);
+
     const int even_vblock_shift = (1 - vert_block_is_odd) * even_vblock_offset_;
     const int odd_vblock_shitf = vert_block_is_odd * odd_vblock_offset_;
 
-    *matrix_x = x + ((x + even_vblock_shift) / tile_width_) * tile_width_ + odd_vblock_shitf;
-    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+    *matrix_x = x + ((x + even_vblock_shift) / tile_width) * tile_width + odd_vblock_shitf;
+    *matrix_y = (y % tile_height) + tile_height * (y / (tile_height * 2));
   }
-protected:
-  const int tile_width_ = 8;
-  const int tile_height_ = 4;
-  int even_vblock_offset_ = 0;
-  int odd_vblock_offset_ = 0;
+
+private:
+  const int even_vblock_offset_;
+  const int odd_vblock_offset_;
 };
 
 /*

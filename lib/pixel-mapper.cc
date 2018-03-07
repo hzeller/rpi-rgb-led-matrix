@@ -90,6 +90,23 @@ private:
   int angle_;
 };
 
+// If we take a long chain of panels and arrange them in a U-shape, so
+// that after half the panels we bend around and continue below. This way
+// we have a panel that has double the height but only uses one chain.
+// A single chain display with four 32x32 panels can then be arranged in this
+// 64x64 display:
+//    [<][<][<][<] }- Raspbery Pi connector
+//
+// can be arranged in this U-shape
+//    [<][<] }----- Raspberry Pi connector
+//    [>][>]
+//
+// This works for more than one chain as well. Here an arrangement with
+// two chains with 8 panels each
+//   [<][<][<][<]  }-- Pi connector #1
+//   [>][>][>][>]
+//   [<][<][<][<]  }--- Pi connector #2
+//   [>][>][>][>]
 class UArrangementMapper : public PixelMapper {
 public:
   UArrangementMapper() : parallel_(1) {}

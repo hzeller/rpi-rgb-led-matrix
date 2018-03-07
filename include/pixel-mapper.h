@@ -96,6 +96,8 @@ void RegisterPixelMapper(PixelMapper *mapper);
 // parametrized PixelMapper with that name. Returns NULL if mapper
 // can not be found or parameter is invalid.
 // Ownership of the returned object is _NOT_ transferred to the caller.
+// Current available mappers are "U-mapper" and "Rotate". The "Rotate"
+// gets a parameter denoting the angle.
 const PixelMapper *FindPixelMapper(const char *name,
                                    int chain, int parallel,
                                    const char *parameter = NULL);
