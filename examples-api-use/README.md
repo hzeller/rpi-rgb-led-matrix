@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  // matrix->ApplyStaticTransformer(...);  // Optional
+  // matrix->ApplyPixelMapper(...);  // Optional
 
   // Do your own command line handling with the remaining options.
 
@@ -213,21 +213,6 @@ have a look into [`demo-main.cc`](./demo-main.cc).
 
 ## Remapping coordinates ##
 
-----
-
-### TBD: Needs to be re-written for PixelMapper
-   * Distinguish
-     * [PixelMapper for regular mapping](../include/pixel-mapper.h)
-     * and [MultiplexMapper](../lib/multiplex-mappers-internal.h) to provide new multiplex options.
-   * Describe the registering process, so that it is clear that things
-     only need to change in one place.
-   * Describe how parameters work and how they can be used from the
-     command line.
-   * Overall better description of each of the available existing modes and
-     how to get into coding these.
-
-----
-
 You might choose a different physical layout than the wiring provides.
 
 Say you have 4 displays with 32x32 and only a single output
@@ -251,30 +236,40 @@ is arranged in this U-shape (on its side)
 How can we make this 'folded' 128x32 screen behave like a 64x64 screen ?
 
 In the API, there is an interface to implement,
-a [`CanvasTransformer`](../include/canvas.h) that allows to program
-re-arrangements of pixels in any way. You can plug such a `CanvasTransformer`
-into the RGBMatrix to use the new layout.
+a [`PixelMapper`](../include/pixel-mapper.h) that allows to program
+re-arrangements of pixels in any way. You can plug such an implementation of
+a `PixelMapper` into the RGBMatrix to use the new layout.
 
 ```
-void RGBMatrix::ApplyStaticTransformer(const CanvasTransformer &transformer)
+bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper);
 ```
 
 Sometimes you even need this for the panel itself: In newer panels
 (often with 1:4 multiplexing) the pixels are often not mapped in
 a straight-forward way, but in a snake arrangement for instance.
-The CanvasTransformer allows you to work around that (I recently have gotten
-some of these to test myself. This will be a new multiplexing option soon).
+
+There are simplified pixel mappers for this purpose, the
+[multiplex mappers](../lib/multiplex-mappers.cc). These are defined there
+and then can be accessed via the command line flag `--led-multiplexing=...`.
+If you find that whatever parameter you give to `--led-multiplexing=` doesn't
+work, you might need to write your own mapper (extend `MultiplexMapperBase`
+and implement the one method `MapSinglePanel()`).
 
 Back to the 64x64 arrangement:
 
-There is a sample implementation `class UArrangementTransformer` that maps
+There is a sample implementation of an U-mapper that maps
 any U-arrangement into a logical arrangement with half the width and double
 the height. So the 128x32 pixel logical arrangement would be a
 64x64 arrangement doing the coordinate mapping.
 
+The globally available pixel mappers can be looked up by name (as a preparation
+to eventually provide them as command-line option), in this case
+the name is `"U-mapper"`:
+
 ```
-  // One chain arranged in a U
-  matrix->ApplyStaticTransformer(UArrangementTransformer(1));
+  matrix->ApplyPixelMapper(FindPixelMapper("U-mapper",
+                                           matrix_options.chain_length,
+                                           matrix_options.parallel));
 ```
 
 In the demo program and the [`led-image-viewer`](../utils#image-viewer), you
@@ -292,14 +287,6 @@ two chains with 8 panels each
 ```
 
 (`--led-chain=8 --led-parallel=2 -L`).
-
-Note, if you use the parallel chains in your programs, you need to pass the
-number of parallel chains to the `UArrangementTransformer`. For instance from
-the defaults you used to create the Matrix:
-
-```
-  matrix->ApplyStaticTransformer(UArrangementTransformer(my_defaults.parallel));
-```
 
 [run-vid]: ../img/running-vid.jpg
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules

@@ -1,19 +1,3 @@
-### TODO pixel-mapper branch
-Work in progress. Api might change slighty. TODO before merge with main
-
-  * Improved documentation and wording in the PixelMapper interface.
-  * Make PixelMappers accessible from options and command-line flags.
-    A semicolon-delimited string
-    of names of PixelMappers (e.g. `--led-pixel-mapper=U-mapper;Rotate:90`)
-  * Match mappers case-insensitive
-  * With that, we can make these available in Python, finally fixing #101
-  * Replace documentation in [examples-api-use/](./examples-api-use/README.md#remapping-coordinates).
-  * (optional, can be past merge with master, but might be a good test to
-    see if all features are there:) Potentially add a new PixelMapper that
-    allows to describe a whole panel-layout in one compact string.
-
-----
-
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
