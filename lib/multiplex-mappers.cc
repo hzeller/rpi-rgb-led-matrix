@@ -159,6 +159,29 @@ private:
   const int odd_vblock_offset_;
 };
 
+class CoremanMapper : public MultiplexMapperBase {
+public:
+  CoremanMapper() : MultiplexMapperBase("coreman", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const bool is_top_check = (y % (panel_rows_/2)) < panel_rows_/4;
+    const bool is_left_check = (x < panel_cols_/2);
+
+    if (is_top_check) {
+      *matrix_x = is_left_check ? x + panel_cols_/2 : x + panel_cols_;
+    } else {
+      *matrix_x = is_left_check ? x : x + panel_cols_/2;
+    }
+
+    int new_y = (y / (panel_rows_/2)) * (panel_rows_/4) + y % (panel_rows_/4);
+
+    if (y <= 7 || y >= 16)
+      *matrix_y = new_y + 8;
+    else
+      *matrix_y = new_y - 8;
+  }
+};
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -173,6 +196,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new SpiralMultiplexMapper());
   result->push_back(new ZStripeMultiplexMapper("ZStripe", 0, 8));
   result->push_back(new ZStripeMultiplexMapper("ZnMirrorZStripe", 4, 4));
+  result->push_back(new CoremanMapper());
 
   return result;
 }
