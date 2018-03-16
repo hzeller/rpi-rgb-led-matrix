@@ -24,8 +24,8 @@ all : $(BINARIES)
 $(RGB_LIBRARY): FORCE
 	$(MAKE) -C $(RGB_LIBDIR)
 
-led-image-viewer: led-image-viewer.o $(RGB_LIBRARY)
-	$(CXX) $(CXXFLAGS) led-image-viewer.o -o $@ $(LDFLAGS) $(MAGICK_LDFLAGS)
+led-image-viewer: led-image-viewer.o GridTransformer.o Config.o $(RGB_LIBRARY)
+	$(CXX) $(CXXFLAGS) -I$(RGB_INCDIR) -L$(RGB_LIBDIR) -lconfig++ led-image-viewer.o GridTransformer.o Config.o -o $@ $(LDFLAGS) $(MAGICK_LDFLAGS)
 
 video-viewer: video-viewer.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) video-viewer.o -o $@ $(LDFLAGS) `pkg-config --cflags --libs  libavcodec libavformat libswscale libavutil`
@@ -33,8 +33,11 @@ video-viewer: video-viewer.o $(RGB_LIBRARY)
 %.o : %.cc
 	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -c -o $@ $<
 
-led-image-viewer.o : led-image-viewer.cc
-	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) $(MAGICK_CXXFLAGS) -c -o $@ $<
+%.o : %.cpp
+	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -lconfig++ -c -o $@ $<
+
+led-image-viewer.o : led-image-viewer.cc GridTransformer.o Config.o
+	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -L$(RGB_LIBDIR) -lconfig++ $(MAGICK_CXXFLAGS) -c -o $@ $<
 
 # We're using a couple of deprecated functions. Pull request to update this to
 # the latest libraries is welcome.
@@ -42,7 +45,7 @@ video-viewer.o: video-viewer.cc
 	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -Wno-deprecated-declarations -c -o $@ $<
 
 clean:
-	rm -f $(OBJECTS) $(BINARIES) $(OPTIONAL_OBJECTS) $(OPTIONAL_BINARIES)
+	rm -f $(OBJECTS) $(BINARIES) $(OPTIONAL_OBJECTS) $(OPTIONAL_BINARIES) Config.o GridTransformer.o
 
 FORCE:
 .PHONY: FORCE
