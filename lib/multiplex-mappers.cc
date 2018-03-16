@@ -164,21 +164,17 @@ public:
   CoremanMapper() : MultiplexMapperBase("coreman", 2) {}
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
-    const bool is_top_check = (y % (panel_rows_/2)) < panel_rows_/4;
     const bool is_left_check = (x < panel_cols_/2);
 
-    if (is_top_check) {
-      *matrix_x = is_left_check ? x + panel_cols_/2 : x + panel_cols_;
+    if((y <= 7) || ((y >= 16) && (y <= 23))){
+      *matrix_x = ((x / (panel_cols_/2)) * panel_cols_) + (x % (panel_cols_/2));
+      if ((y & (panel_rows_/4)) == 0) {
+        *matrix_y = (y / (panel_rows_/2)) * (panel_rows_/4) + (y % (panel_rows_/4));
+      }
     } else {
-      *matrix_x = is_left_check ? x : x + panel_cols_/2;
+      *matrix_x = is_left_check ? x + panel_cols_/2 : x + panel_cols_;
+      *matrix_y = (y / (panel_rows_/2)) * (panel_rows_/4) + y % (panel_rows_/4);
     }
-
-    int new_y = (y / (panel_rows_/2)) * (panel_rows_/4) + y % (panel_rows_/4);
-
-    if (y <= 7 || y >= 16)
-      *matrix_y = new_y + 8;
-    else
-      *matrix_y = new_y - 8;
   }
 };
 
