@@ -1,5 +1,16 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-
+//
+// Abstractions to read and write FrameCanvas objects to streams. This allows
+// you to create canned streams of content with minimal overhead at runtime
+// to play with extreme pixel-throughput which also minimizes overheads in
+// the Pi to avoid stuttering or brightness glitches.
+//
+// The disadvantage is, that this represents the full expanded internal
+// representation of a frame, so is very large memory wise.
+//
+// These abstractions are used in util/led-image-viewer.cc to read and
+// write such animations to disk. It is also used in util/video-viewer.cc
+// to write a version to disk that then can be played with the led-image-viewer.
 #include <stdint.h>
 #include <stdlib.h>
 

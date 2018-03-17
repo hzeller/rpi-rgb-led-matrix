@@ -421,6 +421,7 @@ int main(int argc, char *argv[]) {
             CopyStream(&reader, global_stream_writer, offscreen_canvas);
           }
         } else {
+          err_msg = "Can't read as image or stream";
           delete file_info->content_stream;
           delete file_info;
           file_info = NULL;
