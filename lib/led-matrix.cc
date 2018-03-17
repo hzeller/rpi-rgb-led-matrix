@@ -175,7 +175,8 @@ RGBMatrix::Options::Options() :
 #else
     inverse_colors(false),
 #endif
-  led_rgb_sequence("RGB")
+  led_rgb_sequence("RGB"),
+  pixel_mapper_config(NULL)
 {
   // Nothing to see here.
 }
@@ -203,7 +204,12 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   Clear();
   SetGPIO(io, true);
 
+  // We need to apply the mapping for the panels first.
   ApplyPixelMapper(multiplex_mapper);
+
+  // .. followed by higher level mappers that might arrange panels.
+  ApplyNamedPixelMappers(options.pixel_mapper_config,
+                         params_.chain_length, params_.parallel);
 }
 
 RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
@@ -232,6 +238,26 @@ RGBMatrix::~RGBMatrix() {
     delete created_frames_[i];
   }
   delete shared_pixel_mapper_;
+}
+
+void RGBMatrix::ApplyNamedPixelMappers(const char *pixel_mapper_config,
+                                       int chain, int parallel) {
+  if (pixel_mapper_config == NULL || strlen(pixel_mapper_config) == 0)
+    return;
+  char *const writeable_copy = strdup(pixel_mapper_config);
+  const char *const end = writeable_copy + strlen(writeable_copy);
+  char *s = writeable_copy;
+  while (s < end) {
+    char *const semicolon = strchrnul(s, ';');
+    *semicolon = '\0';
+    char *optional_param_start = strchr(s, ':');
+    if (optional_param_start) {
+      *optional_param_start++ = '\0';
+    }
+    ApplyPixelMapper(FindPixelMapper(s, chain, parallel, optional_param_start));
+    s = semicolon + 1;
+  }
+  free(writeable_copy);
 }
 
 void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {

@@ -120,6 +120,12 @@ struct RGBLedMatrixOptions {
    */
   const char *led_rgb_sequence;     /* Corresponding flag: --led-rgb-sequence */
 
+  /* A string describing a sequence of pixel mappers that should be applied
+   * to this matrix. A semicolon-separated list of pixel-mappers with optional
+   * parameter.
+   */
+  const char *pixel_mapper_config;  /* Corresponding flag: --led-pixel-mapper */
+
   /** The following are boolean flags, all off by default **/
 
   /* Allow to use the hardware subsystem to create pulses. This won't do

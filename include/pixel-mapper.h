@@ -16,6 +16,7 @@
 #define RGBMATRIX_PIXEL_MAPPER
 
 #include <string>
+#include <vector>
 
 namespace rgb_matrix {
 
@@ -91,6 +92,9 @@ public:
 //
 // There are a few standard mappers registered by default.
 void RegisterPixelMapper(PixelMapper *mapper);
+
+// Get a list of the names of available pixel mappers.
+std::vector<std::string> GetAvailablePixelMappers();
 
 // Given a name (e.g. "rotate") and a parameter (e.g. "90"), return the
 // parametrized PixelMapper with that name. Returns NULL if mapper

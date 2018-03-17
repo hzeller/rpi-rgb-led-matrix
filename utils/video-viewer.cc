@@ -62,9 +62,6 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <video>\n", progname);
   fprintf(stderr, "Options:\n"
           "\t-O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).\n"
-          "\t-L                 : Large display, in which each chain is 'folded down'\n"
-          "\t                     in the middle in an U-arrangement to get more vertical space.\n"
-          "\t-R<angle>          : Rotate output; steps of 90 degrees\n"
           "\t-v                 : verbose.\n");
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
@@ -80,8 +77,6 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  bool large_display = false;  // 64x64 made out of 4 in sequence.
-  const char *angle = NULL;
   bool verbose = false;
   const char *stream_output = NULL;
 
@@ -95,16 +90,14 @@ int main(int argc, char *argv[]) {
       stream_output = strdup(optarg);
       break;
     case 'L':
-      if (matrix_options.chain_length == 1) {
-        // If this is still default, force the 64x64 arrangement.
-        matrix_options.chain_length = 4;
-      }
-      large_display = true;
+      fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"U-mapper\" --led-chain=4\ninstead.\n");
+      return 1;
       break;
     case 'R':
-      angle = strdup(optarg);
+      fprintf(stderr, "-R is deprecated. "
+              "Use --led-pixel-mapper=\"Rotate:%s\" instead.\n", optarg);
+      return 1;
       break;
-
     default:
       return usage(argv[0]);
     }
@@ -153,23 +146,6 @@ int main(int argc, char *argv[]) {
   RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL) {
     return 1;
-  }
-
-  if (large_display) {
-    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64.
-    // Or any other U-arrangement.
-    matrix->ApplyPixelMapper(
-      rgb_matrix::FindPixelMapper("U-mapper",
-                                  matrix_options.chain_length,
-                                  matrix_options.parallel));
-  }
-
-  if (angle != NULL) {
-    matrix->ApplyPixelMapper(
-      rgb_matrix::FindPixelMapper("Rotate",
-                                  matrix_options.chain_length,
-                                  matrix_options.parallel,
-                                  angle));
   }
 
   FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();

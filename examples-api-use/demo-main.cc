@@ -1024,10 +1024,6 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n");
   fprintf(stderr,
           "\t-D <demo-nr>              : Always needs to be set\n"
-          "\t-L                        : Large display, in which each chain is 'folded down'\n"
-          "\t                            in the middle in an U-arrangement to get more vertical space.\n"
-          "\t-R <rotation>             : Sets the rotation of matrix. "
-          "Allowed: 0, 90, 180, 270. Default: 0.\n"
           "\t-t <seconds>              : Run for these number of seconds, then exit.\n");
 
 
@@ -1055,8 +1051,6 @@ int main(int argc, char *argv[]) {
   int runtime_seconds = -1;
   int demo = -1;
   int scroll_ms = 30;
-  const char *rotation = NULL;
-  bool large_display = false;
 
   const char *demo_parameter = NULL;
   RGBMatrix::Options matrix_options;
@@ -1088,20 +1082,19 @@ int main(int argc, char *argv[]) {
       scroll_ms = atoi(optarg);
       break;
 
+      // These used to be options we understood, but deprecated now. Accept
+      // but don't mention in usage()
     case 'R':
-      rotation = strdup(optarg);
+      fprintf(stderr, "-R is deprecated. "
+              "Use --led-pixel-mapper=\"Rotate:%s\" instead.\n", optarg);
+      return 1;
       break;
 
     case 'L':
-      if (matrix_options.chain_length == 1) {
-        // If this is still default, force the 64x64 arrangement.
-        matrix_options.chain_length = 4;
-      }
-      large_display = true;
+      fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"U-mapper\" --led-chain=4\ninstead.\n");
+      return 1;
       break;
 
-      // These used to be options we understood, but deprecated now. Accept
-      // but don't mention in usage()
     case 'd':
       runtime_opt.daemon = 1;
       break;
@@ -1147,21 +1140,6 @@ int main(int argc, char *argv[]) {
   RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
-
-  if (large_display) {
-    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64.
-    // Or any other U-arrangement.
-    matrix->ApplyPixelMapper(FindPixelMapper("U-mapper",
-                                             matrix_options.chain_length,
-                                             matrix_options.parallel));
-  }
-
-  if (rotation != NULL) {
-    matrix->ApplyPixelMapper(FindPixelMapper("Rotate",
-                                             matrix_options.chain_length,
-                                             matrix_options.parallel,
-                                             rotation));
-  }
 
   printf("Size: %dx%d. Hardware gpio mapping: %s\n",
          matrix->width(), matrix->height(), matrix_options.hardware_mapping);

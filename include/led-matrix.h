@@ -135,6 +135,11 @@ public:
     // In case the internal sequence of mapping is not "RGB", this contains the
     // real mapping. Some panels mix up these colors.
     const char *led_rgb_sequence;  // Flag: --led-rgb-sequence
+
+    // A string describing a sequence of pixel mappers that should be applied
+    // to this matrix. A semicolon-separated list of pixel-mappers with optional
+    // parameter.
+    const char *pixel_mapper_config;   // Flag: --led-pixel-mapper
   };
 
   // Create an RGBMatrix.
@@ -276,6 +281,11 @@ public:
 private:
   class UpdateThread;
   friend class UpdateThread;
+
+  // Apply pixel mappers that have been passed down via a configuration
+  // string.
+  void ApplyNamedPixelMappers(const char *pixel_mapper_config,
+                              int chain, int parallel);
 
 #ifndef REMOVE_DEPRECATED_TRANSFORMERS
   void ApplyStaticTransformerDeprecated(const CanvasTransformer &transformer);

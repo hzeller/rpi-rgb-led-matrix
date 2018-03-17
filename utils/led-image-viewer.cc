@@ -227,9 +227,6 @@ static int usage(const char *progname) {
           "\t-s                        : If multiple images are given: shuffle.\n"
           "\nDisplay Options:\n"
           "\t-V<vsync-multiple>        : Expert: Only do frame vsync-swaps on multiples of refresh (default: 1)\n"
-          "\t-L                        : Large display, in which each chain is 'folded down'\n"
-          "\t                            in the middle in an U-arrangement to get more vertical space.\n"
-          "\t-R<angle>                 : Rotate output; steps of 90 degrees\n"
           );
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
@@ -262,8 +259,6 @@ int main(int argc, char *argv[]) {
   bool do_forever = false;
   bool do_center = false;
   bool do_shuffle = false;
-  bool large_display = false;  // 64x64 made out of 4 in sequence.
-  const char *angle = NULL;
 
   // We remember ImageParams for each image, which will change whenever
   // there is a flag modifying them. This map keeps track of filenames
@@ -320,14 +315,13 @@ int main(int argc, char *argv[]) {
       matrix_options.parallel = atoi(optarg);
       break;
     case 'L':
-      if (matrix_options.chain_length == 1) {
-        // If this is still default, force the 64x64 arrangement.
-        matrix_options.chain_length = 4;
-      }
-      large_display = true;
+      fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"U-mapper\" --led-chain=4\ninstead.\n");
+      return 1;
       break;
     case 'R':
-      angle = strdup(optarg);
+      fprintf(stderr, "-R is deprecated. "
+              "Use --led-pixel-mapper=\"Rotate:%s\" instead.\n", optarg);
+      return 1;
       break;
     case 'O':
       stream_output = strdup(optarg);
@@ -359,23 +353,6 @@ int main(int argc, char *argv[]) {
   RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
-
-  if (large_display) {
-    // Mapping the coordinates of a 32x128 display mapped to a square of 64x64.
-    // Or any other U-arrangement.
-    matrix->ApplyPixelMapper(
-      rgb_matrix::FindPixelMapper("U-mapper",
-                                  matrix_options.chain_length,
-                                  matrix_options.parallel));
-  }
-
-  if (angle != NULL) {
-    matrix->ApplyPixelMapper(
-      rgb_matrix::FindPixelMapper("Rotate",
-                                  matrix_options.chain_length,
-                                  matrix_options.parallel,
-                                  angle));
-  }
 
   FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
 

@@ -147,6 +147,9 @@ static bool FlagInit(int &argc, char **&argv,
       if (ConsumeStringFlag("rgb-sequence", it, end,
                             &mopts->led_rgb_sequence, &err))
         continue;
+      if (ConsumeStringFlag("pixel-mapper", it, end,
+                            &mopts->pixel_mapper_config, &err))
+        continue;
       if (ConsumeIntFlag("rows", it, end, &mopts->rows, &err))
         continue;
       if (ConsumeIntFlag("cols", it, end, &mopts->cols, &err))
@@ -356,6 +359,14 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
                       const RuntimeOptions &r) {
   const internal::MuxMapperList &muxers
     = internal::GetRegisteredMultiplexMappers();
+
+  std::vector<std::string> mapper_names = GetAvailablePixelMappers();
+  std::string available_mappers;
+  for (size_t i = 0; i < mapper_names.size(); ++i) {
+    if (i != 0) available_mappers.append(", ");
+    available_mappers.append("\"").append(mapper_names[i]).append("\"");
+  }
+
   fprintf(out,
           "\t--led-gpio-mapping=<name> : Name of GPIO mapping used. Default \"%s\"\n"
           "\t--led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64."
@@ -367,6 +378,9 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
           "(Default: %d).\n"
           "\t--led-multiplexing=<0..%d> : Mux type: 0=direct; %s (Default: 0)\n"
+          "\t--led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.\n"
+          "\t                            Optional params after a colon e.g. \"U-mapper;Rotate:90\"\n"
+          "\t                            Available: %s. Default: \"\"\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
@@ -384,6 +398,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
+          available_mappers.c_str(),
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",

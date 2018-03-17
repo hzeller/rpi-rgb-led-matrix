@@ -114,6 +114,14 @@ public:
   virtual const char *GetName() const { return "U-mapper"; }
 
   virtual bool SetParameters(int chain, int parallel, const char *param) {
+    if (chain < 2) {  // technically, a chain of 2 would work, but somewhat pointless
+      fprintf(stderr, "U-mapper: need at least --led-chain=4 for useful folding\n");
+      return false;
+    }
+    if (chain % 2 != 0) {
+      fprintf(stderr, "U-mapper: Chain (--led-chain) needs to be divisible by two\n");
+      return false;
+    }
     parallel_ = parallel;
     return true;
   }
@@ -158,8 +166,10 @@ typedef std::map<std::string, PixelMapper*> MapperByName;
 static void RegisterPixelMapperInternal(MapperByName *registry,
                                         PixelMapper *mapper) {
   assert(mapper != NULL);
-  // TODO: tolower case ?
-  (*registry)[mapper->GetName()] = mapper;
+  std::string lower_name;
+  for (const char *n = mapper->GetName(); *n; n++)
+    lower_name.append(1, tolower(*n));
+  (*registry)[lower_name] = mapper;
 }
 
 static MapperByName *CreateMapperMap() {
@@ -182,17 +192,28 @@ void RegisterPixelMapper(PixelMapper *mapper) {
   RegisterPixelMapperInternal(GetMapperMap(), mapper);
 }
 
+std::vector<std::string> GetAvailablePixelMappers() {
+  std::vector<std::string> result;
+  MapperByName *m = GetMapperMap();
+  for (MapperByName::const_iterator it = m->begin(); it != m->end(); ++it) {
+    result.push_back(it->second->GetName());
+  }
+  return result;
+}
+
 const PixelMapper *FindPixelMapper(const char *name,
                                    int chain, int parallel,
                                    const char *parameter) {
-  MapperByName::const_iterator found = GetMapperMap()->find(name);
+  std::string lower_name;
+  for (const char *n = name; *n; n++) lower_name.append(1, tolower(*n));
+  MapperByName::const_iterator found = GetMapperMap()->find(lower_name);
   if (found == GetMapperMap()->end()) {
     fprintf(stderr, "%s: no such mapper\n", name);
     return NULL;
   }
   PixelMapper *mapper = found->second;
   if (mapper == NULL) return NULL;  // should not happen.
-  if (parameter && !mapper->SetParameters(chain, parallel, parameter))
+  if (!mapper->SetParameters(chain, parallel, parameter))
     return NULL;   // Got parameter, but couldn't deal with it.
   return mapper;
 }
