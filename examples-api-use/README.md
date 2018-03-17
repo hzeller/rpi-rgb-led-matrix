@@ -215,6 +215,12 @@ have a look into [`demo-main.cc`](./demo-main.cc).
 
 You might choose a different physical layout than the wiring provides.
 
+There is an option `--led-pixel-mapper` that allows you to choose between
+some re-mapping options, and also programmatic ways to do so.
+
+### Standard mappers
+
+#### U-mapper
 Say you have 4 displays with 32x32 and only a single output
 like with a Raspberry Pi 1 or the Adafruit HAT -- if we chain
 them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
@@ -233,48 +239,15 @@ is arranged in this U-shape (on its side)
     [>][>]
 ```
 
-How can we make this 'folded' 128x32 screen behave like a 64x64 screen ?
+Now we need to internally map pixels the pixels so that the 'folded' 128x32
+screen behaves like a 64x64 screen.
 
-In the API, there is an interface to implement,
-a [`PixelMapper`](../include/pixel-mapper.h) that allows to program
-re-arrangements of pixels in any way. You can plug such an implementation of
-a `PixelMapper` into the RGBMatrix to use the new layout.
-
-```
-bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper);
-```
-
-Sometimes you even need this for the panel itself: In newer panels
-(often with 1:4 multiplexing) the pixels are often not mapped in
-a straight-forward way, but in a snake arrangement for instance.
-
-There are simplified pixel mappers for this purpose, the
-[multiplex mappers](../lib/multiplex-mappers.cc). These are defined there
-and then can be accessed via the command line flag `--led-multiplexing=...`.
-If you find that whatever parameter you give to `--led-multiplexing=` doesn't
-work, you might need to write your own mapper (extend `MultiplexMapperBase`
-and implement the one method `MapSinglePanel()`).
-
-Back to the 64x64 arrangement:
-
-There is a sample implementation of an U-mapper that maps
-any U-arrangement into a logical arrangement with half the width and double
-the height. So the 128x32 pixel logical arrangement would be a
-64x64 arrangement doing the coordinate mapping.
-
-The globally available pixel mappers can be looked up by name (as a preparation
-to eventually provide them as command-line option), in this case
-the name is `"U-mapper"`:
+There is a pixel-mapper that can help with this "U-Arrangement", you choose
+it with `--led-pixel-mapper=U-mapper`. So in this particular case,
 
 ```
-  matrix->ApplyPixelMapper(FindPixelMapper("U-mapper",
-                                           matrix_options.chain_length,
-                                           matrix_options.parallel));
+  ./demo --led-chain=4 --led-pixel-mapper="U-mapper"
 ```
-
-In the demo program and the [`led-image-viewer`](../utils#image-viewer), you
-can activate this with the `-L` option. Give it the original chain length (so
-for the 64x64 arrangement that would be `--led-chain=4`).
 
 This works for longer and more than one chain as well. Here an arrangement with
 two chains with 8 panels each
@@ -286,7 +259,89 @@ two chains with 8 panels each
    [>][>][>][>]
 ```
 
-(`--led-chain=8 --led-parallel=2 -L`).
+(`--led-chain=8 --led-parallel=2 --led-pixel-mapper="U-mapper"`).
+
+#### Rotate
+
+The "Rotate" mapper allows you to rotate your screen. It takes an angle
+as parameter after a colon:
+
+```
+  ./demo --led-pixel-mapper="Rotate:90"
+```
+
+#### Combining Mappers
+
+You can chain multiple mappers in the configuration, by separating them
+with a semicolon. The mappers are applied in the sequence you give them, so
+if you want to arrange a couple of panels with the U-arrangement, and then
+rotate the resulting screen, use
+
+```
+  ./demo --led-chain=8 --led-parallel=3 --led-pixel-mapper="U-mapper;Rotate:90"
+```
+
+Here, we first create a 128x192 screen (4 panels wide (`4*32=128`),
+with three folded chains (`6*32=192`)) and then rotate it by 90 degrees to
+get a 192x128 screen.
+
+#### Programmatic access
+
+If you want to choose these mappers programmatically from your program and
+not via the flags, you can do this by setting the `pixel_mapper_config` option
+in the options struct in C++ or Python.
+
+```
+  options.pixel_mapper_config = "Rotate:90";
+```
+
+### Writing your own mappers
+
+If you want to write your own mappers, e.g. if you have a fancy panel
+arrangement, you can do so using the API provided.
+
+In the API, there is an interface to implement,
+a [`PixelMapper`](../include/pixel-mapper.h) that allows to program
+re-arrangements of pixels in any way. You can plug such an implementation of
+a `PixelMapper` into the RGBMatrix to use it:
+
+```
+  bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper);
+```
+
+If you want, you can also register your PixelMapper globally before you
+parse the command line options; then this pixel-mapper is automatically
+provided in the `--led-pixel-mapper` command line option:
+
+```
+   RegisterPixelMapper(new MyOwnPixelMapper());
+   RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(...);
+```
+
+Now your mapper can be used alongside (and combined with) the standard
+mappers already there (e.g. "U-mapper" or "Rotate"). Your mapper can have
+parameters: In the command-line flag, parameters provided after `:` are passed
+as-is to your `SetParameters()` implementation
+(e.g. using `--led-pixel-mapper="Rotate:90"`, the `Rotate` mapper
+gets a parameter string `"90"` as parameter).
+
+#### Multiplex Mappers
+
+Sometimes you even need this for the panel itself: In some panels
+(typically the 'outdoor panels', often with 1:4 multiplexing) the pixels
+are not mapped in a straight-forward way, but in a snake arrangement for
+instance.
+
+There are simplified pixel mappers for this purpose, the
+[multiplex mappers](../lib/multiplex-mappers.cc). These are defined there
+and then can be accessed via the command line flag `--led-multiplexing=...`.
+
+If you find that whatever parameter you give to `--led-multiplexing=` doesn't
+work, you might need to write your own mapper (extend `MultiplexMapperBase`
+and implement the one method `MapSinglePanel()`). Then register them with
+the `CreateMultiplexMapperList()` function in that file. When you do this,
+this will automatically become available in the `--led-multiplexing=` command
+line option in C++ and Python.
 
 [run-vid]: ../img/running-vid.jpg
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
