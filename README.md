@@ -602,6 +602,10 @@ kernel for the Pi; maybe there are also hardware limitations (memory bus
 contention?). Anyway, if you have a realtime kernel configuration that you
 have optimized for this application, let me know.
 
+To address the brightness fluctuations, you might experiment with the
+`FIXED_FRAME_MICROSECONDS` compile time option in [lib/Makefile](lib/Makefile)
+that has instructions how to set it up.
+
 Fun
 ---
 I am always happy to see users successfully using the software for wonderful
