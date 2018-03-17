@@ -274,7 +274,12 @@ void RGBMatrix::ApplyNamedPixelMappers(const char *pixel_mapper_config,
     if (optional_param_start) {
       *optional_param_start++ = '\0';
     }
-    ApplyPixelMapper(FindPixelMapper(s, chain, parallel, optional_param_start));
+    if (*s == '\0' && optional_param_start && *optional_param_start != '\0') {
+      fprintf(stderr, "Stray parameter ':%s' without mapper name ?\n", optional_param_start);
+    }
+    if (*s) {
+      ApplyPixelMapper(FindPixelMapper(s, chain, parallel, optional_param_start));
+    }
     s = semicolon + 1;
   }
   free(writeable_copy);
