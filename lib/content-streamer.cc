@@ -156,7 +156,7 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
   }
   if ((int)header.width != frame.width()
       || (int)header.height != frame.height()) {
-    fprintf(stderr, "This stream is for %dx%d, but you try to play it on %dx%d."
+    fprintf(stderr, "This stream is for %dx%d, can't play on %dx%d. "
             "Please use the same settings for record/replay\n",
             header.width, header.height, frame.width(), frame.height());
     state_ = STREAM_ERROR;
