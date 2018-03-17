@@ -63,6 +63,7 @@ cdef extern from "led-matrix.h" namespace "rgb_matrix::RGBMatrix":
         bool inverse_colors
 
         const char *led_rgb_sequence
+        const char *pixel_mapper_config
 
 cdef extern from "graphics.h" namespace "rgb_matrix":
     cdef struct Color:

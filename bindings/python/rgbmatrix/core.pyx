@@ -158,6 +158,12 @@ cdef class RGBMatrixOptions:
             self.__py_encoded_led_rgb_sequence = value.encode('utf-8')
             self.__options.led_rgb_sequence = self.__py_encoded_led_rgb_sequence
 
+    property pixel_mapper_config:
+        def __get__(self): return self.__options.pixel_mapper_config
+        def __set__(self, value):
+            self.__py_encoded_pixel_mapper_config = value.encode('utf-8')
+            self.__options.pixel_mapper_config = self.__py_encoded_pixel_mapper_config
+
     # RuntimeOptions properties
 
     property gpio_slowdown:
