@@ -102,6 +102,38 @@ HARDWARE_DESC?=regular
 # Use PixelMappers instead (include/pixel-mapper.h)
 #DEFINES+=-DREMOVE_DEPRECATED_TRANSFORMERS
 
+# --- EXPERIMENTAL --
+# This allows to fix the refresh rate to a particular refresh time in
+# microseconds.
+#
+# This can be used to mitigate some situations in which you have a rare
+# faint flicker, which can happen due to hardware events (network access)
+# or other situations such as other IO or heavy memory access by other
+# processes (all of which seem to break the isolation we request from the
+# kernel. You did set isolcpus=3 right ?)
+# You trade a slightly slower refresh rate and display brightness for less
+# visible flicker situations.
+#
+# For this to calibrate, run your program for a while with --led-show-refresh
+# and watch the line that shows the refresh time and the maximum microseconds
+# for a frame observed. The maximum number is updated whenever the frame
+# refresh take a little bit longer. So wait a while until that value doesn't
+# change anymore (at least a minute, so that you catch tasks that happen once
+# a minute). Some value might read e.g.
+#   204.6Hz max: 5133usec
+# Now take this maximum value you see there (here: 5133) and put in
+# this define (don't forget to remove the # in front).
+#
+# The refresh rate will now be adapted to always have this amount of time
+# between frames, so faster refreshes will be slowed down, but the occasional
+# delayed frame will fit into the time-window as well, thus reducing visible
+# brightness fluctuations.
+#
+# You can play with value a little and reduce until you find a good balance
+# between refresh rate (which is reduce the higher this value is) and
+# flicker suppression (which is better with higher values).
+#DEFINES+=-DFIXED_FRAME_MICROSECONDS=5000
+
 # ---- Pinout options for hardware variants; usually no change needed here ----
 
 # Uncomment if you want to use the Adafruit HAT with stable PWM timings.

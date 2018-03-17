@@ -47,6 +47,11 @@
 #endif
 
 namespace rgb_matrix {
+
+// Get rolling over microsecond counter. Right now for experimental
+// purposes declared here (defined in gpio.cc).
+uint32_t GetMicrosecondCounter();
+
 using namespace internal;
 
 // Pump pixels to screen. Needs to be high priority real-time because jitter
@@ -66,11 +71,16 @@ public:
 
   virtual void Run() {
     unsigned frame_count = 0;
+    uint32_t largest_time = 0;
+
+    // Let's start measure max time only after a we were running for a few
+    // seconds to not pick up start-up glitches.
+    static const int kHoldffTimeUs = 2000 * 1000;
+    uint32_t initial_holdoff_start = GetMicrosecondCounter();
+    bool max_measure_enabled = false;
+
     while (running()) {
-      struct timeval start, end;
-      if (show_refresh_) {
-        gettimeofday(&start, NULL);
-      }
+      const uint32_t start_time_us = GetMicrosecondCounter();
 
       current_frame_->framebuffer()->DumpToMatrix(io_);
 
@@ -92,11 +102,21 @@ public:
 
       ++frame_count;
 
+#ifdef FIXED_FRAME_MICROSECONDS
+      while ((GetMicrosecondCounter() - start_time_us) < (uint32_t)FIXED_FRAME_MICROSECONDS) {
+        // busy wait.
+      }
+#endif
+      const uint32_t end_time_us = GetMicrosecondCounter();
       if (show_refresh_) {
-        gettimeofday(&end, NULL);
-        int64_t usec = ((uint64_t)end.tv_sec * 1000000 + end.tv_usec)
-          - ((int64_t)start.tv_sec * 1000000 + start.tv_usec);
+        uint32_t usec = end_time_us - start_time_us;
         printf("\b\b\b\b\b\b\b\b%6.1fHz", 1e6 / usec);
+        if (usec > largest_time && max_measure_enabled) {
+          largest_time = usec;
+          printf(" max: %uusec\b\b\b\b\b\b\b\b\b\b\b\b\b\b", largest_time);
+        } else {
+          max_measure_enabled = (end_time_us - initial_holdoff_start) > kHoldffTimeUs;
+        }
       }
     }
   }
