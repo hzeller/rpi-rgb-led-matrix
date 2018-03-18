@@ -49,6 +49,7 @@ namespace rpi_rgb_led_matrix_sharp
                 opt.hardware_mapping = options.HardwareMapping != null ? Marshal.StringToHGlobalAnsi(options.HardwareMapping) : IntPtr.Zero;
                 opt.inverse_colors = (uint)(options.InverseColors ? 0 : 1);  
                 opt.led_rgb_sequence = options.LedRgbSequence != null ? Marshal.StringToHGlobalAnsi(options.LedRgbSequence) : IntPtr.Zero;
+                opt.pixel_mapper_config = options.PixelMapperConfig != null ? Marshal.StringToHGlobalAnsi(options.PixelMapperConfig) : IntPtr.Zero;
                 opt.parallel = options.Parallel;
                 opt.multiplexing = options.Multiplexing;
                 opt.pwm_bits = options.PwmBits;
@@ -68,6 +69,7 @@ namespace rpi_rgb_led_matrix_sharp
             {
                 if (options.HardwareMapping != null) Marshal.FreeHGlobal(opt.hardware_mapping);
                 if (options.LedRgbSequence != null) Marshal.FreeHGlobal(opt.led_rgb_sequence);
+                if (options.PixelMapperConfig != null) Marshal.FreeHGlobal(opt.pixel_mapper_config);
             }
         }
 
@@ -126,6 +128,7 @@ namespace rpi_rgb_led_matrix_sharp
             public int brightness;
             public int scan_mode;
             public IntPtr led_rgb_sequence;
+            public IntPtr pixel_mapper_config; 
             public uint disable_hardware_pulsing;
             public uint show_refresh_rate;
             public uint inverse_colors;
@@ -209,6 +212,12 @@ namespace rpi_rgb_led_matrix_sharp
         /// In case the internal sequence of mapping is not "RGB", this contains the real mapping. Some panels mix up these colors.
         /// </summary>         
         public string LedRgbSequence;
+
+        /// <summary>
+        /// A string describing a sequence of pixel mappers that should be applied
+        /// to this matrix. A semicolon-separated list of pixel-mappers with optional
+        /// parameter.
+        public string PixelMapperConfig;
 
         /// <summary>
         /// Allow to use the hardware subsystem to create pulses. This won't do anything if output enable is not connected to GPIO 18.
