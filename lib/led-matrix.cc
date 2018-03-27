@@ -57,11 +57,26 @@ using namespace internal;
 // Pump pixels to screen. Needs to be high priority real-time because jitter
 class RGBMatrix::UpdateThread : public Thread {
 public:
-  UpdateThread(GPIO *io, FrameCanvas *initial_frame, bool show_refresh)
+  UpdateThread(GPIO *io, FrameCanvas *initial_frame,
+               int pwm_dither_bits, bool show_refresh)
     : io_(io), show_refresh_(show_refresh), running_(true),
       current_frame_(initial_frame), next_frame_(NULL),
       requested_frame_multiple_(1) {
     pthread_cond_init(&frame_done_, NULL);
+    switch (pwm_dither_bits) {
+    case 0:
+      start_bit_[0] = 0; start_bit_[1] = 0;
+      start_bit_[2] = 0; start_bit_[3] = 0;
+      break;
+    case 1:
+      start_bit_[0] = 0; start_bit_[1] = 1;
+      start_bit_[2] = 0; start_bit_[3] = 1;
+      break;
+    case 2:
+      start_bit_[0] = 0; start_bit_[1] = 1;
+      start_bit_[2] = 2; start_bit_[3] = 2;
+      break;
+    }
   }
 
   void Stop() {
@@ -71,6 +86,7 @@ public:
 
   virtual void Run() {
     unsigned frame_count = 0;
+    unsigned low_bit_sequence = 0;
     uint32_t largest_time = 0;
 
     // Let's start measure max time only after a we were running for a few
@@ -82,7 +98,8 @@ public:
     while (running()) {
       const uint32_t start_time_us = GetMicrosecondCounter();
 
-      current_frame_->framebuffer()->DumpToMatrix(io_);
+      current_frame_->framebuffer()
+        ->DumpToMatrix(io_, start_bit_[low_bit_sequence % 4]);
 
       {
         MutexLock l(&frame_sync_);
@@ -101,6 +118,7 @@ public:
       }
 
       ++frame_count;
+      ++low_bit_sequence;
 
 #ifdef FIXED_FRAME_MICROSECONDS
       while ((GetMicrosecondCounter() - start_time_us) < (uint32_t)FIXED_FRAME_MICROSECONDS) {
@@ -138,6 +156,7 @@ private:
 
   GPIO *const io_;
   const bool show_refresh_;
+  uint32_t start_bit_[4];
   Mutex running_mutex_;
   bool running_;
 
@@ -167,7 +186,8 @@ RGBMatrix::Options::Options() :
     pwm_lsb_nanoseconds(130),
 #endif
 
-    brightness(100),
+  pwm_dither_bits(0),
+  brightness(100),
 
 #ifdef RGB_SCAN_INTERLACED
     scan_mode(1),
@@ -252,7 +272,7 @@ RGBMatrix::~RGBMatrix() {
 
   // Make sure LEDs are off.
   active_->Clear();
-  active_->framebuffer()->DumpToMatrix(io_);
+  active_->framebuffer()->DumpToMatrix(io_, 0);
 
   for (size_t i = 0; i < created_frames_.size(); ++i) {
     delete created_frames_[i];
@@ -290,7 +310,7 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
     io_ = io;
     Framebuffer::InitGPIO(io_, params_.rows, params_.parallel,
                           !params_.disable_hardware_pulsing,
-                          params_.pwm_lsb_nanoseconds,
+                          params_.pwm_lsb_nanoseconds, params_.pwm_dither_bits,
                           params_.row_address_type);
   }
   if (start_thread) {
@@ -300,7 +320,8 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
 
 bool RGBMatrix::StartRefresh() {
   if (updater_ == NULL && io_ != NULL) {
-    updater_ = new UpdateThread(io_, active_, params_.show_refresh_rate);
+    updater_ = new UpdateThread(io_, active_, params_.pwm_dither_bits,
+                                params_.show_refresh_rate);
     // If we have multiple processors, the kernel
     // jumps around between these, creating some global flicker.
     // So let's tie it to the last CPU available.

@@ -210,6 +210,13 @@ two chained panels, so then you'd use
 `--led-rows=32 --led-cols=32 --led-chain=2 --led-multiplexing=1`;
 
 ```
+--led-pixel-mapper  : Semicolon-separated list of pixel-mappers.
+```
+
+Mapping the logical layout of your boards to your physical arrangement. See
+more in [Remapping coordinates](./examples-api-use#remapping-coordinates).
+
+```
 --led-row-addr-type=<0..2>: 0 = default; 1=AB-addressed panels; 2=direct row select (Default: 0).
 ```
 This option is useful for certain 64x64 or 32x16 panels. For 64x64 panels,
@@ -257,8 +264,9 @@ flicker - some are fine with 100Hz refresh, others need 250Hz.
 So if you are curious, this gives you the number (shown on the terminal).
 
 The refresh rate depends on a lot of factors, from `--led-rows` and `--led-chain`
-to `--led-pwm-bits` and `--led-pwm-lsb-nanoseconds`. If you are tweaking these
-parameters, showing the refresh rate can be a useful tool.
+to `--led-pwm-bits`, `--led-pwm-lsb-nanoseconds` and `--led-pwm-dither-bits`.
+If you are tweaking these parameters, showing the refresh rate can be a
+useful tool.
 
 ```
 --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
@@ -297,6 +305,23 @@ Ghosting with low --led-pwm-lsb-nanoseconds  | No ghosting after tweaking
 
 If you tweak this value, watch the framerate (`--led-show-refresh`) while playing
 with this number.
+
+```
+--led-pwm-dither-bits   : Time dithering of lower bits (Default: 0)
+```
+
+The lower bits can be time dithered, i.e. their brightness contribution is
+achieved by only showing them some frames (this is possible,
+because the PWM is implemented as binary code modulation).
+This will allow higher refresh rate (or same refresh rate with increased
+`--led-pwm-lsb-nanoseconds`).
+The disadvantage could be slightly lower brightness, in particular for longer
+chains, and higher CPU use.
+CPU use is not of concern for Rasbperry Pi 2 or 3 (as we run on a dedicated
+core anyway) but proably for Raspberry Pi 1 or Pi Zero.
+Default: no dithering; if you have a Pi 3 and struggle with low frame-rate due
+to high multiplexing panels (1:16 or 1:32) or long chains, it might be
+worthwhile to try.
 
 ```
 --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).

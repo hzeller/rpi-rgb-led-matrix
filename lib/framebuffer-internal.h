@@ -72,6 +72,7 @@ public:
   static void InitGPIO(GPIO *io, int rows, int parallel,
                        bool allow_hardware_pulsing,
                        int pwm_lsb_nanoseconds,
+                       int dither_bits,
                        int row_address_type);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
@@ -91,7 +92,7 @@ public:
   }
   uint8_t brightness() { return brightness_; }
 
-  void DumpToMatrix(GPIO *io);
+  void DumpToMatrix(GPIO *io, int pwm_bits_to_show);
 
   void Serialize(const char **data, size_t *len) const;
   bool Deserialize(const char *data, size_t len);

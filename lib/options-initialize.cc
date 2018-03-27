@@ -169,6 +169,9 @@ static bool FlagInit(int &argc, char **&argv,
       if (ConsumeIntFlag("pwm-lsb-nanoseconds", it, end,
                          &mopts->pwm_lsb_nanoseconds, &err))
         continue;
+      if (ConsumeIntFlag("pwm-dither-bits", it, end,
+                         &mopts->pwm_dither_bits, &err))
+        continue;
       if (ConsumeIntFlag("row-addr-type", it, end,
                          &mopts->row_address_type, &err))
         continue;
@@ -394,6 +397,8 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "swapped (Default: \"RGB\")\n"
           "\t--led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB "
           "(Default: %d)\n"
+          "\t--led-pwm-dither-bits=<0..2> : Time dithering of lower bits "
+          "(Default: 0)\n"
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
@@ -481,6 +486,11 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
 
   if (pwm_lsb_nanoseconds < 50 || pwm_lsb_nanoseconds > 3000) {
     err->append("Invalid range of pwm-lsb-nanoseconds (50..3000 allowed).\n");
+    success = false;
+  }
+
+  if (pwm_dither_bits < 0 || pwm_dither_bits > 2) {
+    err->append("Inavlid range of pwm-dither-bits (0..2 allowed).\n");
     success = false;
   }
 

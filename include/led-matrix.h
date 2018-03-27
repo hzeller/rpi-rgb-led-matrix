@@ -103,6 +103,10 @@ public:
     // Flag: --led-pwm-lsb-nanoseconds
     int pwm_lsb_nanoseconds;
 
+    // The lower bits can be time-dithered for higher refresh rate.
+    // Flag: --led-pwm-dither-bits
+    int pwm_dither_bits;
+
     // The initial brightness of the panel in percent. Valid range is 1..100
     // Default: 100
     // Flag: --led-brightness

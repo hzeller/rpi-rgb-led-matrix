@@ -95,6 +95,11 @@ struct RGBLedMatrixOptions {
    */
   int pwm_lsb_nanoseconds;
 
+  /* The lower bits can be time-dithered for higher refresh rate.
+   * Corresponding flag: --led-pwm-dither-bits
+   */
+  int pwm_dither_bits;
+
   /* The initial brightness of the panel in percent. Valid range is 1..100
    * Corresponding flag: --led-brightness
    */

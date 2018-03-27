@@ -27,6 +27,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <algorithm>
+
 #include "gpio.h"
 
 namespace rgb_matrix {
@@ -284,6 +286,7 @@ Framebuffer::~Framebuffer() {
 /* static */ void Framebuffer::InitGPIO(GPIO *io, int rows, int parallel,
                                         bool allow_hardware_pulsing,
                                         int pwm_lsb_nanoseconds,
+                                        int dither_bits,
                                         int row_address_type) {
   if (sOutputEnablePulser != NULL)
     return;  // already initialized.
@@ -327,8 +330,10 @@ Framebuffer::~Framebuffer() {
   assert(result == all_used_bits);  // Impl: all bits declared in gpio.cc ?
 
   std::vector<int> bitplane_timings;
+  uint32_t timing_ns = pwm_lsb_nanoseconds;
   for (int b = 0; b < kBitPlanes; ++b) {
-    bitplane_timings.push_back(pwm_lsb_nanoseconds << b);
+    bitplane_timings.push_back(timing_ns);
+    if (b >= dither_bits) timing_ns *= 2;
   }
   sOutputEnablePulser = PinPulser::Create(io, h.output_enable,
                                           allow_hardware_pulsing,
@@ -544,7 +549,7 @@ void Framebuffer::CopyFrom(const Framebuffer *other) {
   memcpy(bitplane_buffer_, other->bitplane_buffer_, buffer_size_);
 }
 
-void Framebuffer::DumpToMatrix(GPIO *io) {
+void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
   const struct HardwareMapping &h = *hardware_mapping_;
   gpio_bits_t color_clk_mask = 0;  // Mask of bits while clocking in.
   color_clk_mask |= h.p0_r1 | h.p0_g1 | h.p0_b1 | h.p0_r2 | h.p0_g2 | h.p0_b2;
@@ -557,8 +562,10 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
 
   color_clk_mask |= h.clock;
 
+  // Depending if we do dithering, we might not always show the lowest bits.
+  const int start_bit = std::max(pwm_low_bit, kBitPlanes - pwm_bits_);
+
   const uint8_t half_double = double_rows_/2;
-  const int pwm_to_show = pwm_bits_;  // Local copy, might change in process.
   for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
     uint8_t d_row;
     switch (scan_mode_) {
@@ -575,7 +582,7 @@ void Framebuffer::DumpToMatrix(GPIO *io) {
 
     // Rows can't be switched very quickly without ghosting, so we do the
     // full PWM of one row before switching rows.
-    for (int b = kBitPlanes - pwm_to_show; b < kBitPlanes; ++b) {
+    for (int b = start_bit; b < kBitPlanes; ++b) {
       gpio_bits_t *row_data = ValueAt(d_row, 0, b);
       // While the output enable is still on, we can already clock in the next
       // data.
