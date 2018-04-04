@@ -178,6 +178,80 @@ public:
   }
 };
 
+class P10OutdoorMapper : public MultiplexMapperBase {
+public:
+  P10OutdoorMapper() : MultiplexMapperBase("p10outdoor", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+	int phys_x = x;
+	int phys_y = y;
+
+	if (y == 4)
+	{
+	  phys_y = 0;
+	}
+	if (y == 5)
+	{
+	  phys_y = 1;
+	}
+	if (y == 6)
+	{
+	  phys_y = 2;
+	}
+	if (y == 7)
+	{
+	  phys_y = 3;
+	}
+	if (y == 8 || y == 12)
+	{
+	  phys_y = 4;
+	}
+	if (y == 9 || y == 13)
+	{
+	  phys_y = 5;
+	}
+	if (y == 10 || y == 14)
+	{
+	  phys_y = 6;
+	}
+	if (y == 11 || y == 15)
+	{
+	  phys_y = 7;
+	}
+
+	if (y < 4 || (y >= 8 && y < 12)) {
+	  if (x < 8) {
+		phys_x += 8;
+	  }
+	  if (x >= 8) {
+		phys_x += 16;
+	  }
+	  if (x >= 16) {
+		phys_x += 8;
+	  }
+	  if (x >= 24) {
+		phys_x += 8;
+	  }
+	}
+
+	if ((y >= 4 && y < 8) || y >= 12) {
+	  if (x >= 8) {
+		phys_x += 8;
+	  }
+	  if (x >= 16) {
+		phys_x += 8;
+	  }
+	  if (x >= 24) {
+		phys_x += 8;
+	  }
+	}
+
+	*matrix_x = phys_x;
+	*matrix_y = phys_y;  
+	}
+};
+
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -193,7 +267,8 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new ZStripeMultiplexMapper("ZStripe", 0, 8));
   result->push_back(new ZStripeMultiplexMapper("ZnMirrorZStripe", 4, 4));
   result->push_back(new CoremanMapper());
-
+  result->push_back(new P10OutdoorMapper());
+  
   return result;
 }
 
