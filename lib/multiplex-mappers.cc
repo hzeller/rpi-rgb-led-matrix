@@ -178,6 +178,22 @@ public:
   }
 };
 
+class Kaler2ScanMapper : public MultiplexMapperBase {
+public:
+  Kaler2ScanMapper() : MultiplexMapperBase("Kaler2Scan", 4) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    // Now we have a 128x4 matrix
+    int offset = ((y%4)/2) == 0 ? -1 : 1;// Add o substract
+    int deltaOffset = offset < 0 ? 7:8;
+    int deltaColumn = ((y%8)/4)== 0 ? 64 : 0;
+    
+    *matrix_y = (y%2+(y/8)*2);
+    *matrix_x = deltaColumn + (16 * (x/8)) + deltaOffset + ((x%8) * offset);
+
+  }
+};
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -193,6 +209,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new ZStripeMultiplexMapper("ZStripe", 0, 8));
   result->push_back(new ZStripeMultiplexMapper("ZnMirrorZStripe", 4, 4));
   result->push_back(new CoremanMapper());
+  result->push_back(new Kaler2ScanMapper());
 
   return result;
 }
