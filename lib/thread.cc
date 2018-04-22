@@ -63,8 +63,8 @@ void Thread::Start(int priority, uint32_t affinity_mask) {
       }
     }
     if ((err=pthread_setaffinity_np(thread_, sizeof(cpu_mask), &cpu_mask))) {
-      fprintf(stderr, "FYI: Couldn't set affinity 0x%x: %s\n",
-              affinity_mask, strerror(err));
+      //fprintf(stderr, "FYI: Couldn't set affinity 0x%x: %s\n",
+      //        affinity_mask, strerror(err));
     }
   }
 
