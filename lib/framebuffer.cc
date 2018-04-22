@@ -208,7 +208,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
   assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
-  assert(rows_ >=8 && rows_ <= 64 && rows_ % 2 == 0);
+  assert(rows_ >=4 && rows_ <= 64 && rows_ % 2 == 0);
   if (parallel > hardware_mapping_->max_parallel_chains) {
     fprintf(stderr, "The %s GPIO mapping only supports %d parallel chain%s, "
             "but %d was requested.\n", hardware_mapping_->name,
