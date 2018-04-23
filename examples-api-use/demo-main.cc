@@ -209,39 +209,37 @@ public:
   }
 
 private:
-  void Rotate(int x, int y, float angle,
-              float *new_x, float *new_y) {
+  void Rotate(int x, int y, float angle,  float *new_x, float *new_y) {
     *new_x = x * cosf(angle) - y * sinf(angle);
     *new_y = x * sinf(angle) + y * cosf(angle);
   }
 };
 
-// Simple class that generates a rotating block on the screen.
+// Fill the grid increasing x then y values
 class FillGridGenerator : public ThreadedCanvasManipulator {
 public:
-    FillGridGenerator(Canvas *m) : ThreadedCanvasManipulator(m) {}
+  FillGridGenerator(Canvas *m) : ThreadedCanvasManipulator(m) {}
     
-    uint8_t scale_col(int val, int lo, int hi) {
-        if (val < lo) return 0;
-        if (val > hi) return 255;
-        return 255 * (val - lo) / (hi - lo);
-    }
+  uint8_t scale_col(int val, int lo, int hi) {
+    if (val < lo) return 0;
+    if (val > hi) return 255;
+    return 255 * (val - lo) / (hi - lo);
+  }
     
-    void Run() {
-        while (running() && !interrupt_received) {
-            for (int y = 0; y < canvas()->height(); ++y) {
-                for (int x = 0; x < canvas()->width(); ++x) {
-                        canvas()->SetPixel(x, y,
-                                           255,255,255);
-                    printf("(x,y): %d, %d\n", x,y);
-                    sleep(1);
-                    if(!running() || interrupt_received) {
-                        return;
-                    }
-                }
-            }
+  void Run() {
+    while (running() && !interrupt_received) {
+      for (int y = 0; y < canvas()->height(); ++y) {
+        for (int x = 0; x < canvas()->width(); ++x) {
+          canvas()->SetPixel(x, y, 255, 255, 255);
+          printf("(x,y): %d, %d\n", x,y);
+          sleep(1);
+          if (!running() || interrupt_received) {
+            return;
+          }
         }
+      }
     }
+  }
 };
 
 class ImageScroller : public ThreadedCanvasManipulator {
