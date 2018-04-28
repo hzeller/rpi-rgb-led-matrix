@@ -218,7 +218,7 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       }
       if (strncmp(*it, OPTION_PREFIX, OPTION_PREFIX_LEN) == 0) {
-        fprintf(stderr, "Option %s starts with %s but it is unkown. Typo?\n",
+        fprintf(stderr, "Option %s starts with %s but it is unknown. Typo?\n",
                 *it, OPTION_PREFIX);
       }
     }
