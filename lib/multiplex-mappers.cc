@@ -187,7 +187,7 @@ public:
     int offset = ((y%4)/2) == 0 ? -1 : 1;// Add o substract
     int deltaOffset = offset < 0 ? 7:8;
     int deltaColumn = ((y%8)/4)== 0 ? 64 : 0;
-    
+
     *matrix_y = (y%2+(y/8)*2);
     *matrix_x = deltaColumn + (16 * (x/8)) + deltaOffset + ((x%8) * offset);
 
@@ -210,6 +210,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new ZStripeMultiplexMapper("ZnMirrorZStripe", 4, 4));
   result->push_back(new CoremanMapper());
   result->push_back(new Kaler2ScanMapper());
+  result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0));
 
   return result;
 }
