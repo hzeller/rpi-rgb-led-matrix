@@ -166,7 +166,7 @@ public:
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     const bool is_left_check = (x < panel_cols_/2);
 
-    if((y <= 7) || ((y >= 16) && (y <= 23))){
+    if ((y <= 7) || ((y >= 16) && (y <= 23))){
       *matrix_x = ((x / (panel_cols_/2)) * panel_cols_) + (x % (panel_cols_/2));
       if ((y & (panel_rows_/4)) == 0) {
         *matrix_y = (y / (panel_rows_/2)) * (panel_rows_/4) + (y % (panel_rows_/4));
@@ -193,29 +193,29 @@ public:
 
   }
 };
-    
+
 class P10MapperZ : public MultiplexMapperBase {
 public:
   P10MapperZ() : MultiplexMapperBase("P10-128x4-Z", 4) {}
-  //supports this panel: https://www.aliexpress.com/item/2017-Special-Offer-P10-Outdoor-Smd-Full-Color-Led-Display-Module-320x160mm-1-2-Scan-Outdoor/32809267439.html?spm=a2g0s.9042311.0.0.Ob0jEw
-  //with --led-row-addr-type=2 flag
+  // supports this panel: https://www.aliexpress.com/item/2017-Special-Offer-P10-Outdoor-Smd-Full-Color-Led-Display-Module-320x160mm-1-2-Scan-Outdoor/32809267439.html?spm=a2g0s.9042311.0.0.Ob0jEw
+  // with --led-row-addr-type=2 flag
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
-            
     int yComp = 0;
-    if(y == 0 || y == 1 || y == 8 || y == 9){
+    if (y == 0 || y == 1 || y == 8 || y == 9) {
       yComp = 127;
     }
-    else if(y == 2 || y == 3 || y == 10 || y == 11){
+    else if (y == 2 || y == 3 || y == 10 || y == 11) {
       yComp = 112;
     }
-    else if(y == 4 || y == 5 || y == 12 || y == 13){
+    else if (y == 4 || y == 5 || y == 12 || y == 13) {
       yComp = 111;
     }
-    else if(y == 6 || y == 7 || y == 14 || y == 15){
+    else if (y == 6 || y == 7 || y == 14 || y == 15) {
       yComp = 96;
     }
-          
-    if(y == 0 || y == 1 || y == 8 || y == 9 || y == 4 || y == 5 || y == 12 || y == 13){
+
+    if (y == 0 || y == 1 || y == 4 || y == 5 ||
+        y == 8 || y == 9 || y == 12 || y == 13) {
       *matrix_x = yComp - x;
       *matrix_x -= (24 * ((int)(x / 8)));
     }
@@ -223,17 +223,17 @@ public:
       *matrix_x = yComp + x;
       *matrix_x -= (40 * ((int)(x / 8)));
     }
-            
-    if(y == 0 || y == 2 || y == 4 || y == 6){
+
+    if (y == 0 || y == 2 || y == 4 || y == 6) {
       *matrix_y = 3;
     }
-    else if(y == 1 || y == 3 || y == 5 || y == 7){
+    else if (y == 1 || y == 3 || y == 5 || y == 7) {
       *matrix_y = 2;
     }
-    else if(y == 8 || y == 10 || y == 12 || y == 14){
+    else if (y == 8 || y == 10 || y == 12 || y == 14) {
       *matrix_y = 1;
     }
-    else if(y == 9 || y == 11 || y == 13 || y == 15){
+    else if (y == 9 || y == 11 || y == 13 || y == 15) {
       *matrix_y = 0;
     }
   }
@@ -257,7 +257,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new Kaler2ScanMapper());
   result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0));
   result->push_back(new P10MapperZ());
-    
+
   return result;
 }
 
