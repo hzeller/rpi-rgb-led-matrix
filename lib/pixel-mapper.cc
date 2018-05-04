@@ -162,6 +162,49 @@ private:
   int parallel_;
 };
 
+// arrange in an S-shape
+//    [<][<] }----- Raspberry Pi connector
+//    [>][>]
+//    [<][<]
+class SArrangementMapper : public PixelMapper {
+public:
+  SArrangementMapper() : chain_(1), parallel_(1) {}
+
+  virtual const char *GetName() const { return "S-mapper"; }
+
+  virtual bool SetParameters(int chain, int parallel, const char *param) {
+    chain_ = chain;
+    parallel_ = parallel;
+    return true;
+  }
+
+  virtual bool GetSizeMapping(int matrix_width, int matrix_height, int *visible_width, int *visible_height) const {
+    *visible_width  = matrix_width / chain_; //->64
+    *visible_height = (matrix_height / parallel_) * chain_; //leftover height
+    fprintf(stderr, "%s visible width=%d height=%d\n", GetName(), *visible_width, *visible_height);
+    return true;
+  }
+
+  virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
+                                  int x, int y,
+                                  int *matrix_x, int *matrix_y) const {
+    //we're being given x,y in final arranged S-shaped coordinates (visible_*).
+    // this calculates that matrix_x,y in the raw stretched-out matrix_width,height space
+
+    const int visible_w  = matrix_width / chain_; //64 get the long-side width of each panel
+    const int panel_h = matrix_height / parallel_; //32 get the short-side height of each panel
+
+    const int base_y = y / panel_h; //the index of which panel we're in vertically (in arranged space)
+    const int mod_y = y % panel_h;  //where we are in this panel
+
+    *matrix_y = (base_y % 2)? (panel_h - 1 - mod_y) : mod_y; //tall 'arranged' display -> wide short, reversing every other
+    *matrix_x = (base_y * visible_w) + ((base_y % 2)? (visible_w - 1 - x) : x); //x shifted by y's index, also reversed 2n
+  }
+
+private:
+  int chain_, parallel_;
+};
+
 typedef std::map<std::string, PixelMapper*> MapperByName;
 static void RegisterPixelMapperInternal(MapperByName *registry,
                                         PixelMapper *mapper) {
@@ -178,6 +221,7 @@ static MapperByName *CreateMapperMap() {
   // Register all the default PixelMappers here.
   RegisterPixelMapperInternal(result, new RotatePixelMapper());
   RegisterPixelMapperInternal(result, new UArrangementMapper());
+  RegisterPixelMapperInternal(result, new SArrangementMapper());
   return result;
 }
 
