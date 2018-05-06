@@ -22,7 +22,7 @@ Options:
         --led-multiplexing=<0..6> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman (Default: 0)
         --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
                                     Optional params after a colon e.g. "U-mapper;Rotate:90"
-                                    Available: "Rotate", "U-mapper". Default: ""
+                                    Available: "Rotate", "U-mapper", "BottomToTop-mapper". Default: ""
         --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
         --led-brightness=<percent>: Brightness in percent (Default: 100).
         --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
@@ -269,6 +269,42 @@ as parameter after a colon:
 ```
   ./demo --led-pixel-mapper="Rotate:90"
 ```
+
+#### BottomToTop-mapper
+
+Say you have 4 displays with 32x32 and only a single output
+like with a Raspberry Pi 1 or the Adafruit HAT -- if we chain
+them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
+the boards in a S-shape so that they form a square, we get a logical display
+of 64x64 pixels with the Raspberry Pi is connected at the bottom end of the chain.
+
+<img src="../img/chained-64x64-back-bottom-to-top.jpg" width="400px">
+
+This mapper is especially useful if you are migrating from the 
+[SmartMatrix](https://github.com/pixelmatix/SmartMatrix) library and don't want to
+have to reorient your panels.  SmartMatrix refers to this configuration
+as SMARTMATRIX_OPTIONS_BOTTOM_TO_TOP_STACKING.
+
+```
+So the following chain
+    [<][<][<][<] }- Raspbery Pi connector
+
+is arranged in this U-shape (on its side)
+    [<][<]
+    [<][<] }----- Raspberry Pi connector
+```
+
+Now we need to internally map pixels the pixels so that the 'folded' 128x32
+screen behaves like a 64x64 screen.
+
+There is a pixel-mapper that can help with this "BottomToTop-Arrangement", you choose
+it with `--led-pixel-mapper=BottomToTop-mapper`. So in this particular case,
+
+```
+  ./demo --led-chain=4 --led-pixel-mapper="BottomToTop-mapper"
+```
+
+This mapper should work for more than one chain, but is untested.
 
 #### Combining Mappers
 
