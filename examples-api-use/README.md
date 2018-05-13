@@ -289,7 +289,7 @@ as SMARTMATRIX_OPTIONS_BOTTOM_TO_TOP_STACKING.
 So the following chain
     [<][<][<][<] }- Raspbery Pi connector
 
-is arranged in this U-shape (on its side)
+is arranged in this S-shape
     [<][<]
     [<][<] }----- Raspberry Pi connector
 ```
