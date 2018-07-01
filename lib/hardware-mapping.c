@@ -213,5 +213,47 @@ struct HardwareMapping matrix_hardware_mappings[] = {
     .p0_b2         = GPIO_BIT(25),
   },
 
+  /*
+   * The regular hardware mapping without i2c pins (sda and scl),
+   * route p2_g1 p2_b1 to address lines d and e.
+   */
+  {
+    .name          = "free-i2c",
+
+    .output_enable = GPIO_BIT(18),
+    .clock         = GPIO_BIT(17),
+    .strobe        = GPIO_BIT(4),
+
+    /* Address lines */
+    .a             = GPIO_BIT(22),
+    .b             = GPIO_BIT(23),
+    .c             = GPIO_BIT(24),
+
+    /* Parallel chain 0, RGB for both sub-panels */
+    .p0_r1         = GPIO_BIT(11),  /* masks: SPI0_SCKL  */
+    .p0_g1         = GPIO_BIT(27),  /* Not on RPi1, Rev1; use "regular-pi1" instead */
+    .p0_b1         = GPIO_BIT(7),   /* masks: SPI0_CE1   */
+    .p0_r2         = GPIO_BIT(8),   /* masks: SPI0_CE0   */
+    .p0_g2         = GPIO_BIT(9),   /* masks: SPI0_MISO  */
+    .p0_b2         = GPIO_BIT(10),  /* masks: SPI0_MOSI  */
+
+    /* All the following are only available with 40 GPIP pins, on A+/B+/Pi2,3 */
+    /* Chain 1 */
+    .p1_r1         = GPIO_BIT(12),
+    .p1_g1         = GPIO_BIT(5),
+    .p1_b1         = GPIO_BIT(6),
+    .p1_r2         = GPIO_BIT(19),
+    .p1_g2         = GPIO_BIT(13),
+    .p1_b2         = GPIO_BIT(20),
+
+    /* Chain 2 */
+    .p2_r1         = GPIO_BIT(14), /* masks TxD when parallel=3 */
+    .p2_g1         = GPIO_BIT(25),
+    .p2_b1         = GPIO_BIT(15),
+    .p2_r2         = GPIO_BIT(26),
+    .p2_g2         = GPIO_BIT(16),
+    .p2_b2         = GPIO_BIT(21),
+  },
+
   {0}
 };
