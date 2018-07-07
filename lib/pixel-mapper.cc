@@ -90,47 +90,75 @@ private:
   int angle_;
 };
 
-// If we take a long chain of panels and arrange them in a U-shape, so
+// If we take a long chain of panels and arrange them in a snake, so
 // that after half the panels we bend around and continue below. This way
-// we have a panel that has double the height but only uses one chain.
-// A single chain display with four 32x32 panels can then be arranged in this
-// 64x64 display:
-//    [<][<][<][<] }- Raspbery Pi connector
+// we have a panel that has larger height but only uses one chain.
 //
-// can be arranged in this U-shape
-//    [<][<] }----- Raspberry Pi connector
+// A single chain display with four 32x32 panels:
+//    [<][<][<][<] }-- Pi connector
+//
+// can then be arranged in this 64x64 mapping with "Snake" or "Snake:2"
+// (default Snake is 2, like old "Snake")
+//    [<][<] }-- Pi connector
 //    [>][>]
 //
+// or this 32x128 mapping with "Snake:4"
+//    [<] }-- Pi connector
+//    [>]
+//    [<]
+//    [>]
+//
 // This works for more than one chain as well. Here an arrangement with
-// two chains with 8 panels each
-//   [<][<][<][<]  }-- Pi connector #1
-//   [>][>][>][>]
-//   [<][<][<][<]  }--- Pi connector #2
-//   [>][>][>][>]
-class UArrangementMapper : public PixelMapper {
+// two chains with 9 panels each with "Snake:3"
+//   [<][<][<]  }-- Pi connector #1
+//   [>][>][>]
+//   [<][<][<]
+//   [<][<][<]  }-- Pi connector #2
+//   [>][>][>]
+//   [<][<][<]
+class SnakeMapper : public PixelMapper {
 public:
-  UArrangementMapper() : parallel_(1) {}
+  SnakeMapper() : parallel_(1), lines_(2) {}
 
-  virtual const char *GetName() const { return "U-mapper"; }
+  virtual const char *GetName() const { return "Snake"; }
 
   virtual bool SetParameters(int chain, int parallel, const char *param) {
-    if (chain < 2) {  // technically, a chain of 2 would work, but somewhat pointless
-      fprintf(stderr, "U-mapper: need at least --led-chain=4 for useful folding\n");
-      return false;
-    }
-    if (chain % 2 != 0) {
-      fprintf(stderr, "U-mapper: Chain (--led-chain) needs to be divisible by two\n");
+    if (chain < 2) {
+      fprintf(stderr, "Snake: Need at least led-chain=2\n");
       return false;
     }
     parallel_ = parallel;
+    if (param == NULL || strlen(param) == 0) {
+      lines_ = 2;
+      return true;
+    }
+    char *errpos;
+    const int lines = strtol(param, &errpos, 10);
+    if (*errpos != '\0') {
+      fprintf(stderr, "Snake: Invalid lines parameter '%s'\n", param);
+      return false;
+    }
+    if (lines < 2) {
+      fprintf(stderr, "Snake: Need at least Snake:lines=2\n");
+      return false;
+    }
+    if (chain < lines) {
+      fprintf(stderr, "Snake: Snake:lines can't be greater than led-chain\n");
+      return false;
+    }
+    if (chain % lines) {
+      fprintf(stderr, "Snake: led-chain must be divisible by Snake:lines\n");
+      return false;
+    }
+    lines_ = lines;
     return true;
   }
 
   virtual bool GetSizeMapping(int matrix_width, int matrix_height,
                               int *visible_width, int *visible_height)
     const {
-    *visible_width = (matrix_width / 64) * 32;   // Div at 32px boundary
-    *visible_height = 2 * matrix_height;
+    *visible_width = matrix_width / lines_;
+    *visible_height = matrix_height * lines_;
     if (matrix_height % parallel_ != 0) {
       fprintf(stderr, "%s For parallel=%d we would expect the height=%d "
               "to be divisible by %d ??\n",
@@ -144,22 +172,22 @@ public:
                                   int x, int y,
                                   int *matrix_x, int *matrix_y) const {
     const int panel_height = matrix_height / parallel_;
-    const int visible_width = (matrix_width / 64) * 32;
-    const int slab_height = 2 * panel_height;   // one folded u-shape
+    const int visible_width = matrix_width / lines_;
+    const int slab_height = panel_height * lines_;
+    const int slab_line = (y % slab_height) / panel_height;
+    const int base_x = (lines_ - slab_line - 1) * visible_width;
     const int base_y = (y / slab_height) * panel_height;
-    y %= slab_height;
-    if (y < panel_height) {
-      x += matrix_width / 2;
-    } else {
+    y %= panel_height;
+    if (slab_line & 1) {
       x = visible_width - x - 1;
-      y = slab_height - y - 1;
+      y = panel_height - y - 1;
     }
-    *matrix_x = x;
+    *matrix_x = base_x + x;
     *matrix_y = base_y + y;
   }
 
 private:
-  int parallel_;
+  int parallel_, lines_;
 };
 
 typedef std::map<std::string, PixelMapper*> MapperByName;
@@ -177,7 +205,7 @@ static MapperByName *CreateMapperMap() {
 
   // Register all the default PixelMappers here.
   RegisterPixelMapperInternal(result, new RotatePixelMapper());
-  RegisterPixelMapperInternal(result, new UArrangementMapper());
+  RegisterPixelMapperInternal(result, new SnakeMapper());
   return result;
 }
 

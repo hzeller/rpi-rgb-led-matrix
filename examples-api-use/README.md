@@ -21,8 +21,8 @@ Options:
         --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
         --led-multiplexing=<0..6> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman (Default: 0)
         --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
-                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
-                                    Available: "Rotate", "U-mapper". Default: ""
+                                    Optional params after a colon e.g. "Snake:3;Rotate:90"
+                                    Available: "Rotate", "Snake". Default: ""
         --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
         --led-brightness=<percent>: Brightness in percent (Default: 100).
         --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
@@ -220,11 +220,11 @@ some re-mapping options, and also programmatic ways to do so.
 
 ### Standard mappers
 
-#### U-mapper
+#### Snake
 Say you have 4 displays with 32x32 and only a single output
 like with a Raspberry Pi 1 or the Adafruit HAT -- if we chain
 them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
-the boards in a U-shape so that they form a square, we get a logical display
+the boards in a snake so that they form a square, we get a logical display
 of 64x64 pixels:
 
 <img src="../img/chained-64x64.jpg" width="400px"> In action:
@@ -232,34 +232,41 @@ of 64x64 pixels:
 
 ```
 So the following chain
-    [<][<][<][<] }- Raspbery Pi connector
+    [<][<][<][<] }-- Pi connector
 
-is arranged in this U-shape (on its side)
-    [<][<] }----- Raspberry Pi connector
+is arranged in this Snake (previously called "U-shape")
+    [<][<] }-- Pi connector
     [>][>]
+or this with "Snake:4":
+    [<] }-- Pi connector
+    [>]
+    [<]
+    [>]
 ```
 
 Now we need to internally map pixels the pixels so that the 'folded' 128x32
 screen behaves like a 64x64 screen.
 
-There is a pixel-mapper that can help with this "U-Arrangement", you choose
-it with `--led-pixel-mapper=U-mapper`. So in this particular case,
+There is a pixel-mapper that can help with this "Snake-Arrangement", you choose
+it with `--led-pixel-mapper=Snake`. So in this particular case,
 
 ```
-  ./demo --led-chain=4 --led-pixel-mapper="U-mapper"
+  ./demo --led-chain=4 --led-pixel-mapper="Snake"
 ```
 
 This works for longer and more than one chain as well. Here an arrangement with
-two chains with 8 panels each
+two chains with 9 panels each
 
 ```
-   [<][<][<][<]  }--- Pi connector #1
-   [>][>][>][>]
-   [<][<][<][<]  }--- Pi connector #2
-   [>][>][>][>]
+    [<][<][<]  }-- Pi connector #1
+    [>][>][>]
+    [<][<][<]
+    [<][<][<]  }-- Pi connector #2
+    [>][>][>]
+    [<][<][<]
 ```
 
-(`--led-chain=8 --led-parallel=2 --led-pixel-mapper="U-mapper"`).
+(`--led-chain=9 --led-parallel=2 --led-pixel-mapper="Snake:3"`).
 
 #### Rotate
 
@@ -274,11 +281,11 @@ as parameter after a colon:
 
 You can chain multiple mappers in the configuration, by separating them
 with a semicolon. The mappers are applied in the sequence you give them, so
-if you want to arrange a couple of panels with the U-arrangement, and then
-rotate the resulting screen, use
+if you want to arrange a couple of panels with the Snake-arrangement, and
+then rotate the resulting screen, use
 
 ```
-  ./demo --led-chain=8 --led-parallel=3 --led-pixel-mapper="U-mapper;Rotate:90"
+  ./demo --led-chain=8 --led-parallel=3 --led-pixel-mapper="Snake;Rotate:90"
 ```
 
 Here, we first create a 128x192 screen (4 panels wide (`4*32=128`),
@@ -319,7 +326,7 @@ provided in the `--led-pixel-mapper` command line option:
 ```
 
 Now your mapper can be used alongside (and combined with) the standard
-mappers already there (e.g. "U-mapper" or "Rotate"). Your mapper can have
+mappers already there (e.g. "Snake" or "Rotate"). Your mapper can have
 parameters: In the command-line flag, parameters provided after `:` are passed
 as-is to your `SetParameters()` implementation
 (e.g. using `--led-pixel-mapper="Rotate:90"`, the `Rotate` mapper

@@ -1091,7 +1091,7 @@ int main(int argc, char *argv[]) {
       break;
 
     case 'L':
-      fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"U-mapper\" --led-chain=4\ninstead.\n");
+      fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"Snake\" --led-chain=4\ninstead.\n");
       return 1;
       break;
 
