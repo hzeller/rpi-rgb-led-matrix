@@ -1,9 +1,9 @@
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
-A library to control commonly available 32x32 or 16x32 RGB LED panels with the
-Raspberry Pi. Can support PWM up to 11Bit per channel, providing true 24bpp
-color with CIE1931 profile.
+A library to control commonly available 64x64, 32x32 or 16x32 RGB LED panels
+with the Raspberry Pi. Can support PWM up to 11Bit per channel, providing
+true 24bpp color with CIE1931 profile.
 
 Supports 3 chains with many panels each.
 On a Raspberry Pi 2 or 3, you can easily chain 12 panels in that chain
@@ -24,7 +24,7 @@ that they have the freedom to adapt and improve).
 
 Overview
 --------
-The 32x32 or 16x32 RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
+The RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
 [AdaFruit][ada] or eBay and Aliexpress. If you are in China, I'd try to get
 them directly from some manufacturer, Taobao or Alibaba.
 
@@ -44,10 +44,10 @@ B+ models, the Pi Zero, as well as the Raspberry Pi 2 and 3 with 40 pins.
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
 
-The Raspberry Pi 2 and 3 are faster than older models (and the Pi Zero) and
-sometimes the cabeling can't keep up with the speed; check out
-this [troubleshooting section](#troubleshooting)
-what to do.
+The Raspberry Pi 2 and 3 are faster and generally perferred to the older
+models (and the Pi Zero). With the faster models, the panels sometimes
+can't keep up with the speed; check out
+this [troubleshooting section](#troubleshooting) what to do.
 
 The [Raspbian Lite][raspbian-lite] distribution is recommended.
 
