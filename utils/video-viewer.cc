@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
 
   bool verbose = false;
   bool forever = false;
-  const char *stream_output = NULL;
+  int stream_output_fd = -1;
 
   int opt;
   while ((opt = getopt(argc, argv, "vO:R:Lf")) != -1) {
@@ -92,7 +92,11 @@ int main(int argc, char *argv[]) {
       forever = true;
       break;
     case 'O':
-      stream_output = strdup(optarg);
+      stream_output_fd = open(optarg, O_CREAT|O_WRONLY, 0644);
+      if (stream_output_fd < 0) {
+        perror("Couldn't open output stream");
+        return 1;
+      }
       break;
     case 'L':
       fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"U-mapper\" --led-chain=4\ninstead.\n");
@@ -147,7 +151,7 @@ int main(int argc, char *argv[]) {
   }
 
   long frame_count = 0;
-  runtime_opt.do_gpio_init = (stream_output == NULL);
+  runtime_opt.do_gpio_init = (stream_output_fd < 0);
   RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL) {
     return 1;
@@ -156,13 +160,8 @@ int main(int argc, char *argv[]) {
   FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
   StreamIO *stream_io = NULL;
   StreamWriter *stream_writer = NULL;
-  if (stream_output) {
-    int fd = open(stream_output, O_CREAT|O_WRONLY, 0644);
-    if (fd < 0) {
-      perror("Couldn't open output stream");
-      return 1;
-    }
-    stream_io = new rgb_matrix::FileStreamIO(fd);
+  if (stream_output_fd >= 0) {
+    stream_io = new rgb_matrix::FileStreamIO(stream_output_fd);
     stream_writer = new StreamWriter(stream_io);
     if (forever) {
       fprintf(stderr, "-f (forever) doesn't make sense with -O; disabling\n");
