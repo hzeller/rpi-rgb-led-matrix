@@ -1,0 +1,14 @@
+{
+  "name": "buzzer",
+  "version": "1.0.0",
+  "description": "API to drive buzzer",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jonathan Laessker",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.2"
+  }
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html lang="en-US" ng-app="Todo">
+    <head>
+        <meta charset="UTF-16">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="./custom.css">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="page-header">     
+                <h1>Jonis LED-Display Kontrollzentrum</h1>
+                <p>Schreibe mir eine Nachricht, welche auf meinem LED-Display angezeigt wird. Wähle dazu eine passende Farbe!</p>
+            </div>
+            <form id="message_form">
+                <h2>Nachricht an Jonathan</h2> 
+                <div class="form-group">
+                    <label for="message">Nachricht</label>
+                    <input id="message" class="form-control" type="text" name="message" aria-describedby="message_help" placeholder="Hallo :)">
+                    <small id="message_help" class="form-text text-muted">Ich freue mich über deine Nachricht.</small>
+                </div>
+                <div class="form-group">
+                    <label for="colorWell">Farbe</label>
+                    <input type="color" class ="form-control" value="#008000" id="colorWell" name="color">
+                </div>
+                <button id="send_message" class="btn btn-primary" type="submit" value="OK">Abschicken!</button>
+            </form>
+            <form id="color_form">
+                <h2>Farbe</h2> 
+                <div class="form-group">
+                    <label for="colorWell">Farbe</label>
+                    <input type="color" class ="form-control" value="#00f000" id="colorWell_color" name="color" aria-describedby="color_help">
+                    <small id="color_help" class="form-text text-muted">Wähle eine Farbe, die eine Minute angezeigt wird.</small>
+                </div>
+                <button id="send_color" class="btn btn-primary" type="submit" value="OK">Anzeigen!</button>
+            </form>
+            <div id="output">   
+        </div>
+
+
+        </div>
+        <script>
+                $("#send_message").on("click", function(e) {
+                    e.preventDefault();
+                    
+                    $.ajax({
+                        url: "/buzzer",
+                        data: $("#message_form").serialize(),
+                        success: function(data) {
+                            console.log(data);
+                        },
+                        dataType: "json"
+                    });
+                });
+            $("#send_color").on("click", function(e) {
+                e.preventDefault();
+                
+                $.ajax({
+                    url: "/color",
+                    data: $("#color_form").serialize(),
+                    success: function(data) {
+                        console.log(data);
+                    },
+                    dataType: "json"
+                });
+            });
+        </script>
+    </body>
+</html>
