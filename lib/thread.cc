@@ -71,4 +71,20 @@ void Thread::Start(int priority, uint32_t affinity_mask) {
   started_ = true;
 }
 
+bool Mutex::WaitOn(pthread_cond_t *cond, long timeout_ms) {
+  if (timeout_ms < 0) {
+    pthread_cond_wait(cond, &mutex_);
+    return true;
+  }
+  else {
+    struct timespec t;
+    clock_gettime(CLOCK_REALTIME, &t);
+    t.tv_sec += timeout_ms / 1000;
+    t.tv_nsec += (timeout_ms % 1000) * 1000000;
+    t.tv_sec += t.tv_nsec / 1000000000;
+    t.tv_nsec %= 1000000000;
+    // TODO(hzeller): It doesn't seem we return with EINTR on signal. We should.
+    return pthread_cond_timedwait(cond, &mutex_, &t) == 0;
+  }
+}
 }  // namespace rgb_matrix
