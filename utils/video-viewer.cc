@@ -62,7 +62,8 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <video>\n", progname);
   fprintf(stderr, "Options:\n"
           "\t-O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).\n"
-          "\t-v                 : verbose.\n");
+          "\t-v                 : verbose.\n"
+          "\t-f                 : Loop forever.\n");
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
   rgb_matrix::PrintMatrixFlags(stderr);
@@ -78,16 +79,24 @@ int main(int argc, char *argv[]) {
   }
 
   bool verbose = false;
-  const char *stream_output = NULL;
+  bool forever = false;
+  int stream_output_fd = -1;
 
   int opt;
-  while ((opt = getopt(argc, argv, "vO:R:L")) != -1) {
+  while ((opt = getopt(argc, argv, "vO:R:Lf")) != -1) {
     switch (opt) {
     case 'v':
       verbose = true;
       break;
+    case 'f':
+      forever = true;
+      break;
     case 'O':
-      stream_output = strdup(optarg);
+      stream_output_fd = open(optarg, O_CREAT|O_WRONLY, 0644);
+      if (stream_output_fd < 0) {
+        perror("Couldn't open output stream");
+        return 1;
+      }
       break;
     case 'L':
       fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"U-mapper\" --led-chain=4\ninstead.\n");
@@ -142,7 +151,7 @@ int main(int argc, char *argv[]) {
   }
 
   long frame_count = 0;
-  runtime_opt.do_gpio_init = (stream_output == NULL);
+  runtime_opt.do_gpio_init = (stream_output_fd < 0);
   RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL) {
     return 1;
@@ -151,14 +160,13 @@ int main(int argc, char *argv[]) {
   FrameCanvas *offscreen_canvas = matrix->CreateFrameCanvas();
   StreamIO *stream_io = NULL;
   StreamWriter *stream_writer = NULL;
-  if (stream_output) {
-    int fd = open(stream_output, O_CREAT|O_WRONLY, 0644);
-    if (fd < 0) {
-      perror("Couldn't open output stream");
-      return 1;
-    }
-    stream_io = new rgb_matrix::FileStreamIO(fd);
+  if (stream_output_fd >= 0) {
+    stream_io = new rgb_matrix::FileStreamIO(stream_output_fd);
     stream_writer = new StreamWriter(stream_io);
+    if (forever) {
+      fprintf(stderr, "-f (forever) doesn't make sense with -O; disabling\n");
+      forever = false;
+    }
   }
   // Find the first video stream
   videoStream=-1;
@@ -236,33 +244,39 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, InterruptHandler);
 
   const int frame_wait_micros = 1e6 / fps;
-  while (!interrupt_received && av_read_frame(pFormatCtx, &packet) >= 0) {
-    // Is this a packet from the video stream?
-    if (packet.stream_index==videoStream) {
-      // Decode video frame
-      avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
-
-      // Did we get a video frame?
-      if (frameFinished) {
-        // Convert the image from its native format to RGB
-        sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data,
-                  pFrame->linesize, 0, pCodecCtx->height,
-                  pFrameRGB->data, pFrameRGB->linesize);
-
-        CopyFrame(pFrameRGB, offscreen_canvas);
-        frame_count++;
-        if (stream_writer) {
-          stream_writer->Stream(*offscreen_canvas, frame_wait_micros);
-        } else {
-          offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
-        }
-      }
-      if (!stream_writer) usleep(frame_wait_micros);
+  do {
+    if (forever) {
+      av_seek_frame(pFormatCtx, videoStream, 0, AVSEEK_FLAG_ANY);
+      avcodec_flush_buffers(pCodecCtx);
     }
+    while (!interrupt_received && av_read_frame(pFormatCtx, &packet) >= 0) {
+      // Is this a packet from the video stream?
+      if (packet.stream_index==videoStream) {
+        // Decode video frame
+        avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
 
-    // Free the packet that was allocated by av_read_frame
-    av_free_packet(&packet);
-  }
+        // Did we get a video frame?
+        if (frameFinished) {
+          // Convert the image from its native format to RGB
+          sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data,
+                    pFrame->linesize, 0, pCodecCtx->height,
+                    pFrameRGB->data, pFrameRGB->linesize);
+
+          CopyFrame(pFrameRGB, offscreen_canvas);
+          frame_count++;
+          if (stream_writer) {
+            stream_writer->Stream(*offscreen_canvas, frame_wait_micros);
+          } else {
+            offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
+          }
+        }
+        if (!stream_writer) usleep(frame_wait_micros);
+      }
+
+      // Free the packet that was allocated by av_read_frame
+      av_free_packet(&packet);
+    }
+  } while (forever && !interrupt_received);
 
   if (interrupt_received) {
     // Feedback for Ctrl-C, but most importantly, force a newline

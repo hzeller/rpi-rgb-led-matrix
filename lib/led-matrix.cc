@@ -63,6 +63,7 @@ public:
       current_frame_(initial_frame), next_frame_(NULL),
       requested_frame_multiple_(1) {
     pthread_cond_init(&frame_done_, NULL);
+    pthread_cond_init(&input_change_, NULL);
     switch (pwm_dither_bits) {
     case 0:
       start_bit_[0] = 0; start_bit_[1] = 0;
@@ -88,6 +89,7 @@ public:
     unsigned frame_count = 0;
     unsigned low_bit_sequence = 0;
     uint32_t largest_time = 0;
+    uint32_t last_gpio_bits = 0;
 
     // Let's start measure max time only after a we were running for a few
     // seconds to not pick up start-up glitches.
@@ -101,6 +103,7 @@ public:
       current_frame_->framebuffer()
         ->DumpToMatrix(io_, start_bit_[low_bit_sequence % 4]);
 
+      // SwapOnVSync() exchange.
       {
         MutexLock l(&frame_sync_);
         // Do fast equality test first (likely due to frame_count reset).
@@ -115,6 +118,15 @@ public:
           }
           pthread_cond_signal(&frame_done_);
         }
+      }
+
+      // Read input bits.
+      const uint32_t inputs = io_->Read();
+      if (inputs != last_gpio_bits) {
+        last_gpio_bits = inputs;
+        MutexLock l(&input_sync_);
+        gpio_inputs_ = inputs;
+        pthread_cond_signal(&input_change_);
       }
 
       ++frame_count;
@@ -148,6 +160,12 @@ public:
     return previous;
   }
 
+  uint32_t AwaitInputChange(int timeout_ms) {
+    MutexLock l(&input_sync_);
+    input_sync_.WaitOn(&input_change_, timeout_ms);
+    return gpio_inputs_;
+  }
+
 private:
   inline bool running() {
     MutexLock l(&running_mutex_);
@@ -157,8 +175,13 @@ private:
   GPIO *const io_;
   const bool show_refresh_;
   uint32_t start_bit_[4];
+
   Mutex running_mutex_;
   bool running_;
+
+  Mutex input_sync_;
+  pthread_cond_t input_change_;
+  uint32_t gpio_inputs_;
 
   Mutex frame_sync_;
   pthread_cond_t frame_done_;
@@ -362,6 +385,11 @@ FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other,
   FrameCanvas *const previous = updater_->SwapOnVSync(other, frame_fraction);
   if (other) active_ = other;
   return previous;
+}
+
+uint32_t RGBMatrix::AwaitInputChange(int timeout_ms) {
+  if (!updater_) return 0;
+  return updater_->AwaitInputChange(timeout_ms);
 }
 
 bool RGBMatrix::SetPWMBits(uint8_t value) {

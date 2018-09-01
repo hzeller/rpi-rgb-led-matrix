@@ -132,7 +132,8 @@ namespace rgb_matrix {
    (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26)
 );
 
-GPIO::GPIO() : output_bits_(0), slowdown_(1), gpio_port_(NULL) {
+GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
+               slowdown_(1), gpio_port_(NULL) {
 }
 
 uint32_t GPIO::InitOutputs(uint32_t outputs,
@@ -154,17 +155,39 @@ uint32_t GPIO::InitOutputs(uint32_t outputs,
   if (adafruit_pwm_transition_hack_needed) {
     INP_GPIO(4);
     INP_GPIO(18);
+    // Even with PWM enabled, GPIO4 still can not be used, because it is
+    // now connected to the GPIO18 and thus must stay an input.
+    // So reserve this bit if it is not set in outputs.
+    reserved_bits_ = (1<<4) & ~outputs;
   }
 
-  outputs &= kValidBits;   // Sanitize input.
-  output_bits_ = outputs;
+  outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
+  outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
   for (uint32_t b = 0; b <= 27; ++b) {
     if (outputs & (1 << b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
     }
   }
-  return output_bits_;
+  output_bits_ |= outputs;
+  return outputs;
+}
+
+uint32_t GPIO::RequestInputs(uint32_t inputs) {
+  if (gpio_port_ == NULL) {
+    fprintf(stderr, "Attempt to init inputs but not yet Init()-ialized.\n");
+    return 0;
+  }
+
+  inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
+  inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
+  for (uint32_t b = 0; b <= 27; ++b) {
+    if (inputs & (1 << b)) {
+      INP_GPIO(b);
+    }
+  }
+  input_bits_ |= inputs;
+  return inputs;
 }
 
 static bool DetermineIsRaspberryPi2() {
@@ -234,6 +257,7 @@ bool GPIO::Init(int slowdown) {
   }
   gpio_set_bits_ = gpio_port_ + (0x1C / sizeof(uint32_t));
   gpio_clr_bits_ = gpio_port_ + (0x28 / sizeof(uint32_t));
+  gpio_read_bits_ = gpio_port_ + (0x34 / sizeof(uint32_t));
   return true;
 }
 
