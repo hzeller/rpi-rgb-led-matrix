@@ -510,8 +510,6 @@ but it only allows for a single chain. If the
 ready-made vs. single-chain tradeoff is worthwhile, then you might go for that
 (I am not affiliated with Adafruit).
 
-Adafruit also offers a [bonnet](https://www.adafruit.com/product/3211), which is a plug-and-play variant of the HAT with no soldering required, and is slightly cheaper.
-
 ### Switch the Pinout
 
 The Adafruit HAT/Bonnet uses this library but a modified pinout to support other
