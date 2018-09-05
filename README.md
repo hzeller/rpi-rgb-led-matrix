@@ -97,7 +97,7 @@ This documentation is split into parts that help you through the process
     [**Wire up the matrix to your Pi**](./wiring.md). This document describes
     what goes where. You might also be interested
     in [breakout boards](./adapter) for that.
-    If you have an [Adafruit HAT], you can choose that with
+    If you have an [Adafruit HAT] or [Adafruit Bonnet](https://www.adafruit.com/product/3211), you can choose that with
     a command line option [described below](#if-you-have-an-adafruit-hat)
   2. Run a demo. You find that in the
      [examples-api-use/](./examples-api-use#running-some-demos) directory:
@@ -150,7 +150,7 @@ Here is a little run-down of what these command-line flags do and when you'd
 like to change them.
 
 First things first: if you have a different wiring than described in
-[wiring](./wiring.md), for instance if you have an Adafruit HAT, you can
+[wiring](./wiring.md), for instance if you have an Adafruit HAT/Bonnet, you can
 choose these here:
 
 ```
@@ -159,7 +159,7 @@ choose these here:
 
 This can have values such as
   - `--led-gpio-mapping=regular` The standard mapping of this library, described in the [wiring](./wiring.md) page.
-  - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT, that uses this library or
+  - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT/Bonnet, that uses this library or
   - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
 
 The next most important flags describe the type and number of displays connected
@@ -497,7 +497,7 @@ If you encounter this, try these things
 For GPIO slow-down, add the flag `--led-slowdown-gpio=2` to the invocation of
 the binary.
 
-If you have an Adafruit HAT
+If you have an Adafruit HAT or Bonnet
 ---------------------------
 
 Generally, if you want to connect RGB panels via an adapter instead of
@@ -510,9 +510,11 @@ but it only allows for a single chain. If the
 ready-made vs. single-chain tradeoff is worthwhile, then you might go for that
 (I am not affiliated with Adafruit).
 
+Adafruit also offers a [bonnet](https://www.adafruit.com/product/3211), which is a plug-and-play variant of the HAT with no soldering required, and is slightly cheaper.
+
 ### Switch the Pinout
 
-The Adafruit HAT uses this library but a modified pinout to support other
+The Adafruit HAT/Bonnet uses this library but a modified pinout to support other
 features on the HAT. So they forked this library and modified the pinout there.
 However, that fork is _ancient_, so I strongly suggest to use this original
 library instead. You can choose the Adafruit pinout with a command line flag.
@@ -546,6 +548,8 @@ also manually choose this with
 HARDWARE_DESC=adafruit-hat-pwm make
 ```
 to get this as default setting.
+
+**This is only for the Adafruit HAT, not the Bonnet.**
 
 Now you should have less visible flicker. This essentially
 switches on the hardware pulses feature for the Adafruit HAT.
@@ -645,6 +649,7 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [adafruit-hat]: https://www.adafruit.com/products/2345
 [raspbian-lite]: https://downloads.raspberrypi.org/raspbian_lite_latest
 [Adafruit HAT]: https://www.adafruit.com/products/2345
+[Adafruit Bonnet]: https://www.adafruit.com/product/3211
 [Nodejs binding]: https://github.com/zeitungen/node-rpi-rgb-led-matrix
 [Go binding]: https://github.com/mcuadros/go-rpi-rgb-led-matrix
 [Rust binding]: https://crates.io/crates/rpi-led-matrix
