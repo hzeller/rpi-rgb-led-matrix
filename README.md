@@ -549,15 +549,13 @@ HARDWARE_DESC=adafruit-hat-pwm make
 ```
 to get this as default setting.
 
-**This is only for the Adafruit HAT, not the Bonnet.**
-
 Now you should have less visible flicker. This essentially
-switches on the hardware pulses feature for the Adafruit HAT.
+switches on the hardware pulses feature for the Adafruit HAT/Bonnet.
 
-### 64x64 with E-line on Adafruit HAT
+### 64x64 with E-line on Adafruit HAT/Bonnet
 There are LED panels that have 64x64 LEDs packed, but they need 5 address lines,
 which is 1:32 multiplexing (they have an `E` address-line). The hardware of
-the Adafruit HAT is not prepared for this, but it can be done with another
+the Adafruit HAT/Bonnet is not prepared for this, but it can be done with another
 hardware mod.
 
 It is a little more advanced hack, so  is only really for people who are
@@ -572,7 +570,7 @@ IDC Pin 4.
 <a href="img/adafruit-64x64-back.jpg"><img src="img/adafruit-64x64-back.jpg" height="80px"></a>
 
 If the direct connection does not work, you need to send it through a free
-level converter of the Adafruit HAT. Since all unused inputs are grounded
+level converter of the Adafruit HAT/Bonnet. Since all unused inputs are grounded
 with traces under the chip, this involves lifting a leg from the
 HCT245 (figure out a free bus driver from the schematic). If all of the
 above makes sense to you, you have the Ninja level to do it!
@@ -611,7 +609,7 @@ utilize it then. Still, I'd typically recommend it.
 
 Limitations
 -----------
-If you are using the Adafruit Hat in the default configuration, then we
+If you are using the Adafruit HAT/Bonnet in the default configuration, then we
 can't make use of the PWM hardware (which only outputs
 to a particular pin), so you'll see random brightness glitches. I strongly
 suggest to do the aforementioned hardware mod.
