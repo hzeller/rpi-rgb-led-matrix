@@ -97,7 +97,7 @@ This documentation is split into parts that help you through the process
     [**Wire up the matrix to your Pi**](./wiring.md). This document describes
     what goes where. You might also be interested
     in [breakout boards](./adapter) for that.
-    If you have an [Adafruit HAT], you can choose that with
+    If you have an [Adafruit HAT] or [Adafruit Bonnet], you can choose that with
     a command line option [described below](#if-you-have-an-adafruit-hat)
   2. Run a demo. You find that in the
      [examples-api-use/](./examples-api-use#running-some-demos) directory:
@@ -150,7 +150,7 @@ Here is a little run-down of what these command-line flags do and when you'd
 like to change them.
 
 First things first: if you have a different wiring than described in
-[wiring](./wiring.md), for instance if you have an Adafruit HAT, you can
+[wiring](./wiring.md), for instance if you have an Adafruit HAT/Bonnet, you can
 choose these here:
 
 ```
@@ -159,7 +159,7 @@ choose these here:
 
 This can have values such as
   - `--led-gpio-mapping=regular` The standard mapping of this library, described in the [wiring](./wiring.md) page.
-  - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT, that uses this library or
+  - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT/Bonnet, that uses this library or
   - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
 
 The next most important flags describe the type and number of displays connected
@@ -497,7 +497,7 @@ If you encounter this, try these things
 For GPIO slow-down, add the flag `--led-slowdown-gpio=2` to the invocation of
 the binary.
 
-If you have an Adafruit HAT
+If you have an Adafruit HAT or Bonnet
 ---------------------------
 
 Generally, if you want to connect RGB panels via an adapter instead of
@@ -512,7 +512,7 @@ ready-made vs. single-chain tradeoff is worthwhile, then you might go for that
 
 ### Switch the Pinout
 
-The Adafruit HAT uses this library but a modified pinout to support other
+The Adafruit HAT/Bonnet uses this library but a modified pinout to support other
 features on the HAT. So they forked this library and modified the pinout there.
 However, that fork is _ancient_, so I strongly suggest to use this original
 library instead. You can choose the Adafruit pinout with a command line flag.
@@ -548,12 +548,12 @@ HARDWARE_DESC=adafruit-hat-pwm make
 to get this as default setting.
 
 Now you should have less visible flicker. This essentially
-switches on the hardware pulses feature for the Adafruit HAT.
+switches on the hardware pulses feature for the Adafruit HAT/Bonnet.
 
-### 64x64 with E-line on Adafruit HAT
+### 64x64 with E-line on Adafruit HAT/Bonnet
 There are LED panels that have 64x64 LEDs packed, but they need 5 address lines,
 which is 1:32 multiplexing (they have an `E` address-line). The hardware of
-the Adafruit HAT is not prepared for this, but it can be done with another
+the Adafruit HAT/Bonnet is not prepared for this, but it can be done with another
 hardware mod.
 
 It is a little more advanced hack, so  is only really for people who are
@@ -568,7 +568,7 @@ IDC Pin 4.
 <a href="img/adafruit-64x64-back.jpg"><img src="img/adafruit-64x64-back.jpg" height="80px"></a>
 
 If the direct connection does not work, you need to send it through a free
-level converter of the Adafruit HAT. Since all unused inputs are grounded
+level converter of the Adafruit HAT/Bonnet. Since all unused inputs are grounded
 with traces under the chip, this involves lifting a leg from the
 HCT245 (figure out a free bus driver from the schematic). If all of the
 above makes sense to you, you have the Ninja level to do it!
@@ -607,7 +607,7 @@ utilize it then. Still, I'd typically recommend it.
 
 Limitations
 -----------
-If you are using the Adafruit Hat in the default configuration, then we
+If you are using the Adafruit HAT/Bonnet in the default configuration, then we
 can't make use of the PWM hardware (which only outputs
 to a particular pin), so you'll see random brightness glitches. I strongly
 suggest to do the aforementioned hardware mod.
@@ -645,6 +645,7 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [adafruit-hat]: https://www.adafruit.com/products/2345
 [raspbian-lite]: https://downloads.raspberrypi.org/raspbian_lite_latest
 [Adafruit HAT]: https://www.adafruit.com/products/2345
+[Adafruit Bonnet]: https://www.adafruit.com/product/3211
 [Nodejs binding]: https://github.com/zeitungen/node-rpi-rgb-led-matrix
 [Go binding]: https://github.com/mcuadros/go-rpi-rgb-led-matrix
 [Rust binding]: https://crates.io/crates/rpi-led-matrix
