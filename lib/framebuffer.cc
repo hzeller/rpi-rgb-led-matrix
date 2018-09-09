@@ -201,7 +201,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     height_(rows * parallel),
     columns_(columns),
     scan_mode_(scan_mode),
-    led_sequence_(led_sequence), inverse_color_(inverse_color),
+    inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_),
     buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
@@ -226,17 +226,27 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
   // with the specific knowledge of the framebuffer, setting up PixelDesignators
   // in a way that they are useful for this Framebuffer.
   //
-  // Newly created PixelMappers then can just copy around PixelDesignators
+  // Newly created PixelMappers then can just re-arrange PixelDesignators
   // from the parent PixelMapper opaquely without having to know the details.
   if (*shared_mapper_ == NULL) {
     *shared_mapper_ = new PixelDesignatorMap(columns_, height_);
     for (int y = 0; y < height_; ++y) {
       for (int x = 0; x < columns_; ++x) {
-        InitDefaultDesignator(x, y, (*shared_mapper_)->get(x, y));
+        InitDefaultDesignator(x, y, led_sequence, (*shared_mapper_)->get(x, y));
       }
     }
   }
 
+  // Gather all the bits for given color for fast Fill()s and use the right
+  // bits according to the led sequence
+  const struct HardwareMapping &h = *hardware_mapping_;
+  const char *const seq = led_sequence;
+  gpio_bits_t r = h.p0_r1 | h.p0_r2 | h.p1_r1 | h.p1_r2 | h.p2_r1 | h.p2_r2;
+  gpio_bits_t g = h.p0_g1 | h.p0_g2 | h.p1_g1 | h.p1_g2 | h.p2_g1 | h.p2_g2;
+  gpio_bits_t b = h.p0_b1 | h.p0_b2 | h.p1_b1 | h.p1_b2 | h.p2_b1 | h.p2_b2;
+  all_red_   = GetGpioFromLedSequence('R', seq, r, g, b);
+  all_green_ = GetGpioFromLedSequence('G', seq, r, g, b);
+  all_blue_  = GetGpioFromLedSequence('B', seq, r, g, b);
   Clear();
 }
 
@@ -421,17 +431,12 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   uint16_t red, green, blue;
   MapColors(r, g, b, &red, &green, &blue);
 
-  const struct HardwareMapping &h = *hardware_mapping_;
-  gpio_bits_t all_r = h.p0_r1 | h.p0_r2 | h.p1_r1 | h.p1_r2 | h.p2_r1 | h.p2_r2;
-  gpio_bits_t all_g = h.p0_g1 | h.p0_g2 | h.p1_g1 | h.p1_g2 | h.p2_g1 | h.p2_g2;
-  gpio_bits_t all_b = h.p0_b1 | h.p0_b2 | h.p1_b1 | h.p1_b2 | h.p2_b1 | h.p2_b2;
-
   for (int b = kBitPlanes - pwm_bits_; b < kBitPlanes; ++b) {
     uint16_t mask = 1 << b;
     gpio_bits_t plane_bits = 0;
-    plane_bits |= ((red & mask) == mask)   ? all_r : 0;
-    plane_bits |= ((green & mask) == mask) ? all_g : 0;
-    plane_bits |= ((blue & mask) == mask)  ? all_b : 0;
+    plane_bits |= ((red & mask) == mask)   ? all_red_ : 0;
+    plane_bits |= ((green & mask) == mask) ? all_green_ : 0;
+    plane_bits |= ((blue & mask) == mask)  ? all_blue_ : 0;
 
     for (int row = 0; row < double_rows_; ++row) {
       uint32_t *row_data = ValueAt(row, 0, b);
@@ -473,17 +478,18 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 
 // Strange LED-mappings such as RBG or so are handled here.
 gpio_bits_t Framebuffer::GetGpioFromLedSequence(char col,
+                                                const char *led_sequence,
                                                 gpio_bits_t default_r,
                                                 gpio_bits_t default_g,
                                                 gpio_bits_t default_b) {
-  const char *pos = strchr(led_sequence_, col);
-  if (pos == NULL) pos = strchr(led_sequence_, tolower(col));
+  const char *pos = strchr(led_sequence, col);
+  if (pos == NULL) pos = strchr(led_sequence, tolower(col));
   if (pos == NULL) {
     fprintf(stderr, "LED sequence '%s' does not contain any '%c'.\n",
-            led_sequence_, col);
+            led_sequence, col);
     abort();
   }
-  switch (pos - led_sequence_) {
+  switch (pos - led_sequence) {
   case 0: return default_r;
   case 1: return default_g;
   case 2: return default_b;
@@ -491,42 +497,43 @@ gpio_bits_t Framebuffer::GetGpioFromLedSequence(char col,
   return default_r;  // String too long, should've been caught earlier.
 }
 
-void Framebuffer::InitDefaultDesignator(int x, int y, PixelDesignator *d) {
+void Framebuffer::InitDefaultDesignator(int x, int y, const char *seq,
+                                        PixelDesignator *d) {
   const struct HardwareMapping &h = *hardware_mapping_;
   uint32_t *bits = ValueAt(y % double_rows_, x, 0);
   d->gpio_word = bits - bitplane_buffer_;
   d->r_bit = d->g_bit = d->b_bit = 0;
   if (y < rows_) {
     if (y < double_rows_) {
-      d->r_bit = GetGpioFromLedSequence('R', h.p0_r1, h.p0_g1, h.p0_b1);
-      d->g_bit = GetGpioFromLedSequence('G', h.p0_r1, h.p0_g1, h.p0_b1);
-      d->b_bit = GetGpioFromLedSequence('B', h.p0_r1, h.p0_g1, h.p0_b1);
+      d->r_bit = GetGpioFromLedSequence('R', seq, h.p0_r1, h.p0_g1, h.p0_b1);
+      d->g_bit = GetGpioFromLedSequence('G', seq, h.p0_r1, h.p0_g1, h.p0_b1);
+      d->b_bit = GetGpioFromLedSequence('B', seq, h.p0_r1, h.p0_g1, h.p0_b1);
     } else {
-      d->r_bit = GetGpioFromLedSequence('R', h.p0_r2, h.p0_g2, h.p0_b2);
-      d->g_bit = GetGpioFromLedSequence('G', h.p0_r2, h.p0_g2, h.p0_b2);
-      d->b_bit = GetGpioFromLedSequence('B', h.p0_r2, h.p0_g2, h.p0_b2);
+      d->r_bit = GetGpioFromLedSequence('R', seq, h.p0_r2, h.p0_g2, h.p0_b2);
+      d->g_bit = GetGpioFromLedSequence('G', seq, h.p0_r2, h.p0_g2, h.p0_b2);
+      d->b_bit = GetGpioFromLedSequence('B', seq, h.p0_r2, h.p0_g2, h.p0_b2);
     }
   }
   else if (y >= rows_ && y < 2 * rows_) {
     if (y - rows_ < double_rows_) {
-      d->r_bit = GetGpioFromLedSequence('R', h.p1_r1, h.p1_g1, h.p1_b1);
-      d->g_bit = GetGpioFromLedSequence('G', h.p1_r1, h.p1_g1, h.p1_b1);
-      d->b_bit = GetGpioFromLedSequence('B', h.p1_r1, h.p1_g1, h.p1_b1);
+      d->r_bit = GetGpioFromLedSequence('R', seq, h.p1_r1, h.p1_g1, h.p1_b1);
+      d->g_bit = GetGpioFromLedSequence('G', seq, h.p1_r1, h.p1_g1, h.p1_b1);
+      d->b_bit = GetGpioFromLedSequence('B', seq, h.p1_r1, h.p1_g1, h.p1_b1);
     } else {
-      d->r_bit = GetGpioFromLedSequence('R', h.p1_r2, h.p1_g2, h.p1_b2);
-      d->g_bit = GetGpioFromLedSequence('G', h.p1_r2, h.p1_g2, h.p1_b2);
-      d->b_bit = GetGpioFromLedSequence('B', h.p1_r2, h.p1_g2, h.p1_b2);
+      d->r_bit = GetGpioFromLedSequence('R', seq, h.p1_r2, h.p1_g2, h.p1_b2);
+      d->g_bit = GetGpioFromLedSequence('G', seq, h.p1_r2, h.p1_g2, h.p1_b2);
+      d->b_bit = GetGpioFromLedSequence('B', seq, h.p1_r2, h.p1_g2, h.p1_b2);
     }
   }
   else {
     if (y - 2*rows_ < double_rows_) {
-      d->r_bit = GetGpioFromLedSequence('R', h.p2_r1, h.p2_g1, h.p2_b1);
-      d->g_bit = GetGpioFromLedSequence('G', h.p2_r1, h.p2_g1, h.p2_b1);
-      d->b_bit = GetGpioFromLedSequence('B', h.p2_r1, h.p2_g1, h.p2_b1);
+      d->r_bit = GetGpioFromLedSequence('R', seq, h.p2_r1, h.p2_g1, h.p2_b1);
+      d->g_bit = GetGpioFromLedSequence('G', seq, h.p2_r1, h.p2_g1, h.p2_b1);
+      d->b_bit = GetGpioFromLedSequence('B', seq, h.p2_r1, h.p2_g1, h.p2_b1);
     } else {
-      d->r_bit = GetGpioFromLedSequence('R', h.p2_r2, h.p2_g2, h.p2_b2);
-      d->g_bit = GetGpioFromLedSequence('G', h.p2_r2, h.p2_g2, h.p2_b2);
-      d->b_bit = GetGpioFromLedSequence('B', h.p2_r2, h.p2_g2, h.p2_b2);
+      d->r_bit = GetGpioFromLedSequence('R', seq, h.p2_r2, h.p2_g2, h.p2_b2);
+      d->g_bit = GetGpioFromLedSequence('G', seq, h.p2_r2, h.p2_g2, h.p2_b2);
+      d->b_bit = GetGpioFromLedSequence('B', seq, h.p2_r2, h.p2_g2, h.p2_b2);
     }
   }
 

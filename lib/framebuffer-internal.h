@@ -111,13 +111,14 @@ private:
   static RowAddressSetter *row_setter_;
 
   // This returns the gpio-bit for given color (one of 'R', 'G', 'B'). This is
-  // returning the right value in case led_sequence_ is _not_ "RGB"
-  gpio_bits_t GetGpioFromLedSequence(char col,
-                                     gpio_bits_t default_r,
-                                     gpio_bits_t default_g,
-                                     gpio_bits_t default_b);
+  // returning the right value in case "led_sequence" is _not_ "RGB"
+  static gpio_bits_t GetGpioFromLedSequence(char col, const char *led_sequence,
+                                            gpio_bits_t default_r,
+                                            gpio_bits_t default_g,
+                                            gpio_bits_t default_b);
 
-  void InitDefaultDesignator(int x, int y, PixelDesignator *designator);
+  void InitDefaultDesignator(int x, int y, const char *led_sequence,
+                             PixelDesignator *designator);
   inline void  MapColors(uint8_t r, uint8_t g, uint8_t b,
                          uint16_t *red, uint16_t *green, uint16_t *blue);
   const int rows_;     // Number of rows. 16 or 32.
@@ -126,7 +127,6 @@ private:
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
   const int scan_mode_;
-  const char *const led_sequence_;  // Some LEDs are mapped differently.
   const bool inverse_color_;
 
   uint8_t pwm_bits_;   // PWM bits to display.
@@ -145,6 +145,7 @@ private:
   gpio_bits_t *bitplane_buffer_;
   inline gpio_bits_t *ValueAt(int double_row, int column, int bit);
 
+  gpio_bits_t all_red_, all_green_, all_blue_;  // Precalculated for Fill()
   PixelDesignatorMap **shared_mapper_;  // Storage in RGBMatrix.
 };
 }  // namespace internal
