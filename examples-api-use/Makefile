@@ -1,6 +1,6 @@
 CFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter
 CXXFLAGS=$(CFLAGS)
-OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o scrolling-text-example.o clock.o ledcat.o
+OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o scrolling-text-example.o clock.o ledcat.o input-example.o
 BINARIES=demo minimal-example c-example text-example scrolling-text-example clock ledcat input-example
 
 # Where our library resides. You mostly only need to change the
