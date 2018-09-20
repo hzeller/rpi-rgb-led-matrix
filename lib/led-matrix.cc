@@ -451,8 +451,8 @@ bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper) {
   if (!mapper->GetSizeMapping(old_width, old_height, &new_width, &new_height)) {
     return false;
   }
-  PixelDesignatorMap *new_mapper = new PixelDesignatorMap(new_width,
-                                                          new_height);
+  PixelDesignatorMap *new_mapper = new PixelDesignatorMap(
+    new_width, new_height, shared_pixel_mapper_->GetFillColorBits());
   for (int y = 0; y < new_height; ++y) {
     for (int x = 0; x < new_width; ++x) {
       int orig_x = -1, orig_y = -1;
@@ -533,7 +533,8 @@ void RGBMatrix::ApplyStaticTransformerDeprecated(
 
   const int new_width = mapped_canvas->width();
   const int new_height = mapped_canvas->height();
-  PixelDesignatorMap *new_mapper = new PixelDesignatorMap(new_width, new_height);
+  PixelDesignatorMap *new_mapper = new PixelDesignatorMap(
+    new_width, new_height, shared_pixel_mapper_->GetFillColorBits());
   extractor_canvas.SetNewMapper(new_mapper);
   // Learn about the pixel mapping by going through all transformed pixels and
   // build new PixelDesignator map.

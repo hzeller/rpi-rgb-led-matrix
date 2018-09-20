@@ -39,7 +39,7 @@ struct PixelDesignator {
 
 class PixelDesignatorMap {
 public:
-  PixelDesignatorMap(int width, int height);
+  PixelDesignatorMap(int width, int height, const PixelDesignator &fill_bits);
   ~PixelDesignatorMap();
 
   // Get a writable version of the PixelDesignator. Outside Framebuffer used
@@ -49,9 +49,13 @@ public:
   inline int width() const { return width_; }
   inline int height() const { return height_; }
 
+  // All bits that set red/green/blue pixels; used for Fill().
+  const PixelDesignator &GetFillColorBits() { return fill_bits_; }
+
 private:
   const int width_;
   const int height_;
+  const PixelDesignator fill_bits_;  // Precalculated for fill.
   PixelDesignator *const buffer_;
 };
 
@@ -145,7 +149,6 @@ private:
   gpio_bits_t *bitplane_buffer_;
   inline gpio_bits_t *ValueAt(int double_row, int column, int bit);
 
-  gpio_bits_t all_red_, all_green_, all_blue_;  // Precalculated for Fill()
   PixelDesignatorMap **shared_mapper_;  // Storage in RGBMatrix.
 };
 }  // namespace internal

@@ -53,8 +53,9 @@ PixelDesignator *PixelDesignatorMap::get(int x, int y) {
   return buffer_ + (y*width_) + x;
 }
 
-PixelDesignatorMap::PixelDesignatorMap(int width, int height)
-  : width_(width), height_(height),
+PixelDesignatorMap::PixelDesignatorMap(int width, int height,
+                                       const PixelDesignator &fill_bits)
+  : width_(width), height_(height), fill_bits_(fill_bits),
     buffer_(new PixelDesignator[width * height]) {
 }
 
@@ -229,7 +230,18 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
   // Newly created PixelMappers then can just re-arrange PixelDesignators
   // from the parent PixelMapper opaquely without having to know the details.
   if (*shared_mapper_ == NULL) {
-    *shared_mapper_ = new PixelDesignatorMap(columns_, height_);
+    // Gather all the bits for given color for fast Fill()s and use the right
+    // bits according to the led sequence
+    const struct HardwareMapping &h = *hardware_mapping_;
+    gpio_bits_t r = h.p0_r1 | h.p0_r2 | h.p1_r1 | h.p1_r2 | h.p2_r1 | h.p2_r2;
+    gpio_bits_t g = h.p0_g1 | h.p0_g2 | h.p1_g1 | h.p1_g2 | h.p2_g1 | h.p2_g2;
+    gpio_bits_t b = h.p0_b1 | h.p0_b2 | h.p1_b1 | h.p1_b2 | h.p2_b1 | h.p2_b2;
+    PixelDesignator fill_bits;
+    fill_bits.r_bit = GetGpioFromLedSequence('R', led_sequence, r, g, b);
+    fill_bits.g_bit = GetGpioFromLedSequence('G', led_sequence, r, g, b);
+    fill_bits.b_bit = GetGpioFromLedSequence('B', led_sequence, r, g, b);
+
+    *shared_mapper_ = new PixelDesignatorMap(columns_, height_, fill_bits);
     for (int y = 0; y < height_; ++y) {
       for (int x = 0; x < columns_; ++x) {
         InitDefaultDesignator(x, y, led_sequence, (*shared_mapper_)->get(x, y));
@@ -237,16 +249,6 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     }
   }
 
-  // Gather all the bits for given color for fast Fill()s and use the right
-  // bits according to the led sequence
-  const struct HardwareMapping &h = *hardware_mapping_;
-  const char *const seq = led_sequence;
-  gpio_bits_t r = h.p0_r1 | h.p0_r2 | h.p1_r1 | h.p1_r2 | h.p2_r1 | h.p2_r2;
-  gpio_bits_t g = h.p0_g1 | h.p0_g2 | h.p1_g1 | h.p1_g2 | h.p2_g1 | h.p2_g2;
-  gpio_bits_t b = h.p0_b1 | h.p0_b2 | h.p1_b1 | h.p1_b2 | h.p2_b1 | h.p2_b2;
-  all_red_   = GetGpioFromLedSequence('R', seq, r, g, b);
-  all_green_ = GetGpioFromLedSequence('G', seq, r, g, b);
-  all_blue_  = GetGpioFromLedSequence('B', seq, r, g, b);
   Clear();
 }
 
@@ -430,13 +432,14 @@ inline void Framebuffer::MapColors(
 void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   uint16_t red, green, blue;
   MapColors(r, g, b, &red, &green, &blue);
+  const PixelDesignator &fill = (*shared_mapper_)->GetFillColorBits();
 
   for (int b = kBitPlanes - pwm_bits_; b < kBitPlanes; ++b) {
     uint16_t mask = 1 << b;
     gpio_bits_t plane_bits = 0;
-    plane_bits |= ((red & mask) == mask)   ? all_red_ : 0;
-    plane_bits |= ((green & mask) == mask) ? all_green_ : 0;
-    plane_bits |= ((blue & mask) == mask)  ? all_blue_ : 0;
+    plane_bits |= ((red & mask) == mask)   ? fill.r_bit : 0;
+    plane_bits |= ((green & mask) == mask) ? fill.g_bit : 0;
+    plane_bits |= ((blue & mask) == mask)  ? fill.b_bit : 0;
 
     for (int row = 0; row < double_rows_; ++row) {
       uint32_t *row_data = ValueAt(row, 0, b);
