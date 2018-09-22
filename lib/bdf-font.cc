@@ -156,7 +156,7 @@ const Font::Glyph *Font::FindGlyph(uint32_t unicode_codepoint) const {
 
 int Font::CharacterWidth(uint32_t unicode_codepoint) const {
   const Glyph *g = FindGlyph(unicode_codepoint);
-  return g ? g->width : -1;
+  return g ? g->device_width : -1;
 }
 
 int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
