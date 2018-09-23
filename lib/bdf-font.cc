@@ -82,8 +82,8 @@ bool Font::LoadFont(const char *path) {
       // We only get number of bytes large enough holding our width. We want
       // it always left-aligned.
       bitmap_shift =
-        8 * (sizeof(rowbitmap_t) - ((current_glyph->width + 7) / 8)) -
-              current_glyph->x_offset;
+        8 * (sizeof(rowbitmap_t) - ((current_glyph->width + 7) / 8))
+        - current_glyph->x_offset;
       row = -1;  // let's not start yet, wait for BITMAP
     }
     else if (strncmp(buffer, "BITMAP", strlen("BITMAP")) == 0) {
@@ -173,7 +173,7 @@ int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
       if (row & x_mask) {
         c->SetPixel(x_pos + x, y_pos + y, color.r, color.g, color.b);
       } else if (bgcolor) {
-          c->SetPixel(x_pos + x, y_pos + y, bgcolor->r, bgcolor->g, bgcolor->b);
+        c->SetPixel(x_pos + x, y_pos + y, bgcolor->r, bgcolor->g, bgcolor->b);
       }
     }
   }
