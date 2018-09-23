@@ -420,7 +420,7 @@ public:
 #ifdef DISABLE_HARDWARE_PULSES
     return false;
 #else
-    return gpio_mask == (1 << 18);
+    return gpio_mask == (1 << 18) || gpio_mask == (1 << 12);
 #endif
   }
 
@@ -458,7 +458,13 @@ public:
     fifo_ = pwm_reg_ + PWM_FIFO;
     assert((clk_reg_ != NULL) && (pwm_reg_ != NULL));  // init error.
 
-    SetGPIOMode(gpioReg, 18, 2); // set GPIO 18 to PWM0 mode (Alternative 5)
+    if (pins == (1<<18)) {
+      SetGPIOMode(gpioReg, 18, 2); // set GPIO 18 to PWM0 mode (Alternative 5)
+    } else if (pins == (1<<12)) {
+      SetGPIOMode(gpioReg, 12, 4); // set GPIO 12 to PWM0 mode (Alternative 0)
+    } else {
+      assert(false); // should've been caught by CanHandle()
+    }
     InitPWMDivider((base/2) / PWM_BASE_TIME_NS);
     for (size_t i = 0; i < specs.size(); ++i) {
       pwm_range_.push_back(2 * specs[i] / base);
