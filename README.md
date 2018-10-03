@@ -220,7 +220,7 @@ more in [Remapping coordinates](./examples-api-use#remapping-coordinates).
 --led-row-addr-type=<0..2>: 0 = default; 1=AB-addressed panels; 2=direct row select (Default: 0).
 ```
 This option is useful for certain 64x64 or 32x16 panels. For 64x64 panels,
-that only have an `A` and `B` address line, you`d use `--led-row-addr-type=1`.
+that only have an `A` and `B` address line, you'd use `--led-row-addr-type=1`.
 This is only tested with one panel so far, so if it doesn't work for you,
 please send a pull request.
 
