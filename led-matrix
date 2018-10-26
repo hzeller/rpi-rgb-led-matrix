@@ -6,3 +6,5 @@ echo
 echo "See https://github.com/hzeller/rpi-rgb-led-matrix/tree/master/examples-api-use"
 echo
 echo "(You are probably here because you followed some outdated information on the 'net?)"
+echo
+echo" hello world " 
