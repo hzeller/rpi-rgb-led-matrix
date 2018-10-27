@@ -114,11 +114,19 @@
 #define PWM_BASE_TIME_NS 2
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x).
-#define INP_GPIO(g) *(gpio_port_+((g)/10)) &= ~(7<<(((g)%10)*3))
-#define OUT_GPIO(g) *(gpio_port_+((g)/10)) |=  (1<<(((g)%10)*3))
+#define INP_GPIO(g) *(s_GPIO_registers+((g)/10)) &= ~(7<<(((g)%10)*3))
+#define OUT_GPIO(g) *(s_GPIO_registers+((g)/10)) |=  (1<<(((g)%10)*3))
 
 #define GPIO_SET *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
+
+// We're pre-mapping all the registers on first call of GPIO::Init(),
+// so that it is possible to drop privileges afterwards and still have these
+// usable.
+static volatile uint32_t *s_GPIO_registers = NULL;
+static volatile uint32_t *s_Timer1Mhz = NULL;
+static volatile uint32_t *s_PWM_registers = NULL;
+static volatile uint32_t *s_CLK_registers = NULL;
 
 namespace rgb_matrix {
 /*static*/ const uint32_t GPIO::kValidBits
@@ -133,12 +141,12 @@ namespace rgb_matrix {
 );
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
-               slowdown_(1), gpio_port_(NULL) {
+               slowdown_(1) {
 }
 
 uint32_t GPIO::InitOutputs(uint32_t outputs,
                            bool adafruit_pwm_transition_hack_needed) {
-  if (gpio_port_ == NULL) {
+  if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
     return 0;
   }
@@ -174,7 +182,7 @@ uint32_t GPIO::InitOutputs(uint32_t outputs,
 }
 
 uint32_t GPIO::RequestInputs(uint32_t inputs) {
-  if (gpio_port_ == NULL) {
+  if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init inputs but not yet Init()-ialized.\n");
     return 0;
   }
@@ -248,16 +256,46 @@ static uint32_t *mmap_bcm_register(bool isRPi2, off_t register_offset) {
   return result;
 }
 
+static bool mmap_all_bcm_registers_once() {
+  if (s_GPIO_registers != NULL) return true;  // alrady done.
+
+  const bool isPI2 = IsRaspberryPi2();
+
+  // The common GPIO registers.
+  s_GPIO_registers = mmap_bcm_register(isPI2, GPIO_REGISTER_OFFSET);
+  if (s_GPIO_registers == NULL) {
+    return false;
+  }
+
+  // Time measurement.
+  uint32_t *timereg = mmap_bcm_register(isPI2, COUNTER_1Mhz_REGISTER_OFFSET);
+  if (timereg == NULL) {
+    return false;
+  }
+  s_Timer1Mhz = timereg + 1;
+
+  // Hardware pin-pulser.
+  s_PWM_registers  = mmap_bcm_register(isPI2, GPIO_PWM_BASE_OFFSET);
+  s_CLK_registers  = mmap_bcm_register(isPI2, GPIO_CLK_BASE_OFFSET);
+  if (!s_PWM_registers || !s_CLK_registers) {
+    return false;
+  }
+  return true;
+}
+
 // Based on code example found in http://elinux.org/RPi_Low-level_peripherals
 bool GPIO::Init(int slowdown) {
   slowdown_ = slowdown;
-  gpio_port_ = mmap_bcm_register(IsRaspberryPi2(), GPIO_REGISTER_OFFSET);
-  if (gpio_port_ == NULL) {
+
+  // Pre-mmap all bcm registers we need now and possibly in the future, as to
+  // allow  dropping privileges after GPIO::Init() even as some of these
+  // registers might be needed later.
+  if (!mmap_all_bcm_registers_once())
     return false;
-  }
-  gpio_set_bits_ = gpio_port_ + (0x1C / sizeof(uint32_t));
-  gpio_clr_bits_ = gpio_port_ + (0x28 / sizeof(uint32_t));
-  gpio_read_bits_ = gpio_port_ + (0x34 / sizeof(uint32_t));
+
+  gpio_set_bits_ = s_GPIO_registers + (0x1C / sizeof(uint32_t));
+  gpio_clr_bits_ = s_GPIO_registers + (0x28 / sizeof(uint32_t));
+  gpio_read_bits_ = s_GPIO_registers + (0x34 / sizeof(uint32_t));
   return true;
 }
 
@@ -312,8 +350,6 @@ static bool LinuxHasModuleLoaded(const char *name) {
   return found;
 }
 
-static volatile uint32_t *timer1Mhz = NULL;
-
 static void sleep_nanos_rpi_1(long nanos);
 static void sleep_nanos_rpi_2(long nanos);
 static void (*busy_sleep_impl)(long) = sleep_nanos_rpi_1;
@@ -332,13 +368,9 @@ static void DisableRealtimeThrottling() {
 }
 
 bool Timers::Init() {
-  const bool isRPi2 = IsRaspberryPi2();
-  uint32_t *timereg = mmap_bcm_register(isRPi2, COUNTER_1Mhz_REGISTER_OFFSET);
-  if (timereg == NULL) {
+  if (!mmap_all_bcm_registers_once())
     return false;
-  }
-  timer1Mhz = timereg + 1;
-
+  const bool isRPi2 = IsRaspberryPi2();
   busy_sleep_impl = isRPi2 ? sleep_nanos_rpi_2 : sleep_nanos_rpi_1;
   if (isRPi2) DisableRealtimeThrottling();
   return true;
@@ -360,11 +392,11 @@ void Timers::sleep_nanos(long nanos) {
   // busy wait.
   static long kJitterAllowanceNanos = JitterAllowanceMicroseconds() * 1000;
   if (nanos > kJitterAllowanceNanos + 5000) {
-    const uint32_t before = *timer1Mhz;
+    const uint32_t before = *s_Timer1Mhz;
     struct timespec sleep_time
       = { 0, nanos - kJitterAllowanceNanos };
     nanosleep(&sleep_time, NULL);
-    const uint32_t after = *timer1Mhz;
+    const uint32_t after = *s_Timer1Mhz;
     const long nanoseconds_passed = 1000 * (uint32_t)(after - before);
     if (nanoseconds_passed > nanos) {
       return;  // darn, missed it.
@@ -451,17 +483,15 @@ public:
 
     const int base = specs[0];
     // Get relevant registers
-    const bool isPI2 = IsRaspberryPi2();
-    volatile uint32_t *gpioReg = mmap_bcm_register(isPI2, GPIO_REGISTER_OFFSET);
-    pwm_reg_  = mmap_bcm_register(isPI2, GPIO_PWM_BASE_OFFSET);
-    clk_reg_  = mmap_bcm_register(isPI2, GPIO_CLK_BASE_OFFSET);
-    fifo_ = pwm_reg_ + PWM_FIFO;
-    assert((clk_reg_ != NULL) && (pwm_reg_ != NULL));  // init error.
+    fifo_ = s_PWM_registers + PWM_FIFO;
+    assert((s_CLK_registers != NULL) && (s_PWM_registers != NULL));
 
     if (pins == (1<<18)) {
-      SetGPIOMode(gpioReg, 18, 2); // set GPIO 18 to PWM0 mode (Alternative 5)
+      // set GPIO 18 to PWM0 mode (Alternative 5)
+      SetGPIOMode(s_GPIO_registers, 18, 2);
     } else if (pins == (1<<12)) {
-      SetGPIOMode(gpioReg, 12, 4); // set GPIO 12 to PWM0 mode (Alternative 0)
+      // set GPIO 12 to PWM0 mode (Alternative 0)
+      SetGPIOMode(s_GPIO_registers, 12, 4);
     } else {
       assert(false); // should've been caught by CanHandle()
     }
@@ -473,7 +503,7 @@ public:
 
   virtual void SendPulse(int c) {
     if (pwm_range_[c] < 16) {
-      pwm_reg_[PWM_RNG1] = pwm_range_[c];
+      s_PWM_registers[PWM_RNG1] = pwm_range_[c];
 
       *fifo_ = pwm_range_[c];
     } else {
@@ -481,7 +511,7 @@ public:
       // wait for one full period of these in the zero phase.
       // The hardware can't deal with values < 2, so only do this when
       // have enough of these.
-      pwm_reg_[PWM_RNG1] = pwm_range_[c] / 8;
+      s_PWM_registers[PWM_RNG1] = pwm_range_[c] / 8;
 
       *fifo_ = pwm_range_[c] / 8;
       *fifo_ = pwm_range_[c] / 8;
@@ -511,9 +541,9 @@ public:
     *fifo_ = 0;
 
     sleep_hint_ = sleep_hints_[c];
-    start_time_ = *timer1Mhz;
+    start_time_ = *s_Timer1Mhz;
     triggered_ = true;
-    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
+    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
   }
 
   virtual void WaitPulseFinished() {
@@ -525,7 +555,7 @@ public:
     //   the hardware once it is done with the pulse. Sounds silly that there is
     //   not.
     if (sleep_hint_ > 0) {
-      const uint32_t already_elapsed_usec = *timer1Mhz - start_time_;
+      const uint32_t already_elapsed_usec = *s_Timer1Mhz - start_time_;
       const int to_sleep = sleep_hint_ - already_elapsed_usec;
       if (to_sleep > 0) {
         struct timespec sleep_time = { 0, 1000 * to_sleep };
@@ -546,10 +576,10 @@ public:
       }
     }
 
-    while ((pwm_reg_[PWM_STA] & PWM_STA_EMPT1) == 0) {
+    while ((s_PWM_registers[PWM_STA] & PWM_STA_EMPT1) == 0) {
       // busy wait until done.
     }
-    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
+    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
     triggered_ = false;
   }
 
@@ -563,27 +593,27 @@ private:
   void InitPWMDivider(uint32_t divider) {
     assert(divider < (1<<12));  // we only have 12 bits.
 
-    pwm_reg_[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
+    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
 
     // reset PWM clock
-    clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_KILL;
+    s_CLK_registers[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_KILL;
 
     // set PWM clock source as 500 MHz PLLD
-    clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_SRC(CLK_CTL_SRC_PLLD);
+    s_CLK_registers[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_SRC(CLK_CTL_SRC_PLLD);
 
     // set PWM clock divider
-    clk_reg_[CLK_PWMDIV] = CLK_PASSWD | CLK_DIV_DIVI(divider) | CLK_DIV_DIVF(0);
+    s_CLK_registers[CLK_PWMDIV]
+      = CLK_PASSWD | CLK_DIV_DIVI(divider) | CLK_DIV_DIVF(0);
 
     // enable PWM clock
-    clk_reg_[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_ENAB | CLK_CTL_SRC(CLK_CTL_SRC_PLLD);
+    s_CLK_registers[CLK_PWMCTL]
+      = CLK_PASSWD | CLK_CTL_ENAB | CLK_CTL_SRC(CLK_CTL_SRC_PLLD);
   }
 
 private:
   std::vector<uint32_t> pwm_range_;
   std::vector<int> sleep_hints_;
-  volatile uint32_t *pwm_reg_;
   volatile uint32_t *fifo_;
-  volatile uint32_t *clk_reg_;
   uint32_t start_time_;
   int sleep_hint_;
   bool triggered_;
@@ -604,7 +634,7 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
 }
 
 uint32_t GetMicrosecondCounter() {
-  return timer1Mhz ? *timer1Mhz : 0;
+  return s_Timer1Mhz ? *s_Timer1Mhz : 0;
 }
 
 } // namespace rgb_matrix

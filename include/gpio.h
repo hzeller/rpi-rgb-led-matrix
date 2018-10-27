@@ -85,7 +85,6 @@ class GPIO {
   uint32_t input_bits_;
   uint32_t reserved_bits_;
   int slowdown_;
-  volatile uint32_t *gpio_port_;
   volatile uint32_t *gpio_set_bits_;
   volatile uint32_t *gpio_clr_bits_;
   volatile uint32_t *gpio_read_bits_;
