@@ -291,12 +291,6 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
     return NULL;
   }
 
-  if (runtime_options.do_gpio_init && getuid() != 0) {
-    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command\n");
-    return NULL;
-  }
-
   if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 4) {
     fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
             runtime_options.gpio_slowdown);
@@ -306,6 +300,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
   static GPIO io;  // This static var is a little bit icky.
   if (runtime_options.do_gpio_init &&
       !io.Init(runtime_options.gpio_slowdown)) {
+    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
+            "Prepend 'sudo' to the command\n");
     return NULL;
   }
 
