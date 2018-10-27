@@ -289,13 +289,15 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
 }
 
 RGBMatrix::~RGBMatrix() {
-  updater_->Stop();
-  updater_->WaitStopped();
+  if (updater_) {
+    updater_->Stop();
+    updater_->WaitStopped();
+  }
   delete updater_;
 
   // Make sure LEDs are off.
   active_->Clear();
-  active_->framebuffer()->DumpToMatrix(io_, 0);
+  if (io_) active_->framebuffer()->DumpToMatrix(io_, 0);
 
   for (size_t i = 0; i < created_frames_.size(); ++i) {
     delete created_frames_[i];
