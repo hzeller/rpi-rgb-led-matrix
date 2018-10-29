@@ -347,4 +347,4 @@ line option in C++ and Python.
 [git-submodules]: http://git-scm.com/book/en/Git-Tools-Submodules
 [pixelpush]: https://github.com/hzeller/rpi-matrix-pixelpusher
 [pp-vid]: ../img/pixelpusher-vid.jpg
-[otf2bdf]: https://www.math.nmsu.edu/~mleisher/Software/otf2bdf/
+[otf2bdf]: https://github.com/jirutka/otf2bdf
