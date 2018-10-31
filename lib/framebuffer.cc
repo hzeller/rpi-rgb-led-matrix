@@ -81,10 +81,10 @@ public:
   DirectRowAddressSetter(int double_rows, const HardwareMapping &h)
     : row_mask_(0), last_row_(-1) {
     assert(double_rows <= 32);  // need to resize row_lookup_
-    if (double_rows >= 32) row_mask_ |= h.e;
-    if (double_rows >= 16) row_mask_ |= h.d;
-    if (double_rows >=  8) row_mask_ |= h.c;
-    if (double_rows >=  4) row_mask_ |= h.b;
+    if (double_rows > 16) row_mask_ |= h.e;
+    if (double_rows > 8)  row_mask_ |= h.d;
+    if (double_rows > 4)  row_mask_ |= h.c;
+    if (double_rows > 2)  row_mask_ |= h.b;
     row_mask_ |= h.a;
     for (int i = 0; i < double_rows; ++i) {
       // To avoid the bit-fiddle in the critical path, utilize
