@@ -54,6 +54,7 @@ namespace rpi_rgb_led_matrix_sharp
                 opt.multiplexing = options.Multiplexing;
                 opt.pwm_bits = options.PwmBits;
                 opt.pwm_lsb_nanoseconds = options.PwmLsbNanoseconds;
+                opt.pwm_dither_bits = options.PwmDitherBits;
                 opt.scan_mode = options.ScanMode;
                 opt.show_refresh_rate = (uint)(options.ShowRefreshRate ? 0 : 1);
                 opt.brightness = options.Brightness;
@@ -122,17 +123,18 @@ namespace rpi_rgb_led_matrix_sharp
             public int cols;
             public int chain_length;
             public int parallel;
-            public int multiplexing;
             public int pwm_bits;
             public int pwm_lsb_nanoseconds;
+            public int pwm_dither_bits;
             public int brightness;
             public int scan_mode;
+            public int row_address_type;
+            public int multiplexing;
             public IntPtr led_rgb_sequence;
             public IntPtr pixel_mapper_config; 
             public uint disable_hardware_pulsing;
             public uint show_refresh_rate;
             public uint inverse_colors;
-            public int row_address_type;
         };
         #endregion
     }
@@ -185,6 +187,11 @@ namespace rpi_rgb_led_matrix_sharp
         /// ghosting), but have a negative impact on the frame rate.
         /// </summary>
         public int PwmLsbNanoseconds;
+
+        /// <summary>
+        /// The lower bits can be time-dithered for higher refresh rate.
+        /// </summary>
+        public int PwmDitherBits;
 
         /// <summary>
         /// The initial brightness of the panel in percent. Valid range is 1..100
