@@ -253,6 +253,8 @@ struct LedCanvas *led_matrix_create_offscreen_canvas(struct RGBLedMatrix *matrix
 struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
                                            struct LedCanvas *canvas);
 
+uint8_t led_matrix_get_brightness(struct RGBLedMatrix *matrix);
+void led_matrix_set_brightness(struct RGBLedMatrix *matrix, uint8_t brightness);
 
 struct LedFont *load_font(const char *bdf_font_file);
 void delete_font(struct LedFont *font);

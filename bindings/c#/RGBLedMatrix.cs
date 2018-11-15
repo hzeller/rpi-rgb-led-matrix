@@ -30,6 +30,12 @@ namespace rpi_rgb_led_matrix_sharp
 
         [DllImport("librgbmatrix.so")]
         internal static extern IntPtr led_matrix_get_canvas(IntPtr matrix);
+
+        [DllImport("librgbmatrix.so")]
+        internal static extern byte led_matrix_get_brightness(IntPtr matrix);
+
+        [DllImport("librgbmatrix.so")]
+        internal static extern void led_matrix_set_brightness(IntPtr matrix, byte brightness);
         #endregion
 
         public RGBLedMatrix(int rows, int chained, int parallel)
@@ -60,7 +66,6 @@ namespace rpi_rgb_led_matrix_sharp
                 opt.brightness = options.Brightness;
                 opt.disable_hardware_pulsing = (uint)(options.DisableHardwarePulsing ? 1 : 0);
                 opt.row_address_type = options.RowAddressType;
-
                 // dont care about these
                 var argc = IntPtr.Zero;
                 var argv = IntPtr.Zero;
@@ -93,6 +98,13 @@ namespace rpi_rgb_led_matrix_sharp
             canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
             return canvas;
         }
+
+        public byte Brightness
+        {
+          get { return led_matrix_get_brightness(matrix); }
+          set { led_matrix_set_brightness(matrix, value); }
+        }
+
         #region IDisposable Support
         private bool disposedValue = false;
 
