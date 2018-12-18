@@ -199,18 +199,32 @@ uint32_t GPIO::RequestInputs(uint32_t inputs) {
 }
 
 static bool DetermineIsRaspberryPi2() {
-  // TODO: there must be a better, more robust way. Can we ask the processor ?
-  char buffer[2048];
-  const int fd = open("/proc/cmdline", O_RDONLY);
-  ssize_t r = read(fd, buffer, sizeof(buffer) - 1); // returns all in one read.
-  buffer[r >= 0 ? r : 0] = '\0';
-  close(fd);
-  const char *mem_size_key;
-  uint64_t mem_size = 0;
-  if ((mem_size_key = strstr(buffer, "mem_size=")) != NULL
-      && (sscanf(mem_size_key + strlen("mem_size="), "%" PRIx64, &mem_size) == 1)
-      && (mem_size >= 0x3F000000)) {
-    return true;
+  char buffer[256];
+  FILE *fd = fopen("/proc/cpuinfo", "r");
+  if (fd == NULL) return false;
+
+  long int found_revision = 0; 
+  while(fgets(buffer, sizeof(buffer), fd) != NULL) {
+    char *save_ptr = NULL;
+    char *key = strtok_r(buffer, ":", &save_ptr);
+    
+    if (strstr(key, "Revision") != NULL) {
+      char *str_value = strtok_r(NULL, ":", &save_ptr);
+      found_revision = strtol(str_value, NULL, 16);
+      break;
+    }
+  }
+  fclose(fd);
+
+  //remove warranty bits 24 and 25
+  found_revision &= ~0x3000000;
+  //is new revision numbers if bit 23 is set
+  if (found_revision & 0x800000) {
+    //proc information is stored bits 12-15
+    int proc_type = (found_revision & 0x7800) >> 12;
+    if (proc_type > 0) {
+      return true;
+    }
   }
   return false;
 }
