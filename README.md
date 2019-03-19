@@ -576,6 +576,10 @@ above makes sense to you, you have the Ninja level to do it!
 It might be more convienent at this point to consider the [Active3 adapter](./adapter/active-3)
 that has that covered already.
 
+Acme Systems adapter
+--------------------
+A ready-to-use adapter is available also from Acme Systems ( https://www.acmesystems.it/HAT-A3 )
+
 CPU use
 -------
 
