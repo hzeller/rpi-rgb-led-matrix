@@ -190,6 +190,50 @@ struct HardwareMapping matrix_hardware_mappings[] = {
   },
 
   /*
+   * The mapping for JI's first batch hat(s), from
+   * https://github.com/jayeye/ji/src/kicad/rpi-rgb-led-matrix-ji
+   * with swapped G1/G2
+   */
+  {
+    .name          = "ji-hat-bug",
+
+    .output_enable = GPIO_BIT(18),
+    .clock         = GPIO_BIT(27),
+    .strobe        = GPIO_BIT(21),
+
+    /* Address lines */
+    .a             = GPIO_BIT(16),
+    .b             = GPIO_BIT(19),
+    .c             = GPIO_BIT(20),
+    .d             = GPIO_BIT(26),
+    .e             = GPIO_BIT(13),
+
+    /* Parallel chain 0, RGB for both sub-panels */
+    .p0_r1         = GPIO_BIT(4),
+    .p0_g1         = GPIO_BIT(15),
+    .p0_b1         = GPIO_BIT(14),
+    .p0_r2         = GPIO_BIT(3),
+    .p0_g2         = GPIO_BIT(17),
+    .p0_b2         = GPIO_BIT(2),
+
+    /* Chain 1 */
+    .p1_r1         = GPIO_BIT(10),
+    .p1_g1         = GPIO_BIT(25),
+    .p1_b1         = GPIO_BIT(24),
+    .p1_r2         = GPIO_BIT(22),
+    .p1_g2         = GPIO_BIT(9),
+    .p1_b2         = GPIO_BIT(23),
+
+    /* Chain 2 */
+    .p2_r1         = GPIO_BIT(5),
+    .p2_g1         = GPIO_BIT(12),
+    .p2_b1         = GPIO_BIT(7),
+    .p2_r2         = GPIO_BIT(8),
+    .p2_g2         = GPIO_BIT(6),
+    .p2_b2         = GPIO_BIT(11),
+  },
+
+  /*
    * Classic: Early forms of this library had this as default mapping, mostly
    * derived from the 26 GPIO-header version so that it also can work
    * on 40 Pin GPIO headers with more parallel chains.
