@@ -90,6 +90,53 @@ private:
   int angle_;
 };
 
+class MirrorPixelMapper : public PixelMapper {
+public:
+  MirrorPixelMapper() : direction_(0) {}
+
+  virtual const char *GetName() const { return "Mirror"; }
+
+  virtual bool SetParameters(int chain, int parallel, const char *param) {
+    if (param == NULL || strlen(param) == 0) {
+      direction_ = 1;
+    } else {
+      if (strstr(param, "h") != NULL) {
+        direction_ |= 1;
+      }
+      if (strstr(param, "v") != NULL) {
+        direction_ |= 2;
+      }
+    }
+    return true;
+  }
+
+  virtual bool GetSizeMapping(int matrix_width, int matrix_height,
+                              int *visible_width, int *visible_height)
+  const {
+    *visible_width = matrix_width;
+    *visible_height = matrix_height;
+    return true;
+  }
+
+  virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
+                                  int x, int y,
+                                  int *matrix_x, int *matrix_y) const {
+
+    if (direction_ & 1) {
+      *matrix_x = matrix_width - x - 1;
+    } else {
+      *matrix_x = x;
+    }
+    if (direction_ & 2) {
+      *matrix_y = matrix_height - y - 1;
+    } else {
+      *matrix_y = y;
+    }
+  }
+private:
+  int direction_;
+};
+
 // If we take a long chain of panels and arrange them in a U-shape, so
 // that after half the panels we bend around and continue below. This way
 // we have a panel that has double the height but only uses one chain.
@@ -177,6 +224,7 @@ static MapperByName *CreateMapperMap() {
 
   // Register all the default PixelMappers here.
   RegisterPixelMapperInternal(result, new RotatePixelMapper());
+  RegisterPixelMapperInternal(result, new MirrorPixelMapper());
   RegisterPixelMapperInternal(result, new UArrangementMapper());
   return result;
 }
