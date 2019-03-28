@@ -1,7 +1,7 @@
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
-A library to control commonly available 64x64, 32x32 or 16x32 RGB LED panels
+A library to control commonly available 64x64, 32x64, 32x32 or 16x32 RGB LED panels
 with the Raspberry Pi. Can support PWM up to 11Bit per channel, providing
 true 24bpp color with CIE1931 profile.
 
@@ -27,6 +27,22 @@ Overview
 The RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
 [AdaFruit][ada] or eBay and Aliexpress. If you are in China, I'd try to get
 them directly from some manufacturer, Taobao or Alibaba.
+Some things to watch out for:
+* They come in many different sizes. The naming is fairly obvious; 
+  the **P** indicates the pitch in millimeters. 
+* Some of the larger panels (larger than P5) may come with a variety of LED sizes;
+  the cheaper ones may smaller LEDs than their more expensive brethren. For example,
+  "2121" LEDs (the package will be 2.1mm square) are right for a P3 panel, but they
+  don't quite look right on a P5 or larger. They are a lot cheaper, however.
+* These things are power-hungry. A fully-lit 64x64 panel of 2121 LEDs can easily draw 8A.
+  A wall-wart won't cut it; you need a hefty 5V power supply. For long runs of panels fed
+  from the same power supply, make sure your cables are thick enough, and use additional
+  bypass capacitors (most panels have unpopulated pds for them).
+* Finally, if you get several panels for some project, get them 
+  all at once and get some extras: the ones being sold are all leftovers from large
+  batches going to the sort of companies that make the huge screens at Times Square.
+  This does not mean that they are of inferior quality, but different batches may have
+  slightly different color response. 
 
 The `RGBMatrix` class provided in `include/led-matrix.h` does what is needed
 to control these. You can use this as a library in your own projects or just
