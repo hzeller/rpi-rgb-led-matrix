@@ -161,6 +161,7 @@ This can have values such as
   - `--led-gpio-mapping=regular` The standard mapping of this library, described in the [wiring](./wiring.md) page.
   - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT/Bonnet, that uses this library or
   - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
+  - `--led-gpio-mapping=ji-hat` JI's [full-featured-HAT and miminal-adaptor versions](https://github.com/jayeye/ji/tree/master/src/kicad/rpi-rgb-led-matrix-ji).
 
 The next most important flags describe the type and number of displays connected
 
