@@ -136,7 +136,7 @@ The library comes as an API that you can use for your own utilities and use-case
     couple of [examples](./bindings/python/samples) to get started.
   * There are a couple of external bindings, such as
       * [Nodejs binding] by Maxime Journaux
-      * [Nodejs/TypeScript binding] by Alex Eden
+      * [Nodejs/Typescript binding] by Alex Eden
       * [Go binding] by Máximo Cuadros
       * [Rust binding] by Vincent Pasquier
 
@@ -650,4 +650,4 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [Nodejs binding]: https://github.com/zeitungen/node-rpi-rgb-led-matrix
 [Go binding]: https://github.com/mcuadros/go-rpi-rgb-led-matrix
 [Rust binding]: https://crates.io/crates/rpi-led-matrix
-[Nodejs/TypeScript binding]: https://github.com/alexeden/rpi-led-matrix
+[Nodejs/Typescript binding]: https://github.com/alexeden/rpi-led-matrix
