@@ -66,6 +66,7 @@ namespace rpi_rgb_led_matrix_sharp
                 opt.brightness = options.Brightness;
                 opt.disable_hardware_pulsing = (uint)(options.DisableHardwarePulsing ? 1 : 0);
                 opt.row_address_type = options.RowAddressType;
+                opt.gpio_slowdown = options.GpioSlowdown;
                 // dont care about these
                 var argc = IntPtr.Zero;
                 var argv = IntPtr.Zero;
@@ -147,6 +148,7 @@ namespace rpi_rgb_led_matrix_sharp
             public uint disable_hardware_pulsing;
             public uint show_refresh_rate;
             public uint inverse_colors;
+            public int gpio_slowdown;
         };
         #endregion
     }
@@ -244,5 +246,10 @@ namespace rpi_rgb_led_matrix_sharp
         public bool DisableHardwarePulsing;
         public bool ShowRefreshRate;
         public bool InverseColors;
+
+        /// <summary>
+        /// Slowdown GPIO. Needed for faster Pis/slower panels.
+        /// </summary>
+        public int GpioSlowdown;
     };
 }

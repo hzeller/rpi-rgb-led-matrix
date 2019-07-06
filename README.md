@@ -98,7 +98,7 @@ This documentation is split into parts that help you through the process
     what goes where. You might also be interested
     in [breakout boards](./adapter) for that.
     If you have an [Adafruit HAT] or [Adafruit Bonnet], you can choose that with
-    a command line option [described below](#if-you-have-an-adafruit-hat)
+    a command line option [described below](#if-you-have-an-adafruit-hat-or-bonnet)
   2. Run a demo. You find that in the
      [examples-api-use/](./examples-api-use#running-some-demos) directory:
 ```
