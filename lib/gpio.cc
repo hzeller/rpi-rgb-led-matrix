@@ -69,6 +69,7 @@
 // Raspberry 1 and 2 have different base addresses for the periphery
 #define BCM2708_PERI_BASE        0x20000000
 #define BCM2709_PERI_BASE        0x3F000000
+#define BCM2711_PERI_BASE        0xFE000000
 
 #define GPIO_REGISTER_OFFSET         0x200000
 #define COUNTER_1Mhz_REGISTER_OFFSET   0x3000
@@ -198,43 +199,107 @@ uint32_t GPIO::RequestInputs(uint32_t inputs) {
   return inputs;
 }
 
-static bool DetermineIsRaspberryPi2() {
-  // TODO: there must be a better, more robust way. Can we ask the processor ?
-  char buffer[2048];
-  const int fd = open("/proc/cmdline", O_RDONLY);
-  ssize_t r = read(fd, buffer, sizeof(buffer) - 1); // returns all in one read.
+// We are not interested in the _exact_ model, just good enough to determine
+// What to do.
+enum class RaspberryPiModel {
+  PI_MODEL_1,
+  PI_MODEL_2_3,
+  PI_MODEL_4
+};
+
+static int ReadFileToBuffer(char *buffer, size_t size, const char *filename) {
+  const int fd = open(filename, O_RDONLY);
+  if (fd < 0) return -1;
+  ssize_t r = read(fd, buffer, size - 1); // assume one read enough
   buffer[r >= 0 ? r : 0] = '\0';
   close(fd);
-  const char *mem_size_key;
-  uint64_t mem_size = 0;
-  if ((mem_size_key = strstr(buffer, "mem_size=")) != NULL
-      && (sscanf(mem_size_key + strlen("mem_size="), "%" PRIx64, &mem_size) == 1)
-      && (mem_size >= 0x3F000000)) {
-    return true;
-  }
-  return false;
+  return r;
 }
 
-static bool IsRaspberryPi2() {
-  static bool ispi2 = DetermineIsRaspberryPi2();
-  return ispi2;
+static RaspberryPiModel DetermineRaspberryModel() {
+  char buffer[4096];
+  if (ReadFileToBuffer(buffer, sizeof(buffer), "/proc/cpuinfo") < 0) {
+    fprintf(stderr, "Reading cpuinfo: Could not determine Pi model\n");
+    return RaspberryPiModel::PI_MODEL_2_3;  // safe guess fallback.
+  }
+  static const char RevisionTag[] = "Revision";
+  const char *revision_key;
+  if ((revision_key = strstr(buffer, RevisionTag)) == NULL) {
+    fprintf(stderr, "non-existent Revision: Could not determine Pi model\n");
+    return RaspberryPiModel::PI_MODEL_2_3;
+  }
+  unsigned int pi_revision;
+  if (sscanf(index(revision_key, ':') + 1, "%x", &pi_revision) != 1) {
+    fprintf(stderr, "Unknown Revision: Could not determine Pi model\n");
+    return RaspberryPiModel::PI_MODEL_2_3;
+  }
+
+  const unsigned pi_type = (pi_revision >> 4) & 0xff;
+  switch (pi_type) {
+  case 0x00: /* A */
+  case 0x01: /* B, Compute Module 1 */
+  case 0x02: /* A+ */
+  case 0x03: /* B+ */
+  case 0x05: /* Alpha */
+  case 0x06: /* Compute Module */
+  case 0x09: /* Zero */
+  case 0x0c: /* Zero W */
+    return RaspberryPiModel::PI_MODEL_1;
+
+  case 0x11: /* Pi 4 */
+    return RaspberryPiModel::PI_MODEL_4;
+
+  default:  /* a bunch of versions represneting Pi 2 or Pi 3 */
+    return RaspberryPiModel::PI_MODEL_2_3;
+  }
+}
+
+static RaspberryPiModel GetPiModel() {
+  static RaspberryPiModel pi_model = DetermineRaspberryModel();
+  return pi_model;
+}
+
+static int GetNumCores() {
+  return GetPiModel() == RaspberryPiModel::PI_MODEL_1 ? 1 : 4;
 }
 
 static uint32_t JitterAllowanceMicroseconds() {
   // If this is a Raspberry Pi2 or 3, we can allow to burn a bit more busy-wait
   // CPU cycles to get the timing accurate as we have more CPU to spare.
   static int allowance_us = EMPIRICAL_NANOSLEEP_OVERHEAD_US
-    + (IsRaspberryPi2() ? EMPIRICAL_NANOSLEEP_EXTRA_OVERHEAD_US : 0);
+    + (GetNumCores() > 1 ? EMPIRICAL_NANOSLEEP_EXTRA_OVERHEAD_US : 0);
   return allowance_us;
 }
 
-static uint32_t *mmap_bcm_register(bool isRPi2, off_t register_offset) {
-  const off_t base = (isRPi2 ? BCM2709_PERI_BASE : BCM2708_PERI_BASE);
+static uint32_t *mmap_bcm_register(off_t register_offset) {
+  off_t base = BCM2709_PERI_BASE;  // safe fallback guess.
+  switch (GetPiModel()) {
+  case RaspberryPiModel::PI_MODEL_1:   base = BCM2708_PERI_BASE; break;
+  case RaspberryPiModel::PI_MODEL_2_3: base = BCM2709_PERI_BASE; break;
+  case RaspberryPiModel::PI_MODEL_4:   base = BCM2711_PERI_BASE; break;
+  }
 
   int mem_fd;
   if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
-    perror("can't open /dev/mem: ");
-    return NULL;
+    // Try to fall back to /dev/gpiomem.
+
+    // Unfortunately, this will not work with all the registers we want
+    // to map, so we'll get degraded performance.
+    // Annoyingly, it will still successfully mmap(), but simply not work
+    // later :/
+    // So catch these cases here and return early with failure.
+    // TODO: send patch to kernel people to include these ranges.
+
+    // PWM subsystem can not be accessed by gpiomem
+    if (register_offset == GPIO_PWM_BASE_OFFSET)
+      return NULL;
+
+    // Also, we can't read the 1Mhz counter with gpiomem.
+    if (register_offset == COUNTER_1Mhz_REGISTER_OFFSET)
+      return NULL;
+
+    mem_fd = open("/dev/gpiomem", O_RDWR|O_SYNC);
+    if (mem_fd < 0) return NULL;
   }
 
   uint32_t *result =
@@ -249,8 +314,8 @@ static uint32_t *mmap_bcm_register(bool isRPi2, off_t register_offset) {
 
   if (result == MAP_FAILED) {
     perror("mmap error: ");
-    fprintf(stderr, "%s: MMapping from base 0x%lx, offset 0x%lx\n",
-            isRPi2 ? "RPi2,3" : "RPi1", base, register_offset);
+    fprintf(stderr, "MMapping from base 0x%lx, offset 0x%lx\n",
+            base, register_offset);
     return NULL;
   }
   return result;
@@ -259,27 +324,22 @@ static uint32_t *mmap_bcm_register(bool isRPi2, off_t register_offset) {
 static bool mmap_all_bcm_registers_once() {
   if (s_GPIO_registers != NULL) return true;  // alrady done.
 
-  const bool isPI2 = IsRaspberryPi2();
-
   // The common GPIO registers.
-  s_GPIO_registers = mmap_bcm_register(isPI2, GPIO_REGISTER_OFFSET);
+  s_GPIO_registers = mmap_bcm_register(GPIO_REGISTER_OFFSET);
   if (s_GPIO_registers == NULL) {
     return false;
   }
 
-  // Time measurement.
-  uint32_t *timereg = mmap_bcm_register(isPI2, COUNTER_1Mhz_REGISTER_OFFSET);
-  if (timereg == NULL) {
-    return false;
+  // Time measurement. Might fail when run as non-root.
+  uint32_t *timereg = mmap_bcm_register(COUNTER_1Mhz_REGISTER_OFFSET);
+  if (timereg != NULL) {
+    s_Timer1Mhz = timereg + 1;
   }
-  s_Timer1Mhz = timereg + 1;
 
-  // Hardware pin-pulser.
-  s_PWM_registers  = mmap_bcm_register(isPI2, GPIO_PWM_BASE_OFFSET);
-  s_CLK_registers  = mmap_bcm_register(isPI2, GPIO_CLK_BASE_OFFSET);
-  if (!s_PWM_registers || !s_CLK_registers) {
-    return false;
-  }
+  // Hardware pin-pulser. Might fail when run as non-root.
+  s_PWM_registers  = mmap_bcm_register(GPIO_PWM_BASE_OFFSET);
+  s_CLK_registers  = mmap_bcm_register(GPIO_CLK_BASE_OFFSET);
+
   return true;
 }
 
@@ -360,7 +420,7 @@ static void (*busy_sleep_impl)(long) = sleep_nanos_rpi_1;
 // our RT-thread is locked onto one of these.
 // So let's tell it not to do that.
 static void DisableRealtimeThrottling() {
-  if (!IsRaspberryPi2()) return;   // Not safe if we don't have > 1 core.
+  if (GetNumCores() == 1) return;   // Not safe if we don't have > 1 core.
   const int out = open("/proc/sys/kernel/sched_rt_runtime_us", O_WRONLY);
   if (out < 0) return;
   write(out, "-1", 2);
@@ -370,9 +430,15 @@ static void DisableRealtimeThrottling() {
 bool Timers::Init() {
   if (!mmap_all_bcm_registers_once())
     return false;
-  const bool isRPi2 = IsRaspberryPi2();
-  busy_sleep_impl = isRPi2 ? sleep_nanos_rpi_2 : sleep_nanos_rpi_1;
-  if (isRPi2) DisableRealtimeThrottling();
+  switch (GetPiModel()) {
+  case RaspberryPiModel::PI_MODEL_1:
+    busy_sleep_impl = sleep_nanos_rpi_1;
+    break;
+  default:
+    // TODO: re-determine timings in current operating systems.
+    busy_sleep_impl = sleep_nanos_rpi_2;
+  }
+  DisableRealtimeThrottling();
   return true;
 }
 
@@ -389,14 +455,15 @@ void Timers::sleep_nanos(long nanos) {
   //
   // We use the global 1Mhz hardware timer to measure the actual time period
   // that has passed, and then inch forward for the remaining time with
-  // busy wait.
+  // busy wait. TODO: if someone runs this as non-root, the hardware timer
+  // is not available.
   static long kJitterAllowanceNanos = JitterAllowanceMicroseconds() * 1000;
   if (nanos > kJitterAllowanceNanos + 5000) {
-    const uint32_t before = *s_Timer1Mhz;
+    const uint32_t before = GetMicrosecondCounter();
     struct timespec sleep_time
       = { 0, nanos - kJitterAllowanceNanos };
     nanosleep(&sleep_time, NULL);
-    const uint32_t after = *s_Timer1Mhz;
+    const uint32_t after = GetMicrosecondCounter();
     const long nanoseconds_passed = 1000 * (uint32_t)(after - before);
     if (nanoseconds_passed > nanos) {
       return;  // darn, missed it.
@@ -452,7 +519,13 @@ public:
 #ifdef DISABLE_HARDWARE_PULSES
     return false;
 #else
-    return gpio_mask == (1 << 18) || gpio_mask == (1 << 12);
+    const bool can_handle = gpio_mask == (1 << 18) || gpio_mask == (1 << 12);
+    if (can_handle && (s_PWM_registers == NULL || s_CLK_registers == NULL)) {
+      fprintf(stderr, "Flicker alert: you have to run as root to use improved "
+              "PWM with hardware pulse.\n");
+      return false;
+    }
+    return can_handle;
 #endif
   }
 
@@ -541,7 +614,7 @@ public:
     *fifo_ = 0;
 
     sleep_hint_ = sleep_hints_[c];
-    start_time_ = *s_Timer1Mhz;
+    start_time_ = GetMicrosecondCounter();
     triggered_ = true;
     s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
   }
@@ -555,7 +628,7 @@ public:
     //   the hardware once it is done with the pulse. Sounds silly that there is
     //   not.
     if (sleep_hint_ > 0) {
-      const uint32_t already_elapsed_usec = *s_Timer1Mhz - start_time_;
+      const uint32_t already_elapsed_usec = GetMicrosecondCounter() - start_time_;
       const int to_sleep = sleep_hint_ - already_elapsed_usec;
       if (to_sleep > 0) {
         struct timespec sleep_time = { 0, 1000 * to_sleep };
@@ -565,7 +638,7 @@ public:
         {
           // Record histogram of realtime jitter how much longer we actually
           // took.
-          const int total_us = *timer1Mhz - start_time_;
+          const int total_us = GetMicrosecondCounter() - start_time_;
           const int nanoslept = total_us - already_elapsed_usec;
           int overshoot = nanoslept - (to_sleep + JitterAllowanceMicroseconds());
           if (overshoot < 0) overshoot = 0;
@@ -634,7 +707,15 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
 }
 
 uint32_t GetMicrosecondCounter() {
-  return s_Timer1Mhz ? *s_Timer1Mhz : 0;
+  if (s_Timer1Mhz) return *s_Timer1Mhz;
+
+  // When run as non-root, we can't read the timer. Fall back to slow
+  // operating-system ways.
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  const uint64_t micros = ts.tv_nsec / 1000;
+  const uint64_t epoch_usec = (uint64_t)ts.tv_sec * 1000000 + micros;
+  return epoch_usec & 0xFFFFFFFF;
 }
 
 } // namespace rgb_matrix

@@ -47,11 +47,6 @@
 #endif
 
 namespace rgb_matrix {
-
-// Get rolling over microsecond counter. Right now for experimental
-// purposes declared here (defined in gpio.cc).
-uint32_t GetMicrosecondCounter();
-
 using namespace internal;
 
 // Pump pixels to screen. Needs to be high priority real-time because jitter
