@@ -455,14 +455,12 @@ sudo update-initramfs -u
 
 Reboot and confirm that the module is not loaded.
 
-### I have followed the Adafruit Tutorial and it doesn't work
+### I have followed some tutorial on the Internet and it doesn't work
 
 Well, if you use this library, please read the documentation provided _here_,
 not on some other website. Most important for you to get started
-is the [wiring guide](./wiring.md).
-
-Adafruit has some outdated tutorial based on a super-ancient version of this
-library. It won't work.
+is the [wiring guide](./wiring.md). There are some tutorials floating around
+that refer to a very old version of this library.
 
 ### I have a Pi1 Revision1 and top part of Panel doesn't show green
 
@@ -513,9 +511,8 @@ ready-made vs. single-chain tradeoff is worthwhile, then you might go for that
 ### Switch the Pinout
 
 The Adafruit HAT/Bonnet uses this library but a modified pinout to support other
-features on the HAT. So they forked this library and modified the pinout there.
-However, that fork is _ancient_, so I strongly suggest to use this original
-library instead. You can choose the Adafruit pinout with a command line flag.
+features on the HAT. You can choose the Adafruit pinout with a command line
+flag.
 
 Just pass the option `--led-gpio-mapping=adafruit-hat`. This works on the C++
 and Python examples.
