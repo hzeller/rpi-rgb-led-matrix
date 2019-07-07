@@ -251,7 +251,7 @@ int main(int argc, char *argv[]) {
 
   const int frame_wait_micros = 1e6 / fps;
   do {
-    int frames_left = framecount_limit;
+    unsigned int frames_left = framecount_limit;
     if (forever) {
       av_seek_frame(pFormatCtx, videoStream, 0, AVSEEK_FLAG_ANY);
       avcodec_flush_buffers(pCodecCtx);
