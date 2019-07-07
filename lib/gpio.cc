@@ -281,21 +281,14 @@ static uint32_t *mmap_bcm_register(off_t register_offset) {
 
   int mem_fd;
   if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
-    // Try to fall back to /dev/gpiomem.
-
-    // Unfortunately, this will not work with all the registers we want
-    // to map, so we'll get degraded performance.
-    // Annoyingly, it will still successfully mmap(), but simply not work
-    // later :/
-    // So catch these cases here and return early with failure.
-    // TODO: send patch to kernel people to include these ranges.
-
-    // PWM subsystem can not be accessed by gpiomem
-    if (register_offset == GPIO_PWM_BASE_OFFSET)
-      return NULL;
-
-    // Also, we can't read the 1Mhz counter with gpiomem.
-    if (register_offset == COUNTER_1Mhz_REGISTER_OFFSET)
+    // Try to fall back to /dev/gpiomem. Unfortunately, that device
+    // is implemented in a way that it _only_ supports GPIO, not the
+    // other registers we need, such as PWM or COUNTER_1Mhz, which means
+    // we only can operate with degraded performance.
+    //
+    // But, instead of failing, mmap() then silently succeeds with the
+    // unsupported offset. So bail out here.
+    if (register_offset != GPIO_REGISTER_OFFSET)
       return NULL;
 
     mem_fd = open("/dev/gpiomem", O_RDWR|O_SYNC);
