@@ -427,6 +427,9 @@ int main(int argc, char *argv[]) {
           file_info = NULL;
         }
       }
+      else {
+        perror("Opening file");
+      }
     }
 
     if (file_info) {
