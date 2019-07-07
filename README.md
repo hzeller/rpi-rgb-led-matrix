@@ -49,7 +49,8 @@ models (and the Pi Zero). With the faster models, the panels sometimes
 can't keep up with the speed; check out
 this [troubleshooting section](#troubleshooting) what to do.
 
-The [Raspbian Lite][raspbian-lite] distribution is recommended.
+A lightweight, non-GUI, distribution such as [Raspbian Lite][raspbian-lite]
+or [DietPi] is recommended.
 
 Types of Displays
 -----------------
@@ -424,14 +425,14 @@ In general, run a minimal configuration on your Pi.
 
   * It seems that more recent version of Raspbian Lite result in some faint
     brightness fluctuations of the displays and it is not quite clear why (see
-    issue [#483](https://github.com/hzeller/rpi-rgb-led-matrix/issues/483)). If you are a Kernel person and can help figuring out what is
+    issue [#483](https://github.com/hzeller/rpi-rgb-led-matrix/issues/483)).
+    If you are a Kernel person and can help figuring out what is
     happening that would be very appreciated. Also, you might know a minimal
     Linux distribution that is more suited for near realtime applications ?
 
-The default install of **[Raspbian Lite][raspbian-lite]** seems to be a good
-starting point, as it has a reasonable minimal configuration to begin with.
-It recently has the issue of more interference with the matrix, so if you can
-recommend a more lightweight, realtime focused distribution, let me know.
+The default install of **[Raspbian Lite][raspbian-lite]** or **[DietPi]**
+seem to be good starting points, as they have a reasonably minimal
+configuration to begin with.
 
 ### Bad interaction with Sound
 If sound is enabled on your Pi, this will not work together with the LED matrix,
@@ -641,6 +642,7 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [rt-paper]: https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf
 [adafruit-hat]: https://www.adafruit.com/products/2345
 [raspbian-lite]: https://downloads.raspberrypi.org/raspbian_lite_latest
+[DietPi]: https://dietpi.com/
 [Adafruit HAT]: https://www.adafruit.com/products/2345
 [Adafruit Bonnet]: https://www.adafruit.com/product/3211
 [Nodejs binding]: https://github.com/zeitungen/node-rpi-rgb-led-matrix
