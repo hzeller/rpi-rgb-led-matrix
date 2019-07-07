@@ -80,4 +80,4 @@ that the input requires 3.3V level, so if you have a RS232, make sure to first a
 [config-pin8]: ../../img/active3-pcb-config-pin8.png
 [schematic]: ../../img/active3-schematic.png
 [real-world]: ../../img/three-parallel-panels-soic.jpg
-[osh-active3]: https://oshpark.com/shared_projects/bFtff2GR
+[osh-active3]: https://oshpark.com/shared_projects/6xAD1VXr
