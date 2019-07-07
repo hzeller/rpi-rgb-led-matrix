@@ -63,7 +63,8 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <video>\n", progname);
   fprintf(stderr, "Options:\n"
           "\t-O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).\n"
-          "\t-c <count>         : Only show this number of frames.\n"
+          "\t-s <count>         : Skip these number of frames in the beginning.\n"
+          "\t-c <count>         : Only show this number of frames (excluding skipped frames).\n"
           "\t-v                 : verbose.\n"
           "\t-f                 : Loop forever.\n");
 
@@ -83,10 +84,11 @@ int main(int argc, char *argv[]) {
   bool verbose = false;
   bool forever = false;
   int stream_output_fd = -1;
+  unsigned int frame_skip = 0;
   unsigned int framecount_limit = UINT_MAX;  // even at 60fps, that is > 2yrs
 
   int opt;
-  while ((opt = getopt(argc, argv, "vO:R:Lfc:")) != -1) {
+  while ((opt = getopt(argc, argv, "vO:R:Lfc:s:")) != -1) {
     switch (opt) {
     case 'v':
       verbose = true;
@@ -112,6 +114,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'c':
       framecount_limit = atoi(optarg);
+      break;
+    case 's':
+      frame_skip = atoi(optarg);
       break;
     default:
       return usage(argv[0]);
@@ -252,14 +257,16 @@ int main(int argc, char *argv[]) {
   const int frame_wait_micros = 1e6 / fps;
   do {
     unsigned int frames_left = framecount_limit;
+    unsigned int frames_to_skip = frame_skip;
     if (forever) {
       av_seek_frame(pFormatCtx, videoStream, 0, AVSEEK_FLAG_ANY);
       avcodec_flush_buffers(pCodecCtx);
     }
     while (!interrupt_received && av_read_frame(pFormatCtx, &packet) >= 0
-           && frames_left-- > 0) {
+           && frames_left > 0) {
       // Is this a packet from the video stream?
       if (packet.stream_index==videoStream) {
+        if (frames_to_skip) { frames_to_skip--; continue; }
         // Decode video frame
         avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
 
@@ -272,7 +279,9 @@ int main(int argc, char *argv[]) {
 
           CopyFrame(pFrameRGB, offscreen_canvas);
           frame_count++;
+          frames_left--;
           if (stream_writer) {
+            if (verbose) fprintf(stderr, "%6ld", frame_count);
             stream_writer->Stream(*offscreen_canvas, frame_wait_micros);
           } else {
             offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
