@@ -201,7 +201,7 @@ uint32_t GPIO::RequestInputs(uint32_t inputs) {
 
 // We are not interested in the _exact_ model, just good enough to determine
 // What to do.
-enum class RaspberryPiModel {
+enum RaspberryPiModel {
   PI_MODEL_1,
   PI_MODEL_2_3,
   PI_MODEL_4
@@ -220,18 +220,18 @@ static RaspberryPiModel DetermineRaspberryModel() {
   char buffer[4096];
   if (ReadFileToBuffer(buffer, sizeof(buffer), "/proc/cpuinfo") < 0) {
     fprintf(stderr, "Reading cpuinfo: Could not determine Pi model\n");
-    return RaspberryPiModel::PI_MODEL_2_3;  // safe guess fallback.
+    return PI_MODEL_2_3;  // safe guess fallback.
   }
   static const char RevisionTag[] = "Revision";
   const char *revision_key;
   if ((revision_key = strstr(buffer, RevisionTag)) == NULL) {
     fprintf(stderr, "non-existent Revision: Could not determine Pi model\n");
-    return RaspberryPiModel::PI_MODEL_2_3;
+    return PI_MODEL_2_3;
   }
   unsigned int pi_revision;
   if (sscanf(index(revision_key, ':') + 1, "%x", &pi_revision) != 1) {
     fprintf(stderr, "Unknown Revision: Could not determine Pi model\n");
-    return RaspberryPiModel::PI_MODEL_2_3;
+    return PI_MODEL_2_3;
   }
 
   const unsigned pi_type = (pi_revision >> 4) & 0xff;
@@ -244,13 +244,13 @@ static RaspberryPiModel DetermineRaspberryModel() {
   case 0x06: /* Compute Module */
   case 0x09: /* Zero */
   case 0x0c: /* Zero W */
-    return RaspberryPiModel::PI_MODEL_1;
+    return PI_MODEL_1;
 
   case 0x11: /* Pi 4 */
-    return RaspberryPiModel::PI_MODEL_4;
+    return PI_MODEL_4;
 
   default:  /* a bunch of versions represneting Pi 2 or Pi 3 */
-    return RaspberryPiModel::PI_MODEL_2_3;
+    return PI_MODEL_2_3;
   }
 }
 
@@ -260,7 +260,7 @@ static RaspberryPiModel GetPiModel() {
 }
 
 static int GetNumCores() {
-  return GetPiModel() == RaspberryPiModel::PI_MODEL_1 ? 1 : 4;
+  return GetPiModel() == PI_MODEL_1 ? 1 : 4;
 }
 
 static uint32_t JitterAllowanceMicroseconds() {
@@ -274,9 +274,9 @@ static uint32_t JitterAllowanceMicroseconds() {
 static uint32_t *mmap_bcm_register(off_t register_offset) {
   off_t base = BCM2709_PERI_BASE;  // safe fallback guess.
   switch (GetPiModel()) {
-  case RaspberryPiModel::PI_MODEL_1:   base = BCM2708_PERI_BASE; break;
-  case RaspberryPiModel::PI_MODEL_2_3: base = BCM2709_PERI_BASE; break;
-  case RaspberryPiModel::PI_MODEL_4:   base = BCM2711_PERI_BASE; break;
+  case PI_MODEL_1:   base = BCM2708_PERI_BASE; break;
+  case PI_MODEL_2_3: base = BCM2709_PERI_BASE; break;
+  case PI_MODEL_4:   base = BCM2711_PERI_BASE; break;
   }
 
   int mem_fd;
@@ -424,7 +424,7 @@ bool Timers::Init() {
   if (!mmap_all_bcm_registers_once())
     return false;
   switch (GetPiModel()) {
-  case RaspberryPiModel::PI_MODEL_1:
+  case PI_MODEL_1:
     busy_sleep_impl = sleep_nanos_rpi_1;
     break;
   default:
