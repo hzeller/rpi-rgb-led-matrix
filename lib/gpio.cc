@@ -43,19 +43,14 @@
  * This might be interesting to tweak in particular if you have a realtime
  * kernel with different characteristics.
  */
-#define EMPIRICAL_NANOSLEEP_OVERHEAD_US 25
+#define EMPIRICAL_NANOSLEEP_OVERHEAD_US 12
 
 /*
- * In few cases on a standard kernel, we see that the overhead is actually
- * even longer; these additional 35usec cover up for the 99.999%-ile.
- * So ideally, we always use these additional time and also busy-wait them,
- * right ?
- * However, that would take away a lot of CPU on older, one-core Raspberry Pis
- * or Pi Zeros. They rely for us to sleep when possible for it to do work.
- * So we only enable it, if we have have a newer Pi where we anyway burn
- * away on one core (And are isolated there with isolcpus=3).
+ * In case of non-hardware pulse generation, use nanosleep if we want to wait
+ * longer than these given microseconds beyond the general overhead.
+ * Below that, just use busy wait.
  */
-#define EMPIRICAL_NANOSLEEP_EXTRA_OVERHEAD_US 35
+#define MINIMUM_NANOSLEEP_TIME_US 5
 
 /* In order to determine useful values for above, set this to 1 and use the
  * hardware pin-pulser.
@@ -203,7 +198,8 @@ uint32_t GPIO::RequestInputs(uint32_t inputs) {
 // What to do.
 enum RaspberryPiModel {
   PI_MODEL_1,
-  PI_MODEL_2_3,
+  PI_MODEL_2,
+  PI_MODEL_3,
   PI_MODEL_4
 };
 
@@ -220,37 +216,41 @@ static RaspberryPiModel DetermineRaspberryModel() {
   char buffer[4096];
   if (ReadFileToBuffer(buffer, sizeof(buffer), "/proc/cpuinfo") < 0) {
     fprintf(stderr, "Reading cpuinfo: Could not determine Pi model\n");
-    return PI_MODEL_2_3;  // safe guess fallback.
+    return PI_MODEL_3;  // safe guess fallback.
   }
   static const char RevisionTag[] = "Revision";
   const char *revision_key;
   if ((revision_key = strstr(buffer, RevisionTag)) == NULL) {
     fprintf(stderr, "non-existent Revision: Could not determine Pi model\n");
-    return PI_MODEL_2_3;
+    return PI_MODEL_3;
   }
   unsigned int pi_revision;
   if (sscanf(index(revision_key, ':') + 1, "%x", &pi_revision) != 1) {
     fprintf(stderr, "Unknown Revision: Could not determine Pi model\n");
-    return PI_MODEL_2_3;
+    return PI_MODEL_3;
   }
 
+  // https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
   const unsigned pi_type = (pi_revision >> 4) & 0xff;
   switch (pi_type) {
   case 0x00: /* A */
   case 0x01: /* B, Compute Module 1 */
   case 0x02: /* A+ */
   case 0x03: /* B+ */
-  case 0x05: /* Alpha */
-  case 0x06: /* Compute Module */
+  case 0x05: /* Alpha ?*/
+  case 0x06: /* Compute Module1 */
   case 0x09: /* Zero */
   case 0x0c: /* Zero W */
     return PI_MODEL_1;
 
+  case 0x04:  /* Pi 2 */
+    return PI_MODEL_2;
+
   case 0x11: /* Pi 4 */
     return PI_MODEL_4;
 
-  default:  /* a bunch of versions represneting Pi 2 or Pi 3 */
-    return PI_MODEL_2_3;
+  default:  /* a bunch of versions represneting Pi 3 */
+    return PI_MODEL_3;
   }
 }
 
@@ -263,20 +263,13 @@ static int GetNumCores() {
   return GetPiModel() == PI_MODEL_1 ? 1 : 4;
 }
 
-static uint32_t JitterAllowanceMicroseconds() {
-  // If this is a Raspberry Pi2 or 3, we can allow to burn a bit more busy-wait
-  // CPU cycles to get the timing accurate as we have more CPU to spare.
-  static int allowance_us = EMPIRICAL_NANOSLEEP_OVERHEAD_US
-    + (GetNumCores() > 1 ? EMPIRICAL_NANOSLEEP_EXTRA_OVERHEAD_US : 0);
-  return allowance_us;
-}
-
 static uint32_t *mmap_bcm_register(off_t register_offset) {
   off_t base = BCM2709_PERI_BASE;  // safe fallback guess.
   switch (GetPiModel()) {
-  case PI_MODEL_1:   base = BCM2708_PERI_BASE; break;
-  case PI_MODEL_2_3: base = BCM2709_PERI_BASE; break;
-  case PI_MODEL_4:   base = BCM2711_PERI_BASE; break;
+  case PI_MODEL_1: base = BCM2708_PERI_BASE; break;
+  case PI_MODEL_2: base = BCM2709_PERI_BASE; break;
+  case PI_MODEL_3: base = BCM2709_PERI_BASE; break;
+  case PI_MODEL_4: base = BCM2711_PERI_BASE; break;
   }
 
   int mem_fd;
@@ -336,7 +329,6 @@ static bool mmap_all_bcm_registers_once() {
   return true;
 }
 
-// Based on code example found in http://elinux.org/RPi_Low-level_peripherals
 bool GPIO::Init(int slowdown) {
   slowdown_ = slowdown;
 
@@ -355,7 +347,7 @@ bool GPIO::Init(int slowdown) {
 /*
  * We support also other pinouts that don't have the OE- on the hardware
  * PWM output pin, so we need to provide (impefect) 'manual' timing as well.
- * Hence all various sleep_nano() implementations depending on the hardware.
+ * Hence all various busy_wait_nano() implementations depending on the hardware.
  */
 
 // --- PinPulser. Private implementation parts.
@@ -403,9 +395,19 @@ static bool LinuxHasModuleLoaded(const char *name) {
   return found;
 }
 
-static void sleep_nanos_rpi_1(long nanos);
-static void sleep_nanos_rpi_2(long nanos);
-static void (*busy_sleep_impl)(long) = sleep_nanos_rpi_1;
+static void busy_wait_nanos_rpi_1(long nanos);
+static void busy_wait_nanos_rpi_2(long nanos);
+static void busy_wait_nanos_rpi_3(long nanos);
+static void busy_wait_nanos_rpi_4(long nanos);
+static void (*busy_wait_impl)(long) = busy_wait_nanos_rpi_3;
+
+// Best effort write to file. Used to set kernel parameters.
+static void WriteTo(const char *filename, const char *str) {
+  const int fd = open(filename, O_WRONLY);
+  if (fd < 0) return;
+  write(fd, str, strlen(str));
+  close(fd);
+}
 
 // By default, the kernel applies some throtteling for realtime
 // threads to prevent starvation of non-RT threads. But we
@@ -414,25 +416,42 @@ static void (*busy_sleep_impl)(long) = sleep_nanos_rpi_1;
 // So let's tell it not to do that.
 static void DisableRealtimeThrottling() {
   if (GetNumCores() == 1) return;   // Not safe if we don't have > 1 core.
-  const int out = open("/proc/sys/kernel/sched_rt_runtime_us", O_WRONLY);
-  if (out < 0) return;
-  write(out, "-1", 2);
-  close(out);
+  WriteTo("/proc/sys/kernel/sched_rt_runtime_us", "-1");
 }
 
 bool Timers::Init() {
   if (!mmap_all_bcm_registers_once())
     return false;
+
+  // Choose the busy-wait loop that fits our Pi.
+  switch (GetPiModel()) {
+  case PI_MODEL_1: busy_wait_impl = busy_wait_nanos_rpi_1; break;
+  case PI_MODEL_2: busy_wait_impl = busy_wait_nanos_rpi_2; break;
+  case PI_MODEL_3: busy_wait_impl = busy_wait_nanos_rpi_3; break;
+  case PI_MODEL_4: busy_wait_impl = busy_wait_nanos_rpi_4; break;
+  }
+
+  DisableRealtimeThrottling();
+  // If we have it, we run the update thread on core3. No perf-compromises:
+  WriteTo("/sys/devices/system/cpu/cpu3/cpufreq/scaling_governor",
+          "performance");
+  return true;
+}
+
+static uint32_t JitterAllowanceMicroseconds() {
+  // If this is a Raspberry Pi with more than one core, we add a bit of
+  // additional overhead measured up to the 99.999%-ile: we can allow to burn
+  // a bit more busy-wait CPU cycles to get the timing accurate as we have
+  // more CPU to spare.
   switch (GetPiModel()) {
   case PI_MODEL_1:
-    busy_sleep_impl = sleep_nanos_rpi_1;
-    break;
-  default:
-    // TODO: re-determine timings in current operating systems.
-    busy_sleep_impl = sleep_nanos_rpi_2;
+    return EMPIRICAL_NANOSLEEP_OVERHEAD_US;  // 99.9%-ile
+  case PI_MODEL_2: case PI_MODEL_3:
+    return EMPIRICAL_NANOSLEEP_OVERHEAD_US + 35;  // 99.999%-ile
+  case PI_MODEL_4:
+    return EMPIRICAL_NANOSLEEP_OVERHEAD_US + 10;  // this one is fast.
   }
-  DisableRealtimeThrottling();
-  return true;
+  return EMPIRICAL_NANOSLEEP_OVERHEAD_US;
 }
 
 void Timers::sleep_nanos(long nanos) {
@@ -440,35 +459,41 @@ void Timers::sleep_nanos(long nanos) {
 
   // For larger duration, we use nanosleep() to give the operating system
   // a chance to do something else.
-  // However, these timings have a lot of jitter, so we do a two way
-  // approach: we use nanosleep(), but for some shorter time period so
-  // that we can tolerate some jitter (also, we need at least an offset of
-  // EMPIRICAL_NANOSLEEP_OVERHEAD_US as the nanosleep implementations on RPi
-  // actually have such offset).
-  //
-  // We use the global 1Mhz hardware timer to measure the actual time period
-  // that has passed, and then inch forward for the remaining time with
-  // busy wait. TODO: if someone runs this as non-root, the hardware timer
-  // is not available.
-  static long kJitterAllowanceNanos = JitterAllowanceMicroseconds() * 1000;
-  if (nanos > kJitterAllowanceNanos + 5000) {
-    const uint32_t before = GetMicrosecondCounter();
-    struct timespec sleep_time
-      = { 0, nanos - kJitterAllowanceNanos };
-    nanosleep(&sleep_time, NULL);
-    const uint32_t after = GetMicrosecondCounter();
-    const long nanoseconds_passed = 1000 * (uint32_t)(after - before);
-    if (nanoseconds_passed > nanos) {
-      return;  // darn, missed it.
-    } else {
-      nanos -= nanoseconds_passed; // remaining time with busy-loop
+
+  // However, these timings have a lot of jitter, so if we have the 1Mhz timer
+  // available, we use that to accurately mesure time spent and do the
+  // remaining time with busy wait. If we don't have the timer available
+  // (not running as root), we just use nanosleep() for larger values.
+
+  if (s_Timer1Mhz) {
+    static long kJitterAllowanceNanos = JitterAllowanceMicroseconds() * 1000;
+    if (nanos > kJitterAllowanceNanos + MINIMUM_NANOSLEEP_TIME_US*1000) {
+      const uint32_t before = *s_Timer1Mhz;
+      struct timespec sleep_time = { 0, nanos - kJitterAllowanceNanos };
+      nanosleep(&sleep_time, NULL);
+      const uint32_t after = *s_Timer1Mhz;
+      const long nanoseconds_passed = 1000 * (uint32_t)(after - before);
+      if (nanoseconds_passed > nanos) {
+        return;  // darn, missed it.
+      } else {
+        nanos -= nanoseconds_passed; // remaining time with busy-loop
+      }
+    }
+  } else {
+    // Not running as root, not having access to 1Mhz timer. Approximate large
+    // durations with nanosleep(); small durations are done with busy wait.
+    if (nanos > (EMPIRICAL_NANOSLEEP_OVERHEAD_US + MINIMUM_NANOSLEEP_TIME_US)*1000) {
+      struct timespec sleep_time
+        = { 0, nanos - EMPIRICAL_NANOSLEEP_OVERHEAD_US*1000 };
+      nanosleep(&sleep_time, NULL);
+      return;
     }
   }
 
-  busy_sleep_impl(nanos);
+  busy_wait_impl(nanos);  // Use model-specific busy-loop for remaining time.
 }
 
-static void sleep_nanos_rpi_1(long nanos) {
+static void busy_wait_nanos_rpi_1(long nanos) {
   if (nanos < 70) return;
   // The following loop is determined empirically on a 700Mhz RPi
   for (uint32_t i = (nanos - 70) >> 2; i != 0; --i) {
@@ -476,10 +501,25 @@ static void sleep_nanos_rpi_1(long nanos) {
   }
 }
 
-static void sleep_nanos_rpi_2(long nanos) {
+static void busy_wait_nanos_rpi_2(long nanos) {
   if (nanos < 20) return;
   // The following loop is determined empirically on a 900Mhz RPi 2
   for (uint32_t i = (nanos - 20) * 100 / 110; i != 0; --i) {
+    asm("");
+  }
+}
+
+static void busy_wait_nanos_rpi_3(long nanos) {
+  if (nanos < 20) return;
+  for (uint32_t i = (nanos - 15) * 100 / 73; i != 0; --i) {
+    asm("");
+  }
+}
+
+static void busy_wait_nanos_rpi_4(long nanos) {
+  if (nanos < 20) return;
+  // Interesting, the Pi4 is _slower_ than the Pi3 ? At least for this busy loop
+  for (uint32_t i = (nanos - 5) * 100 / 132; i != 0; --i) {
     asm("");
   }
 }
@@ -505,7 +545,7 @@ static void print_overshoot_histogram() {
 #endif
 
 // A PinPulser that uses the PWM hardware to create accurate pulses.
-// It only works on GPIO-18 though.
+// It only works on GPIO-12 or 18 though.
 class HardwarePinPulser : public PinPulser {
 public:
   static bool CanHandle(uint32_t gpio_mask) {
@@ -515,7 +555,7 @@ public:
     const bool can_handle = gpio_mask == (1 << 18) || gpio_mask == (1 << 12);
     if (can_handle && (s_PWM_registers == NULL || s_CLK_registers == NULL)) {
       fprintf(stderr, "Flicker alert: you have to run as root to use improved "
-              "PWM with hardware pulse.\n");
+              "hardware pulse generation.\n");
       return false;
     }
     return can_handle;
@@ -525,6 +565,8 @@ public:
   HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
     : triggered_(false) {
     assert(CanHandle(pins));
+    assert(s_CLK_registers && s_PWM_registers && s_Timer1Mhz);
+
 #if DEBUG_SLEEP_JITTER
     atexit(print_overshoot_histogram);
 #endif
@@ -544,13 +586,12 @@ public:
 
     for (size_t i = 0; i < specs.size(); ++i) {
       // Hints how long to nanosleep, already corrected for system overhead.
-      sleep_hints_.push_back(specs[i] / 1000 - JitterAllowanceMicroseconds());
+      sleep_hints_us_.push_back(specs[i]/1000 - JitterAllowanceMicroseconds());
     }
 
     const int base = specs[0];
     // Get relevant registers
     fifo_ = s_PWM_registers + PWM_FIFO;
-    assert((s_CLK_registers != NULL) && (s_PWM_registers != NULL));
 
     if (pins == (1<<18)) {
       // set GPIO 18 to PWM0 mode (Alternative 5)
@@ -606,8 +647,8 @@ public:
      */
     *fifo_ = 0;
 
-    sleep_hint_ = sleep_hints_[c];
-    start_time_ = GetMicrosecondCounter();
+    sleep_hint_us_ = sleep_hints_us_[c];
+    start_time_ = *s_Timer1Mhz;
     triggered_ = true;
     s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
   }
@@ -619,21 +660,22 @@ public:
     //
     // TODO(hzeller): find if it is possible to get some sort of interrupt from
     //   the hardware once it is done with the pulse. Sounds silly that there is
-    //   not.
-    if (sleep_hint_ > 0) {
-      const uint32_t already_elapsed_usec = GetMicrosecondCounter() - start_time_;
-      const int to_sleep = sleep_hint_ - already_elapsed_usec;
-      if (to_sleep > 0) {
-        struct timespec sleep_time = { 0, 1000 * to_sleep };
+    //   not (so far, only tested GPIO interrupt with a feedback line, but that
+    //   is super-slow with 20μs overhead).
+    if (sleep_hint_us_ > 0) {
+      const uint32_t already_elapsed_usec = *s_Timer1Mhz - start_time_;
+      const int to_sleep_us = sleep_hint_us_ - already_elapsed_usec;
+      if (to_sleep_us > 0) {
+        struct timespec sleep_time = { 0, 1000 * to_sleep_us };
         nanosleep(&sleep_time, NULL);
 
 #if DEBUG_SLEEP_JITTER
         {
           // Record histogram of realtime jitter how much longer we actually
           // took.
-          const int total_us = GetMicrosecondCounter() - start_time_;
-          const int nanoslept = total_us - already_elapsed_usec;
-          int overshoot = nanoslept - (to_sleep + JitterAllowanceMicroseconds());
+          const int total_us = *s_Timer1Mhz - start_time_;
+          const int nanoslept_us = total_us - already_elapsed_usec;
+          int overshoot = nanoslept_us - (to_sleep_us + JitterAllowanceMicroseconds());
           if (overshoot < 0) overshoot = 0;
           if (overshoot > 255) overshoot = 255;
           overshoot_histogram_us[overshoot]++;
@@ -678,10 +720,10 @@ private:
 
 private:
   std::vector<uint32_t> pwm_range_;
-  std::vector<int> sleep_hints_;
+  std::vector<int> sleep_hints_us_;
   volatile uint32_t *fifo_;
   uint32_t start_time_;
-  int sleep_hint_;
+  int sleep_hint_us_;
   bool triggered_;
 };
 
@@ -699,6 +741,7 @@ PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
   }
 }
 
+// For external use, e.g. in the matrix for extra time.
 uint32_t GetMicrosecondCounter() {
   if (s_Timer1Mhz) return *s_Timer1Mhz;
 
