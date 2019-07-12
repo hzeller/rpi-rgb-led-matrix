@@ -15,8 +15,8 @@ RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
 # Imagemagic flags, only needed if actually compiled.
-MAGICK_CXXFLAGS=`GraphicsMagick++-config --cppflags --cxxflags`
-MAGICK_LDFLAGS=`GraphicsMagick++-config --ldflags --libs`
+MAGICK_CXXFLAGS?=`GraphicsMagick++-config --cppflags --cxxflags`
+MAGICK_LDFLAGS?=`GraphicsMagick++-config --ldflags --libs`
 AV_CXXFLAGS=`pkg-config --cflags  libavcodec libavformat libswscale libavutil`
 
 all : $(BINARIES)
