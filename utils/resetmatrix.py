@@ -15,7 +15,7 @@ import sys
 import time
 
 import gpiozero
-import pycparser
+# import pycparser
 
 # ## Pins Up (male header)
 #
@@ -79,9 +79,9 @@ class JiHatZeroBug(object):
 
 
 def main(max_led):
-  print('Initializing...', eol='')
+  print('Initializing...', end='')
   m = JiHatZeroBug()
-  print(' sleeping...', eol='')
+  print(' sleeping...', end='')
   time.sleep(1)
   print()
   if TEENSY_LIKE:
