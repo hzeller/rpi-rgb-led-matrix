@@ -291,7 +291,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
     return NULL;
   }
 
-  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 4) {
+  // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
+  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 5) {
     fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
             runtime_options.gpio_slowdown);
     return NULL;
@@ -407,7 +408,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           !d.disable_hardware_pulsing ? "no-" : "",
           !d.disable_hardware_pulsing ? "Don't u" : "U");
 
-  fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
+  fprintf(out, "\t--led-slowdown-gpio=<0..4>: "
           "Slowdown GPIO. Needed for faster Pis/slower panels "
           "(Default: %d).\n", r.gpio_slowdown);
   if (r.daemon >= 0) {
