@@ -346,6 +346,8 @@ to debug if it has something to do with the sound subsystem (see Troubleshooting
 section). This is really only recommended for debugging; typically you actually
 want the hardware pulses as it results in a much more stable picture.
 
+<a name="no-drop-priv"/>
+
 ```
 --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
 ```
@@ -573,6 +575,27 @@ above makes sense to you, you have the Ninja level to do it!
 
 It might be more convienent at this point to consider the [Active3 adapter](./adapter/active-3)
 that has that covered already.
+
+Running as root
+---------------
+The library requires to access hardware registers to control the LED matrix,
+and create accurate timings. These hardware accesses require to run as root
+user.
+
+For security reasons, it is usually not a good idea to run an application
+as root entirely, so this library makes sure to drop privileges immediately
+after the hardware is initialized.
+
+You can switch off the privilege dropping with the
+[`--led-no-drop-privs`](#user-content-no-drop-priv) flag, or, if you do this
+programmatically,
+choose the configuration in the
+[`RuntimeOptions struct`](https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/include/led-matrix.h#L401).
+
+Note, you _could_ run as non-root, which will use `/dev/gpiomem`
+to at least write to GPIO, however the precise timing hardware registers are
+not accessible. This will result in flicker and color degradation. Starting
+as non-root is not recommended.
 
 CPU use
 -------
