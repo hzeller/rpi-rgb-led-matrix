@@ -44,7 +44,7 @@ import gpiozero
 # |   16 | GND  | #OE   |   15 |
 
 
-TEENSY_LIKE = True
+TEENSY_LIKE = False
 
 class JiHatZeroBug(object):
   def __init__(self):
@@ -91,7 +91,7 @@ def main(max_led):
     for l in range(max_led):
       y = l % 16
       m.off()
-      if y:
+      if y != 0:
         m.on()
       if l > max_led - 12:
         m.strobe.on()
@@ -118,7 +118,42 @@ def main(max_led):
       time.sleep(.0001)
     m.strobe.off()
     m.clock.off()
-
+  else:
+    m.clock.off()
+    m.output_enable.off()
+    m.a.on()
+    m.b.off()
+    m.c.off()
+    m.d.off()
+    m.e.off()
+    m.off()
+    for l in range(max_led):
+      y = l % 16
+      if y == 0:
+        m.off()
+      else:
+        m.on()
+      m.clock.on()
+      time.sleep(.0001)
+      m.clock.off()
+      time.sleep(.0001)
+      if l == max_led - 12:
+        m.strobe.on()
+    m.strobe.off()
+    for l in range(max_led):
+      y = l % 16
+      if y == 9:
+        m.on()
+      else:
+        m.off()
+      m.clock.on()
+      time.sleep(.0001)
+      m.clock.off()
+      time.sleep(.0001)
+      if l == max_led - 12:
+        m.strobe.on()
+    m.strobe.off()
+    m.output_enable.on()
 
 if __name__ == '__main__':
   main(int(sys.argv[1]))
