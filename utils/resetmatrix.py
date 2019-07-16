@@ -1,9 +1,50 @@
 #!/usr/bin/env python3
 
+# Copyright (C) John Ioannidis, ji@tla.org
+# Beer license:
+#   If you like this code, it would be nice if you don't take this notice out.
+#   If you make any money out of it (I doubt it), it would be nice if you send
+#   me some, but you don't have to!
+#   Either way, you should buy me a beer if we ever meet!
+
+# requirements:
+#   gpiozero
+#   pycparser
+
 import sys
 import time
 
 import gpiozero
+import pycparser
+
+# ## Pins Up (male header)
+#
+# | PIN  |       |      | PIN  |
+# | ---: | :---  | :--- | ---: |
+# |    1 | R1    | G1   |    2 |
+# |    3 | B1    | GND  |    4 |
+# |    5 | R2    | G2   |    6 |
+# |    7 | B2    | E    |    8 |
+# |    9 | A     | B    |   10 |
+# |   11 | C     | D    |   12 |
+# |   13 | CLK   | STR  |   14 |
+# |   15 | #OE   | GND  |   16 |
+#
+# ## Holes Up (female header)
+#
+# | PIN  |      |       | PIN  |
+# | ---: | :--- | :---  | ---: |
+# |    2 | G1   | R1    |    1 |
+# |    4 | GND  | B1    |    3 |
+# |    6 | G2   | R2    |    5 |
+# |    8 | E    | B2    |    7 |
+# |   10 | B    | A     |    9 |
+# |   12 | D    | C     |   11 |
+# |   14 | STR  | CLK   |   13 |
+# |   16 | GND  | #OE   |   15 |
+
+
+TEENSY_LIKE = True
 
 class JiHatZeroBug(object):
   def __init__(self):
@@ -38,57 +79,46 @@ class JiHatZeroBug(object):
 
 
 def main(max_led):
+  print('Initializing...', eol='')
   m = JiHatZeroBug()
+  print(' sleeping...', eol='')
+  time.sleep(1)
+  print()
+  if TEENSY_LIKE:
+    m.output_enable.on()
+    m.strobe.off()
+    m.clock.off()
+    for l in range(max_led):
+      y = l % 16
+      m.off()
+      if y:
+        m.on()
+      if l > max_led - 12:
+        m.strobe.on()
+      else:
+        m.strobe.off()
+      m.clock.on()
+      time.sleep(.0001)
+      m.clock.off()
+      time.sleep(.0001)
+    m.strobe.off()
+    m.clock.off()
+    for l in range(max_led):
+      y = l % 16
+      m.off()
+      if y == 9:
+        m.on()
+      if l == max_led - 13:
+        m.strobe.on()
+      else:
+        m.strobe.off()
+      m.clock.on()
+      time.sleep(.0001)
+      m.clock.off()
+      time.sleep(.0001)
+    m.strobe.off()
+    m.clock.off()
 
-  # m.output_enable.on()
-  # m.strobe.off()
-  # m.clock.off()
-  m.clock.off()
-  m.output_enable.off()
-  m.strobe.off()
-  m.a.on()
-  m.b.off()
-  m.c.off()
-  m.d.off()
-  m.e.off()
-  m.off()
-  for l in range(max_led):
-    y = l % 16
-    if y:
-      m.on()
-    else:
-      m.off()
-    m.clock.on()
-    time.sleep(.001)
-    m.clock.off()
-    time.sleep(.001)
-    # if l > max_led - 12:
-    if l == max_led - 12:
-      m.strobe.on()
-    else:
-      m.strobe.off()
-    # m.clock.on()
-    # m.clock.off()
-  m.strobe.off()
-  for l in range(max_led):
-    y = l % 16
-    if y == 9:
-      m.on()
-    else:
-      m.off()
-    m.clock.on()
-    time.sleep(.001)
-    m.clock.off()
-    time.sleep(.001)
-    if l == max_led - 13:
-      m.strobe.on()
-    else:
-      m.strobe.off()
-    # m.clock.on()
-    # m.clock.off()
-  m.strobe.off()
-  m.clock.off()
-  m.output_enable.on()
 
 if __name__ == '__main__':
   main(int(sys.argv[1]))
