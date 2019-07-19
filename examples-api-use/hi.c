@@ -77,6 +77,9 @@ int main(int argc, char* argv[]) {
     err(1, "initializing");
   }
   uint32_t max_led = 64;
+  if (argc > 1) {
+    max_led = atoi(argv[1]) * 64;
+  }
   gpioSetMode(hm.output_enable, PI_OUTPUT);
   gpioSetMode(hm.clock, PI_OUTPUT);
   gpioSetMode(hm.strobe, PI_OUTPUT);
@@ -104,6 +107,80 @@ int main(int argc, char* argv[]) {
   gpioSetMode(hm.p2_g2, PI_OUTPUT);
   gpioSetMode(hm.p2_b2, PI_OUTPUT);
 
+  // Send Data to control register 11
+  gpioWrite(hm.clock, LOW);
+  gpioWrite(hm.output_enable, LOW); // Display reset
+  gpioWrite(hm.strobe, LOW); // ???
+  gpioWrite(hm.a, HIGH);
+  gpioWrite(hm.b, LOW);
+  gpioWrite(hm.c, LOW);
+  gpioWrite(hm.d, LOW);
+  gpioWrite(hm.e, LOW);
+
+  for (int l = 0; l < max_led; ++l) {
+    int y = l % 16;
+    //if (C12[y] == 1) {
+    if (y == 0) {
+      gpioWrite(hm.p0_r1, LOW);
+      gpioWrite(hm.p0_g1, LOW);
+      gpioWrite(hm.p0_b1, LOW);
+      gpioWrite(hm.p0_r2, LOW);
+      gpioWrite(hm.p0_g2, LOW);
+      gpioWrite(hm.p0_b2, LOW);
+    } else {
+      gpioWrite(hm.p0_r1, HIGH);
+      gpioWrite(hm.p0_g1, HIGH);
+      gpioWrite(hm.p0_b1, HIGH);
+      gpioWrite(hm.p0_r2, HIGH);
+      gpioWrite(hm.p0_g2, HIGH);
+      gpioWrite(hm.p0_b2, HIGH);
+    }
+    gpioWrite(hm.clock, HIGH);
+    gpioWrite(hm.clock, LOW);
+    if (l >= max_led - 12) {
+      gpioWrite(hm.strobe, HIGH);
+    } else {
+      gpioWrite(hm.strobe, LOW);
+    }
+  }
+
+  gpioWrite(hm.strobe, LOW);
+  // Send Data to control register 12
+
+  for (int l = 0; l < max_led; ++l) {
+    int y = l % 16;
+    // if (C13[y]==1){
+    if (y != 9) {
+      gpioWrite(hm.p0_r1, LOW);
+      gpioWrite(hm.p0_g1, LOW);
+      gpioWrite(hm.p0_b1, LOW);
+      gpioWrite(hm.p0_r2, LOW);
+      gpioWrite(hm.p0_g2, LOW);
+      gpioWrite(hm.p0_b2, LOW);
+    } else {
+      gpioWrite(hm.p0_r1, HIGH);
+      gpioWrite(hm.p0_g1, HIGH);
+      gpioWrite(hm.p0_b1, HIGH);
+      gpioWrite(hm.p0_r2, HIGH);
+      gpioWrite(hm.p0_g2, HIGH);
+      gpioWrite(hm.p0_b2, HIGH);
+    }
+    gpioWrite(hm.clock, HIGH);
+    gpioWrite(hm.clock, LOW);
+    if (l >= max_led - 13) {
+      gpioWrite(hm.strobe, HIGH);
+    } else {
+      gpioWrite(hm.strobe, LOW);
+    }
+  }
+
+  //gpioWrite(DEBUG_PIN_3, LOW);
+  //gpioWrite(DEBUG_PIN_1, LOW);
+
+  gpioWrite(hm.strobe, LOW);
+
+
+#if 0
   // Send Data to control register 11
   gpioWrite(hm.output_enable, HIGH); // Display reset
   gpioWrite(hm.strobe, LOW);
@@ -172,5 +249,5 @@ int main(int argc, char* argv[]) {
 
   gpioWrite(hm.strobe, LOW);
   gpioWrite(hm.clock, LOW);
-
+#endif
 }
