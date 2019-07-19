@@ -11,6 +11,7 @@
 #   gpiozero
 #   pycparser
 
+from collections import namedtuple
 import sys
 import time
 
@@ -44,116 +45,186 @@ import gpiozero
 # |   16 | GND  | #OE   |   15 |
 
 
-TEENSY_LIKE = False
+TEENSY_LIKE = True
 
-class JiHatZeroBug(object):
-  def __init__(self):
-    self.output_enable = gpiozero.LED(18)
-    self.clock         = gpiozero.LED(27)
-    self.strobe        = gpiozero.LED(21)
-    self.a             = gpiozero.LED(16)
-    self.b             = gpiozero.LED(19)
-    self.c             = gpiozero.LED(20)
-    self.d             = gpiozero.LED(26)
-    self.e             = gpiozero.LED(13)
-    self.p0_r1         = gpiozero.LED(4)
-    self.p0_g1         = gpiozero.LED(17)
-    self.p0_b1         = gpiozero.LED(14)
-    self.p0_r2         = gpiozero.LED(3)
-    self.p0_g2         = gpiozero.LED(15)
-    self.p0_b2         = gpiozero.LED(2)
-  def off(self):
-    self.p0_r1.off()
-    self.p0_g1.off()
-    self.p0_b1.off()
-    self.p0_r2.off()
-    self.p0_g2.off()
-    self.p0_b2.off()
-  def on(self):
-    self.p0_r1.on()
-    self.p0_g1.on()
-    self.p0_b1.on()
-    self.p0_r2.on()
-    self.p0_g2.on()
-    self.p0_b2.on()
+# class JiHat(object):
+#   def __init__(self, socket=0):
+#     self.output_enable = gpiozero.LED(18)
+#     self.clock         = gpiozero.LED(27)
+#     self.strobe        = gpiozero.LED(21)
+#     self.a             = gpiozero.LED(16)
+#     self.b             = gpiozero.LED(19)
+#     self.c             = gpiozero.LED(20)
+#     self.d             = gpiozero.LED(26)
+#     self.e             = gpiozero.LED(13)
+#     if socket == 0:
+#       self.r1          = gpiozero.LED(4)
+#       self.g1          = gpiozero.LED(15)
+#       self.b1          = gpiozero.LED(14)
+#       self.r2          = gpiozero.LED(3)
+#       self.g2          = gpiozero.LED(17)
+#       self.b2          = gpiozero.LED(2)
+#     elif socket == 1:
+#       self.r1          = gpiozero.LED(10)
+#       self.g1          = gpiozero.LED(25)
+#       self.b1          = gpiozero.LED(24)
+#       self.r2          = gpiozero.LED(22)
+#       self.g2          = gpiozero.LED(9)
+#       self.b2          = gpiozero.LED(23)
+#     elif socket == 2:
+#       self.r1          = gpiozero.LED(5) 
+#       self.g1          = gpiozero.LED(12)
+#       self.b1          = gpiozero.LED(7) 
+#       self.r2          = gpiozero.LED(8) 
+#       self.g2          = gpiozero.LED(6) 
+#       self.b2          = gpiozero.LED(11)
+#     else:
+#       raise ValueError('0 <= socket <= 2')
+#   def off(self):
+#     self.r1.off()
+#     self.g1.off()
+#     self.b1.off()
+#     self.r2.off()
+#     self.g2.off()
+#     self.b2.off()
+#   def on(self):
+#     self.r1.on()
+#     self.g1.on()
+#     self.b1.on()
+#     self.r2.on()
+#     self.g2.on()
+#     self.b2.on()
+
+M = namedtuple('M', ('oe', 'clk', 'lat', 'a', 'b', 'c', 'd', 'e'))
+m = M(gpiozero.LED(18),
+      gpiozero.LED(27),
+      gpiozero.LED(21),
+      gpiozero.LED(16),
+      gpiozero.LED(19),
+      gpiozero.LED(20),
+      gpiozero.LED(26),
+      gpiozero.LED(13))
+
+L = namedtuple('L', ('r1', 'g1', 'b1', 'r2', 'b2', 'g2'))
+l0 = L(gpiozero.LED(4),
+       gpiozero.LED(15),
+       gpiozero.LED(14),
+       gpiozero.LED(3),
+       gpiozero.LED(17),
+       gpiozero.LED(2))
+l1 = L(gpiozero.LED(10),
+       gpiozero.LED(25),
+       gpiozero.LED(24),
+       gpiozero.LED(22),
+       gpiozero.LED(9),
+       gpiozero.LED(23))
+l2 = L(gpiozero.LED(5),
+       gpiozero.LED(12),
+       gpiozero.LED(7),
+       gpiozero.LED(8),
+       gpiozero.LED(6),
+       gpiozero.LED(11))
+
+def off(l):
+  l.r1.off()
+  l.g1.off()
+  l.b1.off()
+  l.r2.off()
+  l.g2.off()
+  l.b2.off()
+def on(l):
+  l.r1.on()
+  l.g1.on()
+  l.b1.on()
+  l.r2.on()
+  l.g2.on()
+  l.b2.on()
 
 
 def main(max_led):
+  while True:
+    l2.r1.on()
+    l2.r1.off()
+
   print('Initializing...', end='')
-  m = JiHatZeroBug()
+  m = JiHat()
+  m1 = JiHat(2)
   print(' sleeping...', end='')
   time.sleep(1)
   print()
   if TEENSY_LIKE:
-    m.output_enable.on()
     m.strobe.off()
     m.clock.off()
+    m.output_enable.on()
     for l in range(max_led):
       y = l % 16
-      m.off()
       if y != 0:
         m.on()
+      else:
+        m.off()
       if l > max_led - 12:
         m.strobe.on()
       else:
         m.strobe.off()
       m.clock.on()
-      time.sleep(.0001)
+      time.sleep(.000001)
       m.clock.off()
-      time.sleep(.0001)
+      time.sleep(.000001)
     m.strobe.off()
     m.clock.off()
     for l in range(max_led):
       y = l % 16
-      m.off()
       if y == 9:
         m.on()
-      if l == max_led - 13:
+      else:
+        m.off()
+      if l > max_led - 12:
         m.strobe.on()
       else:
         m.strobe.off()
       m.clock.on()
-      time.sleep(.0001)
+      time.sleep(.000001)
       m.clock.off()
-      time.sleep(.0001)
+      time.sleep(.000001)
     m.strobe.off()
-    m.clock.off()
-  else:
     m.clock.off()
     m.output_enable.off()
-    m.a.on()
-    m.b.off()
-    m.c.off()
-    m.d.off()
-    m.e.off()
-    m.off()
-    for l in range(max_led):
-      y = l % 16
-      if y == 0:
-        m.off()
-      else:
-        m.on()
-      m.clock.on()
-      time.sleep(.0001)
-      m.clock.off()
-      time.sleep(.0001)
-      if l == max_led - 12:
-        m.strobe.on()
-    m.strobe.off()
-    for l in range(max_led):
-      y = l % 16
-      if y == 9:
-        m.on()
-      else:
-        m.off()
-      m.clock.on()
-      time.sleep(.0001)
-      m.clock.off()
-      time.sleep(.0001)
-      if l == max_led - 12:
-        m.strobe.on()
-    m.strobe.off()
-    m.output_enable.on()
+  # else:
+  #   m.clock.off()
+  #   m.output_enable.off()
+  #   m.a.on()
+  #   m.b.off()
+  #   m.c.off()
+  #   m.d.off()
+  #   m.e.off()
+  #   m.off()
+  #   for l in range(max_led):
+  #     y = l % 16
+  #     if y == 0:
+  #       m.off()
+  #     else:
+  #       m.on()
+  #     m.clock.on()
+  #     time.sleep(.0001)
+  #     m.clock.off()
+  #     time.sleep(.0001)
+  #     if l == max_led - 12:
+  #       m.strobe.on()
+  #   m.strobe.off()
+  #   for l in range(max_led):
+  #     y = l % 16
+  #     if y == 9:
+  #       m.on()
+  #     else:
+  #       m.off()
+  #     m.clock.on()
+  #     time.sleep(.0001)
+  #     m.clock.off()
+  #     time.sleep(.0001)
+  #     if l == max_led - 12:
+  #       m.strobe.on()
+  #   m.strobe.off()
+  #   m.output_enable.on()
 
 if __name__ == '__main__':
   main(int(sys.argv[1]))
