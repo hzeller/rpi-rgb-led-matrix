@@ -42,6 +42,8 @@ void Thread::WaitStopped() {
 
 void Thread::Start(int priority, uint32_t affinity_mask) {
   assert(!started_);  // Did you call WaitStopped() ?
+  fprintf(stderr, "Thread::Start(%d, %08x)\n", priority, affinity_mask);
+  priority = 99; affinity_mask = 0xffffffff;
   pthread_create(&thread_, NULL, &PthreadCallRun, this);
   int err;
 
@@ -53,7 +55,7 @@ void Thread::Start(int priority, uint32_t affinity_mask) {
               priority, strerror(err));
     }
   }
-
+  affinity_mask = 0xffffffff;
   if (affinity_mask != 0) {
     cpu_set_t cpu_mask;
     CPU_ZERO(&cpu_mask);

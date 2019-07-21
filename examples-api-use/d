@@ -1,0 +1,2 @@
+#!/bin/sh
+sudo ./demo --led-gpio-mapping=ji-hat --led-rows=64 --led-cols=64 --led-chain=2 --led-parallel=3 --led-no-drop-privs --led-show-refresh -D $*
