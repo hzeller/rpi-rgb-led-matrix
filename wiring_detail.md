@@ -5,6 +5,7 @@ The `pi1` mappings were quite limited on the number of GPIO outputs, so used the
 
 ## HardwareMapping Property Name
 Bold numbers are **physical pins**, everything else is BCM GPIO pins
+
 |  | regular | adafruit-hat | adafruit-hat-pwm | regular-pi1 | classic | classic-pi1 | **HUB75 physical pin** |
 |---|---|---|---|---|---|---|---|
 | .output_enable | 18 | 4 | 18 | 18 | 27 | 0 \| 2 | **15** |
