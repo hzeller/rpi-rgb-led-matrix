@@ -1,0 +1,2 @@
+#!/bin/sh
+sudo ./scrolling-text-example --led-gpio-mapping=ji-hat --led-rows=32 --led-cols=64 --led-chain=1 --led-parallel=1 --led-no-drop-privs --led-show-refresh $*

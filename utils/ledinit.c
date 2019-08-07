@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
   gpioWrite(hm.e, LO);
 
   for (int l = 0; l < max_led; ++l) {
-    hmset(kReg2[l % 16]);;
+    hmset(kReg1[l % 16]);;
     gpioWrite(hm.clock, HI);
     gpioWrite(hm.clock, LO);
     if (l >= max_led - 12) {
