@@ -12,6 +12,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <curl/curl.h>
+
+#ifdef JSONC
+#include <json-c/json.h>
+#include <json-c/json_tokener.h>
+#endif
+
+#include <jansson.h>
 
 using namespace rgb_matrix;
 
@@ -43,6 +51,128 @@ static bool FullSaturation(const Color &c) {
         && (c.g == 0 || c.g == 255)
         && (c.b == 0 || c.b == 255);
 }
+
+ 
+struct MemoryStruct {
+  char* memory;
+  size_t size;
+};
+
+static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+  size_t realsize = size* nmemb;
+  struct MemoryStruct* mem = (struct MemoryStruct*)userp;
+  char* ptr = reinterpret_cast<char*>(realloc(mem->memory, mem->size + realsize + 1));
+  if (ptr == NULL) {
+    /* out of memory! */ 
+    fprintf(stderr, "not enough memory (realloc returned NULL)\n");
+    return 0;
+  }
+  mem->memory = ptr;
+  memcpy(&(mem->memory[mem->size]), contents, realsize);
+  mem->size += realsize;
+  mem->memory[mem->size] = 0;
+  return realsize;
+}
+ 
+#ifdef JSONC
+void json_recurse(json_object* jobj, int indent) {
+  enum json_type type;
+  char prefix[indent + 1];
+  for (int i = 0; i < indent; ++i) {
+    prefix[i] = ' ';
+  }
+  prefix[indent] = '\0';
+  json_object_object_foreach(jobj, key, val) {
+    type = json_object_get_type(val);
+    printf("%s type: ");
+    switch (type) {
+    case json_type_null:
+      printf("json_type_null\n");
+      break;
+    case json_type_boolean:
+      printf("json_type_boolean: %s\n",
+             json_object_get_boolean(jobj) ? "True" : "False");
+      break;
+    case json_type_double:
+      printf("json_type_double: %f\n",
+             json_object_get_double(jobj));
+      break;
+    case json_type_int:
+      printf("json_type_int: %d\n"k
+             json_object_get_int(jobj));
+      break;
+    case json_type_object:
+      printf("json_type_object: \n");
+      json_recurse(
+      break;
+    case json_type_array: printf("json_type_arrayn");
+      break;
+    case json_type_string: printf("json_type_stringn");
+      break;
+    }
+  }
+#endif
+
+void janson_recurse(json_t* jobj, int indent) {
+  //  printf("\nrecursing %d\n", indent);
+
+  char prefix[indent + 1];
+  for (int i = 0; i < indent; ++i) {
+    prefix[i] = ' ';
+  }
+  prefix[indent] = '\0';
+  const char* jkey;
+  json_t* jvalue;
+  json_object_foreach(jobj, jkey, jvalue) {
+    printf("%s%s: ", prefix, jkey);
+    switch (json_typeof(jvalue)) {
+    case JSON_TRUE:
+      printf("True\n");
+      break;
+    case JSON_FALSE:
+      printf("False\n");
+      break;
+    case JSON_NULL:
+      printf("NULL\n");
+      break;
+    case JSON_INTEGER:
+      printf("%" JSON_INTEGER_FORMAT "\n", json_integer_value(jvalue));
+      break;
+    case JSON_REAL:
+      printf("%f\n", json_real_value(jvalue));
+      break;
+    case JSON_STRING:
+      printf("\"%s\"\n", json_string_value(jvalue));
+      break;
+    case JSON_ARRAY:
+      printf("[\n");
+      {
+        size_t index;
+        json_t *jarr;
+        json_t *jv = jvalue;
+        json_array_foreach(jv, index, jarr) {
+          printf("%s  [%d]:\n", prefix, index);
+          janson_recurse(jarr, indent + 4);
+        }
+      }
+      printf("%s]\n", prefix);
+      break;
+    case JSON_OBJECT:
+      printf("%sOBJECT\n", prefix);
+      janson_recurse(jvalue, indent + 2); 
+      break;
+    }
+
+
+  }
+}
+
+
+
+
+
+//CURLcode curl_easy_setopt(CURL *handle, CURLOPT_WRITEFUNCTION, write_callback);
+
 
 int main(int argc, char *argv[]) {
   RGBMatrix::Options matrix_options;
@@ -96,6 +226,42 @@ int main(int argc, char *argv[]) {
     }
   }
 
+  struct MemoryStruct chunk;
+  chunk.memory = malloc(1); // will be grown as needed by the realloc above
+  chunk.size = 0;           // no data at this point 
+  curl_global_init(CURL_GLOBAL_ALL);
+  CURL* curler = curl_easy_init();
+  curl_easy_setopt(curler, CURLOPT_URL, "http://dataservice.accuweather.com/forecasts/v1/daily/1day/523789_PC?apikey=KdGjVBTcRtAZbVqcyVb4nIvAH7qdqZrS&language=en-us&details=true&metric=false");
+  curl_easy_setopt(curler, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+  curl_easy_setopt(curler, CURLOPT_WRITEDATA, (void*)&chunk);
+  curl_easy_setopt(curler, CURLOPT_USERAGENT, "SPERRY-UNIVAC 1100/60");
+  CURLcode res = curl_easy_perform(curler);
+  if (res != CURLE_OK) {
+    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+    exit(1);
+  }
+  printf("%lu bytes retrieved\n", (unsigned long)chunk.size);
+  printf("%s\n", chunk.memory);
+  printf("-------------------------\n\n");
+#ifdef JSONC
+  struct json_object* jobj = json_tokener_parse(chunk.memory);
+  json_recurse(jobj, 0);
+#endif
+
+  json_error_t jerr;
+  json_t* j = json_loadb(chunk.memory, chunk.size, 0, &jerr);
+  if (j == nullptr) {
+    fprintf(stderr, "%s from %s at %d, %d pos %d\n",
+            jerr.text, jerr.source, jerr.line, jerr.column, jerr.position);
+    exit(1);
+  }
+
+  janson_recurse(j, 0);
+
+  curl_easy_cleanup(curler);
+  free(chunk.memory);
+  curl_global_cleanup();
+  exit(0);
   for (int i = optind; i < argc; ++i) {
     cline.append(argv[i]).append(" ");
     fprintf(stderr, "%s\n", cline.c_str());

@@ -1,4 +1,4 @@
-CFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter
+CFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter -fpermissive
 CXXFLAGS=$(CFLAGS)
 OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o scrolling-text-example.o clock.o cclock.o ledcat.o input-example.o static-text.o
 BINARIES=demo minimal-example c-example text-example scrolling-text-example clock cclock ledcat input-example static-text
@@ -10,7 +10,7 @@ RGB_INCDIR=$(RGB_LIB_DISTRIBUTION)/include
 RGB_LIBDIR=$(RGB_LIB_DISTRIBUTION)/lib
 RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
-LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread -lcurl -ljansson 
 
 all : $(BINARIES)
 
