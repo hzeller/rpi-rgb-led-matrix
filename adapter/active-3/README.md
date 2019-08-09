@@ -19,7 +19,8 @@ Adapter PCB to support up to 3 panel chains
      - 1x 10kOhm resistor (0805 package). Not critcial, just a pullup (2.2k .. 15k probably ok).
      - 3x 16pin IDC (=2x8) male receptible to connect the panels.
      - 1x 40pin female connector to connect to the RPi.
-     - 1x (optional) 22μF .. 100μF capacitor for 5V rail.
+     - 1x (optional) 22μF .. 100μF capacitor for 5V rail (either 1206 SMD or
+       radial electrolytic with 2.5mm pitch/6.3mm diameter)
    * The Gerber FAB files are provided as [active3-rpi-hub75-adapter-fab.zip](./active3-rpi-hub75-adapter-fab.zip)
 
 The board is also [shared on OSH Park][osh-active3] (not affiliated).
@@ -80,4 +81,4 @@ that the input requires 3.3V level, so if you have a RS232, make sure to first a
 [config-pin8]: ../../img/active3-pcb-config-pin8.png
 [schematic]: ../../img/active3-schematic.png
 [real-world]: ../../img/three-parallel-panels-soic.jpg
-[osh-active3]: https://oshpark.com/shared_projects/bFtff2GR
+[osh-active3]: https://oshpark.com/shared_projects/6xAD1VXr

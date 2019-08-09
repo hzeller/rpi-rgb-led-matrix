@@ -155,6 +155,15 @@ struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
   return from_canvas(to_matrix(matrix)->SwapOnVSync(to_canvas(canvas)));
 }
 
+void led_matrix_set_brightness(struct RGBLedMatrix *matrix,
+                               uint8_t brightness) {
+  to_matrix(matrix)->SetBrightness(brightness);
+}
+
+uint8_t led_matrix_get_brightness(struct RGBLedMatrix *matrix) {
+  return to_matrix(matrix)->brightness();
+}
+
 void led_canvas_get_size(const struct LedCanvas *canvas,
                          int *width, int *height) {
   rgb_matrix::FrameCanvas *c = to_canvas((struct LedCanvas*)canvas);

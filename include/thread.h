@@ -56,7 +56,11 @@ public:
   ~Mutex() { pthread_mutex_destroy(&mutex_); }
   void Lock() { pthread_mutex_lock(&mutex_); }
   void Unlock() { pthread_mutex_unlock(&mutex_); }
-  void WaitOn(pthread_cond_t *cond) { pthread_cond_wait(cond, &mutex_); }
+
+  // Wait on condition. If "timeout_ms" is < 0, it waits forever, otherwise
+  // until timeout is reached.
+  // Returns 'true' if condition is met, 'false', if wait timed out.
+  bool WaitOn(pthread_cond_t *cond, long timeout_ms = -1);
 
 private:
   pthread_mutex_t mutex_;

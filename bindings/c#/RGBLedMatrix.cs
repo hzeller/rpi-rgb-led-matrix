@@ -30,6 +30,12 @@ namespace rpi_rgb_led_matrix_sharp
 
         [DllImport("librgbmatrix.so")]
         internal static extern IntPtr led_matrix_get_canvas(IntPtr matrix);
+
+        [DllImport("librgbmatrix.so")]
+        internal static extern byte led_matrix_get_brightness(IntPtr matrix);
+
+        [DllImport("librgbmatrix.so")]
+        internal static extern void led_matrix_set_brightness(IntPtr matrix, byte brightness);
         #endregion
 
         public RGBLedMatrix(int rows, int chained, int parallel)
@@ -54,12 +60,13 @@ namespace rpi_rgb_led_matrix_sharp
                 opt.multiplexing = options.Multiplexing;
                 opt.pwm_bits = options.PwmBits;
                 opt.pwm_lsb_nanoseconds = options.PwmLsbNanoseconds;
+                opt.pwm_dither_bits = options.PwmDitherBits;
                 opt.scan_mode = options.ScanMode;
                 opt.show_refresh_rate = (uint)(options.ShowRefreshRate ? 0 : 1);
                 opt.brightness = options.Brightness;
                 opt.disable_hardware_pulsing = (uint)(options.DisableHardwarePulsing ? 1 : 0);
                 opt.row_address_type = options.RowAddressType;
-
+                opt.gpio_slowdown = options.GpioSlowdown;
                 // dont care about these
                 var argc = IntPtr.Zero;
                 var argv = IntPtr.Zero;
@@ -92,6 +99,13 @@ namespace rpi_rgb_led_matrix_sharp
             canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
             return canvas;
         }
+
+        public byte Brightness
+        {
+          get { return led_matrix_get_brightness(matrix); }
+          set { led_matrix_set_brightness(matrix, value); }
+        }
+
         #region IDisposable Support
         private bool disposedValue = false;
 
@@ -122,17 +136,19 @@ namespace rpi_rgb_led_matrix_sharp
             public int cols;
             public int chain_length;
             public int parallel;
-            public int multiplexing;
             public int pwm_bits;
             public int pwm_lsb_nanoseconds;
+            public int pwm_dither_bits;
             public int brightness;
             public int scan_mode;
+            public int row_address_type;
+            public int multiplexing;
             public IntPtr led_rgb_sequence;
             public IntPtr pixel_mapper_config; 
             public uint disable_hardware_pulsing;
             public uint show_refresh_rate;
             public uint inverse_colors;
-            public int row_address_type;
+            public int gpio_slowdown;
         };
         #endregion
     }
@@ -187,6 +203,11 @@ namespace rpi_rgb_led_matrix_sharp
         public int PwmLsbNanoseconds;
 
         /// <summary>
+        /// The lower bits can be time-dithered for higher refresh rate.
+        /// </summary>
+        public int PwmDitherBits;
+
+        /// <summary>
         /// The initial brightness of the panel in percent. Valid range is 1..100
         /// </summary>
         public int Brightness;
@@ -225,5 +246,10 @@ namespace rpi_rgb_led_matrix_sharp
         public bool DisableHardwarePulsing;
         public bool ShowRefreshRate;
         public bool InverseColors;
+
+        /// <summary>
+        /// Slowdown GPIO. Needed for faster Pis/slower panels.
+        /// </summary>
+        public int GpioSlowdown;
     };
 }

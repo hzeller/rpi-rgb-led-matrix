@@ -39,7 +39,7 @@ struct PixelDesignator {
 
 class PixelDesignatorMap {
 public:
-  PixelDesignatorMap(int width, int height);
+  PixelDesignatorMap(int width, int height, const PixelDesignator &fill_bits);
   ~PixelDesignatorMap();
 
   // Get a writable version of the PixelDesignator. Outside Framebuffer used
@@ -49,9 +49,13 @@ public:
   inline int width() const { return width_; }
   inline int height() const { return height_; }
 
+  // All bits that set red/green/blue pixels; used for Fill().
+  const PixelDesignator &GetFillColorBits() { return fill_bits_; }
+
 private:
   const int width_;
   const int height_;
+  const PixelDesignator fill_bits_;  // Precalculated for fill.
   PixelDesignator *const buffer_;
 };
 
@@ -111,13 +115,14 @@ private:
   static RowAddressSetter *row_setter_;
 
   // This returns the gpio-bit for given color (one of 'R', 'G', 'B'). This is
-  // returning the right value in case led_sequence_ is _not_ "RGB"
-  gpio_bits_t GetGpioFromLedSequence(char col,
-                                     gpio_bits_t default_r,
-                                     gpio_bits_t default_g,
-                                     gpio_bits_t default_b);
+  // returning the right value in case "led_sequence" is _not_ "RGB"
+  static gpio_bits_t GetGpioFromLedSequence(char col, const char *led_sequence,
+                                            gpio_bits_t default_r,
+                                            gpio_bits_t default_g,
+                                            gpio_bits_t default_b);
 
-  void InitDefaultDesignator(int x, int y, PixelDesignator *designator);
+  void InitDefaultDesignator(int x, int y, const char *led_sequence,
+                             PixelDesignator *designator);
   inline void  MapColors(uint8_t r, uint8_t g, uint8_t b,
                          uint16_t *red, uint16_t *green, uint16_t *blue);
   const int rows_;     // Number of rows. 16 or 32.
@@ -126,7 +131,6 @@ private:
   const int columns_;  // Number of columns. Number of chained boards * 32.
 
   const int scan_mode_;
-  const char *const led_sequence_;  // Some LEDs are mapped differently.
   const bool inverse_color_;
 
   uint8_t pwm_bits_;   // PWM bits to display.

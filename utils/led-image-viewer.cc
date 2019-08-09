@@ -53,11 +53,12 @@ static const tmillis_t distant_future = (1LL<<40); // that is a while.
 
 struct ImageParams {
   ImageParams() : anim_duration_ms(distant_future), wait_ms(1500),
-                  anim_delay_ms(-1), loops(-1) {}
+                  anim_delay_ms(-1), loops(-1), vsync_multiple(1) {}
   tmillis_t anim_duration_ms;  // If this is an animation, duration to show.
   tmillis_t wait_ms;           // Regular image: duration to show.
   tmillis_t anim_delay_ms;     // Animation delay override.
   int loops;
+  int vsync_multiple;
 };
 
 struct FileInfo {
@@ -174,8 +175,7 @@ static bool LoadImageAndScale(const char *filename,
 }
 
 void DisplayAnimation(const FileInfo *file,
-                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas,
-                      int vsync_multiple) {
+                      RGBMatrix *matrix, FrameCanvas *offscreen_canvas) {
   const tmillis_t duration_ms = (file->is_multi_frame
                                  ? file->params.anim_duration_ms
                                  : file->params.wait_ms);
@@ -194,7 +194,8 @@ void DisplayAnimation(const FileInfo *file,
       const tmillis_t anim_delay_ms =
         override_anim_delay >= 0 ? override_anim_delay : delay_us / 1000;
       const tmillis_t start_wait_ms = GetTimeInMillis();
-      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas, vsync_multiple);
+      offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas,
+                                             file->params.vsync_multiple);
       const tmillis_t time_already_spent = GetTimeInMillis() - start_wait_ms;
       SleepMillis(anim_delay_ms - time_already_spent);
     }
@@ -210,7 +211,8 @@ static int usage(const char *progname) {
           "\t-O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).\n"
           "\t-C                        : Center images.\n"
 
-          "\nThese options affect images following them on the command line:\n"
+          "\nThese options affect images FOLLOWING them on the command line,\n"
+          "so it is possible to have different options for each image\n"
           "\t-w<seconds>               : Regular image: "
           "Wait time in seconds before next image is shown (default: 1.5).\n"
           "\t-t<seconds>               : "
@@ -220,13 +222,12 @@ static int usage(const char *progname) {
           "\t-D<animation-delay-ms>    : "
           "For animations: override the delay between frames given in the\n"
           "\t                            gif/stream animation with this value. Use -1 to use default value.\n"
+          "\t-V<vsync-multiple>        : For animation (expert): Only do frame vsync-swaps on multiples of refresh (default: 1)\n"
 
           "\nOptions affecting display of multiple images:\n"
           "\t-f                        : "
           "Forever cycle through the list of files on the command line.\n"
           "\t-s                        : If multiple images are given: shuffle.\n"
-          "\nDisplay Options:\n"
-          "\t-V<vsync-multiple>        : Expert: Only do frame vsync-swaps on multiples of refresh (default: 1)\n"
           );
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
@@ -255,7 +256,6 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  int vsync_multiple = 1;
   bool do_forever = false;
   bool do_center = false;
   bool do_shuffle = false;
@@ -327,8 +327,8 @@ int main(int argc, char *argv[]) {
       stream_output = strdup(optarg);
       break;
     case 'V':
-      vsync_multiple = atoi(optarg);
-      if (vsync_multiple < 1) vsync_multiple = 1;
+      img_param.vsync_multiple = atoi(optarg);
+      if (img_param.vsync_multiple < 1) img_param.vsync_multiple = 1;
       break;
     case 'h':
     default:
@@ -427,6 +427,9 @@ int main(int argc, char *argv[]) {
           file_info = NULL;
         }
       }
+      else {
+        perror("Opening file");
+      }
     }
 
     if (file_info) {
@@ -482,7 +485,7 @@ int main(int argc, char *argv[]) {
       std::random_shuffle(file_imgs.begin(), file_imgs.end());
     }
     for (size_t i = 0; i < file_imgs.size() && !interrupt_received; ++i) {
-      DisplayAnimation(file_imgs[i], matrix, offscreen_canvas, vsync_multiple);
+      DisplayAnimation(file_imgs[i], matrix, offscreen_canvas);
     }
   } while (do_forever && !interrupt_received);
 

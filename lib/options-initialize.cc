@@ -291,13 +291,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
     return NULL;
   }
 
-  if (runtime_options.do_gpio_init && getuid() != 0) {
-    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command\n");
-    return NULL;
-  }
-
-  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 4) {
+  // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
+  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 5) {
     fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
             runtime_options.gpio_slowdown);
     return NULL;
@@ -306,6 +301,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
   static GPIO io;  // This static var is a little bit icky.
   if (runtime_options.do_gpio_init &&
       !io.Init(runtime_options.gpio_slowdown)) {
+    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
+            "Prepend 'sudo' to the command\n");
     return NULL;
   }
 
@@ -411,7 +408,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           !d.disable_hardware_pulsing ? "no-" : "",
           !d.disable_hardware_pulsing ? "Don't u" : "U");
 
-  fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
+  fprintf(out, "\t--led-slowdown-gpio=<0..4>: "
           "Slowdown GPIO. Needed for faster Pis/slower panels "
           "(Default: %d).\n", r.gpio_slowdown);
   if (r.daemon >= 0) {

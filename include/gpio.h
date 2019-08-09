@@ -42,8 +42,14 @@ class GPIO {
             );
 
   // Initialize outputs.
-  // Returns the bits that are actually set.
+  // Returns the bits that were available and could be set for output.
+  // (never use the optional adafruit_hack_needed parameter, it is used
+  // internally to this library).
   uint32_t InitOutputs(uint32_t outputs, bool adafruit_hack_needed = false);
+
+  // Request given bitmap of GPIO inputs.
+  // Returns the bits that were available and could be reserved.
+  uint32_t RequestInputs(uint32_t inputs);
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(uint32_t value) {
@@ -72,13 +78,16 @@ class GPIO {
   }
 
   inline void Write(uint32_t value) { WriteMaskedBits(value, output_bits_); }
+  inline uint32_t Read() const { return *gpio_read_bits_ & input_bits_; }
 
  private:
   uint32_t output_bits_;
+  uint32_t input_bits_;
+  uint32_t reserved_bits_;
   int slowdown_;
-  volatile uint32_t *gpio_port_;
   volatile uint32_t *gpio_set_bits_;
   volatile uint32_t *gpio_clr_bits_;
+  volatile uint32_t *gpio_read_bits_;
 };
 
 // A PinPulser is a utility class that pulses a GPIO pin. There can be various
@@ -103,6 +112,10 @@ public:
   // If SendPulse() is asynchronously implemented, wait for pulse to finish.
   virtual void WaitPulseFinished() {}
 };
+
+// Get rolling over microsecond counter. We get this from a hardware register
+// if possible and a terrible slow fallback otherwise.
+uint32_t GetMicrosecondCounter();
 
 }  // end namespace rgb_matrix
 
