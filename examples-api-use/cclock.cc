@@ -192,14 +192,22 @@ int main(int argc, char* argv[]) {
     return usage(argv[0]);
   }
   char* ini_filename = "cclock.ini";
+  int adjust_colon_x = 0;
+  int adjust_colon_y = 0;
   int opt;
-  while ((opt = getopt(argc, argv, "i:W")) != -1) {
+  while ((opt = getopt(argc, argv, "i:Wc:C:")) != -1) {
     switch (opt) {
     case 'i':
       ini_filename = strdup(optarg);
       break;
     case 'W':
       exit(weather());
+      break;
+    case 'c':
+      adjust_colon_x = atoi(optarg);
+      break;
+    case 'C':
+      adjust_colon_y = atoi(optarg);
       break;
     default:
       return usage(argv[0]);
@@ -224,7 +232,7 @@ int main(int argc, char* argv[]) {
   parseColor(&temp_bg, ini["temp"]["bg"].c_str());
   parseColor(&date_fg, ini["date"]["fg"].c_str());
   parseColor(&date_bg, ini["date"]["bg"].c_str());
-  int time_x = atoi(ini["time"]["x"].c_str());
+  int time_x = atoi(ini["time"]["x"].c_str()) + adjust_colon_x;
   int time_y = atoi(ini["time"]["y"].c_str());
   int temp_x = atoi(ini["temp"]["x"].c_str());
   int temp_y = atoi(ini["temp"]["y"].c_str());
@@ -281,9 +289,24 @@ int main(int argc, char* argv[]) {
     temp_buffer[3] = 0;
     temp_buffer[4] = 0;
 
+
+    int c_x = time_x + 2 * time_font.CharacterWidth('0');
+    int m_x = time_x + 3 * time_font.CharacterWidth('0') - 1;
+    int c_y = time_y - adjust_colon_y;
+    if (adjust_colon_x) {
+      c_x -= adjust_colon_x;
+      m_x -= 2 * adjust_colon_y;
+    }
+    textat(":", offscreen, time_font, time_fg, time_bg, c_x, c_y);
+    time_buffer[2] = '\0';
+    textat(time_buffer, offscreen, time_font, time_fg, time_bg, time_x, time_y);
+    textat(time_buffer + 3, offscreen, time_font, time_fg, time_bg, m_x, time_y);
+
+    
     
 
-    textat(time_buffer, offscreen, time_font, time_fg, time_bg, time_x, time_y);
+
+
     textat(date_buffer, offscreen, date_font, date_fg, date_bg, date_x, date_y);
     textat(temp_buffer, offscreen, temp_font, temp_fg, temp_bg, temp_x, temp_y);
     
