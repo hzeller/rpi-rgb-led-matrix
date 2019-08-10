@@ -78,110 +78,6 @@ int inihandler(void* user,
   return 0;
 }
 
-struct MemoryStruct {
-  char* memory;
-  size_t size;
-};
-
-static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-  size_t realsize = size* nmemb;
-  struct MemoryStruct* mem = (struct MemoryStruct*)userp;
-  char* ptr = reinterpret_cast<char*>(realloc(mem->memory, mem->size + realsize + 1));
-  if (ptr == NULL) {
-    /* out of memory! */ 
-    fprintf(stderr, "not enough memory (realloc returned NULL)\n");
-    return 0;
-  }
-  mem->memory = ptr;
-  memcpy(&(mem->memory[mem->size]), contents, realsize);
-  mem->size += realsize;
-  mem->memory[mem->size] = 0;
-  return realsize;
-}
- 
-void janson_recurse(json_t* jobj, int indent) {
-  char prefix[indent + 1];
-  for (int i = 0; i < indent; ++i) {
-    prefix[i] = ' ';
-  }
-  prefix[indent] = '\0';
-  const char* jkey;
-  json_t* jvalue;
-  json_object_foreach(jobj, jkey, jvalue) {
-    printf("%s%s: ", prefix, jkey);
-    switch (json_typeof(jvalue)) {
-    case JSON_TRUE:
-      printf("True\n");
-      break;
-    case JSON_FALSE:
-      printf("False\n");
-      break;
-    case JSON_NULL:
-      printf("NULL\n");
-      break;
-    case JSON_INTEGER:
-      printf("%" JSON_INTEGER_FORMAT "\n", json_integer_value(jvalue));
-      break;
-    case JSON_REAL:
-      printf("%f\n", json_real_value(jvalue));
-      break;
-    case JSON_STRING:
-      printf("\"%s\"\n", json_string_value(jvalue));
-      break;
-    case JSON_ARRAY:
-      printf("[\n");
-      {
-        size_t index;
-        json_t *jarr;
-        json_t *jv = jvalue;
-        json_array_foreach(jv, index, jarr) {
-          printf("%s  [%d]:\n", prefix, index);
-          janson_recurse(jarr, indent + 4);
-        }
-      }
-      printf("%s]\n", prefix);
-      break;
-    case JSON_OBJECT:
-      printf("%sOBJECT\n", prefix);
-      janson_recurse(jvalue, indent + 2); 
-      break;
-    }
-  }
-}
-
-int weather() {
-  struct MemoryStruct chunk;
-  chunk.memory = malloc(1); // will be grown as needed by the realloc above
-  chunk.size = 0;           // no data at this point 
-  curl_global_init(CURL_GLOBAL_ALL);
-  CURL* curler = curl_easy_init();
-  curl_easy_setopt(curler, CURLOPT_URL, "http://dataservice.accuweather.com/forecasts/v1/daily/1day/3719_PC?apikey=KdGjVBTcRtAZbVqcyVb4nIvAH7qdqZrS&language=en-us&details=false&metric=false");
-  curl_easy_setopt(curler, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-  curl_easy_setopt(curler, CURLOPT_WRITEDATA, (void*)&chunk);
-  curl_easy_setopt(curler, CURLOPT_USERAGENT, "SPERRY-UNIVAC 1100/60");
-  CURLcode res = curl_easy_perform(curler);
-  if (res != CURLE_OK) {
-    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-    return 1;
-  }
-  printf("%lu bytes retrieved\n", (unsigned long)chunk.size);
-  printf("%s\n", chunk.memory);
-  printf("-------------------------\n\n");
-  json_error_t jerr;
-  json_t* j = json_loadb(chunk.memory, chunk.size, 0, &jerr);
-  if (j == nullptr) {
-    fprintf(stderr, "%s from %s at %d, %d pos %d\n",
-            jerr.text, jerr.source, jerr.line, jerr.column, jerr.position);
-    return 1;
-  }
-  janson_recurse(j, 0);
-  curl_easy_cleanup(curler);
-  free(chunk.memory);
-  curl_global_cleanup();
-  return 0;
-}
-
-map<int, string> weather_icons({{42, "fufutos"}, {69, "totolos"}});
 
 
 int main(int argc, char* argv[]) {
@@ -281,12 +177,12 @@ int main(int argc, char* argv[]) {
     temp_buffer[3] = 0;
     temp_buffer[4] = 0;
 
-    
+
 
     textat(time_buffer, offscreen, time_font, time_fg, time_bg, time_x, time_y);
     textat(date_buffer, offscreen, date_font, date_fg, date_bg, date_x, date_y);
     textat(temp_buffer, offscreen, temp_font, temp_fg, temp_bg, temp_x, temp_y);
-    
+
 
 
     // Wait until we're ready to show it.
