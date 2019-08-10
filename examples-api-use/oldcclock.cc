@@ -10,9 +10,6 @@
 
 #include <err.h>
 #include <getopt.h>
-#include <ini.h>
-#include <iostream>
-#include <map>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,13 +18,14 @@
 #include <unistd.h>
 
 using namespace rgb_matrix;
-using namespace std;
 
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
   interrupt_received = true;
 }
 
+const char* kBigFont = "../fonts/8x13.bdf";
+const char* kSmallFont = "../fonts/5x7.bdf";
 char tz_NYC[] = "TZ=America/New_York";
 char tz_SFO[] = "TZ=America/Los_Angeles";
 char tz_UTC[] = "TZ=UTC";
@@ -35,12 +33,6 @@ char tz_LON[] = "TZ=Europe/London";
 char tz_PAR[] = "TZ=Europe/Paris";
 char tz_ATH[] = "TZ=Europe/Athens";
 char tz_SIN[] = "TZ=Asia/Singapore";
-
-const char left_arrow[] = "\xe2\x86\x90";
-const char up_arrow[] = "\xe2\x86\x91";
-const char right_arrow[] = "\xe2\x86\x92";
-const char down_arrow[] = "\xe2\x86\x93";
-
 
 struct SmallClock {
   char* tz;
@@ -97,7 +89,7 @@ static bool FullSaturation(const Color &c) {
     && (c.b == 0 || c.b == 255);
 }
 
-void textat(const char* text,
+void textat(const std::string& text,
             FrameCanvas* offscreen,
             const Font& font,
             const Color& color,
@@ -110,38 +102,13 @@ void textat(const char* text,
            y + font.baseline(),
            color,
            &bgcolor,
-           text);
+           text.c_str());
 }
 
-const char* kBigFont = "../fonts/9x15B.bdf";
-const char* kSmallFont = "../fonts/5x8.bdf";
+const Color time_fg(255, 255, 255);
 
-Color time_fg(255, 128,   0);
-Color time_bg(  0,   0,   0);
-Color date_fg(255, 255,   0);
-Color date_bg(  0,   0,   0);
-Color temp_fg(  0, 128, 255);
-Color temp_bg(255,   0,   0);
-
-map<string, map<string, string>> ini;
-
-int inihandler(void* user,
-               const char* section,
-               const char* name,
-               const char* value) {
-  // cerr << section << " " << name << " " << value << " " << endl;
-  ini[string(section)][string(name)] = string(value);
-  return 0;
-}
 
 int main(int argc, char *argv[]) {
-  ini_parse("cclock.ini", inihandler, NULL);
-  for (auto& m : ini) {
-    cout << m.first << endl;
-    for (auto& p : m.second) {
-      cout << "  " << p.first << ": " << p.second << endl;
-    }
-  }
   RGBMatrix::Options matrix_options;
   rgb_matrix::RuntimeOptions runtime_opt;
   if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
@@ -179,60 +146,56 @@ int main(int argc, char *argv[]) {
       return usage(argv[0]);
     }
   }
-  const char* bdf_time_font_file = ini["time"]["font"].c_str();
-  const char* bdf_date_font_file = ini["date"]["font"].c_str();
-  const char* bdf_temp_font_file = ini["temp"]["font"].c_str();
-  parseColor(&time_fg, ini["time"]["fg"].c_str());
-  parseColor(&time_bg, ini["time"]["bg"].c_str());
-  parseColor(&temp_fg, ini["temp"]["fg"].c_str());
-  parseColor(&temp_bg, ini["temp"]["bg"].c_str());
-  parseColor(&date_fg, ini["date"]["fg"].c_str());
-  parseColor(&date_bg, ini["date"]["bg"].c_str());
-  int time_x = atoi(ini["time"]["x"].c_str());
-  int time_y = atoi(ini["time"]["y"].c_str());
-  int temp_x = atoi(ini["temp"]["x"].c_str());
-  int temp_y = atoi(ini["temp"]["y"].c_str());
-  int date_x = atoi(ini["date"]["x"].c_str());
-  int date_y = atoi(ini["date"]["y"].c_str());
+
   /*
    * Load font. This needs to be a filename with a bdf bitmap font.
    */
-  Font time_font;
-  if (!time_font.LoadFont(bdf_time_font_file)) {
-    fprintf(stderr, "Couldn't load time font '%s'\n", bdf_time_font_file);
+  rgb_matrix::Font big_font;
+  if (!big_font.LoadFont(bdf_big_font_file)) {
+    fprintf(stderr, "Couldn't load big font '%s'\n", bdf_big_font_file);
     return 1;
   }
-  Font date_font;
-  if (!date_font.LoadFont(bdf_date_font_file)) {
-    fprintf(stderr, "Couldn't load date font '%s'\n", bdf_date_font_file);
+  int big_font_baseline = big_font.baseline();
+  int big_font_height = big_font.height();
+  int big_font_width = big_font.CharacterWidth(77);
+  int big_x_orig = (64 - 7 * big_font_width) / 2;
+  int big_y_orig = big_font_baseline;
+  rgb_matrix::Font small_font;
+  if (!small_font.LoadFont(bdf_small_font_file)) {
+    fprintf(stderr, "Couldn't load small font '%s'\n", bdf_small_font_file);
     return 1;
   }
-  Font temp_font;
-  if (!temp_font.LoadFont(bdf_temp_font_file)) {
-    fprintf(stderr, "Couldn't load temp font '%s'\n", bdf_temp_font_file);
+  int small_font_baseline = small_font.baseline();
+  int small_font_height = small_font.height();
+  int small_font_width = small_font.CharacterWidth(77);
+  if (brightness < 1 || brightness > 100) {
+    fprintf(stderr, "Brightness is outside usable range.\n");
     return 1;
   }
 
-  RGBMatrix* matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
-  if (matrix == NULL) {
+  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromOptions(matrix_options,
+                                                          runtime_opt);
+  if (matrix == NULL)
     return 1;
-  }
+
   matrix->SetBrightness(brightness);
 
   const bool all_extreme_colors = (brightness == 100)
     && FullSaturation(color)
     && FullSaturation(bg_color);
-  if (all_extreme_colors) {
-    //    matrix->SetPWMBits(1);
-  }
+  if (all_extreme_colors)
+    matrix->SetPWMBits(1);
+
   FrameCanvas *offscreen = matrix->CreateFrameCanvas();
-  char time_buffer[256];
-  char date_buffer[256];
-  char temp_buffer[256];
+
+  char hours_buffer[256];
+  char minutes_buffer[256];
+  char seconds_buffer[256];
   struct timespec next_time;
   next_time.tv_sec = time(NULL);
   next_time.tv_nsec = 0;
   struct tm tm;
+
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
 
@@ -243,21 +206,47 @@ int main(int argc, char *argv[]) {
     }
     tzset();
     localtime_r(&next_time.tv_sec, &tm);
-    strftime(time_buffer, sizeof(time_buffer), "%H:%M", &tm);
-    strftime(date_buffer, sizeof(date_buffer), "%a %b %d", &tm);
-    temp_buffer[0] = '7';
-    temp_buffer[1] = '2';
-    temp_buffer[2] = 176;
-    temp_buffer[3] = 0;
-    temp_buffer[4] = 0;
+    strftime(hours_buffer, sizeof(hours_buffer), "%H", &tm);
+    strftime(minutes_buffer, sizeof(minutes_buffer), "%M", &tm);
+    strftime(seconds_buffer, sizeof(seconds_buffer), "%S", &tm);
+    int x = big_x_orig;
+    rgb_matrix::DrawText(offscreen, big_font, x, big_y_orig,
+                         color, NULL, hours_buffer, 0);
+    x = big_x_orig + 1.75 * big_font_width;
+    rgb_matrix::DrawText(offscreen, big_font, x, big_y_orig,
+                         color, NULL, ":", 0);
+    x = big_x_orig + 2.5 * big_font_width;
+    rgb_matrix::DrawText(offscreen, big_font, x, big_y_orig,
+                         color, NULL, minutes_buffer, 0);
+    x = big_x_orig + 4.25 * big_font_width;
+    rgb_matrix::DrawText(offscreen, big_font, x, big_y_orig,
+                         color, NULL, ":", 0);
+    x = big_x_orig + 5 * big_font_width;
+    rgb_matrix::DrawText(offscreen, big_font, x, big_y_orig,
+                         color, NULL, seconds_buffer, 0);
+    for (int i = 0; i < small_clocks_NCLOCKS; ++i) {
+      SmallClock* sc = &small_clocks[i];
+      if (putenv(sc->tz) != 0) {
+        err(1, "putenv(%s)", sc->tz);
+      }
+      tzset();
+      localtime_r(&next_time.tv_sec, &tm);
+      strftime(hours_buffer, sizeof(hours_buffer), "%H", &tm);
+      strftime(minutes_buffer, sizeof(minutes_buffer), "%M", &tm);
+      int x = sc->x;
+      rgb_matrix::DrawText(offscreen, small_font, x, sc->y + small_font_baseline,
+                         sc->color, NULL, hours_buffer, 0);
+      x = sc->x + 1.75 * small_font_width;
+      rgb_matrix::DrawText(offscreen, small_font, x, sc->y + small_font_baseline,
+                           sc->color, NULL, ":", 0);
+      x = sc->x + 2.5 * small_font_width;
+      rgb_matrix::DrawText(offscreen, small_font, x, sc->y + small_font_baseline,
+                           sc->color, NULL, minutes_buffer, 0);
+      x = sc->x + 4.5 * small_font_width;
+      rgb_matrix::DrawText(offscreen, small_font, x, sc->y + small_font_baseline,
+                           sc->color, NULL, sc->label, 0);
 
-    
-
-    textat(time_buffer, offscreen, time_font, time_fg, time_bg, time_x, time_y);
-    textat(date_buffer, offscreen, date_font, date_fg, date_bg, date_x, date_y);
-    textat(temp_buffer, offscreen, temp_font, temp_fg, temp_bg, temp_x, temp_y);
-    
-
+    }
 
     // Wait until we're ready to show it.
     clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_time, NULL);

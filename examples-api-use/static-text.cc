@@ -7,19 +7,13 @@
 #include "led-matrix.h"
 #include "graphics.h"
 
+#include <curl/curl.h>
 #include <getopt.h>
+#include <jansson.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <curl/curl.h>
-
-#ifdef JSONC
-#include <json-c/json.h>
-#include <json-c/json_tokener.h>
-#endif
-
-#include <jansson.h>
 
 using namespace rgb_matrix;
 
@@ -38,6 +32,7 @@ static int usage(const char *progname) {
           "\t-C <r,g,b>        : Color. Default 255,255,0\n"
           "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
           "\t-O <r,g,b>        : Outline-Color, e.g. to increase contrast.\n"
+          "\t-W                : grab data from accuweather.com\n"
           );
   return 1;
 }
@@ -51,7 +46,6 @@ static bool FullSaturation(const Color &c) {
         && (c.g == 0 || c.g == 255)
         && (c.b == 0 || c.b == 255);
 }
-
  
 struct MemoryStruct {
   char* memory;
@@ -74,45 +68,6 @@ static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, voi
   return realsize;
 }
  
-#ifdef JSONC
-void json_recurse(json_object* jobj, int indent) {
-  enum json_type type;
-  char prefix[indent + 1];
-  for (int i = 0; i < indent; ++i) {
-    prefix[i] = ' ';
-  }
-  prefix[indent] = '\0';
-  json_object_object_foreach(jobj, key, val) {
-    type = json_object_get_type(val);
-    printf("%s type: ");
-    switch (type) {
-    case json_type_null:
-      printf("json_type_null\n");
-      break;
-    case json_type_boolean:
-      printf("json_type_boolean: %s\n",
-             json_object_get_boolean(jobj) ? "True" : "False");
-      break;
-    case json_type_double:
-      printf("json_type_double: %f\n",
-             json_object_get_double(jobj));
-      break;
-    case json_type_int:
-      printf("json_type_int: %d\n"k
-             json_object_get_int(jobj));
-      break;
-    case json_type_object:
-      printf("json_type_object: \n");
-      json_recurse(
-      break;
-    case json_type_array: printf("json_type_arrayn");
-      break;
-    case json_type_string: printf("json_type_stringn");
-      break;
-    }
-  }
-#endif
-
 void janson_recurse(json_t* jobj, int indent) {
   //  printf("\nrecursing %d\n", indent);
 
@@ -162,17 +117,8 @@ void janson_recurse(json_t* jobj, int indent) {
       janson_recurse(jvalue, indent + 2); 
       break;
     }
-
-
   }
 }
-
-
-
-
-
-//CURLcode curl_easy_setopt(CURL *handle, CURLOPT_WRITEFUNCTION, write_callback);
-
 
 int main(int argc, char *argv[]) {
   RGBMatrix::Options matrix_options;
@@ -193,9 +139,10 @@ int main(int argc, char *argv[]) {
   int y_orig = 0;
   int brightness = 100;
   int letter_spacing = 0;
+  bool use_accuweather = false;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:W")) != -1) {
     switch (opt) {
     case 'b': brightness = atoi(optarg); break;
     case 'x': x_orig = atoi(optarg); break;
@@ -221,47 +168,45 @@ int main(int argc, char *argv[]) {
       }
       with_outline = true;
       break;
+    case 'W':
+      use_accuweather = true;
+      break;
     default:
       return usage(argv[0]);
     }
   }
 
-  struct MemoryStruct chunk;
-  chunk.memory = malloc(1); // will be grown as needed by the realloc above
-  chunk.size = 0;           // no data at this point 
-  curl_global_init(CURL_GLOBAL_ALL);
-  CURL* curler = curl_easy_init();
-  curl_easy_setopt(curler, CURLOPT_URL, "http://dataservice.accuweather.com/forecasts/v1/daily/1day/523789_PC?apikey=KdGjVBTcRtAZbVqcyVb4nIvAH7qdqZrS&language=en-us&details=true&metric=false");
-  curl_easy_setopt(curler, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-  curl_easy_setopt(curler, CURLOPT_WRITEDATA, (void*)&chunk);
-  curl_easy_setopt(curler, CURLOPT_USERAGENT, "SPERRY-UNIVAC 1100/60");
-  CURLcode res = curl_easy_perform(curler);
-  if (res != CURLE_OK) {
-    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-    exit(1);
+  if (use_accuweather) {
+    struct MemoryStruct chunk;
+    chunk.memory = malloc(1); // will be grown as needed by the realloc above
+    chunk.size = 0;           // no data at this point 
+    curl_global_init(CURL_GLOBAL_ALL);
+    CURL* curler = curl_easy_init();
+    curl_easy_setopt(curler, CURLOPT_URL, "http://dataservice.accuweather.com/forecasts/v1/daily/1day/3719_PC?apikey=KdGjVBTcRtAZbVqcyVb4nIvAH7qdqZrS&language=en-us&details=true&metric=false");
+    curl_easy_setopt(curler, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    curl_easy_setopt(curler, CURLOPT_WRITEDATA, (void*)&chunk);
+    curl_easy_setopt(curler, CURLOPT_USERAGENT, "SPERRY-UNIVAC 1100/60");
+    CURLcode res = curl_easy_perform(curler);
+    if (res != CURLE_OK) {
+      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+      exit(1);
+    }
+    printf("%lu bytes retrieved\n", (unsigned long)chunk.size);
+    printf("%s\n", chunk.memory);
+    printf("-------------------------\n\n");
+    json_error_t jerr;
+    json_t* j = json_loadb(chunk.memory, chunk.size, 0, &jerr);
+    if (j == nullptr) {
+      fprintf(stderr, "%s from %s at %d, %d pos %d\n",
+              jerr.text, jerr.source, jerr.line, jerr.column, jerr.position);
+      exit(1);
+    }
+    janson_recurse(j, 0);
+    curl_easy_cleanup(curler);
+    free(chunk.memory);
+    curl_global_cleanup();
+    exit(0);
   }
-  printf("%lu bytes retrieved\n", (unsigned long)chunk.size);
-  printf("%s\n", chunk.memory);
-  printf("-------------------------\n\n");
-#ifdef JSONC
-  struct json_object* jobj = json_tokener_parse(chunk.memory);
-  json_recurse(jobj, 0);
-#endif
-
-  json_error_t jerr;
-  json_t* j = json_loadb(chunk.memory, chunk.size, 0, &jerr);
-  if (j == nullptr) {
-    fprintf(stderr, "%s from %s at %d, %d pos %d\n",
-            jerr.text, jerr.source, jerr.line, jerr.column, jerr.position);
-    exit(1);
-  }
-
-  janson_recurse(j, 0);
-
-  curl_easy_cleanup(curler);
-  free(chunk.memory);
-  curl_global_cleanup();
-  exit(0);
   for (int i = optind; i < argc; ++i) {
     cline.append(argv[i]).append(" ");
     fprintf(stderr, "%s\n", cline.c_str());
