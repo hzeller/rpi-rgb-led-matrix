@@ -1,17 +1,14 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
-// Example of a clock. This is very similar to the text-example,
-// except that it shows the time :)
-//
-// This code is public domain
-// (but note, that the led-matrix library this depends on is GPL v2)
 
 #include "led-matrix.h"
 #include "graphics.h"
 
+#include <curl/curl.h>
 #include <err.h>
 #include <getopt.h>
 #include <ini.h>
 #include <iostream>
+#include <jansson.h>
 #include <map>
 #include <signal.h>
 #include <stdio.h>
@@ -23,78 +20,36 @@
 using namespace rgb_matrix;
 using namespace std;
 
+char kTzAth[] = "TZ=Europe/Athens";
+char kTzLon[] = "TZ=Europe/London";
+char kTzNyc[] = "TZ=America/New_York";
+char kTzPar[] = "TZ=Europe/Paris";
+char kTzSfo[] = "TZ=America/Los_Angeles";
+char kTzSin[] = "TZ=Asia/Singapore";
+char kTzUtc[] = "TZ=UTC";
+
+const char kLeftArrow[] = "\xe2\x86\x90";
+const char kUpArrow[] = "\xe2\x86\x91";
+const char kRightArrow[] = "\xe2\x86\x92";
+const char kDownArrow[] = "\xe2\x86\x93";
+
 volatile bool interrupt_received = false;
 static void InterruptHandler(int signo) {
   interrupt_received = true;
 }
 
-char tz_NYC[] = "TZ=America/New_York";
-char tz_SFO[] = "TZ=America/Los_Angeles";
-char tz_UTC[] = "TZ=UTC";
-char tz_LON[] = "TZ=Europe/London";
-char tz_PAR[] = "TZ=Europe/Paris";
-char tz_ATH[] = "TZ=Europe/Athens";
-char tz_SIN[] = "TZ=Asia/Singapore";
-
-const char left_arrow[] = "\xe2\x86\x90";
-const char up_arrow[] = "\xe2\x86\x91";
-const char right_arrow[] = "\xe2\x86\x92";
-const char down_arrow[] = "\xe2\x86\x93";
-
-
-struct SmallClock {
-  char* tz;
-  const char* label;
-  Color color;
-  int x;
-  int y;
-  
-};
-
-SmallClock small_clocks[] = {
-  {tz_UTC, "UTC", Color(255, 255, 255),  0, 16},
-  {tz_SFO, "SFO", Color(255, 128, 128), 32, 16},
-  {tz_LON, "LON", Color(  0, 255, 255),  0, 24},
-  {tz_ATH, "ATH", Color( 64,  64, 255), 32, 24},
-};
-
-const int small_clocks_NCLOCKS = sizeof(small_clocks) / sizeof(small_clocks[0]);
-// SmallClock small_clocks[] = {
-//   {tz_SFO, "SFO", "255,128,128", 0, 16},
-//   {tz_UTC, "UTC", "255,255,255", 21, 16},
-//   {tz_LON, "LON", "0,255,255", 42, 16},
-//   {tz_PAR, "PAR", "64,64,64",  0, 24},
-//   {tz_ATH, "ATH", "64,64,255", 21, 24},
-//   {tz_SIN, "SIN", "255,0,0", 42, 24},
-// };
-
-static int usage(const char *progname) {
+static int usage(const char* progname) {
   fprintf(stderr, "usage: %s [options]\n", progname);
-  fprintf(stderr, "Reads text from stdin and displays it. "
-          "Empty string: clear screen\n");
   fprintf(stderr, "Options:\n");
-  rgb_matrix::PrintMatrixFlags(stderr);
+  PrintMatrixFlags(stderr);
   fprintf(stderr,
-          "\t-d <time-format>  : Default '%%H:%%M'. See strftime()\n"
-          "\t-f <font-file>    : Use given font for small font.\n"
-          "\t-F <font-file>    : Use given font for big font.\n"
-          "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
-          "\t-S <spacing>      : Spacing pixels between letters (Default: 0)\n"
-          "\t-C <r,g,b>        : Color. Default 255,255,0\n"
-          "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
+          "\t-i <.ini filename> : Default 'cclock.ini'\n"
           );
-
   return 1;
 }
 
-static bool parseColor(Color *c, const char *str) {
+static bool parseColor(Color* c, const char* str) {
   return sscanf(str, "%hhu,%hhu,%hhu", &c->r, &c->g, &c->b) == 3;
-}
-
-static bool FullSaturation(const Color &c) {
-  return (c.r == 0 || c.r == 255)
-    && (c.g == 0 || c.g == 255)
-    && (c.b == 0 || c.b == 255);
 }
 
 void textat(const char* text,
@@ -113,75 +68,156 @@ void textat(const char* text,
            text);
 }
 
-const char* kBigFont = "../fonts/9x15B.bdf";
-const char* kSmallFont = "../fonts/5x8.bdf";
-
-Color time_fg(255, 128,   0);
-Color time_bg(  0,   0,   0);
-Color date_fg(255, 255,   0);
-Color date_bg(  0,   0,   0);
-Color temp_fg(  0, 128, 255);
-Color temp_bg(255,   0,   0);
-
 map<string, map<string, string>> ini;
 
 int inihandler(void* user,
                const char* section,
                const char* name,
                const char* value) {
-  // cerr << section << " " << name << " " << value << " " << endl;
   ini[string(section)][string(name)] = string(value);
   return 0;
 }
 
-int main(int argc, char *argv[]) {
-  ini_parse("cclock.ini", inihandler, NULL);
+struct MemoryStruct {
+  char* memory;
+  size_t size;
+};
+
+static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+  size_t realsize = size* nmemb;
+  struct MemoryStruct* mem = (struct MemoryStruct*)userp;
+  char* ptr = reinterpret_cast<char*>(realloc(mem->memory, mem->size + realsize + 1));
+  if (ptr == NULL) {
+    /* out of memory! */ 
+    fprintf(stderr, "not enough memory (realloc returned NULL)\n");
+    return 0;
+  }
+  mem->memory = ptr;
+  memcpy(&(mem->memory[mem->size]), contents, realsize);
+  mem->size += realsize;
+  mem->memory[mem->size] = 0;
+  return realsize;
+}
+ 
+void janson_recurse(json_t* jobj, int indent) {
+  char prefix[indent + 1];
+  for (int i = 0; i < indent; ++i) {
+    prefix[i] = ' ';
+  }
+  prefix[indent] = '\0';
+  const char* jkey;
+  json_t* jvalue;
+  json_object_foreach(jobj, jkey, jvalue) {
+    printf("%s%s: ", prefix, jkey);
+    switch (json_typeof(jvalue)) {
+    case JSON_TRUE:
+      printf("True\n");
+      break;
+    case JSON_FALSE:
+      printf("False\n");
+      break;
+    case JSON_NULL:
+      printf("NULL\n");
+      break;
+    case JSON_INTEGER:
+      printf("%" JSON_INTEGER_FORMAT "\n", json_integer_value(jvalue));
+      break;
+    case JSON_REAL:
+      printf("%f\n", json_real_value(jvalue));
+      break;
+    case JSON_STRING:
+      printf("\"%s\"\n", json_string_value(jvalue));
+      break;
+    case JSON_ARRAY:
+      printf("[\n");
+      {
+        size_t index;
+        json_t *jarr;
+        json_t *jv = jvalue;
+        json_array_foreach(jv, index, jarr) {
+          printf("%s  [%d]:\n", prefix, index);
+          janson_recurse(jarr, indent + 4);
+        }
+      }
+      printf("%s]\n", prefix);
+      break;
+    case JSON_OBJECT:
+      printf("%sOBJECT\n", prefix);
+      janson_recurse(jvalue, indent + 2); 
+      break;
+    }
+  }
+}
+
+int weather() {
+  struct MemoryStruct chunk;
+  chunk.memory = malloc(1); // will be grown as needed by the realloc above
+  chunk.size = 0;           // no data at this point 
+  curl_global_init(CURL_GLOBAL_ALL);
+  CURL* curler = curl_easy_init();
+  curl_easy_setopt(curler, CURLOPT_URL, "http://dataservice.accuweather.com/forecasts/v1/daily/1day/3719_PC?apikey=KdGjVBTcRtAZbVqcyVb4nIvAH7qdqZrS&language=en-us&details=false&metric=false");
+  curl_easy_setopt(curler, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+  curl_easy_setopt(curler, CURLOPT_WRITEDATA, (void*)&chunk);
+  curl_easy_setopt(curler, CURLOPT_USERAGENT, "SPERRY-UNIVAC 1100/60");
+  CURLcode res = curl_easy_perform(curler);
+  if (res != CURLE_OK) {
+    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+    return 1;
+  }
+  printf("%lu bytes retrieved\n", (unsigned long)chunk.size);
+  printf("%s\n", chunk.memory);
+  printf("-------------------------\n\n");
+  json_error_t jerr;
+  json_t* j = json_loadb(chunk.memory, chunk.size, 0, &jerr);
+  if (j == nullptr) {
+    fprintf(stderr, "%s from %s at %d, %d pos %d\n",
+            jerr.text, jerr.source, jerr.line, jerr.column, jerr.position);
+    return 1;
+  }
+  janson_recurse(j, 0);
+  curl_easy_cleanup(curler);
+  free(chunk.memory);
+  curl_global_cleanup();
+  return 0;
+}
+
+map<int, string> weather_icons({{42, "fufutos"}, {69, "totolos"}});
+
+
+int main(int argc, char* argv[]) {
+  RGBMatrix::Options matrix_options;
+  RuntimeOptions runtime_opt;
+  if (!ParseOptionsFromFlags(&argc, &argv,
+                             &matrix_options, &runtime_opt)) {
+    return usage(argv[0]);
+  }
+  char* ini_filename = "cclock.ini";
+  int opt;
+  while ((opt = getopt(argc, argv, "i:W")) != -1) {
+    switch (opt) {
+    case 'i':
+      ini_filename = strdup(optarg);
+      break;
+    case 'W':
+      exit(weather());
+      break;
+    default:
+      return usage(argv[0]);
+    }
+  }
+  ini_parse(ini_filename, inihandler, NULL);
   for (auto& m : ini) {
     cout << m.first << endl;
     for (auto& p : m.second) {
       cout << "  " << p.first << ": " << p.second << endl;
     }
   }
-  RGBMatrix::Options matrix_options;
-  rgb_matrix::RuntimeOptions runtime_opt;
-  if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
-                                         &matrix_options, &runtime_opt)) {
-    return usage(argv[0]);
-  }
-
-  Color color(255, 255, 0);
-  Color bg_color(0, 0, 0);
-
-  const char *bdf_big_font_file = kBigFont;
-  const char *bdf_small_font_file = kSmallFont;
-  int brightness = 100;
-  int letter_spacing = 0;
-  int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:F:C:B:b:S:d:")) != -1) {
-    switch (opt) {
-    case 'b': brightness = atoi(optarg); break;
-    case 'f': bdf_small_font_file = strdup(optarg); break;
-    case 'F': bdf_big_font_file = strdup(optarg); break;
-    case 'S': letter_spacing = atoi(optarg); break;
-    case 'C':
-      if (!parseColor(&color, optarg)) {
-        fprintf(stderr, "Invalid color spec: %s\n", optarg);
-        return usage(argv[0]);
-      }
-      break;
-    case 'B':
-      if (!parseColor(&bg_color, optarg)) {
-        fprintf(stderr, "Invalid background color spec: %s\n", optarg);
-        return usage(argv[0]);
-      }
-      break;
-    default:
-      return usage(argv[0]);
-    }
-  }
-  const char* bdf_time_font_file = ini["time"]["font"].c_str();
-  const char* bdf_date_font_file = ini["date"]["font"].c_str();
-  const char* bdf_temp_font_file = ini["temp"]["font"].c_str();
+  Color time_fg;
+  Color time_bg;
+  Color date_fg;
+  Color date_bg;
+  Color temp_fg;
+  Color temp_bg;
   parseColor(&time_fg, ini["time"]["fg"].c_str());
   parseColor(&time_bg, ini["time"]["bg"].c_str());
   parseColor(&temp_fg, ini["temp"]["fg"].c_str());
@@ -194,20 +230,20 @@ int main(int argc, char *argv[]) {
   int temp_y = atoi(ini["temp"]["y"].c_str());
   int date_x = atoi(ini["date"]["x"].c_str());
   int date_y = atoi(ini["date"]["y"].c_str());
-  /*
-   * Load font. This needs to be a filename with a bdf bitmap font.
-   */
+  const char* bdf_time_font_file = ini["time"]["font"].c_str();
+  const char* bdf_date_font_file = ini["date"]["font"].c_str();
+  const char* bdf_temp_font_file = ini["temp"]["font"].c_str();
   Font time_font;
+  Font date_font;
+  Font temp_font;
   if (!time_font.LoadFont(bdf_time_font_file)) {
     fprintf(stderr, "Couldn't load time font '%s'\n", bdf_time_font_file);
     return 1;
   }
-  Font date_font;
   if (!date_font.LoadFont(bdf_date_font_file)) {
     fprintf(stderr, "Couldn't load date font '%s'\n", bdf_date_font_file);
     return 1;
   }
-  Font temp_font;
   if (!temp_font.LoadFont(bdf_temp_font_file)) {
     fprintf(stderr, "Couldn't load temp font '%s'\n", bdf_temp_font_file);
     return 1;
@@ -217,14 +253,8 @@ int main(int argc, char *argv[]) {
   if (matrix == NULL) {
     return 1;
   }
-  matrix->SetBrightness(brightness);
+  matrix->SetBrightness(100);
 
-  const bool all_extreme_colors = (brightness == 100)
-    && FullSaturation(color)
-    && FullSaturation(bg_color);
-  if (all_extreme_colors) {
-    //    matrix->SetPWMBits(1);
-  }
   FrameCanvas *offscreen = matrix->CreateFrameCanvas();
   char time_buffer[256];
   char date_buffer[256];
@@ -237,8 +267,8 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, InterruptHandler);
 
   while (!interrupt_received) {
-    offscreen->Fill(bg_color.r, bg_color.g, bg_color.b);
-    if (putenv(tz_NYC) != 0) {
+    offscreen->Fill(0, 0, 0);
+    if (putenv(kTzNyc) != 0) {
       err(1, "putenv");
     }
     tzset();
