@@ -239,6 +239,21 @@ public:
   }
 };
 
+class QiangLiQ8 : public MultiplexMapperBase {
+public:
+  QiangLiQ8() : MultiplexMapperBase("QiangLiQ8", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const int column = x + (4+ 4*(x/4));
+    *matrix_x = column;
+    if ((y >= 15 && y <=19) || (y >= 5 && y <= 9)) {
+      const int reverseColumn = x + (4*(x/4));
+      *matrix_x = reverseColumn;
+    }
+    *matrix_y = y % 5 + (y/10) *5;
+  }
+};
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -257,7 +272,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new Kaler2ScanMapper());
   result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0));
   result->push_back(new P10MapperZ());
-
+  result->push_back(new QiangLiQ8());
   return result;
 }
 
