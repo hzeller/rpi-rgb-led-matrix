@@ -78,6 +78,7 @@ public:
                        int pwm_lsb_nanoseconds,
                        int dither_bits,
                        int row_address_type);
+  static void InitializePanels(GPIO *io, const char *panel_type, int columns);
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.

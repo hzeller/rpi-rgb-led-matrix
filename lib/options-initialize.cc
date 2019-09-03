@@ -150,6 +150,9 @@ static bool FlagInit(int &argc, char **&argv,
       if (ConsumeStringFlag("pixel-mapper", it, end,
                             &mopts->pixel_mapper_config, &err))
         continue;
+      if (ConsumeStringFlag("panel-type", it, end,
+                            &mopts->panel_type, &err))
+        continue;
       if (ConsumeIntFlag("rows", it, end, &mopts->rows, &err))
         continue;
       if (ConsumeIntFlag("cols", it, end, &mopts->cols, &err))
@@ -396,7 +399,8 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d)\n"
           "\t--led-pwm-dither-bits=<0..2> : Time dithering of lower bits "
           "(Default: 0)\n"
-          "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
+          "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n"
+          "\t--led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),

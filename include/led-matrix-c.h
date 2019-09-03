@@ -131,6 +131,12 @@ struct RGBLedMatrixOptions {
    */
   const char *pixel_mapper_config;  /* Corresponding flag: --led-pixel-mapper */
 
+  /*
+   * Panel type. Typically just NULL, but certain panels (AM6126) require
+   * an initialization sequence
+   */
+  const char *panel_type;  /* Corresponding flag: --led-panel-type */
+
   /** The following are boolean flags, all off by default **/
 
   /* Allow to use the hardware subsystem to create pulses. This won't do

@@ -144,6 +144,10 @@ public:
     // to this matrix. A semicolon-separated list of pixel-mappers with optional
     // parameter.
     const char *pixel_mapper_config;   // Flag: --led-pixel-mapper
+
+    // Panel type. Typically an empty string or NULL, but some panels need
+    // a particular initialization sequence, so this is used for that.
+    const char *panel_type;  // Flag: --led-panel-type
   };
 
   // Create an RGBMatrix.

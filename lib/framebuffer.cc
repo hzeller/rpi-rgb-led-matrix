@@ -352,6 +352,57 @@ Framebuffer::~Framebuffer() {
                                           bitplane_timings);
 }
 
+// NOTE: first version for panel initialization sequence, need to refine
+// until it is more clear how different panel types are initialized to be
+// able to abstract this more.
+
+static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
+  const uint32_t bits_on
+    = h.p0_r1 | h.p0_g1 | h.p0_b1 | h.p0_r2 | h.p0_g2 | h.p0_b2
+    | h.p1_r1 | h.p1_g1 | h.p1_b1 | h.p1_r2 | h.p1_g2 | h.p1_b2
+    | h.p2_r1 | h.p2_g1 | h.p2_b1 | h.p2_r2 | h.p2_g2 | h.p2_b2
+    | h.a;  // Address bit 'A' is always on.
+  const uint32_t bits_off = h.a;
+
+  // Init bits. TODO: customize, as we can do things such as brightness here,
+  // which would allow more higher quality output.
+  static const char* init_b12 = "0111111111111111";  // full bright
+  static const char* init_b13 = "0000000001000000";  // panel on.
+
+  io->ClearBits(h.clock | h.strobe);
+
+  for (int i = 0; i < columns; ++i) {
+    uint32_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
+    if (i > columns - 12) value |= h.strobe;
+    io->Write(value);
+    io->SetBits(h.clock);
+    io->ClearBits(h.clock);
+  }
+  io->ClearBits(h.strobe);
+
+  for (int i = 0; i < columns; ++i) {
+    uint32_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
+    if (i > columns - 13) value |= h.strobe;
+    io->Write(value);
+    io->SetBits(h.clock);
+    io->ClearBits(h.clock);
+  }
+  io->ClearBits(h.strobe);
+}
+
+/*static*/ void Framebuffer::InitializePanels(GPIO *io,
+                                              const char *panel_type,
+                                              int columns) {
+  if (!panel_type || panel_type[0] == '\0') return;
+  if (strncasecmp(panel_type, "fm6126", 6) == 0) {
+    InitFM6126(io, *hardware_mapping_, columns);
+  }
+  // else if (strncasecmp(...))  // more init types
+  else {
+    fprintf(stderr, "Unknown panel type '%s'; typo ?\n", panel_type);
+  }
+}
+
 bool Framebuffer::SetPWMBits(uint8_t value) {
   if (value < 1 || value > kBitPlanes)
     return false;

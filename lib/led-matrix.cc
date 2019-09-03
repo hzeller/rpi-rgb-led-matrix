@@ -234,7 +234,8 @@ RGBMatrix::Options::Options() :
     inverse_colors(false),
 #endif
   led_rgb_sequence("RGB"),
-  pixel_mapper_config(NULL)
+  pixel_mapper_config(NULL),
+  panel_type(NULL)
 {
   // Nothing to see here.
 }
@@ -258,6 +259,7 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   }
 
   Framebuffer::InitHardwareMapping(params_.hardware_mapping);
+
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
@@ -332,6 +334,7 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
                           !params_.disable_hardware_pulsing,
                           params_.pwm_lsb_nanoseconds, params_.pwm_dither_bits,
                           params_.row_address_type);
+    Framebuffer::InitializePanels(io_, params_.panel_type, params_.cols);
   }
   if (start_thread) {
     StartRefresh();

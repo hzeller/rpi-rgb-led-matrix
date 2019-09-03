@@ -80,6 +80,10 @@ faster refresh-rate for the same size, but do some multiplexing internally
 of which there are a few types out there; they can be chosen with
 the `--led-multiplexing` parameter.
 
+There are some panels that have a different chip-set than the default HUB75.
+These require some initialization sequence. The current supported one is
+`--led-panel-type=FM6126A`.
+
 Generally, the higher scan-rate (e.g. 1:8), a.k.a. outdoor panels generally
 allow faster refresh rate, but you might need to figure out the multiplexing
 mapping if one of the three provided does not work.
@@ -184,6 +188,16 @@ many there are.
 This illustrates what each of these parameters mean:
 
 <a href="wiring.md#chaining-parallel-chains-and-coordinate-system"><img src="img/coordinates.png"></a>
+
+##### Panel Type
+
+Typically, panels should just work out of the box, but some panels use a
+different chip-set that requires some initialization. If you don't see any
+output on your panel, try setting:
+
+```
+--led-panel-type=FM6126A
+```
 
 ##### Multiplexing
 If you have some 'outdoor' panels or panels with different multiplexing,

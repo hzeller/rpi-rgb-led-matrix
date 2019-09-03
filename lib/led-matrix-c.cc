@@ -70,18 +70,19 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     OPT_COPY_IF_SET(cols);
     OPT_COPY_IF_SET(chain_length);
     OPT_COPY_IF_SET(parallel);
-    OPT_COPY_IF_SET(multiplexing);
     OPT_COPY_IF_SET(pwm_bits);
     OPT_COPY_IF_SET(pwm_lsb_nanoseconds);
     OPT_COPY_IF_SET(pwm_dither_bits);
     OPT_COPY_IF_SET(brightness);
     OPT_COPY_IF_SET(scan_mode);
+    OPT_COPY_IF_SET(row_address_type);
+    OPT_COPY_IF_SET(multiplexing);
     OPT_COPY_IF_SET(disable_hardware_pulsing);
     OPT_COPY_IF_SET(show_refresh_rate);
+    OPT_COPY_IF_SET(inverse_colors);
     OPT_COPY_IF_SET(led_rgb_sequence);
     OPT_COPY_IF_SET(pixel_mapper_config);
-    OPT_COPY_IF_SET(inverse_colors);
-    OPT_COPY_IF_SET(row_address_type);
+    OPT_COPY_IF_SET(panel_type);
 #undef OPT_COPY_IF_SET
   }
 
@@ -101,18 +102,19 @@ struct RGBLedMatrix *led_matrix_create_from_options(
     ACTUAL_VALUE_BACK_TO_OPT(cols);
     ACTUAL_VALUE_BACK_TO_OPT(chain_length);
     ACTUAL_VALUE_BACK_TO_OPT(parallel);
-    ACTUAL_VALUE_BACK_TO_OPT(multiplexing);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_bits);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_lsb_nanoseconds);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_dither_bits);
     ACTUAL_VALUE_BACK_TO_OPT(brightness);
     ACTUAL_VALUE_BACK_TO_OPT(scan_mode);
+    ACTUAL_VALUE_BACK_TO_OPT(row_address_type);
+    ACTUAL_VALUE_BACK_TO_OPT(multiplexing);
     ACTUAL_VALUE_BACK_TO_OPT(disable_hardware_pulsing);
     ACTUAL_VALUE_BACK_TO_OPT(show_refresh_rate);
+    ACTUAL_VALUE_BACK_TO_OPT(inverse_colors);
     ACTUAL_VALUE_BACK_TO_OPT(led_rgb_sequence);
     ACTUAL_VALUE_BACK_TO_OPT(pixel_mapper_config);
-    ACTUAL_VALUE_BACK_TO_OPT(inverse_colors);
-    ACTUAL_VALUE_BACK_TO_OPT(row_address_type);
+    ACTUAL_VALUE_BACK_TO_OPT(panel_type);
 #undef ACTUAL_VALUE_BACK_TO_OPT
   }
 
