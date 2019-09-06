@@ -147,6 +147,13 @@ public domain fonts available in the [`../fonts/`](../fonts) directory. Any
 other fonts you might want to use or scale to the size you need can be
 converted to a BDF format (either with a font editor or the [otf2bdf] tool).
 
+Here is an example how you could create a 30pixel high BDF font from some
+TrueType font:
+
+```bash
+otf2bdf -v -o myfont.bdf -r 72 -p 30 /path/to/font-Bold.ttf
+```
+
 Integrating in your own application
 -----------------------------------
 Until this library shows up in your favorite Linux distribution, you can just
