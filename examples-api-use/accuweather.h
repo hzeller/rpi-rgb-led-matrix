@@ -12,4 +12,4 @@ struct WeatherIcon {
 
 typedef std::map<int, WeatherIcon> weather_icons_t;
 
-int weather(const std::string& what);
+int weather(const std::string& what, std::map<std::string, std::string>* resmap);

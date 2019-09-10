@@ -10,6 +10,10 @@
 
 using namespace std;
 
+extern void janson_recurse(json_t* jobj, string pfx, map<string, string>* dstmap, int debug);
+
+
+
 static weather_icons_t icons(
     {
       { 1, { true, false, "SUNNY   ", "Sunny"}},
@@ -76,138 +80,120 @@ static size_t WriteMemoryCallback(void* contents, size_t size, size_t nmemb, voi
   return realsize;
 }
 
-#if 0
-static void janson_recurse(json_t* jobj, string prefix) {
-  const char* jkey;
-  json_t* jvalue;
-  json_object_foreach(jobj, jkey, jvalue) {
-    string pfx(prefix + string("/") + string(jkey));
-    switch (json_typeof(jvalue)) {
-    case JSON_TRUE:
-      cout << pfx << ": True" << endl;
-      break;
-    case JSON_FALSE:
-      cout << pfx << ": False" << endl;
-      break;
-    case JSON_NULL:
-      cout << pfx << ": NULL" << endl;
-      break;
-    case JSON_INTEGER:
-      // printf("%" JSON_INTEGER_FORMAT "\n", json_integer_value(jvalue));
-      cout << pfx << ": " << json_integer_value(jvalue) << endl;
-      break;
-    case JSON_REAL:
-      // printf("%f\n", json_real_value(jvalue));
-      cout << pfx << ": " << json_real_value(jvalue) << endl;
-      break;
-    case JSON_STRING:
-      // printf("\"%s\"\n", json_string_value(jvalue));
-      cout << pfx << ": " << json_string_value(jvalue) << endl;
-      break;
-    case JSON_ARRAY:
-      {
-        size_t index;
-        json_t *jarr;
-        json_t *jv = jvalue;
-        json_array_foreach(jv, index, jarr) {
-          // printf("%s  [%d]:\n", prefix, index);
-          janson_recurse(jarr, pfx + "[" + to_string(index) + "]");
-        }
-      }
-      break;
-    case JSON_OBJECT:
-      // printf("%sOBJECT\n", prefix);
-      janson_recurse(jvalue, pfx);
-      break;
-    }
-  }
-}
-#endif
-#if 0
-static void janson_recurse(json_t* jobj, int indent) {
-  char prefix[indent + 1];
-  for (int i = 0; i < indent; ++i) {
-    prefix[i] = ' ';
-  }
-  prefix[indent] = '\0';
-  const char* jkey;
-  json_t* jvalue;
-  json_object_foreach(jobj, jkey, jvalue) {
-    printf("%s%s: ", prefix, jkey);
-    switch (json_typeof(jvalue)) {
-    case JSON_TRUE:
-      printf("True\n");
-      break;
-    case JSON_FALSE:
-      printf("False\n");
-      break;
-    case JSON_NULL:
-      printf("NULL\n");
-      break;
-    case JSON_INTEGER:
-      printf("%" JSON_INTEGER_FORMAT "\n", json_integer_value(jvalue));
-      break;
-    case JSON_REAL:
-      printf("%f\n", json_real_value(jvalue));
-      break;
-    case JSON_STRING:
-      printf("\"%s\"\n", json_string_value(jvalue));
-      break;
-    case JSON_ARRAY:
-      printf("[\n");
-      {
-        size_t index;
-        json_t *jarr;
-        json_t *jv = jvalue;
-        json_array_foreach(jv, index, jarr) {
-          printf("%s  [%d]:\n", prefix, index);
-          janson_recurse(jarr, indent + 4);
-        }
-      }
-      printf("%s]\n", prefix);
-      break;
-    case JSON_OBJECT:
-      printf("%sOBJECT\n", prefix);
-      janson_recurse(jvalue, indent + 2);
-      break;
-    }
-  }
-}
-#endif
+char mock_forecast[] =
+  "{"
+  "  \"Headline\": {"
+  "    \"EffectiveDate\": \"2019-08-10T08:00:00-04:00\","
+  "    \"EffectiveEpochDate\": 1565438400,"
+  "    \"Severity\": 4,"
+  "    \"Text\": \"Pleasant this weekend\","
+  "    \"Category\": null,"
+  "    \"EndDate\": null,"
+  "    \"EndEpochDate\": null,"
+  "    \"MobileLink\":"
+  "    \"http://m.accuweather.com/en/us/new-york-ny/10007/extended-weather-forecast/3719_pc?lang=en-us\","
+  "    \"Link\": \"http://www.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?lang=en-us\""
+  "  },"
+  "  \"DailyForecasts\": ["
+  "    {"
+  "      \"Date\": \"2019-08-10T07:00:00-04:00\","
+  "      \"EpochDate\": 1565434800,"
+  "      \"Temperature\": {"
+  "        \"Minimum\": {"
+  "          \"Value\": 63.0,"
+  "          \"Unit\": \"F\", "
+  "          \"UnitType\": 18"
+  "        },"
+  "        \"Maximum\": {"
+  "          \"Value\": 82.0,"
+  "          \"Unit\": \"F\","
+  "          \"UnitType\": 18"
+  "        }"
+  "      },"
+  "      \"Day\": {"
+  "        \"Icon\": 2,"
+  "        \"IconPhrase\": \"Mostly sunny\","
+  "        \"HasPrecipitation\": false"
+  "      },"
+  "      \"Night\": {"
+  "        \"Icon\": 34,"
+  "        \"IconPhrase\": \"Mostly clear\","
+  "        \"HasPrecipitation\": false"
+  "      },"
+  "      \"Sources\": ["
+  "        \"AccuWeather\""
+  "      ],"
+  "      \"MobileLink\": \"http://m.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?day=1&lang=en-us\","
+  "      \"Link\": \"http://www.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?day=1&lang=en-us\""
+  "    }"
+  "  ]"
+  "}";
 
-int weather(const string& what) {
-  string url("http://dataservice.accuweather.com/" +
-             what +
-             "/" "3719_PC" +
-             "?" "apikey" "=" "KdGjVBTcRtAZbVqcyVb4nIvAH7qdqZrS"
-             "&" "language" "=" "en-us" +
-             "&" "details" "=" "false");
-  cerr << url << endl;
-  struct MemoryStruct chunk;
-  chunk.memory = malloc(1); // will be grown as needed by the realloc above
-  chunk.size = 0;           // no data at this point
-  //curl_global_init(CURL_GLOBAL_ALL);
-  CURL* curler = curl_easy_init();
-  curl_easy_setopt(curler, CURLOPT_URL, url.c_str());
-  curl_easy_setopt(curler, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-  curl_easy_setopt(curler, CURLOPT_WRITEDATA, (void*)&chunk);
-  curl_easy_setopt(curler, CURLOPT_USERAGENT, "SPERRY-UNIVAC 1100/60");
-  CURLcode res = curl_easy_perform(curler);
-  if (res != CURLE_OK) {
-    fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-    return 1;
+char mock_currentconditions[] =
+  "["
+  "  {"
+  "    \"LocalObservationDateTime\": \"2019-08-10T10:23:00-04:00\","
+  "    \"EpochTime\": 1565446980,"
+  "    \"WeatherText\": \"Sunny\","
+  "    \"WeatherIcon\": 1,"
+  "    \"HasPrecipitation\": false,"
+  "    \"PrecipitationType\": null,"
+  "    \"IsDayTime\": true,"
+  "    \"Temperature\": {"
+  "      \"Metric\": {"
+  "        \"Value\": 22.8,"
+  "        \"Unit\": \"C\","
+  "        \"UnitType\": 17"
+  "      },"
+  "      \"Imperial\": {"
+  "        \"Value\": 73,"
+  "        \"Unit\": \"F\","
+  "        \"UnitType\": 18"
+  "      }"
+  "    },"
+  "    \"MobileLink\": \"http://m.accuweather.com/en/us/new-york-ny/10007/current-weather/3719_pc?lang=en-us\","
+  "    \"Link\": \"http://www.accuweather.com/en/us/new-york-ny/10007/current-weather/3719_pc?lang=en-us\""
+  "  }"
+  "]";
+
+int weather(const string& what, map<string, string>* resmap) {
+  cerr << "weather(" << what << endl;
+  struct MemoryStruct chunk = {nullptr, 0};
+  size_t chunk_size;
+  char* json_result;
+  if (what.substr(0, 4) == "http") {
+    chunk.memory = malloc(1); // will be grown as needed by the realloc above
+    chunk.size = 0;           // no data at this point
+    //curl_global_init(CURL_GLOBAL_ALL);
+    CURL* curler = curl_easy_init();
+    curl_easy_setopt(curler, CURLOPT_URL, what.c_str());
+    curl_easy_setopt(curler, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    curl_easy_setopt(curler, CURLOPT_WRITEDATA, (void*)&chunk);
+    curl_easy_setopt(curler, CURLOPT_USERAGENT, "SPERRY-UNIVAC 1100/60");
+    CURLcode res = curl_easy_perform(curler);
+    curl_easy_cleanup(curler);
+    if (res != CURLE_OK) {
+      fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+      return 1;
+    }
+    fprintf(stderr, "\n\n----\n%s\n----\n", chunk.memory);
+    json_result = chunk.memory;
+    chunk_size = chunk.size;
+  } else {
+    json_result = what.c_str();
+    chunk_size = strlen(json_result);
   }
-  fprintf(stderr, "\n\n----\n%s\n----\n", chunk.memory);
   json_error_t jerr;
-  json_t* j = json_loadb(chunk.memory, chunk.size, 0, &jerr);
+  json_t* j = json_loadb(json_result, chunk_size, 0, &jerr);
   if (j == nullptr) {
     fprintf(stderr, "%s from %s at %d, %d pos %d\n",
             jerr.text, jerr.source, jerr.line, jerr.column, jerr.position);
     return 1;
   }
-  janson_recurse(j, string(""));
-  curl_easy_cleanup(curler);
-  free(chunk.memory);
+  janson_recurse(j, string(""), resmap, 0);
+  if (chunk.memory) {
+    free(chunk.memory);
+  }
   // curl_global_cleanup();
   return 0;
 }

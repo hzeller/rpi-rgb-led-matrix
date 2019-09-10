@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 using namespace std;
-static void janson_recurse(json_t* jobj, string pfx, map<string, string>* dstmap, int debug) {
+void janson_recurse(json_t* jobj, string pfx, map<string, string>* dstmap, int debug) {
   size_t index;
   const char* jkey;
   json_t* jvalue;

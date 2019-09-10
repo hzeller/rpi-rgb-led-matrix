@@ -1,6 +1,6 @@
 CFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter -fpermissive
 CXXFLAGS=$(CFLAGS)
-OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o scrolling-text-example.o clock.o cclock.o ledcat.o input-example.o static-text.o
+OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o scrolling-text-example.o clock.o cclock.o ledcat.o input-example.o static-text.o json.o accuweather.o
 BINARIES=demo minimal-example c-example text-example scrolling-text-example clock cclock ledcat input-example static-text
 
 # Where our library resides. You mostly only need to change the
@@ -26,13 +26,14 @@ text-example: text-example.o
 static-text: static-text.o
 scrolling-text-example : scrolling-text-example.o
 clock : clock.o
-cclock : cclock.o
 ledcat : ledcat.o
 
 # All the binaries that have the same name as the object file.q
 % : %.o $(RGB_LIBRARY)
 	$(CXX) $< -o $@ $(LDFLAGS)
 
+cclock : json.o accuweather.o cclock.o
+	$(CC)  cclock.o accuweather.o json.o -o $@ $(LDFLAGS) -lstdc++
 
 # Since the C example uses the C++ library underneath, which depends on C++
 # runtime stuff, you still have to also link -lstdc++

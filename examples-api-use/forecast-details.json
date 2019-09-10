@@ -1,0 +1,248 @@
+{
+  "Headline": {
+    "EffectiveDate": "2019-08-13T08:00:00-04:00",
+    "EffectiveEpochDate": 1565697600,
+    "Severity": 3,
+    "Text": "Thunderstorms Tuesday",
+    "Category": "thunderstorm",
+    "EndDate": "2019-08-13T20:00:00-04:00",
+    "EndEpochDate": 1565740800,
+    "MobileLink": "http://m.accuweather.com/en/us/new-york-ny/10007/extended-weather-forecast/3719_pc?lang=en-us",
+    "Link": "http://www.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?lang=en-us"
+  },
+  "DailyForecasts": [
+    {
+      "Date": "2019-08-11T07:00:00-04:00",
+      "EpochDate": 1565521200,
+      "Sun": {
+        "Rise": "2019-08-11T06:02:00-04:00",
+        "EpochRise": 1565517720,
+        "Set": "2019-08-11T20:00:00-04:00",
+        "EpochSet": 1565568000
+      },
+      "Moon": {
+        "Rise": "2019-08-11T17:37:00-04:00",
+        "EpochRise": 1565559420,
+        "Set": "2019-08-12T03:09:00-04:00",
+        "EpochSet": 1565593740,
+        "Phase": "WaxingGibbous",
+        "Age": 10
+      },
+      "Temperature": {
+        "Minimum": {
+          "Value": 66,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Maximum": {
+          "Value": 80,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "RealFeelTemperature": {
+        "Minimum": {
+          "Value": 65,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Maximum": {
+          "Value": 88,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "RealFeelTemperatureShade": {
+        "Minimum": {
+          "Value": 65,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Maximum": {
+          "Value": 80,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "HoursOfSun": 5.4,
+      "DegreeDaySummary": {
+        "Heating": {
+          "Value": 0,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Cooling": {
+          "Value": 8,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "AirAndPollen": [
+        {
+          "Name": "AirQuality",
+          "Value": 26,
+          "Category": "Good",
+          "CategoryValue": 1,
+          "Type": "Particle Pollution"
+        },
+        {
+          "Name": "Grass",
+          "Value": 0,
+          "Category": "Low",
+          "CategoryValue": 1
+        },
+        {
+          "Name": "Mold",
+          "Value": 0,
+          "Category": "Low",
+          "CategoryValue": 1
+        },
+        {
+          "Name": "Tree",
+          "Value": 7,
+          "Category": "Low",
+          "CategoryValue": 1
+        },
+        {
+          "Name": "Ragweed",
+          "Value": 5,
+          "Category": "Low",
+          "CategoryValue": 1
+        },
+        {
+          "Name": "UVIndex",
+          "Value": 8,
+          "Category": "Very High",
+          "CategoryValue": 4
+        }
+      ],
+      "Day": {
+        "Icon": 3,
+        "IconPhrase": "Partly sunny",
+        "HasPrecipitation": false,
+        "ShortPhrase": "Partly sunny and nice",
+        "LongPhrase": "Partly sunny and nice",
+        "PrecipitationProbability": 0,
+        "ThunderstormProbability": 1,
+        "RainProbability": 0,
+        "SnowProbability": 0,
+        "IceProbability": 0,
+        "Wind": {
+          "Speed": {
+            "Value": 4,
+            "Unit": "mi/h",
+            "UnitType": 9
+          },
+          "Direction": {
+            "Degrees": 307,
+            "Localized": "NW",
+            "English": "NW"
+          }
+        },
+        "WindGust": {
+          "Speed": {
+            "Value": 11,
+            "Unit": "mi/h",
+            "UnitType": 9
+          },
+          "Direction": {
+            "Degrees": 307,
+            "Localized": "NW",
+            "English": "NW"
+          }
+        },
+        "TotalLiquid": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "Rain": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "Snow": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "Ice": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "HoursOfPrecipitation": 0,
+        "HoursOfRain": 0,
+        "HoursOfSnow": 0,
+        "HoursOfIce": 0,
+        "CloudCover": 37
+      },
+      "Night": {
+        "Icon": 33,
+        "IconPhrase": "Clear",
+        "HasPrecipitation": false,
+        "ShortPhrase": "Clear",
+        "LongPhrase": "Clear",
+        "PrecipitationProbability": 0,
+        "ThunderstormProbability": 0,
+        "RainProbability": 0,
+        "SnowProbability": 0,
+        "IceProbability": 0,
+        "Wind": {
+          "Speed": {
+            "Value": 2,
+            "Unit": "mi/h",
+            "UnitType": 9
+          },
+          "Direction": {
+            "Degrees": 257,
+            "Localized": "WSW",
+            "English": "WSW"
+          }
+        },
+        "WindGust": {
+          "Speed": {
+            "Value": 7,
+            "Unit": "mi/h",
+            "UnitType": 9
+          },
+          "Direction": {
+            "Degrees": 257,
+            "Localized": "WSW",
+            "English": "WSW"
+          }
+        },
+        "TotalLiquid": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "Rain": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "Snow": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "Ice": {
+          "Value": 0,
+          "Unit": "in",
+          "UnitType": 1
+        },
+        "HoursOfPrecipitation": 0,
+        "HoursOfRain": 0,
+        "HoursOfSnow": 0,
+        "HoursOfIce": 0,
+        "CloudCover": 5
+      },
+      "Sources": [
+        "AccuWeather"
+      ],
+      "MobileLink": "http://m.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?day=1&lang=en-us",
+      "Link": "http://www.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?day=1&lang=en-us"
+    }
+  ]
+}
