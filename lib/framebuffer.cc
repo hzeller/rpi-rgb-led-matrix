@@ -148,6 +148,44 @@ private:
   int last_row_;
 };
 
+// Experimental! see issue #823
+// An shift register row address setter that does not use B but C for the
+// data. Clock is inverted.
+class ABCShiftRegisterRowAddressSetter : public RowAddressSetter {
+public:
+  ABCShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
+    : double_rows_(double_rows),
+      row_mask_(h.a | h.c),
+      clock_(h.a),
+      data_(h.c),
+      last_row_(-1) {
+  }
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    for (int activate = 0; activate < double_rows_; ++activate) {
+      io->SetBits(clock_);
+      if (activate == double_rows_ - 1 - row) {
+        io->SetBits(data_);
+      } else {
+        io->ClearBits(data_);
+      }
+      io->ClearBits(clock_);
+    }
+    io->SetBits(clock_);
+    io->ClearBits(clock_);
+    last_row_ = row;
+  }
+
+private:
+  const int double_rows_;
+  const gpio_bits_t row_mask_;
+  const gpio_bits_t clock_;
+  const gpio_bits_t data_;
+  int last_row_;
+};
+
 // The DirectABCDRowAddressSetter sets the address by one of
 // row pin ABCD for 32х16 matrix 1:4 multiplexing. The matrix has
 // 4 addressable rows. Row is selected by a low level on the
@@ -327,6 +365,9 @@ Framebuffer::~Framebuffer() {
     break;
   case 2:
     row_setter_ = new DirectABCDLineRowAddressSetter(double_rows, h);
+    break;
+  case 3:
+    row_setter_ = new ABCShiftRegisterRowAddressSetter(double_rows, h);
     break;
   default:
     assert(0);  // unexpected type.

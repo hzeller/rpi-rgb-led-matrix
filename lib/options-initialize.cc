@@ -388,7 +388,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
-          "\t--led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct row select"
+          "\t--led-row-addr-type=<0..3>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels (experimental) "
           "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "
@@ -460,8 +460,8 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (row_address_type < 0 || row_address_type > 2) {
-    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select)\n");
+  if (row_address_type < 0 || row_address_type > 3) {
+    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 ABC address.\n");
     success = false;
   }
 
