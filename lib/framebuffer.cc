@@ -163,15 +163,14 @@ public:
   virtual gpio_bits_t need_bits() const { return row_mask_; }
 
   virtual void SetRowAddress(GPIO *io, int row) {
-    if (row == last_row_) return;
     for (int activate = 0; activate < double_rows_; ++activate) {
-      io->SetBits(clock_);
+      io->ClearBits(clock_);
       if (activate == double_rows_ - 1 - row) {
         io->SetBits(data_);
       } else {
         io->ClearBits(data_);
       }
-      io->ClearBits(clock_);
+      io->SetBits(clock_);
     }
     io->SetBits(clock_);
     io->ClearBits(clock_);
