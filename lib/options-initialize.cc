@@ -382,7 +382,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-multiplexing=<0..%d> : Mux type: 0=direct; %s (Default: 0)\n"
           "\t--led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.\n"
-          "\t                            Optional params after a colon e.g. \"U-mapper;Rotate:90\"\n"
+          "\t                            Optional params after a colon e.g. \"Snake:3;Rotate:90\"\n"
           "\t                            Available: %s. Default: \"\"\n"
           "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
