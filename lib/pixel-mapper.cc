@@ -90,6 +90,61 @@ private:
   int angle_;
 };
 
+class MirrorPixelMapper : public PixelMapper {
+public:
+  MirrorPixelMapper() : horizontal_(true) {}
+
+  virtual const char *GetName() const { return "Mirror"; }
+
+  virtual bool SetParameters(int chain, int parallel, const char *param) {
+    if (param == NULL || strlen(param) == 0) {
+      horizontal_ = true;
+      return true;
+    }
+    if (strlen(param) != 1) {
+      fprintf(stderr, "Mirror parameter should be a single "
+              "character:'V' or 'H'\n");
+    }
+    switch (*param) {
+    case 'V':
+    case 'v':
+      horizontal_ = false;
+      break;
+    case 'H':
+    case 'h':
+      horizontal_ = true;
+      break;
+    default:
+      fprintf(stderr, "Mirror parameter should be either 'V' or 'H'\n");
+      return false;
+    }
+    return true;
+  }
+
+  virtual bool GetSizeMapping(int matrix_width, int matrix_height,
+                              int *visible_width, int *visible_height)
+    const {
+    *visible_height = matrix_height;
+    *visible_width = matrix_width;
+    return true;
+  }
+
+  virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
+                                  int x, int y,
+                                  int *matrix_x, int *matrix_y) const {
+    if (horizontal_) {
+      *matrix_x = matrix_width - 1 - x;
+      *matrix_y = y;
+    } else {
+      *matrix_x = x;
+      *matrix_y = matrix_height - 1 - y;
+    }
+  }
+
+private:
+  bool horizontal_;
+};
+
 // If we take a long chain of panels and arrange them in a U-shape, so
 // that after half the panels we bend around and continue below. This way
 // we have a panel that has double the height but only uses one chain.
@@ -178,6 +233,7 @@ static MapperByName *CreateMapperMap() {
   // Register all the default PixelMappers here.
   RegisterPixelMapperInternal(result, new RotatePixelMapper());
   RegisterPixelMapperInternal(result, new UArrangementMapper());
+  RegisterPixelMapperInternal(result, new MirrorPixelMapper());
   return result;
 }
 
