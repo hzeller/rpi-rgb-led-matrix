@@ -47,7 +47,9 @@ public:
 
   virtual const char *GetName() const { return name_; }
 
-  // The MapVisibleToMatrix() as required by PanelMatrix here does
+  // The MapVisibleToMatrix() as required by PanelMatrix here breaks it
+  // down to the individual panel, so that derived classes only need to
+  // implement MapSinglePanel().
   virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
                                   int visible_x, int visible_y,
                                   int *matrix_x, int *matrix_y) const {
@@ -65,8 +67,11 @@ public:
 
   // Map the coordinates for a single panel. This is to be overridden in
   // derived classes.
+  // Input parameter is the visible position on the matrix, and this method
+  // should return the internal multiplexed position.
   virtual void MapSinglePanel(int visible_x, int visible_y,
                               int *matrix_x, int *matrix_y) const = 0;
+
 protected:
   const char *const name_;
   const int panel_stretch_factor_;

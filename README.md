@@ -55,23 +55,33 @@ or [DietPi] is recommended.
 Types of Displays
 -----------------
 There are various types of displays that come all with the same Hub75 connector.
-They vary in the way the multiplexing is happening.
+They vary in the way the multiplexing is happening so this library supports
+options to choose that.
+All these are configured by flags (or, programmatically, in an [Options struct](include/led-matrix.h#L57)).
 
-Type w*h | Scan Multiplexing | Program commandline flags    | Remark
------:|:-----------------:|:-----------------------------|-------
-64x64 |  1:32             | --led-rows=64 --led-cols=64  | For displays with A,B,C,D,E line.
-64x64 |  1:32             | --led-rows=64 --led-cols=64 --led-row-addr-type=1 | For displays with A,B lines.
-64x32 |  1:16             | --led-rows=32 --led-cols=64  |
-64x32 |  1:8              | --led-rows=32 --led-cols=64 --led-multiplexing=1 | few mux choices
-32x32 |  1:16             | --led-rows=32                |
-32x32 |  1:8              | --led-rows=32 --led-multiplexing=1 | few mux choices
-32x16 |  1:8              | --led-rows=16                |
-32x16 |  1:4              | --led-rows=16 --led-multiplexing=1 | few mux choices
-32x16 |  1:4              | --led-rows=16 --led-row-addr-type=2 --led-multiplexing=4 | For direct A..D address panels.
-...   |
+If you have a 64x32 display, you need to supply the flags
+`--led-cols=64 --led-rows=32` for instance.
 
-These can be chained by connecting the output of one panel to the input of
-the next panel. You can chain quite a few together.
+Depending on the Matrix, there are various configuration options that
+you might need to set for it to work. See further below in the README for the
+[detailed description of these](#changing-parameters-via-command-line-flags).
+While the `--led-rows` and `--led-cols` can be derived from simply looking
+at the panels, the other options might require some experimenting to find the
+right setting if there is no description provided by the manufacturer of
+the panel. Going through these options for experiments would typically not do
+harm, so you're free to experiment to find your setting.
+
+Flag                                | Description
+:---------------      | :-----------------
+`--led-cols`          | Columns in the LED matrix, the 'width'.
+`--led-rows`          | Rows in the LED matrix, the 'height'.
+`--led-multiplexing`  | In particular bright outdoor panels with small multiplex ratios require this. Often an indicator: if there are fewer address lines than expected: ABC (instead of ABCD) for 32 high panels and ABCD (instead of ABCDE) for 64 high panels.
+`--led-row-addr-type` | Adressing of rows; in particular panels with only AB address lines might indicate that this is needed.
+`--led-panel-type`    | Chipset of the panel. In particular if it doesn't light up at all, you might need to play with this option because it indicates that the panel requires a particular initialization sequence.
+
+Panels can be chained by connecting the output of one panel to the input of
+the next panel. You can chain quite a few together, but the refresh rate will
+reduce with longer chains.
 
 The 64x64 matrixes typically come in two kinds: with 5 address
 lines (A, B, C, D, E), or (A, B); the latter needs a `--led-row-addr-type=1`
@@ -113,7 +123,8 @@ sudo examples-api-use/demo -D0
   3. Use the utilities. The [utils](./utils) directory has some ready-made
     useful utilities to show content. [Go there](./utils) to see how to
     compile and run these.
-  4. Write your own programs using the Matrix in C++ or Python.
+  4. Write your own programs using the Matrix in C++ or one of the
+     bindings such as Python or C#.
 
 ### Utilities
 
@@ -168,6 +179,24 @@ This can have values such as
   - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT/Bonnet, that uses this library or
   - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
 
+#### GPIO speed
+
+```
+--led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
+```
+
+The Raspberry Pi starting with Pi2 are putting out data too fast for almost
+all LED panels I have seen. In this case, you want to slow down writing to
+GPIO. Zero for this parameter means 'no slowdown'.
+
+The default 1 (one) typically works fine, but often you have to even go further
+by setting it to 2 (two). If you have a Raspberry Pi with a slower processor
+(Model A, A+, B+, Zero), then a value of 0 (zero) might work and is desirable.
+
+A Raspberry Pi 3 or Pi4 might even need higher values for the panels to be
+happy.
+
+#### Panel Connection
 The next most important flags describe the type and number of displays connected
 
 ```
@@ -204,20 +233,24 @@ If you have some 'outdoor' panels or panels with different multiplexing,
 the following will be useful:
 
 ```
---led-multiplexing=<0..4> : Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=Z-strip (Default: 0)
+--led-multiplexing=<0..10> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven; 9=P10-128x4-Z; 10=QiangLiQ8 (Default: 0)
 ```
+
 The outdoor panels have different multiplexing which allows them to be faster
 and brighter, but by default their output looks jumbled up.
 They require some pixel-mapping of which there are a few
 types you can try and hopefully one of them works for your panel; The default=0
-is no mapping ('standard' panels), while 1, 2, 3 or 4 are different mappings
-to try with. If your panel has a different mapping, please send a pull request.
+is no mapping ('standard' panels), while 1, 2, ... are different mappings
+to try with. If your panel has a different mapping, you find everything you
+need to implement one in [lib/multiplex-mappers.cc](lib/multiplex-mappers.cc).
+Please send a pull request if you encounter a panel for which you needed to
+implement a new mapping.
 
 Note that you have to set the `--led-rows` and `--led-cols` to the rows and
 columns that are physically on each chained panel so that the multiplexing
 option can work properly. For instance a `32x16` panel with `1:4` multiplexing
 would be controlled with `--led-rows=16 --led-cols=32 --led-multiplexing=1` (or
-whatever multiplexing type your panel is, so it can also be `--led-multiplexing=2`, or 3).
+whatever multiplexing type your panel is, so it can also be `--led-multiplexing=2` ...).
 
 For `64x32` panels with `1:8` multiplexing, this would typically be
 `--led-rows=32 --led-cols=64 --led-multiplexing=1`;
@@ -226,15 +259,9 @@ two chained panels, so then you'd use
 `--led-rows=32 --led-cols=32 --led-chain=2 --led-multiplexing=1`;
 
 ```
---led-pixel-mapper  : Semicolon-separated list of pixel-mappers.
+--led-row-addr-type=<0..3>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels (Default: 0).
 ```
 
-Mapping the logical layout of your boards to your physical arrangement. See
-more in [Remapping coordinates](./examples-api-use#remapping-coordinates).
-
-```
---led-row-addr-type=<0..2>: 0 = default; 1=AB-addressed panels; 2=direct row select (Default: 0).
-```
 This option is useful for certain 64x64 or 32x16 panels. For 64x64 panels,
 that only have an `A` and `B` address line, you'd use `--led-row-addr-type=1`.
 This is only tested with one panel so far, so if it doesn't work for you,
@@ -242,6 +269,25 @@ please send a pull request.
 
 For 32x16 outdoor panels, that have have 4 address line (A, B, C, D), it is
 necessary to use `--led-row-addr-type=2`.
+
+#### Panel Arrangement
+
+```
+--led-pixel-mapper  : Semicolon-separated list of pixel-mappers to arrange pixels.
+```
+
+Optional params after a colon e.g. "U-mapper;Rotate:90"
+
+Available | Parameter after colon| Example
+----------|----------------------|----------
+Mirror    | `H` or `V` for horizontal/vertical mirror. | `Mirror:H`
+Rotate    | Degrees.                                   | `Rotate:90`
+U-mapper  | -
+
+Mapping the logical layout of your boards to your physical arrangement. See
+more in [Remapping coordinates](./examples-api-use#remapping-coordinates).
+
+#### Misc Options
 
 ```
 --led-brightness=<percent>: Brightness in percent (Default: 100).
@@ -340,18 +386,6 @@ to high multiplexing panels (1:16 or 1:32) or long chains, it might be
 worthwhile to try.
 
 ```
---led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
-```
-
-The Raspberry Pi 2 and 3 are putting out data too fast for almost all LED panels
-I have seen. In this case, you want to slow down writing to GPIO. Zero for this
-parameter means 'no slowdown'.
-
-The default 1 (one) typically works fine, but often you have to even go further
-by setting it to 2 (two). If you have a Raspberry Pi with a slower processor
-(Model A, A+, B+, Zero), then a value of 0 (zero) might work and is desirable.
-
-```
 --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
 ```
 
@@ -372,7 +406,8 @@ at initialization time. After that, it is typically not desirable to stay in thi
 role, so the library then drops the privileges.
 
 This flag allows to switch off this behavior, so that you stay root.
-Not recommended unless you have a specific reason for it.
+Not recommended unless you have a specific reason for it (e.g. you need root
+to access other hardware or you do the privilege dropping yourself).
 
 ```
 --led-daemon              : Make the process run in the background as daemon.
