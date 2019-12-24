@@ -334,7 +334,8 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
                           !params_.disable_hardware_pulsing,
                           params_.pwm_lsb_nanoseconds, params_.pwm_dither_bits,
                           params_.row_address_type);
-    Framebuffer::InitializePanels(io_, params_.panel_type, params_.cols);
+    Framebuffer::InitializePanels(io_, params_.panel_type,
+                                  params_.cols * params_.chain_length);
   }
   if (start_thread) {
     StartRefresh();
