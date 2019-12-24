@@ -388,7 +388,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
-          "\t--led-row-addr-type=<0..3>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels (experimental) "
+          "\t--led-row-addr-type=<0..3>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels "
           "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
           "\t--led-%sinverse             "

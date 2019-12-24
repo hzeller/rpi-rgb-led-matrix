@@ -112,9 +112,6 @@ private:
   int last_row_;
 };
 
-// This is mostly experimental at this point. It works with the one panel I have
-// seen that does AB, but might need smallish tweaks to work with all panels
-// that do this.
 class ShiftRegisterRowAddressSetter : public RowAddressSetter {
 public:
   ShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
@@ -148,7 +145,7 @@ private:
   int last_row_;
 };
 
-// Experimental! see issue #823
+// Issue #823
 // An shift register row address setter that does not use B but C for the
 // data. Clock is inverted.
 class ABCShiftRegisterRowAddressSetter : public RowAddressSetter {
