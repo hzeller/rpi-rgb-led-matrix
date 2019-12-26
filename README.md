@@ -179,6 +179,8 @@ This can have values such as
   - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT/Bonnet, that uses this library or
   - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
 
+Learn more about the mappings in the [wiring documentation](wiring.md#alternative-hardware-mappings).
+
 #### GPIO speed
 
 ```
