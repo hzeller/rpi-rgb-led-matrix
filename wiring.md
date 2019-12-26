@@ -130,7 +130,7 @@ recompile and it will be provided as a new option in `--led-gpio-mapping`.
 
 |         | regular | adafruit-hat | adafruit-hat-pwm | regular-pi1 | classic | classic-pi1 |
 ----------|---------|--------------|------------------|-------------|---------|-------------|
-Max chains|        3|             1|                 1|            1|        3|            1|
+Parallel chains|        3|             1|                 1|            1|        3|            1|
 ~OE       |GPIO 18  |GPIO 4        |GPIO 18           |GPIO 18      |GPIO 27  |GPIO 0       |
 Clock     |GPIO 17  |GPIO 17       |GPIO 17           |GPIO 17      |GPIO 11  |GPIO 1       |
 Strobe    |GPIO 4   |GPIO 21       |GPIO 21           |GPIO 4       |GPIO 4   |GPIO 4       |
