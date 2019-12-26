@@ -117,14 +117,14 @@ The hardware mapping described above is the 'regular' hardware mapping, which
 is the default for this library. However, there are alternative hardware
 mappings to choose from, e.g. Adafruit sells a board where they choose a
 different mapping.
-You can choose with the `--led-hardware-mapping` flag.
+You can choose with the `--led-gpio-mapping` flag.
 
 If you got an adapter board that is from some unknown source and you don't
 get any output: double check the GPIO mappings they use.
 
 You have relative freedom to assign any pins to the output of your choosing,
 just add a new mapping in [lib/hardware-mapping.c](lib/hardware-mapping.c),
-recompile and it will be provided as a new option in `--led-hardware-mapping`.
+recompile and it will be provided as a new option in `--led-gpio-mapping`.
 
 <details><summary>Table: GPIO-pins for each hardware mapping</summary>
 
