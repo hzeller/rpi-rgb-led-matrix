@@ -111,6 +111,55 @@ can see a real-live panel with three chains of 5 panels each seen from the back.
 
 ![Coordinate overview][coordinates]
 
+### Alternative Hardware Mappings
+
+The hardware mapping described above is the 'regular' hardware mapping, which
+is the default for this library. However, there are alternative hardware
+mappings to choose from, e.g. Adafruit sells a board where they choose a
+different mapping.
+You can choose with the `--led-hardware-mapping` flag.
+
+If you got an adapter board that is from some unknown source and you don't
+get any output: double check the GPIO mappings they use.
+
+You have relative freedom to assign any pins to the output of your choosing,
+just add a new mapping in [lib/hardware-mapping.c](lib/hardware-mapping.c),
+recompile and it will be provided as a new option in `--led-hardware-mapping`.
+
+<details><summary>Table: GPIO-pins for each hardware mapping</summary>
+
+|         | regular | adafruit-hat | adafruit-hat-pwm | regular-pi1 | classic | classic-pi1 |
+----------|---------|--------------|------------------|-------------|---------|-------------|
+Max chains|        3|             1|                 1|            1|        3|            1|
+~OE       |GPIO 18  |GPIO 4        |GPIO 18           |GPIO 18      |GPIO 27  |GPIO 0       |
+Clock     |GPIO 17  |GPIO 17       |GPIO 17           |GPIO 17      |GPIO 11  |GPIO 1       |
+Strobe    |GPIO 4   |GPIO 21       |GPIO 21           |GPIO 4       |GPIO 4   |GPIO 4       |
+A         |GPIO 22  |GPIO 22       |GPIO 22           |GPIO 22      |GPIO 7   |GPIO 7       |
+B         |GPIO 23  |GPIO 26       |GPIO 26           |GPIO 23      |GPIO 8   |GPIO 8       |
+C         |GPIO 24  |GPIO 27       |GPIO 27           |GPIO 24      |GPIO 9   |GPIO 9       |
+D         |GPIO 25  |GPIO 20       |GPIO 20           |GPIO 25      |GPIO 10  |GPIO 10      |
+E         |GPIO 15  |GPIO 24       |GPIO 24           |GPIO 15      |        -|            -|
+Chain 1/R1|GPIO 11  |GPIO 5        |GPIO 5            |GPIO 11      |GPIO 17  |GPIO 17      |
+Chain 1/G1|GPIO 27  |GPIO 13       |GPIO 13           |GPIO 21      |GPIO 18  |GPIO 18      |
+Chain 1/B1|GPIO 7   |GPIO 6        |GPIO 6            |GPIO 7       |GPIO 22  |GPIO 22      |
+Chain 1/R2|GPIO 8   |GPIO 12       |GPIO 12           |GPIO 8       |GPIO 23  |GPIO 23      |
+Chain 1/G2|GPIO 9   |GPIO 16       |GPIO 16           |GPIO 9       |GPIO 24  |GPIO 24      |
+Chain 1/B2|GPIO 10  |GPIO 23       |GPIO 23           |GPIO 10      |GPIO 25  |GPIO 25      |
+Chain 2/R1|GPIO 12  |             -|                 -|            -|GPIO 12  |            -|
+Chain 2/G1|GPIO 5   |             -|                 -|            -|GPIO 5   |            -|
+Chain 2/B1|GPIO 6   |             -|                 -|            -|GPIO 6   |            -|
+Chain 2/R2|GPIO 19  |             -|                 -|            -|GPIO 19  |            -|
+Chain 2/G2|GPIO 13  |             -|                 -|            -|GPIO 13  |            -|
+Chain 2/B2|GPIO 20  |             -|                 -|            -|GPIO 20  |            -|
+Chain 3/R1|GPIO 14  |             -|                 -|            -|GPIO 14  |            -|
+Chain 3/G1|GPIO 2   |             -|                 -|            -|GPIO 2   |            -|
+Chain 3/B1|GPIO 3   |             -|                 -|            -|GPIO 3   |            -|
+Chain 3/R2|GPIO 26  |             -|                 -|            -|GPIO 15  |            -|
+Chain 3/G2|GPIO 16  |             -|                 -|            -|GPIO 26  |            -|
+Chain 3/B2|GPIO 21  |             -|                 -|            -|GPIO 21  |            -|
+
+</details>
+
 
 A word about power
 ------------------
