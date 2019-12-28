@@ -184,8 +184,8 @@ cdef class RGBMatrixOptions:
         def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
 
 cdef class RGBMatrix(Canvas):
-    def __cinit__(self, int rows = 0, int chains = 0, int parallel = 0,
-        RGBMatrixOptions options = None):
+    def __cinit__(self, RGBMatrixOptions options = None,
+                  int rows = 0, int chains = 0, int parallel = 0):
 
         # If RGBMatrixOptions not provided, create defaults and set any optional
         # parameters supplied
