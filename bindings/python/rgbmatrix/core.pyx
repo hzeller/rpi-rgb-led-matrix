@@ -165,11 +165,11 @@ cdef class RGBMatrixOptions:
             self.__py_encoded_pixel_mapper_config = value.encode('utf-8')
             self.__options.pixel_mapper_config = self.__py_encoded_pixel_mapper_config
 
-    property led_panel_type:
-        def __get__(self): return self.__options.led_panel_type
+    property panel_type:
+        def __get__(self): return self.__options.panel_type
         def __set__(self, value):
-            self.__py_encoded_led_panel_type = value.encode('utf-8')
-            self.__options.led_panel_type = self.__py_encoded_led_panel_type
+            self.__py_encoded_panel_type = value.encode('utf-8')
+            self.__options.panel_type = self.__py_encoded_panel_type
 
     property pwm_dither_bits:
         def __get__(self): return self.__options.pwm_dither_bits

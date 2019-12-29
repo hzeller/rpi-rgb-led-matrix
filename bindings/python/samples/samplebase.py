@@ -53,7 +53,7 @@ class SampleBase(object):
         options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
         options.led_rgb_sequence = self.args.led_rgb_sequence
         options.pixel_mapper_config = self.args.led_pixel_mapper
-        options.led_panel_type = self.args.led_panel_type
+        options.panel_type = self.args.led_panel_type
 
         if self.args.led_show_refresh:
           options.show_refresh_rate = 1
