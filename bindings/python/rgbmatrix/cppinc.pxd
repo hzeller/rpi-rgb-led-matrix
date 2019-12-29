@@ -65,6 +65,7 @@ cdef extern from "led-matrix.h" namespace "rgb_matrix::RGBMatrix":
 
         const char *led_rgb_sequence
         const char *pixel_mapper_config
+        const char *led_panel_type
 
 cdef extern from "graphics.h" namespace "rgb_matrix":
     cdef struct Color:

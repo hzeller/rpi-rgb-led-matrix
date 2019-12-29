@@ -27,6 +27,7 @@ class SampleBase(object):
         self.parser.add_argument("--led-pixel-mapper", action="store", help="Apply pixel mappers. e.g \"Rotate:90\"", default="", type=str)
         self.parser.add_argument("--led-row-addr-type", action="store", help="0 = default; 1=AB-addressed panels;2=row direct", default=0, type=int, choices=[0,1,2])
         self.parser.add_argument("--led-multiplexing", action="store", help="Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven (Default: 0)", default=0, type=int)
+        self.parser.add_argument("--led-panel-type", action="store", help="Needed to initialize special panels. Supported: 'FM6126A'", default="FM6126A", type=str)
 
     def usleep(self, value):
         time.sleep(value / 1000000.0)
@@ -52,7 +53,9 @@ class SampleBase(object):
         options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
         options.led_rgb_sequence = self.args.led_rgb_sequence
         options.pixel_mapper_config = self.args.led_pixel_mapper
-        if self.args.led_show_refresh:
+        options.led_panel_type = self.args.led_panel_type
+
+	if self.args.led_show_refresh:
           options.show_refresh_rate = 1
 
         if self.args.led_slowdown_gpio != None:
