@@ -68,6 +68,27 @@ convenience, there is a little runtext.ppm example included:
 Here is a video of how it looks
 [![Runtext][run-vid]](http://youtu.be/OJvEWyvO4ro)
 
+Other Examples
+--------------
+
+There are a few other examples that you can use as starting point for your
+own exploration of the API. If you just type `make` in this directory, the
+Makefile will build all of these, so they are ready to use. Some examples
+need BDF fonts, of which there are a few provided in [../fonts](../fonts).
+
+Some of these example programs are described in more detail further down this
+page.
+
+ * [minimal-example](./minimal-example.cc) Good to get started with the API
+ * [text-example](./text-example.cc) Reads text from stdin and displays it.
+ * [scrolling-text-example](./scrolling-text-example.cc) Scrolls a text
+   given on the command-line.
+ * [clock](./clock.cc) Shows a clock.
+ * [input-example](./input-example.cc) Example how to use the LED-Matrix but
+   also read inputs from free GPIO-pins. Needed if you build some interactive
+   piece.
+ * [ledcat](./ledcat.cc) LED-cat compatible reading of pixels from stdin.
+
 Using the API
 -------------
 While there is the demo program and the [utilities](../utils), this code can
