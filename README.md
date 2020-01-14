@@ -711,6 +711,25 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 
 ![](./img/user-action-shot.jpg)
 
+Running arduino code with this driver
+-------------------------------------
+If you are using arduino like chips (specifically teensy 3.6 or ESP32), SmartMatrix 
+is the best library you can use to drive RGBPanels. The library has a hard limit of 
+128x128 which only works with a low refresh rate on teensy, while ESP32 is currently 
+limited to 128x64. SmartMatrix also does not currently support AB or AC panels or 
+other weird panels that this library supports.  
+So, if you have arduino code and you need bigger resolutions or panels that don't work
+with arduino drivers, there is now a solution from Marc MERLIN:
+[Running FastLED, Adafruit::GFX, and LEDMatrix code on High Resolution RGBPanels with a Raspberry Pi](http://marc.merlins.org/perso/arduino/post_2020-01-01_Running-FastLED_-Adafruit_GFX_-and-LEDMatrix-code-on-High-Resolution-RGBPanels-with-a-Raspberry-Pi.html).  
+This solution allows you to build arduino code so that it works on linux and uses these layers:
+- https://github.com/marcmerlin/ArduinoOnPc-FastLED-GFX-LEDMatrix
+- https://github.com/marcmerlin/Framebuffer_GFX is the base arduino framebuffer that supports more 2D arduino code
+- https://github.com/marcmerlin/FastLED_RPIRGBPanel_GFX is the driver that bridges that framebuffer and the APIs it supports (FastLED, Adafruit::GFX, and LEDMatrix), with rpi-rgb-led-matrix for display
+
+Here is a demo of arduino code running on 3x 128x64 ABCDE panels connected via the active-3 board, running at 400Hz:
+![image](https://user-images.githubusercontent.com/1369412/71642449-9cce0a80-2cab-11ea-876d-8c9bd6ef3b72.png)
+
+
 [matrix64]: ./img/chained-64x64.jpg
 [sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/product/1484
