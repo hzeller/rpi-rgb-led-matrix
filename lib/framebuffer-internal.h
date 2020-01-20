@@ -108,6 +108,7 @@ public:
   int width() const;
   int height() const;
   void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+  void SetImage(uint8_t *rawdata,int length,bool isBGR);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
 

@@ -230,6 +230,7 @@ void led_canvas_get_size(const struct LedCanvas *canvas,
 void led_canvas_set_pixel(struct LedCanvas *canvas, int x, int y,
 			  uint8_t r, uint8_t g, uint8_t b);
 
+void led_canvas_set_image(struct LedCanvas *canvas, uint8_t *rawdata, int length, bool isBGR);
 /** Clear screen (black). */
 void led_canvas_clear(struct LedCanvas *canvas);
 

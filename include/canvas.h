@@ -17,7 +17,8 @@
 #define RPI_CANVAS_H
 #include <stdint.h>
 
-namespace rgb_matrix {
+namespace rgb_matrix
+{
 // An interface for things a Canvas can do. The RGBMatrix implements this
 // interface, so you can use it directly wherever a canvas is needed.
 //
@@ -29,7 +30,8 @@ namespace rgb_matrix {
 //
 // It is a good idea to have your applications use the concept of
 // a Canvas to write the content to instead of directly using the RGBMatrix.
-class Canvas {
+class Canvas
+{
 public:
   virtual ~Canvas() {}
   virtual int width() const = 0;  // Pixels available in x direction.
@@ -40,6 +42,10 @@ public:
   // Each color is 8 bit (24bpp), 0 black, 255 brightest.
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue) = 0;
+
+  // Input whole image as byte array as pointer and length
+  // Can be in format RGB or BGR
+  virtual void SetImage(uint8_t *rawdata, int length, bool isBGR) = 0;
 
   // Clear screen to be all black.
   virtual void Clear() = 0;
@@ -57,7 +63,8 @@ public:
 // These days, this is done by rgb_matrix::PixelMapper, see pixel-mapper.h
 //
 // Don't use CanvasTransformer in new code.
-class CanvasTransformer {
+class CanvasTransformer
+{
 public:
   virtual ~CanvasTransformer() {}
 
@@ -67,5 +74,5 @@ public:
 };
 #endif
 
-}  // namespace rgb_matrix
-#endif  // RPI_CANVAS_H
+} // namespace rgb_matrix
+#endif // RPI_CANVAS_H

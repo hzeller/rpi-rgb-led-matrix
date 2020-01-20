@@ -27,6 +27,9 @@ namespace rpi_rgb_led_matrix_sharp
 
         [DllImport("librgbmatrix.so")]
         internal static extern void draw_line(IntPtr canvas, int x0, int y0, int x1, int y1, byte r, byte g, byte b);
+
+        [DllImport("librgbmatrix.so")]
+        internal static extern void led_canvas_set_image(IntPtr canvas, IntPtr rawdata, int length, bool isBGR);
         #endregion
 
         // This is a wrapper for canvas no need to implement IDisposable here 
@@ -45,7 +48,7 @@ namespace rpi_rgb_led_matrix_sharp
             Height = height;
         }
 
-        public int Width {get; private set; }
+        public int Width { get; private set; }
         public int Height { get; private set; }
 
         public void SetPixel(int x, int y, Color color)
@@ -53,6 +56,11 @@ namespace rpi_rgb_led_matrix_sharp
             led_canvas_set_pixel(_canvas, x, y, color.R, color.G, color.B);
         }
 
+        public void SetImage(IntPtr rawdata, int length, bool isBGR)
+        {
+            led_canvas_set_image(_canvas, rawdata, length, isBGR);
+        }
+        
         public void Fill(Color color)
         {
             led_canvas_fill(_canvas, color.R, color.G, color.B);
@@ -68,12 +76,12 @@ namespace rpi_rgb_led_matrix_sharp
             draw_circle(_canvas, x0, y0, radius, color.R, color.G, color.B);
         }
 
-        public void DrawLine (int x0, int y0, int x1, int y1, Color color)
+        public void DrawLine(int x0, int y0, int x1, int y1, Color color)
         {
             draw_line(_canvas, x0, y0, x1, y1, color.R, color.G, color.B);
         }
 
-        public int DrawText(RGBLedFont font, int x, int y, Color color, string text, int spacing=0, bool vertical=false)
+        public int DrawText(RGBLedFont font, int x, int y, Color color, string text, int spacing = 0, bool vertical = false)
         {
             return font.DrawText(_canvas, x, y, color, text, spacing, vertical);
         }
@@ -81,7 +89,7 @@ namespace rpi_rgb_led_matrix_sharp
 
     public struct Color
     {
-        public Color (int r, int g, int b)
+        public Color(int r, int g, int b)
         {
             R = (byte)r;
             G = (byte)g;

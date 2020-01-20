@@ -179,6 +179,9 @@ void led_canvas_set_pixel(struct LedCanvas *canvas, int x, int y,
   to_canvas(canvas)->SetPixel(x, y, r, g, b);
 }
 
+void led_canvas_set_image(struct LedCanvas *canvas, uint8_t *rawdata, int length, bool isBGR){
+  to_canvas(canvas)->SetImage(rawdata,length,isBGR);
+}
 void led_canvas_clear(struct LedCanvas *canvas) {
   to_canvas(canvas)->Clear();
 }
