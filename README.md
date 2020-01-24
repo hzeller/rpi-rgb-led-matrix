@@ -678,6 +678,37 @@ the other arguments, no newline). This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
 
+Performance improvements and limits
+-----------------------------------
+Regardless of which driving hardware you use, ultimately you can only push pixels 
+so fast to a string of panels before you get flickering due to too low a refresh 
+rate (less than 80-100Hz), or before you refresh the panel lines too fast and they
+appear too dim because each line is not displayed long enough before it is turned off.
+
+AB panels also known as outdoor panels, help with performance (you can drive them a bit
+faster and they'll still look bright enough), but as you drive them faster, you'll
+eventually run into the same limits.  
+Ultimately a Raspberri Pi3 is fast enough to push pixels as quickly as panels can accept them.
+Using an FPGA solution could work around some slight inefficiencies but ultimately run into 
+similar limits.  
+A general rule of thumb is that running 128x128 on a single channel, is already pushing
+limits and you will have to make tradeoffs in visual quality.
+
+You can look at this bug for more details: 
+https://github.com/hzeller/rpi-rgb-led-matrix/issues/918#issuecomment-578281400
+
+Basic tips:
+- use an active-3 board with led-parallel=3
+- led-pwm-dither-bits=1 and led-pwm-bits=7 decrease visual quality but increase refresh frequency
+- You can patch the code to allow led-pwm-lsb-nanoseconds=25 for slightly dimmer output at higher rate
+(some panels can go all the way down to 9 but they get much dimmer)
+- AB panels and other panels with that use values of led-multiplexing bigger than 0, 
+will also go faster, although as you tune more options, their advantage will decrease.
+
+Ultimately, you should not expect to go past 256x256 using an active-3 board without significant
+quality tradeoffs. If you need bigger displays, you should use multiple boards and synchronize the
+output.
+
 Limitations
 -----------
 If you are using the Adafruit HAT/Bonnet in the default configuration, then we
