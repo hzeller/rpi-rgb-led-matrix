@@ -260,6 +260,75 @@ public:
 };
 
 /*
+ * Vairous P10 1R1G1B Outdoor implementations for 16x16 modules with separate
+ * RGB LEDs, e.g.:
+ * https://www.ledcontrollercard.com/english/p10-outdoor-rgb-led-module-160x160mm-dip.html
+ * 
+ */
+class P10Outdoor1R1G1BMultiplexBase : public MultiplexMapperBase {
+public:
+  P10Outdoor1R1G1BMultiplexBase(const char *name)
+  : MultiplexMapperBase(name, 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const int vblock_is_odd = (y / tile_height_) % 2;
+    const int vblock_is_even = 1 - vblock_is_odd;
+    const int even_vblock_shift = vblock_is_even * even_vblock_offset_;
+    const int odd_vblock_shift = vblock_is_odd * odd_vblock_offset_;
+
+    MapSinglePanel(x, y, matrix_x, matrix_y, vblock_is_even, vblock_is_odd, even_vblock_shift, odd_vblock_shift);
+  }
+
+protected:
+  virtual void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y, const int vblock_is_even, const int vblock_is_odd, const int even_vblock_shift, const int odd_vblock_shift) const = 0;
+
+  static const int tile_width_ = 8;
+  static const int tile_height_ = 4;
+  static const int even_vblock_offset_ = 0;
+  static const int odd_vblock_offset_ = 8;
+};
+
+class P10Outdoor1R1G1BMultiplexMapper1 : public P10Outdoor1R1G1BMultiplexBase {
+public:
+  P10Outdoor1R1G1BMultiplexMapper1()
+  : P10Outdoor1R1G1BMultiplexBase("P10Outdoor1R1G1-1") {}
+
+protected:
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y, const int vblock_is_even, const int vblock_is_odd, const int even_vblock_shift, const int odd_vblock_shift) const {
+    *matrix_x = tile_width_ * (1 + vblock_is_even + 2 * (x / tile_width_)) - (x % tile_width_) - 1;
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
+
+class P10Outdoor1R1G1BMultiplexMapper2 : public P10Outdoor1R1G1BMultiplexBase {
+public:
+  P10Outdoor1R1G1BMultiplexMapper2()
+  : P10Outdoor1R1G1BMultiplexBase("P10Outdoor1R1G1-2") {}
+
+protected:
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y, const int vblock_is_even, const int vblock_is_odd, const int even_vblock_shift, const int odd_vblock_shift) const {
+    *matrix_x = vblock_is_even
+      ? tile_width_ * (1 + 2 * (x / tile_width_)) - (x % tile_width_) - 1
+      : x + ((x + even_vblock_shift) / tile_width_) * tile_width_ + odd_vblock_shift;
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
+
+class P10Outdoor1R1G1BMultiplexMapper3 : public P10Outdoor1R1G1BMultiplexBase {
+public:
+  P10Outdoor1R1G1BMultiplexMapper3()
+  : P10Outdoor1R1G1BMultiplexBase("P10Outdoor1R1G1-3") {}
+
+protected:
+    void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y, const int vblock_is_even, const int vblock_is_odd, const int even_vblock_shift, const int odd_vblock_shift) const {
+    *matrix_x = vblock_is_odd
+      ? tile_width_ * (2 + 2 * (x / tile_width_)) - (x % tile_width_) - 1
+      : x + ((x + even_vblock_shift) / tile_width_) * tile_width_ + odd_vblock_shift;
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
+
+/*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
  * made available in the --led-multiplexing commandline option.
@@ -278,6 +347,9 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0));
   result->push_back(new P10MapperZ());
   result->push_back(new QiangLiQ8());
+  result->push_back(new P10Outdoor1R1G1BMultiplexMapper1());
+  result->push_back(new P10Outdoor1R1G1BMultiplexMapper2());
+  result->push_back(new P10Outdoor1R1G1BMultiplexMapper3());
   return result;
 }
 
