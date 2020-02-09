@@ -112,6 +112,56 @@ private:
   int last_row_;
 };
 
+class SM5266RowAddressSetter : public RowAddressSetter {
+public:
+  SM5266RowAddressSetter(int double_rows, const HardwareMapping &h)
+    : row_mask_(0), last_row_(-1),
+      bk_(h.c),
+      din_(h.b),
+      dck_(h.a)
+  {
+
+    assert(double_rows <= 32);  // need to resize row_lookup_
+    if (double_rows > 16) row_mask_ |= h.e;
+    if (double_rows > 8)  row_mask_ |= h.d;
+    for (int i = 0; i < double_rows; ++i) {
+      // To avoid the bit-fiddle in the critical path, utilize
+      // a lookup-table for all possible rows.
+      gpio_bits_t row_address = 0;
+      row_address |= (i & 0x08) ? h.d : 0;
+      row_address |= (i & 0x10) ? h.e : 0;
+      row_lookup_[i] = row_address;
+    }
+  }
+
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    io->SetBits(bk_);
+    for (int r = 0; r < 8; r++) {
+      if (row % 8 == (7-r)){
+        io->SetBits(din_);}
+      else{
+        io->ClearBits(din_);}
+      io->SetBits(dck_);
+      usleep(1);
+      io->ClearBits(dck_);
+      }
+    io->ClearBits(bk_);
+    last_row_ = row;
+    io->WriteMaskedBits(row_lookup_[row], row_mask_);
+  }
+
+private:
+  gpio_bits_t row_mask_;
+  int last_row_;
+  const gpio_bits_t bk_;
+  const gpio_bits_t din_;
+  const gpio_bits_t dck_;
+  gpio_bits_t row_lookup_[32];
+};
+
 class ShiftRegisterRowAddressSetter : public RowAddressSetter {
 public:
   ShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
@@ -365,6 +415,9 @@ Framebuffer::~Framebuffer() {
   case 3:
     row_setter_ = new ABCShiftRegisterRowAddressSetter(double_rows, h);
     break;
+  case 4:
+    row_setter_ = new SM5266RowAddressSetter(double_rows, h);
+    break;
   default:
     assert(0);  // unexpected type.
   }
@@ -427,12 +480,125 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.strobe);
 }
 
+static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
+  const uint32_t bits_r_on= h.p0_r1 | h.p0_r2;
+  const uint32_t bits_g_on= h.p0_g1 | h.p0_g2;
+  const uint32_t bits_b_on= h.p0_b1 | h.p0_b2;
+  const uint32_t bits_on= bits_r_on | bits_g_on | bits_b_on;
+  const uint32_t bits_off = 0;
+
+/*
+Register 1
+11111111 11001110 default
+|||||||| ||||||||- Low Gray Compensation Bit 0 (0-7, default 4) (default 0)
+|||||||| |||||||-- Output enable 1=On, 0=Off (default 1)
+|||||||| ||||||--- Intensity Bit 0 (15-63, default 63) (default 1)
+|||||||| |||||---- Intensity Bit 1 (15-63, default 63) (default 1)
+|||||||| ||||----- Inflection Point Bit 0 (0-7, default 4) (default 0)
+|||||||| |||------ Inflection Point Bit 1 (0-7, default 4) (default 0)
+|||||||| ||------- Inflection Point Bit 2 (0-7, default 4 (FM6126=6)) (default 1)
+|||||||| |-------- Intensity Bit 2 (15-63, default 63) (default 1)
+
+||||||||---------- Intensity Bit 3 (15-63, default 63) (default 1)
+|||||||----------- Intensity Bit 4 (15-63, default 63) (default 1)
+||||||------------ Intensity Bit 5 (15-63, default 63) (default 1)
+|||||------------- Lower Blanking Level #1 Bit 0 (0-15, default 15) (default 1)
+||||-------------- Lower Blanking Level #1 Bit 1 (0-15, default 15) (default 1)
+|||--------------- Lower Blanking Level #1 Bit 2 (0-15, default 15) (default 1)
+||---------------- Lower Blanking Level #1 Bit 3 (0-15, default 15) (default 1)
+|----------------- First Line of Dark Compensation Bit 4 (0-15, default 8) (default 1)
+
+Register 2
+11111000 01100010 default red
+11110000 01100010 default green
+11101000 01100010 default blue
+|||||||| ||||||||- Low Gray Compensation Bit 1 (0-7, default 4) (default 0)
+|||||||| |||||||-- Low Gray Compensation Bit 2 (0-7, default 4) (default 1)
+|||||||| ||||||--- SDO Output delay 1=On, 0=Off (Default 0)
+|||||||| |||||---- Lower Blanking Level #2 (0-1, default 0)
+|||||||| ||||----- Ghosting Enhancement (0=off*, 1=on)
+|||||||| |||------ Always 1
+|||||||| ||------- LE Data latch 1=On, 0=Off (Default 1)
+|||||||| |-------- Always 0
+
+||||||||---------- First Line of Dark Compensation Bit 0 (0-15, default 8) (default 0)
+|||||||----------- First Line of Dark Compensation Bit 1 (0-15, default 8) (default 0)
+||||||------------ First Line of Dark Compensation Bit 2 (0-15, default 8) (default 0)
+|||||------------- OE Delay Bit 0
+||||-------------- OE Delay Bit 1 (0-3, default red=3, green=2, blue=1)
+|||--------------- Always 1
+||---------------- Always 1
+|----------------- Always 1
+
+Register 3
+00011111 00000000  default
+|||||||| ||||||||- Always 0
+|||||||| |||||||-- Always 0
+|||||||| ||||||--- Always 0
+|||||||| |||||---- Always 0
+|||||||| ||||----- Always 0
+|||||||| |||------ Always 0
+|||||||| ||------- Always 0
+|||||||| |-------- Always 0
+
+||||||||---------- Always 1
+|||||||----------- Always 1
+||||||------------ Always 1
+|||||------------- Always 1
+||||-------------- Always 1
+|||--------------- Always 0
+||---------------- Bad Pixel Elimination 1=On 0=Off*
+|----------------- Always 0
+*/
+  static const char* init_b12 = "1111111111001110";  // register 1
+  static const char* init_b13 = "1110000001100010";  // register 2.
+  static const char* init_b11 = "0101111100000000";  // register 3.
+
+  io->ClearBits(h.clock | h.strobe);
+
+
+  for (int i = 0; i < columns; ++i) {
+    uint32_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
+    if (i > columns - 12) value |= h.strobe;
+    io->Write(value);
+    io->SetBits(h.clock);
+    io->ClearBits(h.clock);
+  }
+  io->ClearBits(h.strobe);
+
+  for (int i = 0; i < columns; ++i) {
+    uint32_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
+    if (i > columns - 13) value |= h.strobe;
+    io->Write(value);
+    io->SetBits(h.clock);
+    io->ClearBits(h.clock);
+  }
+  io->ClearBits(h.strobe);
+
+  for (int i = 0; i < columns; ++i) {
+    uint32_t value = init_b11[i % 16] == '0' ? bits_off : bits_on;
+    if (i > columns - 11) value |= h.strobe;
+    io->Write(value);
+    io->SetBits(h.clock);
+    io->ClearBits(h.clock);
+  }
+  io->ClearBits(h.strobe);
+
+}
+
+ 
+
+	
+	
 /*static*/ void Framebuffer::InitializePanels(GPIO *io,
                                               const char *panel_type,
                                               int columns) {
   if (!panel_type || panel_type[0] == '\0') return;
   if (strncasecmp(panel_type, "fm6126", 6) == 0) {
     InitFM6126(io, *hardware_mapping_, columns);
+  }
+  else if (strncasecmp(panel_type, "fm6127", 6) == 0) {
+    InitFM6127(io, *hardware_mapping_, columns);
   }
   // else if (strncasecmp(...))  // more init types
   else {
