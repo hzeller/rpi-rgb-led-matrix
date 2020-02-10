@@ -460,8 +460,8 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (row_address_type < 0 || row_address_type > 3) {
-    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 ABC address.\n");
+  if (row_address_type < 0 || row_address_type > 4) {
+    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 (ABC address), 4 (ABC Shift + DE direct).\n");
     success = false;
   }
 
