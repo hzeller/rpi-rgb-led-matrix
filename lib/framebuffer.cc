@@ -112,21 +112,23 @@ private:
   int last_row_;
 };
 
+// The SM5266RowAddressSetter (ABC Shifter + DE direct) sets bits ABC using a 8 bit shifter and DE directly.
+// The panel this works with has 8 SM5266 shifters (4 for the top 32 rows and 4 for the bottom 32 rows).
+// DE is used to select the active shifter (rows 1-8/33-40, 9-16/41-48, 17-24/49-56, 25-32/57-64).
+// Rows are enabled by shifting in 8 bits (high bit first) with a high bit enabling that row.
+// This allows up to 8 rows per group to be active at the same time (if they have the same content), but that isn't implemented here.
+// BK, DIN and DCK are the designations on the SM5266P datasheet.  
+// BK = Enable Input, DIN = Serial In, DCK = Clock
 class SM5266RowAddressSetter : public RowAddressSetter {
 public:
   SM5266RowAddressSetter(int double_rows, const HardwareMapping &h)
-    : row_mask_(0), last_row_(-1),
-      bk_(h.c),
-      din_(h.b),
-      dck_(h.a)
-  {
-
-    assert(double_rows <= 32);  // need to resize row_lookup_
-    if (double_rows > 16) row_mask_ |= h.e;
-    if (double_rows > 8)  row_mask_ |= h.d;
+    : row_mask_(h.a | h.b | h.c | h.d | h.e), 
+      last_row_(-1), 
+      bk_(h.c), 
+      din_(h.b), 
+      dck_(h.a) {
+    assert(double_rows == 32); // designed for 1/32 panel
     for (int i = 0; i < double_rows; ++i) {
-      // To avoid the bit-fiddle in the critical path, utilize
-      // a lookup-table for all possible rows.
       gpio_bits_t row_address = 0;
       row_address |= (i & 0x08) ? h.d : 0;
       row_address |= (i & 0x10) ? h.e : 0;
@@ -138,19 +140,23 @@ public:
 
   virtual void SetRowAddress(GPIO *io, int row) {
     if (row == last_row_) return;
-    io->SetBits(bk_);
-    for (int r = 0; r < 8; r++) {
-      if (row % 8 == (7-r)){
-        io->SetBits(din_);}
-      else{
-        io->ClearBits(din_);}
-      io->SetBits(dck_);
-      usleep(1);
+    io->SetBits(bk_);  // Enable serial input for the shifter
+    for (int r = 7; r >= 0; r--) {
+      if (row % 8 == r) {
+        io->SetBits(din_);
+        } else {
+        io->ClearBits(din_);
+        }
+      io->SetBits(dck_);  
+      io->SetBits(dck_);  
+      // The second setbits allows the clock pulse timing to work on my rpi3.  
+      // It increased fps from 70 to 90 on demo 0 on a 256x64 panel stack compared to a 1 us delay.  
+      // This may need to be changed to usleep(1) (1 us delay) for full timing reliability on other platforms.
       io->ClearBits(dck_);
       }
-    io->ClearBits(bk_);
+    io->ClearBits(bk_);  // Disable serial input to keep unwanted bits out of the shifters
     last_row_ = row;
-    io->WriteMaskedBits(row_lookup_[row], row_mask_);
+    io->WriteMaskedBits(row_lookup_[row], row_mask_);  // Set bits D and E to enable the proper shifter to display the selected row.
   }
 
 private:
@@ -480,6 +486,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.strobe);
 }
 
+// The FM6217 is very similar to the FM6216.  FM6217 adds Register 3 to allow for automatic bad pixel supression.
 static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   const uint32_t bits_r_on= h.p0_r1 | h.p0_r2;
   const uint32_t bits_g_on= h.p0_g1 | h.p0_g2;
@@ -487,76 +494,10 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   const uint32_t bits_on= bits_r_on | bits_g_on | bits_b_on;
   const uint32_t bits_off = 0;
 
-/*
-Register 1
-11111111 11001110 default
-|||||||| ||||||||- Low Gray Compensation Bit 0 (0-7, default 4) (default 0)
-|||||||| |||||||-- Output enable 1=On, 0=Off (default 1)
-|||||||| ||||||--- Intensity Bit 0 (15-63, default 63) (default 1)
-|||||||| |||||---- Intensity Bit 1 (15-63, default 63) (default 1)
-|||||||| ||||----- Inflection Point Bit 0 (0-7, default 4) (default 0)
-|||||||| |||------ Inflection Point Bit 1 (0-7, default 4) (default 0)
-|||||||| ||------- Inflection Point Bit 2 (0-7, default 4 (FM6126=6)) (default 1)
-|||||||| |-------- Intensity Bit 2 (15-63, default 63) (default 1)
-
-||||||||---------- Intensity Bit 3 (15-63, default 63) (default 1)
-|||||||----------- Intensity Bit 4 (15-63, default 63) (default 1)
-||||||------------ Intensity Bit 5 (15-63, default 63) (default 1)
-|||||------------- Lower Blanking Level #1 Bit 0 (0-15, default 15) (default 1)
-||||-------------- Lower Blanking Level #1 Bit 1 (0-15, default 15) (default 1)
-|||--------------- Lower Blanking Level #1 Bit 2 (0-15, default 15) (default 1)
-||---------------- Lower Blanking Level #1 Bit 3 (0-15, default 15) (default 1)
-|----------------- First Line of Dark Compensation Bit 4 (0-15, default 8) (default 1)
-
-Register 2
-11111000 01100010 default red
-11110000 01100010 default green
-11101000 01100010 default blue
-|||||||| ||||||||- Low Gray Compensation Bit 1 (0-7, default 4) (default 0)
-|||||||| |||||||-- Low Gray Compensation Bit 2 (0-7, default 4) (default 1)
-|||||||| ||||||--- SDO Output delay 1=On, 0=Off (Default 0)
-|||||||| |||||---- Lower Blanking Level #2 (0-1, default 0)
-|||||||| ||||----- Ghosting Enhancement (0=off*, 1=on)
-|||||||| |||------ Always 1
-|||||||| ||------- LE Data latch 1=On, 0=Off (Default 1)
-|||||||| |-------- Always 0
-
-||||||||---------- First Line of Dark Compensation Bit 0 (0-15, default 8) (default 0)
-|||||||----------- First Line of Dark Compensation Bit 1 (0-15, default 8) (default 0)
-||||||------------ First Line of Dark Compensation Bit 2 (0-15, default 8) (default 0)
-|||||------------- OE Delay Bit 0
-||||-------------- OE Delay Bit 1 (0-3, default red=3, green=2, blue=1)
-|||--------------- Always 1
-||---------------- Always 1
-|----------------- Always 1
-
-Register 3
-00011111 00000000  default
-|||||||| ||||||||- Always 0
-|||||||| |||||||-- Always 0
-|||||||| ||||||--- Always 0
-|||||||| |||||---- Always 0
-|||||||| ||||----- Always 0
-|||||||| |||------ Always 0
-|||||||| ||------- Always 0
-|||||||| |-------- Always 0
-
-||||||||---------- Always 1
-|||||||----------- Always 1
-||||||------------ Always 1
-|||||------------- Always 1
-||||-------------- Always 1
-|||--------------- Always 0
-||---------------- Bad Pixel Elimination 1=On 0=Off*
-|----------------- Always 0
-*/
   static const char* init_b12 = "1111111111001110";  // register 1
   static const char* init_b13 = "1110000001100010";  // register 2.
   static const char* init_b11 = "0101111100000000";  // register 3.
-
   io->ClearBits(h.clock | h.strobe);
-
-
   for (int i = 0; i < columns; ++i) {
     uint32_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 12) value |= h.strobe;
@@ -583,13 +524,8 @@ Register 3
     io->ClearBits(h.clock);
   }
   io->ClearBits(h.strobe);
-
 }
 
- 
-
-	
-	
 /*static*/ void Framebuffer::InitializePanels(GPIO *io,
                                               const char *panel_type,
                                               int columns) {
