@@ -112,22 +112,27 @@ private:
   int last_row_;
 };
 
-// The SM5266RowAddressSetter (ABC Shifter + DE direct) sets bits ABC using a 8 bit shifter and DE directly.
-// The panel this works with has 8 SM5266 shifters (4 for the top 32 rows and 4 for the bottom 32 rows).
-// DE is used to select the active shifter (rows 1-8/33-40, 9-16/41-48, 17-24/49-56, 25-32/57-64).
-// Rows are enabled by shifting in 8 bits (high bit first) with a high bit enabling that row.
-// This allows up to 8 rows per group to be active at the same time (if they have the same content), but that isn't implemented here.
-// BK, DIN and DCK are the designations on the SM5266P datasheet.  
+// The SM5266RowAddressSetter (ABC Shifter + DE direct) sets bits ABC using
+// a 8 bit shifter and DE directly. The panel this works with has 8 SM5266
+// shifters (4 for the top 32 rows and 4 for the bottom 32 rows).
+// DE is used to select the active shifter
+// (rows 1-8/33-40, 9-16/41-48, 17-24/49-56, 25-32/57-64).
+// Rows are enabled by shifting in 8 bits (high bit first) with a high bit
+// enabling that row. This allows up to 8 rows per group to be active at the
+// same time (if they have the same content), but that isn't implemented here.
+// BK, DIN and DCK are the designations on the SM5266P datasheet.
 // BK = Enable Input, DIN = Serial In, DCK = Clock
 class SM5266RowAddressSetter : public RowAddressSetter {
 public:
   SM5266RowAddressSetter(int double_rows, const HardwareMapping &h)
-    : row_mask_(h.a | h.b | h.c | h.d | h.e), 
-      last_row_(-1), 
-      bk_(h.c), 
-      din_(h.b), 
+    : row_mask_(h.a | h.b | h.c),
+      last_row_(-1),
+      bk_(h.c),
+      din_(h.b),
       dck_(h.a) {
-    assert(double_rows == 32); // designed for 1/32 panel
+    assert(double_rows <= 32); // designed for up to 1/32 panel
+    if (double_rows > 8)  row_mask_ |= h.d;
+    if (double_rows > 16) row_mask_ |= h.e;
     for (int i = 0; i < double_rows; ++i) {
       gpio_bits_t row_address = 0;
       row_address |= (i & 0x08) ? h.d : 0;
@@ -144,19 +149,18 @@ public:
     for (int r = 7; r >= 0; r--) {
       if (row % 8 == r) {
         io->SetBits(din_);
-        } else {
+      } else {
         io->ClearBits(din_);
-        }
-      io->SetBits(dck_);  
-      io->SetBits(dck_);  
-      // The second setbits allows the clock pulse timing to work on my rpi3.  
-      // It increased fps from 70 to 90 on demo 0 on a 256x64 panel stack compared to a 1 us delay.  
-      // This may need to be changed to usleep(1) (1 us delay) for full timing reliability on other platforms.
-      io->ClearBits(dck_);
       }
+      io->SetBits(dck_);
+      io->SetBits(dck_);  // Longer clock time; tested with Pi3
+      io->ClearBits(dck_);
+    }
     io->ClearBits(bk_);  // Disable serial input to keep unwanted bits out of the shifters
     last_row_ = row;
-    io->WriteMaskedBits(row_lookup_[row], row_mask_);  // Set bits D and E to enable the proper shifter to display the selected row.
+    // Set bits D and E to enable the proper shifter to display the selected
+    // row.
+    io->WriteMaskedBits(row_lookup_[row], row_mask_);
   }
 
 private:
@@ -486,7 +490,8 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.strobe);
 }
 
-// The FM6217 is very similar to the FM6216.  FM6217 adds Register 3 to allow for automatic bad pixel supression.
+// The FM6217 is very similar to the FM6216.
+// FM6217 adds Register 3 to allow for automatic bad pixel supression.
 static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   const uint32_t bits_r_on= h.p0_r1 | h.p0_r2;
   const uint32_t bits_g_on= h.p0_g1 | h.p0_g2;
