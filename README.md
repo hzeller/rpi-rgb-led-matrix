@@ -91,8 +91,8 @@ of which there are a few types out there; they can be chosen with
 the `--led-multiplexing` parameter.
 
 There are some panels that have a different chip-set than the default HUB75.
-These require some initialization sequence. The current supported one is
-`--led-panel-type=FM6126A`.
+These require some initialization sequence. The current supported types are
+`--led-panel-type=FM6126A` and `--led-panel-type=FM6127`.
 
 Generally, the higher scan-rate (e.g. 1:8), a.k.a. outdoor panels generally
 allow faster refresh rate, but you might need to figure out the multiplexing
@@ -229,6 +229,8 @@ output on your panel, try setting:
 ```
 --led-panel-type=FM6126A
 ```
+
+Some panels have the FM6127 chip, which is also an option.
 
 ##### Multiplexing
 If you have some 'outdoor' panels or panels with different multiplexing,
