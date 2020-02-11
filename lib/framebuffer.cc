@@ -112,6 +112,62 @@ private:
   int last_row_;
 };
 
+// The SM5266RowAddressSetter (ABC Shifter + DE direct) sets bits ABC using a 8 bit shifter and DE directly.
+// The panel this works with has 8 SM5266 shifters (4 for the top 32 rows and 4 for the bottom 32 rows).
+// DE is used to select the active shifter (rows 1-8/33-40, 9-16/41-48, 17-24/49-56, 25-32/57-64).
+// Rows are enabled by shifting in 8 bits (high bit first) with a high bit enabling that row.
+// This allows up to 8 rows per group to be active at the same time (if they have the same content), but that isn't implemented here.
+// BK, DIN and DCK are the designations on the SM5266P datasheet.  
+// BK = Enable Input, DIN = Serial In, DCK = Clock
+class SM5266RowAddressSetter : public RowAddressSetter {
+public:
+  SM5266RowAddressSetter(int double_rows, const HardwareMapping &h)
+    : row_mask_(h.a | h.b | h.c | h.d | h.e), 
+      last_row_(-1), 
+      bk_(h.c), 
+      din_(h.b), 
+      dck_(h.a) {
+    assert(double_rows == 32); // designed for 1/32 panel
+    for (int i = 0; i < double_rows; ++i) {
+      gpio_bits_t row_address = 0;
+      row_address |= (i & 0x08) ? h.d : 0;
+      row_address |= (i & 0x10) ? h.e : 0;
+      row_lookup_[i] = row_address;
+    }
+  }
+
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    io->SetBits(bk_);  // Enable serial input for the shifter
+    for (int r = 7; r >= 0; r--) {
+      if (row % 8 == r) {
+        io->SetBits(din_);
+        } else {
+        io->ClearBits(din_);
+        }
+      io->SetBits(dck_);  
+      io->SetBits(dck_);  
+      // The second setbits allows the clock pulse timing to work on my rpi3.  
+      // It increased fps from 70 to 90 on demo 0 on a 256x64 panel stack compared to a 1 us delay.  
+      // This may need to be changed to usleep(1) (1 us delay) for full timing reliability on other platforms.
+      io->ClearBits(dck_);
+      }
+    io->ClearBits(bk_);  // Disable serial input to keep unwanted bits out of the shifters
+    last_row_ = row;
+    io->WriteMaskedBits(row_lookup_[row], row_mask_);  // Set bits D and E to enable the proper shifter to display the selected row.
+  }
+
+private:
+  gpio_bits_t row_mask_;
+  int last_row_;
+  const gpio_bits_t bk_;
+  const gpio_bits_t din_;
+  const gpio_bits_t dck_;
+  gpio_bits_t row_lookup_[32];
+};
+
 class ShiftRegisterRowAddressSetter : public RowAddressSetter {
 public:
   ShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
@@ -365,6 +421,9 @@ Framebuffer::~Framebuffer() {
   case 3:
     row_setter_ = new ABCShiftRegisterRowAddressSetter(double_rows, h);
     break;
+  case 4:
+    row_setter_ = new SM5266RowAddressSetter(double_rows, h);
+    break;
   default:
     assert(0);  // unexpected type.
   }
@@ -427,12 +486,55 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.strobe);
 }
 
+// The FM6217 is very similar to the FM6216.  FM6217 adds Register 3 to allow for automatic bad pixel supression.
+static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
+  const uint32_t bits_r_on= h.p0_r1 | h.p0_r2;
+  const uint32_t bits_g_on= h.p0_g1 | h.p0_g2;
+  const uint32_t bits_b_on= h.p0_b1 | h.p0_b2;
+  const uint32_t bits_on= bits_r_on | bits_g_on | bits_b_on;
+  const uint32_t bits_off = 0;
+
+  static const char* init_b12 = "1111111111001110";  // register 1
+  static const char* init_b13 = "1110000001100010";  // register 2.
+  static const char* init_b11 = "0101111100000000";  // register 3.
+  io->ClearBits(h.clock | h.strobe);
+  for (int i = 0; i < columns; ++i) {
+    uint32_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
+    if (i > columns - 12) value |= h.strobe;
+    io->Write(value);
+    io->SetBits(h.clock);
+    io->ClearBits(h.clock);
+  }
+  io->ClearBits(h.strobe);
+
+  for (int i = 0; i < columns; ++i) {
+    uint32_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
+    if (i > columns - 13) value |= h.strobe;
+    io->Write(value);
+    io->SetBits(h.clock);
+    io->ClearBits(h.clock);
+  }
+  io->ClearBits(h.strobe);
+
+  for (int i = 0; i < columns; ++i) {
+    uint32_t value = init_b11[i % 16] == '0' ? bits_off : bits_on;
+    if (i > columns - 11) value |= h.strobe;
+    io->Write(value);
+    io->SetBits(h.clock);
+    io->ClearBits(h.clock);
+  }
+  io->ClearBits(h.strobe);
+}
+
 /*static*/ void Framebuffer::InitializePanels(GPIO *io,
                                               const char *panel_type,
                                               int columns) {
   if (!panel_type || panel_type[0] == '\0') return;
   if (strncasecmp(panel_type, "fm6126", 6) == 0) {
     InitFM6126(io, *hardware_mapping_, columns);
+  }
+  else if (strncasecmp(panel_type, "fm6127", 6) == 0) {
+    InitFM6127(io, *hardware_mapping_, columns);
   }
   // else if (strncasecmp(...))  // more init types
   else {
