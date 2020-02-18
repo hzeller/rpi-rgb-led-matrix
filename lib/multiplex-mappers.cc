@@ -259,6 +259,27 @@ public:
   }
 };
 
+class InversedZStripe : public MultiplexMapperBase {
+public:
+  InversedZStripe() : MultiplexMapperBase("InversedZStripe", 2) {}
+  
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    static const int tile_width = 8;
+    static const int tile_height = 4;
+    
+    const int vert_block_is_odd = ((y / tile_height) % 2);
+    const int evenOffset[8] = {7, 5, 3, 1, -1, -3, -5, -7};
+    
+    if (vert_block_is_odd) {
+      *matrix_x = x + (x / tile_width) * tile_width;
+    } else {
+      *matrix_x = x + (x / tile_width) * tile_width + 8 + evenOffset[x % 8];
+    }
+    *matrix_y = (y % tile_height) + tile_height * (y / (tile_height * 2));
+  }
+};
+
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -278,6 +299,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0));
   result->push_back(new P10MapperZ());
   result->push_back(new QiangLiQ8());
+  result->push_back(new InversedZStripe());
   return result;
 }
 
