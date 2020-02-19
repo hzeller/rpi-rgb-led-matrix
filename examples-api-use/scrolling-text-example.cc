@@ -29,7 +29,8 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n");
   rgb_matrix::PrintMatrixFlags(stderr);
   fprintf(stderr,
-          "\t-s <speed>        : Approximate letters per second.\n"
+          "\t-s <speed>        : Approximate letters per second. "
+          "(Zero for no scrolling)\n"
           "\t-l <loop-count>   : Number of loops through the text. "
           "-1 for endless (default)\n"
           "\t-f <font-file>    : Use given font.\n"
@@ -41,6 +42,7 @@ static int usage(const char *progname) {
           "\t-C <r,g,b>        : Color. Default 255,255,0\n"
           "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
           "\t-O <r,g,b>        : Outline-Color, e.g. to increase contrast.\n"
+          "\t-F <r,g,b>        : Panel flooding-background color. Default 0,0,0\n"
           );
   return 1;
 }
@@ -65,13 +67,16 @@ int main(int argc, char *argv[]) {
 
   Color color(255, 255, 0);
   Color bg_color(0, 0, 0);
+  Color flood_color(0, 0, 0);
   Color outline_color(0,0,0);
   bool with_outline = false;
 
   const char *bdf_font_file = NULL;
   std::string line;
-  /* x_origin is set just right of the screen */
-  int x_orig = (matrix_options.chain_length * matrix_options.cols) + 5;
+  /* x_origin is set by default just right of the screen */
+  const int x_default_start = (matrix_options.chain_length
+                               * matrix_options.cols) + 5;
+  int x_orig = x_default_start;
   int y_orig = 0;
   int brightness = 100;
   int letter_spacing = 0;
@@ -79,7 +84,7 @@ int main(int argc, char *argv[]) {
   int loops = -1;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:s:l:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:s:l:F:")) != -1) {
     switch (opt) {
     case 's': speed = atof(optarg); break;
     case 'l': loops = atoi(optarg); break;
@@ -106,6 +111,12 @@ int main(int argc, char *argv[]) {
         return usage(argv[0]);
       }
       with_outline = true;
+      break;
+    case 'F':
+      if (!parseColor(&flood_color, optarg)) {
+        fprintf(stderr, "Invalid background color spec: %s\n", optarg);
+        return usage(argv[0]);
+      }
       break;
     default:
       return usage(argv[0]);
@@ -163,10 +174,6 @@ int main(int argc, char *argv[]) {
   if (all_extreme_colors)
     canvas->SetPWMBits(1);
 
-  int x = x_orig;
-  int y = y_orig;
-  int length = 0;
-
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
 
@@ -175,12 +182,20 @@ int main(int argc, char *argv[]) {
   // Create a new canvas to be used with led_matrix_swap_on_vsync
   FrameCanvas *offscreen_canvas = canvas->CreateFrameCanvas();
 
-  int delay_speed_usec = 1000000 / speed / font.CharacterWidth('W');
-  if (delay_speed_usec < 0) delay_speed_usec = 2000;
+  int delay_speed_usec = 1000000;
+  if (speed > 0) {
+    delay_speed_usec = 1000000 / speed / font.CharacterWidth('W');
+  } else if (x_orig == x_default_start) {
+    // There would be no scrolling, so text would never appear. Move to front.
+    x_orig = 0;
+  }
+
+  int x = x_orig;
+  int y = y_orig;
+  int length = 0;
 
   while (!interrupt_received && loops != 0) {
-    offscreen_canvas->Clear(); // clear canvas
-
+    offscreen_canvas->Fill(flood_color.r, flood_color.g, flood_color.b);
     if (outline_font) {
       // The outline font, we need to write with a negative (-2) text-spacing,
       // as we want to have the same letter pitch as the regular text that
@@ -197,14 +212,14 @@ int main(int argc, char *argv[]) {
                                   color, outline_font ? NULL : &bg_color,
                                   line.c_str(), letter_spacing);
 
-    if (--x + length < 0) {
+    if (speed > 0 && --x + length < 0) {
       x = x_orig;
       if (loops > 0) --loops;
     }
 
-    usleep(delay_speed_usec);
     // Swap the offscreen_canvas with canvas on vsync, avoids flickering
     offscreen_canvas = canvas->SwapOnVSync(offscreen_canvas);
+    usleep(delay_speed_usec);
   }
 
   // Finished. Shut down the RGB matrix.
