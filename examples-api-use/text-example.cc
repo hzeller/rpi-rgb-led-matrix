@@ -28,8 +28,9 @@ static int usage(const char *progname) {
           "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
           "\t-S <spacing>      : Spacing pixels between letters (Default: 0)\n"
           "\t-C <r,g,b>        : Color. Default 255,255,0\n"
-          "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
+          "\t-B <r,g,b>        : Font Background-Color. Default 0,0,0\n"
           "\t-O <r,g,b>        : Outline-Color, e.g. to increase contrast.\n"
+          "\t-F <r,g,b>        : Panel flooding-background color. Default 0,0,0\n"
           );
   return 1;
 }
@@ -54,6 +55,7 @@ int main(int argc, char *argv[]) {
 
   Color color(255, 255, 0);
   Color bg_color(0, 0, 0);
+  Color flood_color(0, 0, 0);
   Color outline_color(0,0,0);
   bool with_outline = false;
 
@@ -64,7 +66,7 @@ int main(int argc, char *argv[]) {
   int letter_spacing = 0;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:F:")) != -1) {
     switch (opt) {
     case 'b': brightness = atoi(optarg); break;
     case 'x': x_orig = atoi(optarg); break;
@@ -89,6 +91,12 @@ int main(int argc, char *argv[]) {
         return usage(argv[0]);
       }
       with_outline = true;
+      break;
+    case 'F':
+      if (!parseColor(&flood_color, optarg)) {
+        fprintf(stderr, "Invalid background color spec: %s\n", optarg);
+        return usage(argv[0]);
+      }
       break;
     default:
       return usage(argv[0]);
@@ -146,13 +154,14 @@ int main(int argc, char *argv[]) {
            "Supports UTF-8. CTRL-D for exit.\n");
   }
 
+  canvas->Fill(flood_color.r, flood_color.g, flood_color.b);
   char line[1024];
   while (fgets(line, sizeof(line), stdin)) {
     const size_t last = strlen(line);
     if (last > 0) line[last - 1] = '\0';  // remove newline.
     bool line_empty = strlen(line) == 0;
     if ((y + font.height() > canvas->height()) || line_empty) {
-      canvas->Clear();
+      canvas->Fill(flood_color.r, flood_color.g, flood_color.b);
       y = y_orig;
     }
     if (line_empty)
