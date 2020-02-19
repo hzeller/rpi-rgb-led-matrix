@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
     delay_speed_usec = 1000000 / speed / font.CharacterWidth('W');
   } else if (x_orig == x_default_start) {
     // There would be no scrolling, so text would never appear. Move to front.
-    x_orig = 0;
+    x_orig = with_outline ? 1 : 0;
   }
 
   int x = x_orig;
