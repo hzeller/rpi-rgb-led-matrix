@@ -475,7 +475,7 @@ bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper) {
   return true;
 }
 
-#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
 namespace {
 // A pixel mapper
 class PixelMapExtractionCanvas : public Canvas {
@@ -548,7 +548,7 @@ void RGBMatrix::ApplyStaticTransformerDeprecated(
   delete shared_pixel_mapper_;
   shared_pixel_mapper_ = new_mapper;
 }
-#endif  // REMOVE_DEPRECATED_TRANSFORMERS
+#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
 
 // FrameCanvas implementation of Canvas
 FrameCanvas::~FrameCanvas() { delete frame_; }

@@ -48,7 +48,8 @@ public:
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue) = 0;
 };
 
-#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+
+#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
 // Canvas Transformer used to be a way to map pixels in the LED matrix.
 // It was an overdesigned concept and required some confusing boilerplate
 // to set-up, but was too compilcated for what it was used for: mapping
@@ -65,7 +66,7 @@ public:
   // the output canvas.
   virtual Canvas *Transform(Canvas *output) = 0;
 };
-#endif
+#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
 
 }  // namespace rgb_matrix
 #endif  // RPI_CANVAS_H

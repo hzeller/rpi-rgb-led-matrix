@@ -23,7 +23,7 @@
  * They have been superseeded by the simpler PixelMapper, see pixel-mapper.h
  */
 
-#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
 #include <assert.h>
 #include <stdio.h>
 
@@ -240,4 +240,4 @@ Canvas *LargeSquare64x64Transformer::Transform(Canvas *output) {
 }
 } // namespace rgb_matrix
 
-#endif // REMOVE_DEPRECATED_TRANSFORMERS
+#endif // INCLUDE_DEPRECATED_TRANSFORMERS
