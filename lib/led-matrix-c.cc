@@ -200,6 +200,11 @@ void delete_font(struct LedFont *font) {
 
 // -- Some utility functions.
 
+void set_image(struct LedCanvas *c, const uint8_t *buffer, size_t size,
+               uint8_t is_bgr) {
+  SetImage(to_canvas(c), buffer, size, is_bgr ? true : false);
+}
+
 // Draw text, a standard NUL terminated C-string encoded in UTF-8,
 // with given "font" at "x","y" with "color".
 // "color" always needs to be set (hence it is a reference),

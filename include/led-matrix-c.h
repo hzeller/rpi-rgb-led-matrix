@@ -228,7 +228,7 @@ void led_canvas_get_size(const struct LedCanvas *canvas,
 
 /** Set pixel at (x, y) with color (r,g,b). */
 void led_canvas_set_pixel(struct LedCanvas *canvas, int x, int y,
-			  uint8_t r, uint8_t g, uint8_t b);
+                          uint8_t r, uint8_t g, uint8_t b);
 
 /** Clear screen (black). */
 void led_canvas_clear(struct LedCanvas *canvas);
@@ -262,22 +262,31 @@ struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
 uint8_t led_matrix_get_brightness(struct RGBLedMatrix *matrix);
 void led_matrix_set_brightness(struct RGBLedMatrix *matrix, uint8_t brightness);
 
+// Utility function: set an image from the given buffer and size.
+// The buffer should be organized as rows with columns of three bytes organized
+// as rgb or bgr.
+// The of the buffer needs to be exactly (3 * width * height).
+// "buffer" contains the data, "size" contains the size in bytes.
+// Returns 'true' if size criteria is met and image could be set successfully.
+void set_image(struct LedCanvas *c, const uint8_t *buffer, size_t size,
+               uint8_t is_bgr);
+
 struct LedFont *load_font(const char *bdf_font_file);
 void delete_font(struct LedFont *font);
 
 int draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
-	      uint8_t r, uint8_t g, uint8_t b,
-	      const char *utf8_text, int kerning_offset);
+              uint8_t r, uint8_t g, uint8_t b,
+              const char *utf8_text, int kerning_offset);
 
 int vertical_draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
-		       uint8_t r, uint8_t g, uint8_t b,
-		       const char *utf8_text, int kerning_offset);
+                       uint8_t r, uint8_t g, uint8_t b,
+                       const char *utf8_text, int kerning_offset);
 
 void draw_circle(struct LedCanvas *c, int x, int y, int radius,
-		 uint8_t r, uint8_t g, uint8_t b);
+                 uint8_t r, uint8_t g, uint8_t b);
 
 void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1,
-	       uint8_t r, uint8_t g, uint8_t b);
+               uint8_t r, uint8_t g, uint8_t b);
 
 #ifdef  __cplusplus
 }  // extern C

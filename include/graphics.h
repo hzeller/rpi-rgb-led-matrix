@@ -80,6 +80,16 @@ private:
 
 // -- Some utility functions.
 
+// Utility function: set an image from the given buffer and size containing
+// the pixels.
+// The buffer should be organized as rows with columns of three bytes organized
+// as rgb or bgr.
+// Thus the size of the buffer needs to be exactly (3 * width * height) bytes.
+//
+// The "buffer" parameters contains the data, "size" the size in bytes.
+// Returns 'true' if size criteria is met and image could be set successfully.
+bool SetImage(Canvas *c, const uint8_t *buffer, size_t size, bool is_bgr);
+
 // Draw text, a standard NUL terminated C-string encoded in UTF-8,
 // with given "font" at "x","y" with "color".
 // "color" always needs to be set (hence it is a reference),

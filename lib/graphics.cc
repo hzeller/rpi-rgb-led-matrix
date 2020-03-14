@@ -19,6 +19,27 @@
 #include <functional>
 
 namespace rgb_matrix {
+bool SetImage(Canvas *c, const uint8_t *buffer, size_t size, bool is_bgr) {
+  const size_t w = c->width();
+  const size_t h = c->height();
+  if (3 * h * w != size)
+    return false;
+  if (is_bgr) {
+    for (size_t y = 0; y < h; ++y)
+      for (size_t x = 0; x < w; ++x) {
+        c->SetPixel(x, y, buffer[2], buffer[1], buffer[0]);
+        buffer += 3;
+      }
+  } else {
+    for (size_t y = 0; y < h; ++y)
+      for (size_t x = 0; x < w; ++x) {
+        c->SetPixel(x, y, buffer[0], buffer[1], buffer[2]);
+        buffer += 3;
+      }
+  }
+  return true;
+}
+
 int DrawText(Canvas *c, const Font &font,
              int x, int y, const Color &color,
              const char *utf8_text) {
