@@ -200,9 +200,14 @@ void delete_font(struct LedFont *font) {
 
 // -- Some utility functions.
 
-void set_image(struct LedCanvas *c, const uint8_t *buffer, size_t size,
-               uint8_t is_bgr) {
-  SetImage(to_canvas(c), buffer, size, is_bgr ? true : false);
+void set_image(struct LedCanvas *c, int canvas_offset_x, int canvas_offset_y,
+	       const uint8_t *image_buffer, size_t buffer_size_bytes,
+	       int image_width, int image_height,
+	       char is_bgr) {
+  SetImage(to_canvas(c), canvas_offset_x, canvas_offset_y,
+           image_buffer, buffer_size_bytes,
+           image_width, image_height,
+           is_bgr);
 }
 
 // Draw text, a standard NUL terminated C-string encoded in UTF-8,

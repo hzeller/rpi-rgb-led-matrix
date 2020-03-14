@@ -262,16 +262,33 @@ struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
 uint8_t led_matrix_get_brightness(struct RGBLedMatrix *matrix);
 void led_matrix_set_brightness(struct RGBLedMatrix *matrix, uint8_t brightness);
 
-// Utility function: set an image from the given buffer and size.
-// The buffer should be organized as rows with columns of three bytes organized
-// as rgb or bgr.
-// The of the buffer needs to be exactly (3 * width * height).
-// "buffer" contains the data, "size" contains the size in bytes.
-// Returns 'true' if size criteria is met and image could be set successfully.
-void set_image(struct LedCanvas *c, const uint8_t *buffer, size_t size,
-               uint8_t is_bgr);
+// Utility function: set an image from the given buffer containting pixels.
+//
+// Draw image of size "image_width" and "image_height" from pixel at
+// canvas-offset "canvas_offset_x", "canvas_offset_y". Image will be shown
+// cropped on the edges if needed.
+//
+// The canvas offset can be negative, i.e. the image start can be shifted
+// outside the image frame on the left/top edge.
+//
+// The buffer needs to be organized as rows with columns of three bytes
+// organized as rgb or bgr. Thus the size of the buffer needs to be exactly
+// (3 * image_width * image_height) bytes.
+//
+// The "image_buffer" parameters contains the data, "buffer_size_bytes" the
+// size in bytes.
+//
+// If "is_bgr" is 1, the buffer is treated as BGR pixel arrangement instead
+// of RGB with is_bgr = 0.
+void set_image(struct LedCanvas *c, int canvas_offset_x, int canvas_offset_y,
+               const uint8_t *image_buffer, size_t buffer_size_bytes,
+               int image_width, int image_height,
+               char is_bgr);
 
+// Load a font given a path to a font file containing a bdf font.
 struct LedFont *load_font(const char *bdf_font_file);
+
+// Delete a font originally created from load_font.
 void delete_font(struct LedFont *font);
 
 int draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,

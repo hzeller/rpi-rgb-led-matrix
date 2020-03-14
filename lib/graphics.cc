@@ -15,27 +15,64 @@
 
 #include "graphics.h"
 #include "utf8-internal.h"
+
 #include <stdlib.h>
 #include <functional>
+#include <algorithm>
 
 namespace rgb_matrix {
-bool SetImage(Canvas *c, const uint8_t *buffer, size_t size, bool is_bgr) {
-  const size_t w = c->width();
-  const size_t h = c->height();
-  if (3 * h * w != size)
+bool SetImage(Canvas *c, int canvas_offset_x, int canvas_offset_y,
+              const uint8_t *buffer, size_t size,
+              const int width, const int height,
+              bool is_bgr) {
+  if (3 * width * height != (int)size)   // Sanity check
     return false;
+
+  int image_display_w = width;
+  int image_display_h = height;
+
+  size_t skip_start_row = 0;   // Bytes to skip before each row
+  if (canvas_offset_x < 0) {
+    skip_start_row = -canvas_offset_x * 3;
+    image_display_w += canvas_offset_x;
+    if (image_display_w <= 0) return false;  // Done. outside canvas.
+    canvas_offset_x = 0;
+  }
+  if (canvas_offset_y < 0) {
+    // Skip buffer to the first row we'll be showing
+    buffer += 3 * width * -canvas_offset_y;
+    image_display_h += canvas_offset_y;
+    if (image_display_h <= 0) return false;  // Done. outside canvas.
+    canvas_offset_y = 0;
+  }
+  const int w = std::min(c->width(), canvas_offset_x + image_display_w);
+  const int h = std::min(c->height(), canvas_offset_y + image_display_h);
+
+  // Bytes to skip for wider than canvas image at the end of a row
+  const size_t skip_end_row = (canvas_offset_x + image_display_w > w)
+    ? (canvas_offset_x + image_display_w - w) * 3
+    : 0;
+
+  // Let's make this a combined skip per row and ajust where we start.
+  const size_t next_row_skip = skip_start_row + skip_end_row;
+  buffer += skip_start_row;
+
   if (is_bgr) {
-    for (size_t y = 0; y < h; ++y)
-      for (size_t x = 0; x < w; ++x) {
+    for (int y = canvas_offset_y; y < h; ++y) {
+      for (int x = canvas_offset_x; x < w; ++x) {
         c->SetPixel(x, y, buffer[2], buffer[1], buffer[0]);
         buffer += 3;
       }
+      buffer += next_row_skip;
+    }
   } else {
-    for (size_t y = 0; y < h; ++y)
-      for (size_t x = 0; x < w; ++x) {
+    for (int y = canvas_offset_y; y < h; ++y) {
+      for (int x = canvas_offset_x; x < w; ++x) {
         c->SetPixel(x, y, buffer[0], buffer[1], buffer[2]);
         buffer += 3;
       }
+      buffer += next_row_skip;
+    }
   }
   return true;
 }
