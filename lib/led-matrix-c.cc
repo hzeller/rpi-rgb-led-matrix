@@ -44,10 +44,10 @@ static struct LedCanvas *from_canvas(rgb_matrix::FrameCanvas *canvas) {
 }
 
 static rgb_matrix::Font *to_font(struct LedFont *font) {
-	return reinterpret_cast<rgb_matrix::Font*>(font);
+  return reinterpret_cast<rgb_matrix::Font*>(font);
 }
 static struct LedFont *from_font(rgb_matrix::Font *font) {
-	return reinterpret_cast<struct LedFont*>(font);
+  return reinterpret_cast<struct LedFont*>(font);
 }
 
 
@@ -188,13 +188,13 @@ void led_canvas_fill(struct LedCanvas *canvas, uint8_t r, uint8_t g, uint8_t b) 
 }
 
 struct LedFont *load_font(const char *bdf_font_file) {
-	rgb_matrix::Font* font = new rgb_matrix::Font();
-	font->LoadFont(bdf_font_file);
-	return from_font(font);
+  rgb_matrix::Font* font = new rgb_matrix::Font();
+  font->LoadFont(bdf_font_file);
+  return from_font(font);
 }
 
 void delete_font(struct LedFont *font) {
-	delete to_font(font);
+  delete to_font(font);
 }
 
 
@@ -208,9 +208,9 @@ void delete_font(struct LedFont *font) {
 // negative)
 // Returns how many pixels we advanced on the screen.
 int draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
-	uint8_t r, uint8_t g, uint8_t b, const char *utf8_text, int kerning_offset) {
-	const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
-	return DrawText(to_canvas(c), *to_font(font), x, y, col, NULL, utf8_text, kerning_offset);
+              uint8_t r, uint8_t g, uint8_t b, const char *utf8_text, int kerning_offset) {
+  const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
+  return DrawText(to_canvas(c), *to_font(font), x, y, col, NULL, utf8_text, kerning_offset);
 }
 
 // Draw text, a standard NUL terminated C-string encoded in UTF-8,
@@ -222,20 +222,20 @@ int draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
 // negative).
 // Returns font height to advance up on the screen.
 int vertical_draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
-	uint8_t r, uint8_t g, uint8_t b,
-	const char *utf8_text, int kerning_offset = 0) {
-	const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
-	return VerticalDrawText(to_canvas(c), *to_font(font), x, y, col, NULL, utf8_text, kerning_offset);
+                       uint8_t r, uint8_t g, uint8_t b,
+                       const char *utf8_text, int kerning_offset = 0) {
+  const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
+  return VerticalDrawText(to_canvas(c), *to_font(font), x, y, col, NULL, utf8_text, kerning_offset);
 }
 
 // Draw a circle centered at "x", "y", with a radius of "radius" and with "color"
 void draw_circle(struct LedCanvas *c, int xx, int y, int radius, uint8_t r, uint8_t g, uint8_t b) {
-	const rgb_matrix::Color col = rgb_matrix::Color( r,g,b );
-	DrawCircle(to_canvas(c), xx, y, radius, col);
+  const rgb_matrix::Color col = rgb_matrix::Color( r,g,b );
+  DrawCircle(to_canvas(c), xx, y, radius, col);
 }
 
 // Draw a line from "x0", "y0" to "x1", "y1" and with "color"
 void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1, uint8_t r, uint8_t g, uint8_t b) {
-	const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
-	DrawLine(to_canvas(c), x0, y0, x1, y1, col);
+  const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
+  DrawLine(to_canvas(c), x0, y0, x1, y1, col);
 }
