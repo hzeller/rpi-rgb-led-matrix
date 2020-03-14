@@ -100,7 +100,7 @@ HARDWARE_DESC?=regular
 # This will eventually be enabled by default and at some point the code
 # in question will be removed from the code-base, so don't use transformers.
 # Use PixelMappers instead (include/pixel-mapper.h)
-#DEFINES+=-DREMOVE_DEPRECATED_TRANSFORMERS
+DEFINES+=-DREMOVE_DEPRECATED_TRANSFORMERS
 
 # --- EXPERIMENTAL --
 # This allows to fix the refresh rate to a particular refresh time in
