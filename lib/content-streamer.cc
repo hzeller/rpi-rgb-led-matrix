@@ -40,7 +40,9 @@ struct FrameHeader {
 };
 }
 
-FileStreamIO::FileStreamIO(int fd) : fd_(fd) {}
+FileStreamIO::FileStreamIO(int fd) : fd_(fd) {
+  posix_fadvise(fd_, 0, 0, POSIX_FADV_SEQUENTIAL);
+}
 FileStreamIO::~FileStreamIO() { close(fd_); }
 
 void FileStreamIO::Rewind() { lseek(fd_, 0, SEEK_SET); }
@@ -65,27 +67,29 @@ ssize_t MemStreamIO::Append(const void *buf, size_t count) {
   return count;
 }
 
-static ssize_t FullRead(StreamIO *io, void *buf, const size_t count) {
+// Read exactly count bytes including retries. Returns success.
+static bool FullRead(StreamIO *io, void *buf, const size_t count) {
   int remaining = count;
   char *char_buffer = (char*)buf;
   while (remaining > 0) {
     int r = io->Read(char_buffer, remaining);
-    if (r < 0) return r;
+    if (r < 0) return false;
     if (r == 0) break;  // EOF.
     char_buffer += r; remaining -= r;
   }
-  return count - remaining;
+  return remaining == 0;
 }
 
-static ssize_t FullAppend(StreamIO *io, const void *buf, const size_t count) {
+// Write exactly count bytes including retries. Returns success.
+static bool FullAppend(StreamIO *io, const void *buf, const size_t count) {
   int remaining = count;
   const char *char_buffer = (const char*) buf;
   while (remaining > 0) {
     int w = io->Append(char_buffer, remaining);
-    if (w < 0) return w;
+    if (w < 0) return false;
     char_buffer += w; remaining -= w;
   }
-  return count;
+  return remaining == 0;
 }
 
 StreamWriter::StreamWriter(StreamIO *io) : io_(io), header_written_(false) {}
@@ -116,10 +120,10 @@ void StreamWriter::WriteFileHeader(const FrameCanvas &frame, size_t len) {
 }
 
 StreamReader::StreamReader(StreamIO *io)
-  : io_(io), state_(STREAM_AT_BEGIN), buffer_(NULL) {
+  : io_(io), state_(STREAM_AT_BEGIN), header_frame_buffer_(NULL) {
   io_->Rewind();
 }
-StreamReader::~StreamReader() { delete [] buffer_; }
+StreamReader::~StreamReader() { delete [] header_frame_buffer_; }
 
 void StreamReader::Rewind() {
   io_->Rewind();
@@ -129,8 +133,14 @@ void StreamReader::Rewind() {
 bool StreamReader::GetNext(FrameCanvas *frame, uint32_t* hold_time_us) {
   if (state_ == STREAM_AT_BEGIN && !ReadFileHeader(*frame)) return false;
   if (state_ != STREAM_READING) return false;
-  FrameHeader h;
-  if (FullRead(io_, &h, sizeof(h)) != sizeof(h)) return false;
+
+  // Read header and expected buffer size.
+  if (!FullRead(io_, header_frame_buffer_,
+                sizeof(FrameHeader) + frame_buf_size_)) {
+    return false;
+  }
+
+  const FrameHeader &h = *reinterpret_cast<FrameHeader*>(header_frame_buffer_);
 
   // TODO: we might allow for this to be a kFileMagicValue, to allow people
   // to just concatenate streams. In that case, we just would need to read
@@ -139,12 +149,16 @@ bool StreamReader::GetNext(FrameCanvas *frame, uint32_t* hold_time_us) {
     state_ = STREAM_ERROR;
     return false;
   }
+
   // In the future, we might allow larger buffers (audio?), but never smaller.
-  if (h.size < buf_size_)
+  // For now, we need to make sure to exactly match the size, as our assumption
+  // above is that we can read the full header + frame in one FullRead().
+  if (h.size != frame_buf_size_)
     return false;
+
   if (hold_time_us) *hold_time_us = h.hold_time_us;
-  if (FullRead(io_, buffer_, buf_size_) != (ssize_t)buf_size_) return false;
-  return frame->Deserialize(buffer_, buf_size_);
+  return frame->Deserialize(header_frame_buffer_ + sizeof(FrameHeader),
+                            frame_buf_size_);
 }
 
 bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
@@ -163,8 +177,9 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
     return false;
   }
   state_ = STREAM_READING;
-  buf_size_ = header.buf_size;
-  if (!buffer_) buffer_ = new char [ header.buf_size ];
+  frame_buf_size_ = header.buf_size;
+  if (!header_frame_buffer_)
+    header_frame_buffer_ = new char [ sizeof(FrameHeader) + header.buf_size ];
   return true;
 }
 }  // namespace rgb_matrix
