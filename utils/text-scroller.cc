@@ -37,9 +37,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <text>\n", progname);
   fprintf(stderr, "Takes text and scrolls it with speed -s\n");
   fprintf(stderr, "Options:\n");
-  rgb_matrix::PrintMatrixFlags(stderr);
   fprintf(stderr,
-          "\nText Scroller\n"
           "\t-s <speed>        : Approximate letters per second. "
           "(Zero for no scrolling)\n"
           "\t-l <loop-count>   : Number of loops through the text. "
@@ -54,6 +52,8 @@ static int usage(const char *progname) {
           "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
           "\t-O <r,g,b>        : Outline-Color, e.g. to increase contrast.\n"
           );
+  fprintf(stderr, "\nGeneral LED matrix options:\n");
+  rgb_matrix::PrintMatrixFlags(stderr);
   return 1;
 }
 

@@ -123,6 +123,19 @@ The text scoller allows to show some scrolling text.
 usage: ./text-scroller [options] <text>
 Takes text and scrolls it with speed -s
 Options:
+        -s <speed>        : Approximate letters per second. (Zero for no scrolling)
+        -l <loop-count>   : Number of loops through the text. -1 for endless (default)
+        -f <font-file>    : Path to *.bdf-font to be used.
+        -b <brightness>   : Sets brightness percent. Default: 100.
+        -x <x-origin>     : Shift X-Origin of displaying text (Default: 0)
+        -y <y-origin>     : Shift Y-Origin of displaying text (Default: 0)
+        -t <track-spacing>: Spacing pixels between letters (Default: 0)
+
+        -C <r,g,b>        : Text Color. Default 255,255,255 (white)
+        -B <r,g,b>        : Background-Color. Default 0,0,0
+        -O <r,g,b>        : Outline-Color, e.g. to increase contrast.
+
+General LED matrix options:
         --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
         --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
         --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
@@ -146,19 +159,6 @@ Options:
         --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
         --led-daemon              : Make the process run in the background as daemon.
         --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
-
-Text Scroller
-        -s <speed>        : Approximate letters per second. (Zero for no scrolling)
-        -l <loop-count>   : Number of loops through the text. -1 for endless (default)
-        -f <font-file>    : Path to *.bdf-font to be used.
-        -b <brightness>   : Sets brightness percent. Default: 100.
-        -x <x-origin>     : Shift X-Origin of displaying text (Default: 0)
-        -y <y-origin>     : Shift Y-Origin of displaying text (Default: 0)
-        -t <track-spacing>: Spacing pixels between letters (Default: 0)
-
-        -C <r,g,b>        : Text Color. Default 255,255,255 (white)
-        -B <r,g,b>        : Background-Color. Default 0,0,0
-        -O <r,g,b>        : Outline-Color, e.g. to increase contrast.
 ```
 
 You need to specify a font for the tool to use. We are using BDF-fonts, which are bitmap fonts
