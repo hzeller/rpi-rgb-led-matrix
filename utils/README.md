@@ -206,7 +206,7 @@ smooth. If you observe that, it is suggested to do one of these:
 
 ```
 sudo apt-get update
-sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev
 make video-viewer
 ```
 
