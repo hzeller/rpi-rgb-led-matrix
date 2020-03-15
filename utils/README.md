@@ -115,6 +115,75 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-out.stream
 ```
 
+### Text Scroller ###
+
+The text scoller allows to show some scrolling text.
+
+```
+usage: ./text-scroller [options] <text>
+Takes text and scrolls it with speed -s
+Options:
+        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
+        --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
+        --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
+        --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
+        --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
+        --led-multiplexing=<0..11> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven; 9=P10-128x4-Z; 10=QiangLiQ8; 11=InversedZStripe (Default: 0)
+        --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
+                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
+                                    Available: "Mirror", "Rotate", "U-mapper". Default: ""
+        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
+        --led-brightness=<percent>: Brightness in percent (Default: 100).
+        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
+        --led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct (Default: 0).
+        --led-show-refresh        : Show refresh rate.
+        --led-inverse             : Switch if your matrix has inverse colors on.
+        --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
+        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
+        --led-pwm-dither-bits=<0..2> : Time dithering of lower bits (Default: 0)
+        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
+        --led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'
+        --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
+        --led-daemon              : Make the process run in the background as daemon.
+        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+
+Text Scroller
+        -s <speed>        : Approximate letters per second. (Zero for no scrolling)
+        -l <loop-count>   : Number of loops through the text. -1 for endless (default)
+        -f <font-file>    : Path to *.bdf-font to be used.
+        -b <brightness>   : Sets brightness percent. Default: 100.
+        -x <x-origin>     : Shift X-Origin of displaying text (Default: 0)
+        -y <y-origin>     : Shift Y-Origin of displaying text (Default: 0)
+        -t <track-spacing>: Spacing pixels between letters (Default: 0)
+
+        -C <r,g,b>        : Text Color. Default 255,255,255 (white)
+        -B <r,g,b>        : Background-Color. Default 0,0,0
+        -O <r,g,b>        : Outline-Color, e.g. to increase contrast.
+```
+
+You need to specify a font for the tool to use. We are using BDF-fonts, which are bitmap fonts
+nicely suited for low-resolution displays such as ours. A few fonts you find in the
+[../fonts](../fonts) directory. The [README.md](../fonts/README.md) there also describes
+how to make your own.
+
+Some Examples:
+```bash
+# Red (-C) text on a display with 5 chained displays. Notice you can use UTF-8 characters
+# if they are supported by the font.
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=5 "Hello World ♥"
+
+# .. faster speed; roughly 20 characters per second with option -s.
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=5 -s20 "The quick brown fox jumps over the lazy dog"
+
+# Now same text in red color on a blue background (-B). We choose an outline (-O)
+# of a slightly darker blue for better contrast
+sudo ./text-scroller -f ../fonts/9x18.bdf -B0,0,255 -O0,0,100 -C255,0,0 --led-chain=5 "Hello World ♥"
+
+# A larger font. This one needs a bit of an y-adjustment (move up 11 pixels) to
+# fit nicely on a 32 high panel
+sudo ./text-scroller -f ../fonts/texgyre-27.bdf --led-chain=5 -y-11  "Hello World ♥"
+```
+
 ### Video Viewer ###
 
 The video viewer allows to play common video formats on the RGB matrix (just
