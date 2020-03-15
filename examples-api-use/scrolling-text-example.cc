@@ -4,6 +4,9 @@
 // This code is public domain
 // (but note, that the led-matrix library this depends on is GPL v2)
 
+// For a utility with a few more features see
+// ../utils/text-scroller.cc
+
 #include "led-matrix.h"
 #include "graphics.h"
 
@@ -37,12 +40,10 @@ static int usage(const char *progname) {
           "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
           "\t-x <x-origin>     : X-Origin of displaying text (Default: 0)\n"
           "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
-          "\t-S <spacing>      : Spacing pixels between letters (Default: 0)\n"
+          "\t-t <track=spacing>: Spacing pixels between letters (Default: 0)\n"
           "\n"
-          "\t-C <r,g,b>        : Color. Default 255,255,0\n"
+          "\t-C <r,g,b>        : Text-Color. Default 255,255,0\n"
           "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
-          "\t-O <r,g,b>        : Outline-Color, e.g. to increase contrast.\n"
-          "\t-F <r,g,b>        : Panel flooding-background color. Default 0,0,0\n"
           );
   return 1;
 }
@@ -67,9 +68,6 @@ int main(int argc, char *argv[]) {
 
   Color color(255, 255, 0);
   Color bg_color(0, 0, 0);
-  Color flood_color(0, 0, 0);
-  Color outline_color(0,0,0);
-  bool with_outline = false;
 
   const char *bdf_font_file = NULL;
   std::string line;
@@ -84,7 +82,7 @@ int main(int argc, char *argv[]) {
   int loops = -1;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:S:s:l:F:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:b:t:s:l:")) != -1) {
     switch (opt) {
     case 's': speed = atof(optarg); break;
     case 'l': loops = atoi(optarg); break;
@@ -92,7 +90,7 @@ int main(int argc, char *argv[]) {
     case 'x': x_orig = atoi(optarg); break;
     case 'y': y_orig = atoi(optarg); break;
     case 'f': bdf_font_file = strdup(optarg); break;
-    case 'S': letter_spacing = atoi(optarg); break;
+    case 't': letter_spacing = atoi(optarg); break;
     case 'C':
       if (!parseColor(&color, optarg)) {
         fprintf(stderr, "Invalid color spec: %s\n", optarg);
@@ -101,19 +99,6 @@ int main(int argc, char *argv[]) {
       break;
     case 'B':
       if (!parseColor(&bg_color, optarg)) {
-        fprintf(stderr, "Invalid background color spec: %s\n", optarg);
-        return usage(argv[0]);
-      }
-      break;
-    case 'O':
-      if (!parseColor(&outline_color, optarg)) {
-        fprintf(stderr, "Invalid outline color spec: %s\n", optarg);
-        return usage(argv[0]);
-      }
-      with_outline = true;
-      break;
-    case 'F':
-      if (!parseColor(&flood_color, optarg)) {
         fprintf(stderr, "Invalid background color spec: %s\n", optarg);
         return usage(argv[0]);
       }
@@ -146,15 +131,6 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  /*
-   * If we want an outline around the font, we create a new font with
-   * the original font as a template that is just an outline font.
-   */
-  rgb_matrix::Font *outline_font = NULL;
-  if (with_outline) {
-    outline_font = font.CreateOutlineFont();
-  }
-
   if (brightness < 1 || brightness > 100) {
     fprintf(stderr, "Brightness is outside usable range.\n");
     return 1;
@@ -169,8 +145,7 @@ int main(int argc, char *argv[]) {
 
   const bool all_extreme_colors = (brightness == 100)
     && FullSaturation(color)
-    && FullSaturation(bg_color)
-    && FullSaturation(outline_color);
+    && FullSaturation(bg_color);
   if (all_extreme_colors)
     canvas->SetPWMBits(1);
 
@@ -187,7 +162,7 @@ int main(int argc, char *argv[]) {
     delay_speed_usec = 1000000 / speed / font.CharacterWidth('W');
   } else if (x_orig == x_default_start) {
     // There would be no scrolling, so text would never appear. Move to front.
-    x_orig = with_outline ? 1 : 0;
+    x_orig = 0;
   }
 
   int x = x_orig;
@@ -195,21 +170,11 @@ int main(int argc, char *argv[]) {
   int length = 0;
 
   while (!interrupt_received && loops != 0) {
-    offscreen_canvas->Fill(flood_color.r, flood_color.g, flood_color.b);
-    if (outline_font) {
-      // The outline font, we need to write with a negative (-2) text-spacing,
-      // as we want to have the same letter pitch as the regular text that
-      // we then write on top.
-      rgb_matrix::DrawText(offscreen_canvas, *outline_font,
-                           x - 1, y + font.baseline(),
-                           outline_color, &bg_color,
-                           line.c_str(), letter_spacing - 2);
-    }
-
+    offscreen_canvas->Fill(bg_color.r, bg_color.g, bg_color.b);
     // length = holds how many pixels our text takes up
     length = rgb_matrix::DrawText(offscreen_canvas, font,
                                   x, y + font.baseline(),
-                                  color, outline_font ? NULL : &bg_color,
+                                  color, nullptr,
                                   line.c_str(), letter_spacing);
 
     if (speed > 0 && --x + length < 0) {
