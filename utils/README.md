@@ -168,20 +168,28 @@ how to make your own.
 
 Some Examples:
 ```bash
-# Red (-C) text on a display with 5 chained displays. Notice you can use UTF-8 characters
+# (use your --led-rows, --led-chain and --led-parallel suited for your setup)
+
+# Red (-C) text on a display with 4 chained displays. Notice you can use UTF-8 characters
 # if they are supported by the font.
-sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=5 "Hello World ♥"
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=4 "Hello World ♥"
 
 # .. faster speed; roughly 20 characters per second with option -s.
-sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=5 -s20 "The quick brown fox jumps over the lazy dog"
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=4 -s20 "The quick brown fox jumps over the lazy dog"
 
-# Now same text in red color on a blue background (-B). We choose an outline (-O)
+# A speed of zero does just shows the text, no scrolling.
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=4 -s0 "No Scroll"
+
+# A text might need to be arranged a bit. Let's move it 15 pixels to the right and 5 down:
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=4 -s0 -x15 -y5 "Shifted"
+
+# Now text in red color on a blue background (-B). We choose an outline (-O)
 # of a slightly darker blue for better contrast
-sudo ./text-scroller -f ../fonts/9x18.bdf -B0,0,255 -O0,0,100 -C255,0,0 --led-chain=5 "Hello World ♥"
+sudo ./text-scroller -f ../fonts/9x18.bdf -B0,0,255 -O0,0,100 -C255,0,0 --led-chain=4 "Contrast outline"
 
-# A larger font. This one needs a bit of an y-adjustment (move up 11 pixels) to
-# fit nicely on a 32 high panel
-sudo ./text-scroller -f ../fonts/texgyre-27.bdf --led-chain=5 -y-11  "Hello World ♥"
+# A larger font. This one needs a bit of an y-adjustment
+# (move up 11 pixels: a negative y shift) to fit nicely on a panel.
+sudo ./text-scroller -f ../fonts/texgyre-27.bdf --led-chain=4 -y-11 "Large Font"
 ```
 
 ### Video Viewer ###
