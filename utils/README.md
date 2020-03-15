@@ -4,6 +4,44 @@ Utilities
 This contains useful utilities that might be directly useful without having
 to write any code.
 
+Below, the description of the utilities contains a list of commandline flags
+they support. Next to the specific flags for their use, they all
+have a set of standard options that always come with the LED matrix,
+such as choosing the `--led-rows` or `--led-chain`.
+
+For brevity, we don't repeat them below in the synopsis prints of each of
+these utilities. You find a description of the standard options in
+the [toplevel readme](../README.md#changing-parameters-via-command-line-flags)
+
+<details><summary>Unfold: Standard LED-matrix options present in all utilities</summary>
+
+```
+ --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
+ --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
+ --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
+ --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
+ --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
+ --led-multiplexing=<0..11> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven; 9=P10-128x4-Z; 10=QiangLiQ8; 11=InversedZStripe (Default: 0)
+ --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
+                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
+                                    Available: "Mirror", "Rotate", "U-mapper". Default: ""
+ --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
+ --led-brightness=<percent>: Brightness in percent (Default: 100).
+ --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
+ --led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct (Default: 0).
+ --led-show-refresh        : Show refresh rate.
+ --led-inverse             : Switch if your matrix has inverse colors on.
+ --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
+ --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
+ --led-pwm-dither-bits=<0..2> : Time dithering of lower bits (Default: 0)
+ --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
+ --led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'
+ --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
+ --led-daemon              : Make the process run in the background as daemon.
+ --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+```
+</details>
+
 ### Image Viewer ###
 
 The image viewer reads all kinds of image formats, including animated gifs.
@@ -45,27 +83,7 @@ Display Options:
         -V<vsync-multiple>        : Expert: Only do frame vsync-swaps on multiples of refresh (default: 1)
 
 General LED matrix options:
-        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
-        --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
-        --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
-        --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
-        --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
-        --led-multiplexing=<0..6> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman (Default: 0)
-        --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
-                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
-                                    Available: "Rotate", "U-mapper". Default: ""
-        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
-        --led-brightness=<percent>: Brightness in percent (Default: 100).
-        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
-        --led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct row select(Default: 0).
-        --led-show-refresh        : Show refresh rate.
-        --led-inverse             : Switch if your matrix has inverse colors on.
-        --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
-        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
-        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
-        --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
-        --led-daemon              : Make the process run in the background as daemon.
-        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+        <... all the --led- options>
 
 Switch time between files: -w for static images; -t/-l for animations
 Animated gifs: If both -l and -t are given, whatever finishes first determines duration.
@@ -76,7 +94,8 @@ So you can choose different durations for different images.
 
 Then, you can run it with any common image format, including animated gifs:
 
-Examples:
+##### Examples
+
 ```bash
 sudo ./led-image-viewer some-image.jpg       # Display an image.
 sudo ./led-image-viewer animated.gif         # Show an animated gif
@@ -136,29 +155,7 @@ Options:
         -O <r,g,b>        : Outline-Color, e.g. to increase contrast.
 
 General LED matrix options:
-        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
-        --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
-        --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
-        --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
-        --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
-        --led-multiplexing=<0..11> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven; 9=P10-128x4-Z; 10=QiangLiQ8; 11=InversedZStripe (Default: 0)
-        --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
-                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
-                                    Available: "Mirror", "Rotate", "U-mapper". Default: ""
-        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
-        --led-brightness=<percent>: Brightness in percent (Default: 100).
-        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
-        --led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct (Default: 0).
-        --led-show-refresh        : Show refresh rate.
-        --led-inverse             : Switch if your matrix has inverse colors on.
-        --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
-        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
-        --led-pwm-dither-bits=<0..2> : Time dithering of lower bits (Default: 0)
-        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
-        --led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'
-        --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
-        --led-daemon              : Make the process run in the background as daemon.
-        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+        <... all the --led- options>
 ```
 
 You need to specify a font for the tool to use. We are using BDF-fonts, which are bitmap fonts
@@ -166,7 +163,8 @@ nicely suited for low-resolution displays such as ours. A few fonts you find in 
 [../fonts](../fonts) directory. The [README.md](../fonts/README.md) there also describes
 how to make your own.
 
-Some Examples:
+##### Examples
+
 ```bash
 # (use your --led-rows, --led-chain and --led-parallel suited for your setup)
 
@@ -198,7 +196,8 @@ The video viewer allows to play common video formats on the RGB matrix (just
 the picture, no sound).
 
 Note, this is CPU intensive and decoding can result in an output that is not
-smooth. If you observe that, it is suggested to do one of these:
+smooth or presents flicker. If you observe that, it is suggested to do one
+of these:
 
   - Transcode the video first to the width and height of the final output size.
   - Prepare an animation stream that you then later watch with led-image-viewer
@@ -221,32 +220,11 @@ Options:
         -f                 : Loop forever.
 
 General LED matrix options:
-        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
-        --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
-        --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
-        --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
-        --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
-        --led-multiplexing=<0..11> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven; 9=P10-128x4-Z; 10=QiangLiQ8; 11=InversedZStripe (Default: 0)
-        --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
-                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
-                                    Available: "Mirror", "Rotate", "U-mapper". Default: ""
-        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
-        --led-brightness=<percent>: Brightness in percent (Default: 100).
-        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
-        --led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct (Default: 0).
-        --led-show-refresh        : Show refresh rate.
-        --led-inverse             : Switch if your matrix has inverse colors on.
-        --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
-        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
-        --led-pwm-dither-bits=<0..2> : Time dithering of lower bits (Default: 0)
-        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
-        --led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'
-        --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
-        --led-daemon              : Make the process run in the background as daemon.
-        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+        <... all the --led- options>
 ```
 
-Examples:
+##### Examples
+
 ```bash
 # Play video. If you observe that the Pi has trouble to keep up (extensive
 # flickering), transcode the video first to the exact size of your display.
