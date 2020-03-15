@@ -194,13 +194,8 @@ int main(int argc, char *argv[]) {
   AVCodecContext    *pCodecCtxOrig = NULL;
   AVCodecContext    *pCodecCtx = NULL;
   AVCodec           *pCodec = NULL;
-  AVFrame           *pFrame = NULL;
-  AVFrame           *pFrameRGB = NULL;
   AVPacket          packet;
   int               frameFinished;
-  int               numBytes;
-  uint8_t           *buffer = NULL;
-  struct SwsContext *sws_ctx = NULL;
 
   const char *movie_file = argv[optind];
 
@@ -275,25 +270,11 @@ int main(int argc, char *argv[]) {
   if (avcodec_open2(pCodecCtx, pCodec, NULL)<0)
     return -1;
 
-  // Allocate video frame
-  pFrame=av_frame_alloc();
 
-  // Allocate an AVFrame structure
-  pFrameRGB=av_frame_alloc();
-  if (pFrameRGB==NULL)
-    return -1;
-
-  // Determine required buffer size and allocate buffer
-  numBytes=avpicture_get_size(AV_PIX_FMT_RGB24, pCodecCtx->width,
-                              pCodecCtx->height);
-  buffer=(uint8_t *)av_malloc(numBytes*sizeof(uint8_t));
-
-  // Assign appropriate parts of buffer to image planes in pFrameRGB
-  // Note that pFrameRGB is an AVFrame, but AVFrame is a superset
-  // of AVPicture
-  avpicture_fill((AVPicture *)pFrameRGB, buffer, AV_PIX_FMT_RGB24,
-                 pCodecCtx->width, pCodecCtx->height);
-
+  /*
+   * Prepare frame to hold the scaled target frame to be send to matrix.
+   */
+  AVFrame *output_frame = av_frame_alloc();  // Target frame for output
   int display_width = pCodecCtx->width;
   int display_height = pCodecCtx->height;
   if (maintain_aspect_ratio) {
@@ -306,27 +287,40 @@ int main(int argc, char *argv[]) {
     display_width = matrix->width();
     display_height = matrix->height();
   }
+  // Letterbox or pillarbox black bars.
   const int display_offset_x = (matrix->width() - display_width)/2;
   const int display_offset_y = (matrix->height() - display_height)/2;
 
-  // initialize SWS context for software scaling
-  sws_ctx = sws_getContext(pCodecCtx->width,
-                           pCodecCtx->height,
-                           pCodecCtx->pix_fmt,
-                           display_width, display_height,
-                           AV_PIX_FMT_RGB24,
-                           SWS_BILINEAR,
-                           NULL,
-                           NULL,
-                           NULL
-                           );
+  // Allocate buffer to meet output size requirements
+  const size_t output_size = avpicture_get_size(AV_PIX_FMT_RGB24,
+                                                display_width,
+                                                display_height);
+  uint8_t *output_buffer = (uint8_t *) av_malloc(output_size);
+
+  // Assign appropriate parts of buffer to image planes in output_frame.
+  // Note that output_frame is an AVFrame, but AVFrame is a superset
+  // of AVPicture
+  avpicture_fill((AVPicture *)output_frame, output_buffer, AV_PIX_FMT_RGB24,
+                 display_width, display_height);
+
   if (verbose) {
     fprintf(stderr, "Scaling %dx%d -> %dx%d; black border x:%d y:%d\n",
             pCodecCtx->width, pCodecCtx->height,
             display_width, display_height,
             display_offset_x, display_offset_y);
   }
-  if (sws_ctx == 0) {
+
+  // initialize SWS context for software scaling
+  SwsContext *const sws_ctx = sws_getContext(pCodecCtx->width,
+                                             pCodecCtx->height,
+                                             pCodecCtx->pix_fmt,
+                                             display_width, display_height,
+                                             AV_PIX_FMT_RGB24,
+                                             SWS_BILINEAR,
+                                             NULL,
+                                             NULL,
+                                             NULL);
+  if (!sws_ctx) {
     fprintf(stderr, "Trouble doing scaling to %dx%d :(\n",
             matrix->width(), matrix->height());
     return 1;
@@ -338,6 +332,7 @@ int main(int argc, char *argv[]) {
   const long frame_wait_nanos = 1e9 / fps;
   struct timespec next_frame;
 
+  AVFrame *decode_frame = av_frame_alloc();  // Decode video into this
   do {
     unsigned int frames_left = framecount_limit;
     unsigned int frames_to_skip = frame_skip;
@@ -357,16 +352,15 @@ int main(int argc, char *argv[]) {
         add_nanos(&next_frame, frame_wait_nanos);
 
         // Decode video frame
-        avcodec_decode_video2(pCodecCtx, pFrame, &frameFinished, &packet);
+        avcodec_decode_video2(pCodecCtx, decode_frame, &frameFinished, &packet);
 
         // Did we get a video frame?
         if (frameFinished) {
           // Convert the image from its native format to RGB
-          sws_scale(sws_ctx, (uint8_t const * const *)pFrame->data,
-                    pFrame->linesize, 0, pCodecCtx->height,
-                    pFrameRGB->data, pFrameRGB->linesize);
-
-          CopyFrame(pFrameRGB, offscreen_canvas,
+          sws_scale(sws_ctx, (uint8_t const * const *)decode_frame->data,
+                    decode_frame->linesize, 0, pCodecCtx->height,
+                    output_frame->data, output_frame->linesize);
+          CopyFrame(output_frame, offscreen_canvas,
                     display_offset_x, display_offset_y,
                     display_width, display_height);
           frame_count++;
@@ -396,12 +390,9 @@ int main(int argc, char *argv[]) {
 
   delete matrix;
 
-  // Free the RGB image
-  av_free(buffer);
-  av_frame_free(&pFrameRGB);
-
-  // Free the YUV frame
-  av_frame_free(&pFrame);
+  av_free(output_buffer);
+  av_frame_free(&output_frame);
+  av_frame_free(&decode_frame);
 
   // Close the codecs
   avcodec_close(pCodecCtx);
