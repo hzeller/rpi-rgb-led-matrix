@@ -14,7 +14,10 @@
 //      acceleration features IIRC, so if we could use thes, that would be
 //      great.
 //    * Other improvements that could reduce the flicker on a Raspberry Pi.
-//      Currently it seems to create flicker in particular for
+//      Currently it seems to create flicker in particular when decoding larger
+//      videos due to memory bandwidth overload (?). Might already be fixed
+//      with using hardware acceleration.
+
 // Ancient AV versions forgot to set this.
 #define __STDC_CONSTANT_MACROS
 
