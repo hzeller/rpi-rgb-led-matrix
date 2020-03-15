@@ -94,6 +94,7 @@ void ScaleToFitKeepAscpet(int fit_in_width, int fit_in_height,
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <video>\n", progname);
   fprintf(stderr, "Options:\n"
+          "\t-F                 : Full screen without black bars; aspect ratio might suffer\n"
           "\t-O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).\n"
           "\t-s <count>         : Skip these number of frames in the beginning.\n"
           "\t-c <count>         : Only show this number of frames (excluding skipped frames).\n"
@@ -121,6 +122,7 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
+  bool maintain_aspect_ratio = true;
   bool verbose = false;
   bool forever = false;
   int stream_output_fd = -1;
@@ -128,7 +130,7 @@ int main(int argc, char *argv[]) {
   unsigned int framecount_limit = UINT_MAX;  // even at 60fps, that is > 2yrs
 
   int opt;
-  while ((opt = getopt(argc, argv, "vO:R:Lfc:s:")) != -1) {
+  while ((opt = getopt(argc, argv, "vO:R:Lfc:s:F")) != -1) {
     switch (opt) {
     case 'v':
       verbose = true;
@@ -157,6 +159,9 @@ int main(int argc, char *argv[]) {
       break;
     case 's':
       frame_skip = atoi(optarg);
+      break;
+    case 'F':
+      maintain_aspect_ratio = false;
       break;
     default:
       return usage(argv[0]);
@@ -274,11 +279,18 @@ int main(int argc, char *argv[]) {
   avpicture_fill((AVPicture *)pFrameRGB, buffer, AV_PIX_FMT_RGB24,
                  pCodecCtx->width, pCodecCtx->height);
 
-  // Make display fit within canvas.
   int display_width = pCodecCtx->width;
   int display_height = pCodecCtx->height;
-  ScaleToFitKeepAscpet(matrix->width(), matrix->height(),
-                       &display_width, &display_height);
+  if (maintain_aspect_ratio) {
+    display_width = pCodecCtx->width;
+    display_height = pCodecCtx->height;
+    // Make display fit within canvas.
+    ScaleToFitKeepAscpet(matrix->width(), matrix->height(),
+                         &display_width, &display_height);
+  } else {
+    display_width = matrix->width();
+    display_height = matrix->height();
+  }
   const int display_offset_x = (matrix->width() - display_width)/2;
   const int display_offset_y = (matrix->height() - display_height)/2;
 
