@@ -5,9 +5,13 @@
 // in turn based on a tutorial by
 // Martin Bohme (boehme@inb.uni-luebeckREMOVETHIS.de)
 //
+// HELP NEEDED
 // Note, this is known to not be optimal, causing flicker etc. It is at this
-// point merely a demonstration of what is possible. Pull requests are welcome
-// to address
+// point merely a demonstration of what is possible. It also serves as a
+// converter to a 'stream' (-O option) which then can be played quickly with
+// the led-image-viewer.
+//
+// Pull requests are welcome to address
 //    * Ancient code: this is based on a very old ffmpeg demo. The API probably
 //      evolved over time.
 //    * Use hardware acceleration if possible. The Pi does have some
@@ -17,6 +21,11 @@
 //      Currently it seems to create flicker in particular when decoding larger
 //      videos due to memory bandwidth overload (?). Might already be fixed
 //      with using hardware acceleration.
+//    * Add sound ? Right now, we don't decode the sound. It is usually
+//      not very useful as the builtin-sound is disabled when running the
+//      LED matrix, but if there is an external USB sound adapter, it might
+//      be nice.
+
 
 // Ancient AV versions forgot to set this.
 #define __STDC_CONSTANT_MACROS
