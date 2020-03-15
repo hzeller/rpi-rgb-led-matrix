@@ -5,7 +5,16 @@
 // in turn based on a tutorial by
 // Martin Bohme (boehme@inb.uni-luebeckREMOVETHIS.de)
 //
-
+// Note, this is known to not be optimal, causing flicker etc. It is at this
+// point merely a demonstration of what is possible. Pull requests are welcome
+// to address
+//    * Ancient code: this is based on a very old ffmpeg demo. The API probably
+//      evolved over time.
+//    * Use hardware acceleration if possible. The Pi does have some
+//      acceleration features IIRC, so if we could use thes, that would be
+//      great.
+//    * Other improvements that could reduce the flicker on a Raspberry Pi.
+//      Currently it seems to create flicker in particular for
 // Ancient AV versions forgot to set this.
 #define __STDC_CONSTANT_MACROS
 
@@ -48,16 +57,26 @@ static void InterruptHandler(int) {
 struct LedPixel {
   uint8_t r, g, b;
 };
-void CopyFrame(AVFrame *pFrame, FrameCanvas *canvas) {
-  // Write pixel data
-  const int height = canvas->height();
-  const int width = canvas->width();
-  for(int y = 0; y < height; ++y) {
+void CopyFrame(AVFrame *pFrame, FrameCanvas *canvas,
+               int offset_x, int offset_y,
+               int width, int height) {
+  for (int y = 0; y < height; ++y) {
     LedPixel *pix = (LedPixel*) (pFrame->data[0] + y*pFrame->linesize[0]);
-    for(int x = 0; x < width; ++x, ++pix) {
-      canvas->SetPixel(x, y, pix->r, pix->g, pix->b);
+    for (int x = 0; x < width; ++x, ++pix) {
+      canvas->SetPixel(x + offset_x, y + offset_y, pix->r, pix->g, pix->b);
     }
   }
+}
+
+// Scale "width" and "height" to fit within target rectangle of given size.
+void ScaleToFitKeepAscpet(int fit_in_width, int fit_in_height,
+                          int *width, int *height) {
+  if (*height < fit_in_height && *width < fit_in_width) return; // Done.
+  const float height_ratio = 1.0 * (*height) / fit_in_height;
+  const float width_ratio  = 1.0 * (*width) / fit_in_width;
+  const float ratio = (height_ratio > width_ratio) ? height_ratio : width_ratio;
+  *width = roundf(*width / ratio);
+  *height = roundf(*height / ratio);
 }
 
 static int usage(const char *progname) {
@@ -243,17 +262,31 @@ int main(int argc, char *argv[]) {
   avpicture_fill((AVPicture *)pFrameRGB, buffer, AV_PIX_FMT_RGB24,
                  pCodecCtx->width, pCodecCtx->height);
 
+  // Make display fit within canvas.
+  int display_width = pCodecCtx->width;
+  int display_height = pCodecCtx->height;
+  ScaleToFitKeepAscpet(matrix->width(), matrix->height(),
+                       &display_width, &display_height);
+  const int display_offset_x = (matrix->width() - display_width)/2;
+  const int display_offset_y = (matrix->height() - display_height)/2;
+
   // initialize SWS context for software scaling
   sws_ctx = sws_getContext(pCodecCtx->width,
                            pCodecCtx->height,
                            pCodecCtx->pix_fmt,
-                           matrix->width(), matrix->height(),
+                           display_width, display_height,
                            AV_PIX_FMT_RGB24,
                            SWS_BILINEAR,
                            NULL,
                            NULL,
                            NULL
                            );
+  if (verbose) {
+    fprintf(stderr, "Scaling %dx%d -> %dx%d; black border x:%d y:%d\n",
+            pCodecCtx->width, pCodecCtx->height,
+            display_width, display_height,
+            display_offset_x, display_offset_y);
+  }
   if (sws_ctx == 0) {
     fprintf(stderr, "Trouble doing scaling to %dx%d :(\n",
             matrix->width(), matrix->height());
@@ -294,7 +327,9 @@ int main(int argc, char *argv[]) {
                     pFrame->linesize, 0, pCodecCtx->height,
                     pFrameRGB->data, pFrameRGB->linesize);
 
-          CopyFrame(pFrameRGB, offscreen_canvas);
+          CopyFrame(pFrameRGB, offscreen_canvas,
+                    display_offset_x, display_offset_y,
+                    display_width, display_height);
           frame_count++;
           frames_left--;
           if (stream_writer) {
