@@ -1,6 +1,6 @@
 CXXFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter -D_FILE_OFFSET_BITS=64
 OBJECTS=led-image-viewer.o
-BINARIES=led-image-viewer
+BINARIES=led-image-viewer text-scroller
 
 OPTIONAL_OBJECTS=video-viewer.o
 OPTIONAL_BINARIES=video-viewer
@@ -23,6 +23,9 @@ all : $(BINARIES)
 
 $(RGB_LIBRARY): FORCE
 	$(MAKE) -C $(RGB_LIBDIR)
+
+text-scroller: text-scroller.o $(RGB_LIBRARY)
+	$(CXX) $(CXXFLAGS) text-scroller.o -o $@ $(LDFLAGS)
 
 led-image-viewer: led-image-viewer.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) led-image-viewer.o -o $@ $(LDFLAGS) $(MAGICK_LDFLAGS)
