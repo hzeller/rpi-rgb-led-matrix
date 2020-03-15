@@ -15,7 +15,7 @@
 //    * Ancient code: this is based on a very old ffmpeg demo. The API probably
 //      evolved over time.
 //    * Use hardware acceleration if possible. The Pi does have some
-//      acceleration features IIRC, so if we could use thes, that would be
+//      acceleration features IIRC, so if we could use these, that would be
 //      great.
 //    * Other improvements that could reduce the flicker on a Raspberry Pi.
 //      Currently it seems to create flicker in particular when decoding larger
@@ -91,14 +91,20 @@ void ScaleToFitKeepAscpet(int fit_in_width, int fit_in_height,
   *height = roundf(*height / ratio);
 }
 
-static int usage(const char *progname) {
+static int usage(const char *progname, const char *msg = nullptr) {
+  if (msg) {
+    fprintf(stderr, "%s\n", msg);
+  }
   fprintf(stderr, "usage: %s [options] <video>\n", progname);
   fprintf(stderr, "Options:\n"
           "\t-F                 : Full screen without black bars; aspect ratio might suffer\n"
           "\t-O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).\n"
           "\t-s <count>         : Skip these number of frames in the beginning.\n"
           "\t-c <count>         : Only show this number of frames (excluding skipped frames).\n"
-          "\t-v                 : verbose.\n"
+          "\t-V<vsync-multiple> : Instead of native video framerate, playback framerate\n"
+          "\t                     is a fraction of matrix refresh. In particular with a stable refresh,\n"
+          "\t                     this can result in more smooth playback. Choose multiple for desired framerate.\n"
+          "\t-v                 : verbose; prints video metadata and other info.\n"
           "\t-f                 : Loop forever.\n");
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
@@ -122,6 +128,8 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
+  int vsync_multiple = 1;
+  bool use_vsync_for_frame_timing = false;
   bool maintain_aspect_ratio = true;
   bool verbose = false;
   bool forever = false;
@@ -130,7 +138,7 @@ int main(int argc, char *argv[]) {
   unsigned int framecount_limit = UINT_MAX;  // even at 60fps, that is > 2yrs
 
   int opt;
-  while ((opt = getopt(argc, argv, "vO:R:Lfc:s:F")) != -1) {
+  while ((opt = getopt(argc, argv, "vO:R:Lfc:s:FV:")) != -1) {
     switch (opt) {
     case 'v':
       verbose = true;
@@ -162,6 +170,13 @@ int main(int argc, char *argv[]) {
       break;
     case 'F':
       maintain_aspect_ratio = false;
+      break;
+    case 'V':
+      vsync_multiple = atoi(optarg);
+      if (vsync_multiple <= 0)
+        return usage(argv[0],
+                     "-V: VSync-multiple needs to be a positive integer");
+      use_vsync_for_frame_timing = true;
       break;
     default:
       return usage(argv[0]);
@@ -360,10 +375,11 @@ int main(int argc, char *argv[]) {
             if (verbose) fprintf(stderr, "%6ld", frame_count);
             stream_writer->Stream(*offscreen_canvas, frame_wait_nanos/1000);
           } else {
-            offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas);
+            offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas,
+                                                   vsync_multiple);
           }
         }
-        if (!stream_writer) {
+        if (!stream_writer && !use_vsync_for_frame_timing) {
           clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_frame, NULL);
         }
       }
