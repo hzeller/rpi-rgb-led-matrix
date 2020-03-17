@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
       forever = true;
       break;
     case 'O':
-      stream_output_fd = open(optarg, O_CREAT|O_WRONLY, 0644);
+      stream_output_fd = open(optarg, O_CREAT|O_TRUNC|O_WRONLY, 0644);
       if (stream_output_fd < 0) {
         perror("Couldn't open output stream");
         return 1;
@@ -345,14 +345,14 @@ int main(int argc, char *argv[]) {
            && frames_left > 0) {
       // Is this a packet from the video stream?
       if (packet.stream_index==videoStream) {
-        if (frames_to_skip) { frames_to_skip--; continue; }
-
         // Determine absolute end of this frame now so that we don't include
         // decoding overhead. TODO: skip frames if getting too slow ?
         add_nanos(&next_frame, frame_wait_nanos);
 
         // Decode video frame
         avcodec_decode_video2(pCodecCtx, decode_frame, &frameFinished, &packet);
+
+        if (frames_to_skip) { frames_to_skip--; continue; }
 
         // Did we get a video frame?
         if (frameFinished) {
