@@ -291,6 +291,37 @@ two chains with 8 panels each
 
 (`--led-chain=8 --led-parallel=2 --led-pixel-mapper="U-mapper"`).
 
+#### V-mapper
+
+By default, when you add panels on a chain, they are added horizontally.  
+If you have 2 panels of 64x32, you get 128x32. What if you wanted 64x64?  
+V-mapper allows the stacking to be vertical and not horizontal.
+
+It is compatible with parallel output, so if you have 12 128x64 panels, without this
+mapper, you can either do a matrix of 3x3 panels (384x192). Adding more panels
+would force you to have a 4x3 layout (512x192) while you probably want a 3x4
+layout (384 * 256) for a better aspect ratio.
+
+```
+  ./demo --led-rows=64 --led-cols=128 --led-chain=4 -led-parallel=3 --led-pixel-mapper=V-mapper -D0
+```
+
+Note that this is not a U mapper, all the panels are correct side up, and you need
+more cable length. It looks like this, 3 chains of 4 panels for a total of 32K pixels
+per chain. This is also a good time to mention that this is probably an upper limit of
+what you can reasonably output without having an unusable fresh rate
+( Try these options to help: --led-pwm-bits=7 --led-pwm-dither-bits=1 and get about 100Hz )
+
+```
+  Ch1 Ch2 Ch3
+   v   v   v
+  [>] [>] [>]
+  [>] [>] [>]
+  [>] [>] [>]
+  [>] [>] [>]
+```
+
+
 #### Rotate
 
 The "Rotate" mapper allows you to rotate your screen. It takes an angle
