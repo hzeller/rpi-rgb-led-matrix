@@ -236,10 +236,12 @@ public:
     const {
     *visible_width = matrix_width * parallel_ / chain_;
     *visible_height = matrix_height * chain_ / parallel_;
+#if 0
       fprintf(stderr, "%s: C:%d P:%d. Turning W:%d H:%d Physical "
 	      "into W:%d H:%d Virtual\n",
               GetName(), chain_, parallel_,
 	      *visible_width, *visible_height, matrix_width, matrix_height);
+#endif
     return true;
   }
 
@@ -250,9 +252,6 @@ public:
     int panel_height = matrix_height / parallel_;
     *matrix_x = (x % panel_width) +  int(y/panel_height)* panel_width;
     *matrix_y = (y % panel_height) + int(x/panel_width) * panel_height;
-
-    //fprintf(stderr, "%s: Panel-W:%d Panel-H:%d. X: %3d -> %3d, Y: %3d -> %3d\n",
-    //          GetName(), panel_width, panel_height, x, *matrix_x, y, *matrix_y);
   }
 
 private:
