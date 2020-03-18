@@ -104,6 +104,7 @@ static int usage(const char *progname, const char *msg = nullptr) {
           "\t-V<vsync-multiple> : Instead of native video framerate, playback framerate\n"
           "\t                     is a fraction of matrix refresh. In particular with a stable refresh,\n"
           "\t                     this can result in more smooth playback. Choose multiple for desired framerate.\n"
+          "\t                     (Tip: use --led-limit-refresh for stable rate)\n"
           "\t-v                 : verbose; prints video metadata and other info.\n"
           "\t-f                 : Loop forever.\n");
 

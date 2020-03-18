@@ -68,19 +68,19 @@ Options:
         -O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).
         -C                        : Center images.
 
-These options affect images following them on the command line:
+These options affect images FOLLOWING them on the command line,
+so it is possible to have different options for each image
         -w<seconds>               : Regular image: Wait time in seconds before next image is shown (default: 1.5).
         -t<seconds>               : For animations: stop after this time.
         -l<loop-count>            : For animations: number of loops through a full cycle.
         -D<animation-delay-ms>    : For animations: override the delay between frames given in the
                                     gif/stream animation with this value. Use -1 to use default value.
+        -V<vsync-multiple>        : For animation (expert): Only do frame vsync-swaps on multiples of refresh (default: 1)
+                                    (Tip: use --led-limit-refresh for stable rate)
 
 Options affecting display of multiple images:
         -f                        : Forever cycle through the list of files on the command line.
         -s                        : If multiple images are given: shuffle.
-
-Display Options:
-        -V<vsync-multiple>        : Expert: Only do frame vsync-swaps on multiples of refresh (default: 1)
 
 General LED matrix options:
         <... all the --led- options>
@@ -106,7 +106,8 @@ sudo ./led-image-viewer -D16 animated.gif    # Play animated gif, use 16ms frame
 # If you want to have an even frame rate, that is depending on your
 # refresh rate, use the following. Note, your refresh rate is dependent on
 # factors such as chain length and rows; use --led-show-refresh to get an idea.
-sudo ./led-image-viewer -D0 -V12 animated.gif # Frame rate = 1/12 refresh rate
+# Then fix it with --led-limit-refresh
+sudo ./led-image-viewer --led-limit-refresh=200 -D0 -V10 animated.gif # Frame rate = 1/12 refresh rate
 
 sudo ./led-image-viewer    -w3 foo.jpg bar.png  # show two images, wait 3 seconds between. Stop.
 sudo ./led-image-viewer    -w3 foo.jpg -w2 bar.png baz.png  # show images, wait 3 seconds after the first, 2 seconds after the second and third. Stop.
@@ -219,7 +220,11 @@ Options:
         -O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).
         -s <count>         : Skip these number of frames in the beginning.
         -c <count>         : Only show this number of frames (excluding skipped frames).
-        -v                 : verbose.
+        -V<vsync-multiple> : Instead of native video framerate, playback framerate
+                             is a fraction of matrix refresh. In particular with a stable refresh,
+                             this can result in more smooth playback. Choose multiple for desired framerate.
+                             (Tip: use --led-limit-refresh for stable rate)
+        -v                 : verbose; prints video metadata and other info.
         -f                 : Loop forever.
 
 General LED matrix options:
