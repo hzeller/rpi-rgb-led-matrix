@@ -200,6 +200,9 @@ smooth or presents flicker. If you observe that, it is suggested to do one
 of these:
 
   - Transcode the video first to the width and height of the final output size.
+  - If you use tools such as [youtube-dl] to acquire the video, tell it
+    to choose a low resolution version (e.g. for that program use option
+    `-f"[height<480]"`).
   - Prepare an animation stream that you then later watch with led-image-viewer
     (see example below).
 
@@ -244,3 +247,5 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
 # different frame rate.
 sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```
+
+[youtube-dl]: https://youtube-dl.org/
