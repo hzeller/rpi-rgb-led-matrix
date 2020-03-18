@@ -249,7 +249,7 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
 # tweakings such as with --led-pwm-dither-bits).
 # Let's fix the refresh rate to 200 and sync a new frame with every
 # 8th refresh to get the desired video fps (200/8 = 25)
-sudo ./video-viewer --led-chain=4 --led-parallel=4 --led-limit-refresh=200 -V8 myvideo.webm
+sudo ./video-viewer --led-chain=4 --led-parallel=3 --led-limit-refresh=200 -V8 myvideo.webm
 
 # Another way to avoid flicker playback with best possible results even with
 # very high framerate: create a preprocessed stream first, then replay it with
