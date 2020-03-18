@@ -250,7 +250,7 @@ some re-mapping options, and also programmatic ways to do so.
 
 ### Standard mappers
 
-#### U-mapper
+#### U-mapper (U-shape connection)
 Say you have 4 displays with 32x32 and only a single output
 like with a Raspberry Pi 1 or the Adafruit HAT -- if we chain
 them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
@@ -291,39 +291,53 @@ two chains with 8 panels each
 
 (`--led-chain=8 --led-parallel=2 --led-pixel-mapper="U-mapper"`).
 
-#### V-mapper
+#### V-mapper (Vertical arrangement)
 
-By default, when you add panels on a chain, they are added horizontally.  
-If you have 2 panels of 64x32, you get 128x32. What if you wanted 64x64?  
-V-mapper allows the stacking to be vertical and not horizontal.
+By default, when you add panels on a chain, they are added horizontally.
+If you have 2 panels of 64x32, you get 128x32. If you wanted 64x64, you can
+use a U-mapper, but it would require that some panels are 'upside down', which
+might not be desirable.
+The V-mapper allows the stacking to be vertical and not horizontal.
 
-It is compatible with parallel output, so if you have 12 128x64 panels, without this
-mapper, you can either do a matrix of 3x3 panels (384x192). Adding more panels
-would force you to have a 4x3 layout (512x192) while you probably want a 3x4
-layout (384 * 256) for a better aspect ratio.
+Unlike the U mapper, all the panels are correct side up, and you need
+more cable length as you need to cross back to the start of the next panel.
+
+It is compatible with parallel chains, so you can have multiple stacks
+of panels all building a coherent overall display.
+
+Here an example with 3 chains of 4 panels (128x64) for a total of about
+98k display pixels.
 
 ```
   ./demo --led-rows=64 --led-cols=128 --led-chain=4 -led-parallel=3 --led-pixel-mapper=V-mapper -D0
 ```
 
-Note that this is not a U mapper, all the panels are correct side up, and you need
-more cable length. It looks like this, 3 chains of 4 panels for a total of 32K pixels
-per chain. This is also a good time to mention that this is probably an upper limit of
-what you can reasonably output without having an unusable fresh rate
-( Try these options to help: --led-pwm-bits=7 --led-pwm-dither-bits=1 and get about 100Hz )
-
 ```
   [O < I] [O < I] [O < I]
-   ,---'   ,---'   ,---'
+   ,---^   ,---^   ,---^
   [O < I] [O < I] [O < I]
-   ,---'   ,---'   ,---'
+   ,---^   ,---^   ,---^
   [O < I] [O < I] [O < I]
-   ,---'   ,---'   ,---'
+   ,---^   ,---^   ,---^
   [O < I] [O < I] [O < I]
        ^       ^       ^
-      Ch3     Ch2     Ch1
+      #3      #2       #1 Pi connector (three parallel chains of len 4)
 ```
 
+ (This is also a good time to notice that such large arrangement is probably an
+upper limit of what you can reasonably output without having an unusable fresh
+rate (Try these options to help: --led-pwm-bits=7 --led-pwm-dither-bits=1 and get about 100Hz)).
+
+This can also be used to improve the refresh rate of a long display even
+if it is only one panel high (e.g. for a text running output) by
+splitting the load into multiple parallel chains.
+
+```
+
+  [O < I] [O < I] [O < I]
+       ^       ^       ^
+      #3      #2       #1 Pi connector (three parallel chains of len 1)
+```
 
 #### Rotate
 
