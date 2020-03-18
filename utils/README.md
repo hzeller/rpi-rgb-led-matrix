@@ -204,6 +204,8 @@ of these:
   - If you use tools such as [youtube-dl] to acquire the video, tell it
     to choose a low resolution version (e.g. for that program use option
     `-f"[height<480]"`).
+  - Synchronize output as integer fraction of matrix refresh rate (example
+    below).
   - Prepare an animation stream that you then later watch with led-image-viewer
     (see example below).
 
@@ -237,6 +239,17 @@ General LED matrix options:
 # Play video. If you observe that the Pi has trouble to keep up (extensive
 # flickering), transcode the video first to the exact size of your display.
 sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
+
+# If you observe flicker you can try to synchronize video output with
+# the refresh rate of the panel. For that, first figure out with
+# --led-show-refresh what the 'natural' refresh rate is of your LED panel.
+# Then choose one that is lower and a multiple of the frame-rate of the
+# video. Let's say we have a video with a framerate of 25fps and find that
+# our panel can refresh with more than 200Hz (after the usual refresh
+# tweakings such as with --led-pwm-dither-bits).
+# Let's fix the refresh rate to 200 and sync a new frame with every
+# 8th refresh to get the desired video fps (200/8 = 25)
+sudo ./video-viewer --led-chain=4 --led-parallel=4 --led-limit-refresh=200 -V8 myvideo.webm
 
 # Another way to avoid flicker playback with best possible results even with
 # very high framerate: create a preprocessed stream first, then replay it with

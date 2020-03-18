@@ -345,7 +345,7 @@ a fixed refresh rate.
 This can be used to mitigate some situations in which you have a faint flicker,
 which can happen due to hardware events (network access)
 or other situations such as other IO or heavy memory access by other
-processes. Also when you see wildly changing refresh freuqncies with
+processes. Also when you see wildly changing refresh frequencies with
 `--led-show-refresh`.
 
 You trade a slightly slower refresh rate and display brightness for less
