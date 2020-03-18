@@ -261,7 +261,7 @@ of 64x64 pixels:
 [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
 
 ```
-So the following chain
+So the following chain (Viewed looking at the LED-side of the panels)
     [<][<][<][<] }- Raspbery Pi connector
 
 is arranged in this U-shape (on its side)
@@ -311,6 +311,8 @@ Here an example with 3 chains of 4 panels (128x64) for a total of about
 ```
   ./demo --led-rows=64 --led-cols=128 --led-chain=4 -led-parallel=3 --led-pixel-mapper=V-mapper -D0
 ```
+
+Viewed looking the LED-side of the panels:
 
 ```
   [O < I] [O < I] [O < I]
