@@ -321,7 +321,7 @@ what you can reasonably output without having an unusable fresh rate
    ,---'   ,---'   ,---'
   [O < I] [O < I] [O < I]
        ^       ^       ^
-      Ch1     Ch2     Ch3
+      Ch3     Ch2     Ch1
 ```
 
 
