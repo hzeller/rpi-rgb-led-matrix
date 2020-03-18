@@ -313,15 +313,15 @@ what you can reasonably output without having an unusable fresh rate
 ( Try these options to help: --led-pwm-bits=7 --led-pwm-dither-bits=1 and get about 100Hz )
 
 ```
-  [I > O] [I > O] [I > O]
-   `---,   `---,   `---,
-  [I > O] [I > O] [I > O]
-   `---,   `---,   `---,
-  [I > O] [I > O] [I > O]
-   `---,   `---,   `---,
-  [I > O] [I > O] [I > O]
-   ^       ^       ^
-  Ch1     Ch2     Ch3
+  [O < I] [O < I] [O < I]
+   ,---'   ,---'   ,---'
+  [O < I] [O < I] [O < I]
+   ,---'   ,---'   ,---'
+  [O < I] [O < I] [O < I]
+   ,---'   ,---'   ,---'
+  [O < I] [O < I] [O < I]
+       ^       ^       ^
+      Ch1     Ch2     Ch3
 ```
 
 
