@@ -15,9 +15,9 @@ namespace rpi_rgb_led_matrix_sharp
 
         [DllImport("librgbmatrix.so", CallingConvention= CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
         internal static extern IntPtr led_matrix_create_from_options(
-            ref InternalRGBLedMatrixOptions options,  
-            IntPtr argc,
-            out IntPtr argv);
+            ref InternalRGBLedMatrixOptions options,
+            ref int argc,
+            ref string[] argv);
 
         [DllImport("librgbmatrix.so")]
         internal static extern void led_matrix_delete(IntPtr matrix);
@@ -48,7 +48,7 @@ namespace rpi_rgb_led_matrix_sharp
             var opt = new InternalRGBLedMatrixOptions();
 
             try {      
-                // pass in options to interal data structure           
+                // pass in options to internal data structure           
                 opt.chain_length = options.ChainLength;
                 opt.rows = options.Rows;
                 opt.cols = options.Cols;
@@ -66,10 +66,11 @@ namespace rpi_rgb_led_matrix_sharp
                 opt.brightness = options.Brightness;
                 opt.disable_hardware_pulsing = (uint)(options.DisableHardwarePulsing ? 1 : 0);
                 opt.row_address_type = options.RowAddressType;
-                // dont care about these
-                var argc = IntPtr.Zero;
-                var argv = IntPtr.Zero;
-                matrix = led_matrix_create_from_options(ref opt, argc, out argv);
+
+                string[] argv = new string[] { Environment.GetCommandLineArgs()[0],"--led-slowdown-gpio="+options.GpioSlowdown };
+                int argc = argv.Length;
+
+                matrix = led_matrix_create_from_options(ref opt,ref argc,ref argv);
             }
             finally
             {
@@ -244,5 +245,10 @@ namespace rpi_rgb_led_matrix_sharp
         public bool DisableHardwarePulsing;
         public bool ShowRefreshRate;
         public bool InverseColors;
+
+        /// <summary>
+        /// Slowdown GPIO. Needed for faster Pis/slower panels.
+        /// </summary>
+        public int GpioSlowdown;
     };
 }

@@ -1,6 +1,6 @@
-CXXFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter
-OBJECTS=led-image-viewer.o
-BINARIES=led-image-viewer
+CXXFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter -D_FILE_OFFSET_BITS=64
+OBJECTS=led-image-viewer.o text-scroller.o
+BINARIES=led-image-viewer text-scroller
 
 OPTIONAL_OBJECTS=video-viewer.o
 OPTIONAL_BINARIES=video-viewer
@@ -15,14 +15,17 @@ RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
 # Imagemagic flags, only needed if actually compiled.
-MAGICK_CXXFLAGS=`GraphicsMagick++-config --cppflags --cxxflags`
-MAGICK_LDFLAGS=`GraphicsMagick++-config --ldflags --libs`
+MAGICK_CXXFLAGS?=`GraphicsMagick++-config --cppflags --cxxflags`
+MAGICK_LDFLAGS?=`GraphicsMagick++-config --ldflags --libs`
 AV_CXXFLAGS=`pkg-config --cflags  libavcodec libavformat libswscale libavutil`
 
 all : $(BINARIES)
 
 $(RGB_LIBRARY): FORCE
 	$(MAKE) -C $(RGB_LIBDIR)
+
+text-scroller: text-scroller.o $(RGB_LIBRARY)
+	$(CXX) $(CXXFLAGS) text-scroller.o -o $@ $(LDFLAGS)
 
 led-image-viewer: led-image-viewer.o $(RGB_LIBRARY)
 	$(CXX) $(CXXFLAGS) led-image-viewer.o -o $@ $(LDFLAGS) $(MAGICK_LDFLAGS)

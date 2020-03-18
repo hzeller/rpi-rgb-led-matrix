@@ -9,6 +9,12 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
      buffer the outputs using the ...
    * [Active-3](./active-3) board. Supports three parallel chains with active buffering
      and 3.3V -> 5V level shifting for best reliability. Requires SMD soldering.
+     
+     As another option you can buy it from these locations not affiliated with this project.
+     They are given to help you locate premade boards but no guarantees are given or implied:
+     * https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-raspberry-pi/
+       ($3/board, but fairly long and/or expensive shipping from HKG)
+     * Seller #2 (fill me)
    * The [Passive-RPi1](./passive-rpi1) adapter board is to connect one panel to
      Raspberry Pi 1 with 26 GPIO pins.
 

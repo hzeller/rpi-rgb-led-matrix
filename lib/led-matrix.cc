@@ -47,11 +47,6 @@
 #endif
 
 namespace rgb_matrix {
-
-// Get rolling over microsecond counter. Right now for experimental
-// purposes declared here (defined in gpio.cc).
-uint32_t GetMicrosecondCounter();
-
 using namespace internal;
 
 // Pump pixels to screen. Needs to be high priority real-time because jitter
@@ -239,7 +234,8 @@ RGBMatrix::Options::Options() :
     inverse_colors(false),
 #endif
   led_rgb_sequence("RGB"),
-  pixel_mapper_config(NULL)
+  pixel_mapper_config(NULL),
+  panel_type(NULL)
 {
   // Nothing to see here.
 }
@@ -263,6 +259,7 @@ RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   }
 
   Framebuffer::InitHardwareMapping(params_.hardware_mapping);
+
   active_ = CreateFrameCanvas();
   Clear();
   SetGPIO(io, true);
@@ -337,6 +334,8 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
                           !params_.disable_hardware_pulsing,
                           params_.pwm_lsb_nanoseconds, params_.pwm_dither_bits,
                           params_.row_address_type);
+    Framebuffer::InitializePanels(io_, params_.panel_type,
+                                  params_.cols * params_.chain_length);
   }
   if (start_thread) {
     StartRefresh();
@@ -476,7 +475,7 @@ bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper) {
   return true;
 }
 
-#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
 namespace {
 // A pixel mapper
 class PixelMapExtractionCanvas : public Canvas {
@@ -549,7 +548,7 @@ void RGBMatrix::ApplyStaticTransformerDeprecated(
   delete shared_pixel_mapper_;
   shared_pixel_mapper_ = new_mapper;
 }
-#endif  // REMOVE_DEPRECATED_TRANSFORMERS
+#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
 
 // FrameCanvas implementation of Canvas
 FrameCanvas::~FrameCanvas() { delete frame_; }

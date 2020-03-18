@@ -47,7 +47,9 @@ public:
 
   virtual const char *GetName() const { return name_; }
 
-  // The MapVisibleToMatrix() as required by PanelMatrix here does
+  // The MapVisibleToMatrix() as required by PanelMatrix here breaks it
+  // down to the individual panel, so that derived classes only need to
+  // implement MapSinglePanel().
   virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
                                   int visible_x, int visible_y,
                                   int *matrix_x, int *matrix_y) const {
@@ -65,8 +67,11 @@ public:
 
   // Map the coordinates for a single panel. This is to be overridden in
   // derived classes.
+  // Input parameter is the visible position on the matrix, and this method
+  // should return the internal multiplexed position.
   virtual void MapSinglePanel(int visible_x, int visible_y,
                               int *matrix_x, int *matrix_y) const = 0;
+
 protected:
   const char *const name_;
   const int panel_stretch_factor_;
@@ -239,6 +244,42 @@ public:
   }
 };
 
+class QiangLiQ8 : public MultiplexMapperBase {
+public:
+  QiangLiQ8() : MultiplexMapperBase("QiangLiQ8", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const int column = x + (4+ 4*(x/4));
+    *matrix_x = column;
+    if ((y >= 15 && y <=19) || (y >= 5 && y <= 9)) {
+      const int reverseColumn = x + (4*(x/4));
+      *matrix_x = reverseColumn;
+    }
+    *matrix_y = y % 5 + (y/10) *5;
+  }
+};
+
+class InversedZStripe : public MultiplexMapperBase {
+public:
+  InversedZStripe() : MultiplexMapperBase("InversedZStripe", 2) {}
+  
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    static const int tile_width = 8;
+    static const int tile_height = 4;
+    
+    const int vert_block_is_odd = ((y / tile_height) % 2);
+    const int evenOffset[8] = {7, 5, 3, 1, -1, -3, -5, -7};
+    
+    if (vert_block_is_odd) {
+      *matrix_x = x + (x / tile_width) * tile_width;
+    } else {
+      *matrix_x = x + (x / tile_width) * tile_width + 8 + evenOffset[x % 8];
+    }
+    *matrix_y = (y % tile_height) + tile_height * (y / (tile_height * 2));
+  }
+};
+
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -257,7 +298,8 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new Kaler2ScanMapper());
   result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0));
   result->push_back(new P10MapperZ());
-
+  result->push_back(new QiangLiQ8());
+  result->push_back(new InversedZStripe());
   return result;
 }
 
