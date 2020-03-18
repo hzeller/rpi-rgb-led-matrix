@@ -400,7 +400,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-pwm-dither-bits=<0..2> : Time dithering of lower bits "
           "(Default: 0)\n"
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n"
-          "\t--led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'\n",
+          "\t--led-panel-type=<name>  : Needed to initialize special panels. Supported: 'FM6126A', 'FM6127'\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
