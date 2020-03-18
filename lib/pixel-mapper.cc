@@ -226,10 +226,6 @@ public:
   virtual const char *GetName() const { return "V-mapper"; }
 
   virtual bool SetParameters(int chain, int parallel, const char *param) {
-    if (chain < 2) {
-      fprintf(stderr, "V-mapper: need at least --led-chain=2\n");
-      return false;
-    }
     chain_ = chain;
     parallel_ = parallel;
     return true;
