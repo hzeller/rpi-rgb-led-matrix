@@ -688,11 +688,15 @@ appear too dim because each line is not displayed long enough before it is turne
 AB panels also known as outdoor panels, help with performance (you can drive them a bit
 faster and they'll still look bright enough), but as you drive them faster, you'll
 eventually run into the same limits.  
-Ultimately a Raspberri Pi3 is fast enough to push pixels as quickly as panels can accept them.
+Ultimately a Raspberri Pi3 is fast enough to push pixels as quickly as panels can accept them
+(actually, not quite an rPi4 goes a bit faster even with the required --led-slowdown-gpio=2).  
 Using an FPGA solution could work around some slight inefficiencies but ultimately run into 
 similar limits.  
 A general rule of thumb is that running 128x128 on a single channel, is already pushing
-limits and you will have to make tradeoffs in visual quality.
+limits and you will have to make tradeoffs in visual quality. 128x256 is definitely pushing
+things and you'll get 100Hz or less depending on the performance options you choose.  
+This puts the maximum reasonable resolution at 384x256 for 3 chains. You can see more examples
+and video capture on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)
 
 You can look at this bug for more details: 
 https://github.com/hzeller/rpi-rgb-led-matrix/issues/918#issuecomment-578281400
