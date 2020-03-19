@@ -91,8 +91,8 @@ of which there are a few types out there; they can be chosen with
 the `--led-multiplexing` parameter.
 
 There are some panels that have a different chip-set than the default HUB75.
-These require some initialization sequence. The current supported one is
-`--led-panel-type=FM6126A`.
+These require some initialization sequence. The current supported types are
+`--led-panel-type=FM6126A` and `--led-panel-type=FM6127`.
 
 Generally, the higher scan-rate (e.g. 1:8), a.k.a. outdoor panels generally
 allow faster refresh rate, but you might need to figure out the multiplexing
@@ -230,6 +230,8 @@ output on your panel, try setting:
 --led-panel-type=FM6126A
 ```
 
+Some panels have the FM6127 chip, which is also an option.
+
 ##### Multiplexing
 If you have some 'outdoor' panels or panels with different multiplexing,
 the following will be useful:
@@ -331,6 +333,42 @@ The refresh rate depends on a lot of factors, from `--led-rows` and `--led-chain
 to `--led-pwm-bits`, `--led-pwm-lsb-nanoseconds` and `--led-pwm-dither-bits`.
 If you are tweaking these parameters, showing the refresh rate can be a
 useful tool.
+
+```
+--led-limit-refresh=<Hz>  : Limit refresh rate to this frequency in Hz. Useful to keep a
+                            constant refresh rate on loaded system. 0=no limit. Default: 0
+```
+
+This allows to limit the refresh rate to a particular frequency to approach
+a fixed refresh rate.
+
+This can be used to mitigate some situations in which you have a faint flicker,
+which can happen due to hardware events (network access)
+or other situations such as other IO or heavy memory access by other
+processes. Also when you see wildly changing refresh frequencies with
+`--led-show-refresh`.
+
+You trade a slightly slower refresh rate and display brightness for less
+visible flicker situations.
+
+For this to calibrate, run your program for a while with --led-show-refresh
+and watch the line that shows the current refresh rate and minimum refresh
+rate observed. So wait a while until that value doesn't
+change anymore (e.g. a minute, so that you catch tasks that happen once
+a minute, such as ntp updated).
+Use this as a guidance what value to choose with `--led-limit-refresh`.
+
+The refresh rate will now be adapted to always reach this value
+between frames, so faster refreshes will be slowed down, but the occasional
+delayed frame will fit into the time-window as well, thus reducing visible
+brightness fluctuations.
+
+You can play with value a little and reduce until you find a good balance
+between refresh rate and flicker suppression.
+
+Use this also if you want to have a stable baseline refresh rate when using
+the vsync-multiple flag `-V` in the [led-image-viewer] or
+[video-viewer] utility programs.
 
 ```
 --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
@@ -726,10 +764,12 @@ This solution allows you to build arduino code so that it works on linux and use
 - https://github.com/marcmerlin/Framebuffer_GFX is the base arduino framebuffer that supports more 2D arduino code
 - https://github.com/marcmerlin/FastLED_RPIRGBPanel_GFX is the driver that bridges that framebuffer and the APIs it supports (FastLED, Adafruit::GFX, and LEDMatrix), with rpi-rgb-led-matrix for display
 
-Here is a demo of arduino code running on 3x 128x64 ABCDE panels connected via the active-3 board, running at 400Hz:
-![image](https://user-images.githubusercontent.com/1369412/71642449-9cce0a80-2cab-11ea-876d-8c9bd6ef3b72.png)
+Here is a demo of arduino code running on 9x 128x64 ABCDE panels connected via the active-3 board, running at 130Hz:
+![image](https://user-images.githubusercontent.com/1369412/77025606-c9123280-694e-11ea-9acd-cfd2b890321d.png)
 
 
+[led-image-viewer]: ./utils#image-viewer
+[video-viewer]: ./utils#video-viewer
 [matrix64]: ./img/chained-64x64.jpg
 [sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/product/1484

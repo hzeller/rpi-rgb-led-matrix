@@ -22,7 +22,7 @@
 #ifndef RPI_TRANSFORMER_H
 #define RPI_TRANSFORMER_H
 
-#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
 
 #include <vector>
 #include <cstddef>
@@ -123,5 +123,5 @@ private:
 
 } // namespace rgb_matrix
 
-#endif  // REMOVE_DEPRECATED_TRANSFORMERS
+#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
 #endif  // RPI_TRANSFORMER_H

@@ -51,25 +51,47 @@ For reference, this is how the numbering on the Raspberry Pi looks like:
 This is the same representation used in the table below, which helps for
 visual inspection.
 
+### Chains
+
+You connect the Pi to the input of the first in the chain of panels.
+Each panel has an output connector, that you then can connect to the
+next panel in that chain.
+
+The IO and library supports to run up to three chains in parallel.
+
+Thus you can create a larger panel. Here a schematic view, below in the
+'Power' section, you can see a real-live panel with three chains of 5 panels each seen from the back.
+
+![Coordinate overview][coordinates]
+
 ### Wiring diagram
 
-For each of the up to three chains, you have to connect `GND`, `strobe`,
-`clock`, `OE-`, `A`, `B`, `C`, `D` to all of these (the `D` line is needed
-for 32x32 displays; 32x16 displays don't need it). If you have a 64x64 display,
-these have an additional `E` line which is typically on Pin 4 or 8 on the
-matrix connector.
 You find the positions of the pins on the Raspberry Pi and the corresponding
 logical connections in the table below (there are more GND pins on the
 Raspberry Pi, but they are left out for simplicity).
 
-Then for each panel, there is a set of (R1, G1, B1, R2, G2, B2) that you have
-to connect to the corresponding pins that are marked `[1]`, `[2]` and `[3]` for
-chain 1, 2, and 3 below.
-If you only connect one panel or have one chain, connect it to `[1]` (:smile:); if you
-use parallel chains, add the other `[2]` and `[3]`.
+#### Shared connections
+For each of the up to three chains, you have to connect `GND`, `strobe`,
+`clock`, `OE-`, `A`, `B`, `C`, `D` to **all** of these (the `D` line is needed
+for 32x32 displays; 32x16 displays don't need it).
 
-To make things quicker to navigate visually, each chain is marked with a separate
-icon:
+If you have a 64x64 display, these have an additional `E` line which is
+typically on Pin 4 or 8 on the matrix connector.
+
+For these pins, all chains receive the same data line, e.g. if you have three
+chains, you have to wire the `A` output on the Pi with three wires to the
+three chain inputs of the `A` input.
+
+#### Connections per chain
+Then for each first panel of a chain there is a set of
+(R1, G1, B1, R2, G2, B2) that you have to connect to the corresponding pins.
+They are marked `[1]`, `[2]` and `[3]` for chain 1, 2, and 3 below.
+
+If you only connect one panel or have one chain, connect it to
+`[1]` (:smile:); if you use parallel chains, add the other `[2]` and `[3]`.
+
+To make things quicker to navigate visually, each chain is marked with a
+separate icon:
 
 `[1]`=:smile:, `[2]`=:boom: and `[3]`=:droplet: ; signals that go to all
 chains have all icons.
@@ -101,15 +123,6 @@ In the [adapter/](./adapter) directory, there are some boards that make
 the wiring task simpler.
 
 <a href="adapter/"><img src="img/three-parallel-panels-soic.jpg" width="300px"></a>
-
-### Chains
-
-You connect the Pi to the first element in the chain of panels. Each panel has
-an output connector, that you then can connect to the next panel. Thus you can
-create a larger panel. Here a schematic view, below in the 'Power' section, you
-can see a real-live panel with three chains of 5 panels each seen from the back.
-
-![Coordinate overview][coordinates]
 
 ### Alternative Hardware Mappings
 

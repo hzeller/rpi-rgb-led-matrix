@@ -4,6 +4,44 @@ Utilities
 This contains useful utilities that might be directly useful without having
 to write any code.
 
+Below, the description of the utilities contains a list of commandline flags
+they support. Next to the specific flags for their use, they all
+have a set of standard options that always come with the LED matrix,
+such as choosing the `--led-rows` or `--led-chain`.
+
+For brevity, we don't repeat them below in the synopsis prints of each of
+these utilities. You find a description of the standard options in
+the [toplevel readme](../README.md#changing-parameters-via-command-line-flags)
+
+<details><summary>Unfold: Standard LED-matrix options present in all utilities</summary>
+
+```
+ --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
+ --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
+ --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
+ --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
+ --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
+ --led-multiplexing=<0..11> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven; 9=P10-128x4-Z; 10=QiangLiQ8; 11=InversedZStripe (Default: 0)
+ --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
+                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
+                                    Available: "Mirror", "Rotate", "U-mapper". Default: ""
+ --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
+ --led-brightness=<percent>: Brightness in percent (Default: 100).
+ --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
+ --led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct (Default: 0).
+ --led-show-refresh        : Show refresh rate.
+ --led-inverse             : Switch if your matrix has inverse colors on.
+ --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
+ --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
+ --led-pwm-dither-bits=<0..2> : Time dithering of lower bits (Default: 0)
+ --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
+ --led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'
+ --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
+ --led-daemon              : Make the process run in the background as daemon.
+ --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+```
+</details>
+
 ### Image Viewer ###
 
 The image viewer reads all kinds of image formats, including animated gifs.
@@ -30,42 +68,22 @@ Options:
         -O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).
         -C                        : Center images.
 
-These options affect images following them on the command line:
+These options affect images FOLLOWING them on the command line,
+so it is possible to have different options for each image
         -w<seconds>               : Regular image: Wait time in seconds before next image is shown (default: 1.5).
         -t<seconds>               : For animations: stop after this time.
         -l<loop-count>            : For animations: number of loops through a full cycle.
         -D<animation-delay-ms>    : For animations: override the delay between frames given in the
                                     gif/stream animation with this value. Use -1 to use default value.
+        -V<vsync-multiple>        : For animation (expert): Only do frame vsync-swaps on multiples of refresh (default: 1)
+                                    (Tip: use --led-limit-refresh for stable rate)
 
 Options affecting display of multiple images:
         -f                        : Forever cycle through the list of files on the command line.
         -s                        : If multiple images are given: shuffle.
 
-Display Options:
-        -V<vsync-multiple>        : Expert: Only do frame vsync-swaps on multiples of refresh (default: 1)
-
 General LED matrix options:
-        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
-        --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
-        --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
-        --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
-        --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
-        --led-multiplexing=<0..6> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman (Default: 0)
-        --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
-                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
-                                    Available: "Rotate", "U-mapper". Default: ""
-        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
-        --led-brightness=<percent>: Brightness in percent (Default: 100).
-        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
-        --led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct row select(Default: 0).
-        --led-show-refresh        : Show refresh rate.
-        --led-inverse             : Switch if your matrix has inverse colors on.
-        --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
-        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
-        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
-        --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
-        --led-daemon              : Make the process run in the background as daemon.
-        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+        <... all the --led- options>
 
 Switch time between files: -w for static images; -t/-l for animations
 Animated gifs: If both -l and -t are given, whatever finishes first determines duration.
@@ -76,7 +94,8 @@ So you can choose different durations for different images.
 
 Then, you can run it with any common image format, including animated gifs:
 
-Examples:
+##### Examples
+
 ```bash
 sudo ./led-image-viewer some-image.jpg       # Display an image.
 sudo ./led-image-viewer animated.gif         # Show an animated gif
@@ -87,7 +106,8 @@ sudo ./led-image-viewer -D16 animated.gif    # Play animated gif, use 16ms frame
 # If you want to have an even frame rate, that is depending on your
 # refresh rate, use the following. Note, your refresh rate is dependent on
 # factors such as chain length and rows; use --led-show-refresh to get an idea.
-sudo ./led-image-viewer -D0 -V12 animated.gif # Frame rate = 1/12 refresh rate
+# Then fix it with --led-limit-refresh
+sudo ./led-image-viewer --led-limit-refresh=200 -D0 -V10 animated.gif # Frame rate = 1/12 refresh rate
 
 sudo ./led-image-viewer    -w3 foo.jpg bar.png  # show two images, wait 3 seconds between. Stop.
 sudo ./led-image-viewer    -w3 foo.jpg -w2 bar.png baz.png  # show images, wait 3 seconds after the first, 2 seconds after the second and third. Stop.
@@ -115,59 +135,121 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-out.stream
 ```
 
+### Text Scroller ###
+
+The text scoller allows to show some scrolling text.
+
+```
+usage: ./text-scroller [options] <text>
+Takes text and scrolls it with speed -s
+Options:
+        -s <speed>        : Approximate letters per second. (Zero for no scrolling)
+        -l <loop-count>   : Number of loops through the text. -1 for endless (default)
+        -f <font-file>    : Path to *.bdf-font to be used.
+        -b <brightness>   : Sets brightness percent. Default: 100.
+        -x <x-origin>     : Shift X-Origin of displaying text (Default: 0)
+        -y <y-origin>     : Shift Y-Origin of displaying text (Default: 0)
+        -t <track-spacing>: Spacing pixels between letters (Default: 0)
+
+        -C <r,g,b>        : Text Color. Default 255,255,255 (white)
+        -B <r,g,b>        : Background-Color. Default 0,0,0
+        -O <r,g,b>        : Outline-Color, e.g. to increase contrast.
+
+General LED matrix options:
+        <... all the --led- options>
+```
+
+You need to specify a font for the tool to use. We are using BDF-fonts, which are bitmap fonts
+nicely suited for low-resolution displays such as ours. A few fonts you find in the
+[../fonts](../fonts) directory. The [README.md](../fonts/README.md) there also describes
+how to make your own.
+
+##### Examples
+
+```bash
+# (use your --led-rows, --led-chain and --led-parallel suited for your setup)
+
+# Red (-C) text on a display with 4 chained displays. Notice you can use UTF-8 characters
+# if they are supported by the font.
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=4 "Hello World ♥"
+
+# .. faster speed; roughly 20 characters per second with option -s.
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=4 -s20 "The quick brown fox jumps over the lazy dog"
+
+# A speed of zero does just shows the text, no scrolling.
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=4 -s0 "No Scroll"
+
+# A text might need to be arranged a bit. Let's move it 15 pixels to the right and 5 down:
+sudo ./text-scroller -f ../fonts/9x18.bdf -C255,0,0 --led-chain=4 -s0 -x15 -y5 "Shifted"
+
+# Now text in red color on a blue background (-B). We choose an outline (-O)
+# of a slightly darker blue for better contrast
+sudo ./text-scroller -f ../fonts/9x18.bdf -B0,0,255 -O0,0,100 -C255,0,0 --led-chain=4 "Contrast outline"
+
+# A larger font. This one needs a bit of an y-adjustment
+# (move up 11 pixels: a negative y shift) to fit nicely on a panel.
+sudo ./text-scroller -f ../fonts/texgyre-27.bdf --led-chain=4 -y-11 "Large Font"
+```
+
 ### Video Viewer ###
 
 The video viewer allows to play common video formats on the RGB matrix (just
 the picture, no sound).
 
 Note, this is CPU intensive and decoding can result in an output that is not
-smooth. If you observe that, it is suggested to do one of these:
+smooth or presents flicker. If you observe that, it is suggested to do one
+of these:
 
   - Transcode the video first to the width and height of the final output size.
+  - If you use tools such as [youtube-dl] to acquire the video, tell it
+    to choose a low resolution version (e.g. for that program use option
+    `-f"[height<480]"`).
+  - Synchronize output as integer fraction of matrix refresh rate (example
+    below).
   - Prepare an animation stream that you then later watch with led-image-viewer
     (see example below).
 
 ```
 sudo apt-get update
-sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev
 make video-viewer
 ```
 
 ```
 usage: ./video-viewer [options] <video>
 Options:
+        -F                 : Full screen without black bars; aspect ratio might suffer
         -O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).
-        -v                 : verbose.
+        -s <count>         : Skip these number of frames in the beginning.
+        -c <count>         : Only show this number of frames (excluding skipped frames).
+        -V<vsync-multiple> : Instead of native video framerate, playback framerate
+                             is a fraction of matrix refresh. In particular with a stable refresh,
+                             this can result in more smooth playback. Choose multiple for desired framerate.
+                             (Tip: use --led-limit-refresh for stable rate)
+        -v                 : verbose; prints video metadata and other info.
+        -f                 : Loop forever.
 
 General LED matrix options:
-        --led-gpio-mapping=<name> : Name of GPIO mapping used. Default "regular"
-        --led-rows=<rows>         : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
-        --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
-        --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
-        --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
-        --led-multiplexing=<0..6> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman (Default: 0)
-        --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
-                                    Optional params after a colon e.g. "U-mapper;Rotate:90"
-                                    Available: "Rotate", "U-mapper". Default: ""
-        --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
-        --led-brightness=<percent>: Brightness in percent (Default: 100).
-        --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
-        --led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct row select(Default: 0).
-        --led-show-refresh        : Show refresh rate.
-        --led-inverse             : Switch if your matrix has inverse colors on.
-        --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
-        --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
-        --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
-        --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
-        --led-daemon              : Make the process run in the background as daemon.
-        --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+        <... all the --led- options>
 ```
 
-Examples:
+##### Examples
+
 ```bash
 # Play video. If you observe that the Pi has trouble to keep up (extensive
 # flickering), transcode the video first to the exact size of your display.
 sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
+
+# If you observe flicker you can try to synchronize video output with
+# the refresh rate of the panel. For that, first figure out with
+# --led-show-refresh what the 'natural' refresh rate is of your LED panel.
+# Then choose one that is lower and a multiple of the frame-rate of the
+# video. Let's say we have a video with a framerate of 25fps and find that
+# our panel can refresh with more than 200Hz (after the usual refresh
+# tweakings such as with --led-pwm-dither-bits).
+# Let's fix the refresh rate to 200 and sync a new frame with every
+# 8th refresh to get the desired video fps (200/8 = 25)
+sudo ./video-viewer --led-chain=4 --led-parallel=3 --led-limit-refresh=200 -V8 myvideo.webm
 
 # Another way to avoid flicker playback with best possible results even with
 # very high framerate: create a preprocessed stream first, then replay it with
@@ -183,3 +265,5 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
 # different frame rate.
 sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```
+
+[youtube-dl]: https://youtube-dl.org/

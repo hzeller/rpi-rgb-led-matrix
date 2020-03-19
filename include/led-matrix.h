@@ -148,6 +148,10 @@ public:
     // Panel type. Typically an empty string or NULL, but some panels need
     // a particular initialization sequence, so this is used for that.
     const char *panel_type;  // Flag: --led-panel-type
+
+    // Limit refresh rate of LED panel. This will help on a loaded system
+    // to keep a constant refresh rate. <= 0 for no limit.
+    int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
   };
 
   // Create an RGBMatrix.
@@ -299,7 +303,7 @@ public:
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
 
-#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
   //--- deprecated section: transformers. Use PixelMapper instead.
   void ApplyStaticTransformer(const CanvasTransformer &transformer) __attribute__((deprecated)) {
     ApplyStaticTransformerDeprecated(transformer);
@@ -323,9 +327,9 @@ private:
   void ApplyNamedPixelMappers(const char *pixel_mapper_config,
                               int chain, int parallel);
 
-#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
   void ApplyStaticTransformerDeprecated(const CanvasTransformer &transformer);
-#endif  // REMOVE_DEPRECATED_TRANSFORMERS
+#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
 
   Options params_;
   bool do_luminance_correct_;
@@ -334,7 +338,7 @@ private:
 
   GPIO *io_;
   Mutex active_frame_sync_;
-#ifndef REMOVE_DEPRECATED_TRANSFORMERS
+#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
   CanvasTransformer *transformer_;  // deprecated. To be removed.
 #endif
   UpdateThread *updater_;

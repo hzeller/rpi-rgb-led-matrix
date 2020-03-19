@@ -9,6 +9,11 @@ from the utils/ directory.
 
 Tom-Thumb.bdf is included in this directory under [MIT license](http://vt100.tarunz.org/LICENSE). Tom-thumb.bdf was created by [@robey](http://twitter.com/robey) and originally published at https://robey.lag.net/2010/01/23/tiny-monospace-font.html
 
+The texguire-27.bdf font was created using the [otf2bdf] tool from the TeX Gyre font.
+```
+otf2bdf -v -o texgyre-27.bdf -r 72 -p 27 texgyreadventor-regular.otf
+```
+
 ## Create your own
 
 Fonts are in a human readable and editbable `*.bdf` format, but unless you

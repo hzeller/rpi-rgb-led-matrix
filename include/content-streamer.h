@@ -97,9 +97,9 @@ private:
   bool ReadFileHeader(const FrameCanvas &frame);
 
   StreamIO *io_;
-  size_t buf_size_;
+  size_t frame_buf_size_;
   State state_;
 
-  char *buffer_;
+  char *header_frame_buffer_;
 };
 }
