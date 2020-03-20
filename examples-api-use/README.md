@@ -323,7 +323,7 @@ Viewed looking the LED-side of the panels:
    ,---^   ,---^   ,---^
   [O < I] [O < I] [O < I]
        ^       ^       ^
-      #3      #2       #1 Pi connector (three parallel chains of len 4)
+      #1      #2       #3 Pi connector (three parallel chains of len 4)
 ```
 
  (This is also a good time to notice that such large arrangement is probably an
@@ -338,7 +338,7 @@ splitting the load into multiple parallel chains.
 
   [O < I] [O < I] [O < I]
        ^       ^       ^
-      #3      #2       #1 Pi connector (three parallel chains of len 1)
+      #1      #2       #3 Pi connector (three parallel chains of len 1)
 ```
 
 #### Rotate
