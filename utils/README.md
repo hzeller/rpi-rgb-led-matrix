@@ -68,19 +68,19 @@ Options:
         -O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).
         -C                        : Center images.
 
-These options affect images following them on the command line:
+These options affect images FOLLOWING them on the command line,
+so it is possible to have different options for each image
         -w<seconds>               : Regular image: Wait time in seconds before next image is shown (default: 1.5).
         -t<seconds>               : For animations: stop after this time.
         -l<loop-count>            : For animations: number of loops through a full cycle.
         -D<animation-delay-ms>    : For animations: override the delay between frames given in the
                                     gif/stream animation with this value. Use -1 to use default value.
+        -V<vsync-multiple>        : For animation (expert): Only do frame vsync-swaps on multiples of refresh (default: 1)
+                                    (Tip: use --led-limit-refresh for stable rate)
 
 Options affecting display of multiple images:
         -f                        : Forever cycle through the list of files on the command line.
         -s                        : If multiple images are given: shuffle.
-
-Display Options:
-        -V<vsync-multiple>        : Expert: Only do frame vsync-swaps on multiples of refresh (default: 1)
 
 General LED matrix options:
         <... all the --led- options>
@@ -106,7 +106,8 @@ sudo ./led-image-viewer -D16 animated.gif    # Play animated gif, use 16ms frame
 # If you want to have an even frame rate, that is depending on your
 # refresh rate, use the following. Note, your refresh rate is dependent on
 # factors such as chain length and rows; use --led-show-refresh to get an idea.
-sudo ./led-image-viewer -D0 -V12 animated.gif # Frame rate = 1/12 refresh rate
+# Then fix it with --led-limit-refresh
+sudo ./led-image-viewer --led-limit-refresh=200 -D0 -V10 animated.gif # Frame rate = 1/12 refresh rate
 
 sudo ./led-image-viewer    -w3 foo.jpg bar.png  # show two images, wait 3 seconds between. Stop.
 sudo ./led-image-viewer    -w3 foo.jpg -w2 bar.png baz.png  # show images, wait 3 seconds after the first, 2 seconds after the second and third. Stop.
@@ -200,6 +201,11 @@ smooth or presents flicker. If you observe that, it is suggested to do one
 of these:
 
   - Transcode the video first to the width and height of the final output size.
+  - If you use tools such as [youtube-dl] to acquire the video, tell it
+    to choose a low resolution version (e.g. for that program use option
+    `-f"[height<480]"`).
+  - Synchronize output as integer fraction of matrix refresh rate (example
+    below).
   - Prepare an animation stream that you then later watch with led-image-viewer
     (see example below).
 
@@ -216,7 +222,11 @@ Options:
         -O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).
         -s <count>         : Skip these number of frames in the beginning.
         -c <count>         : Only show this number of frames (excluding skipped frames).
-        -v                 : verbose.
+        -V<vsync-multiple> : Instead of native video framerate, playback framerate
+                             is a fraction of matrix refresh. In particular with a stable refresh,
+                             this can result in more smooth playback. Choose multiple for desired framerate.
+                             (Tip: use --led-limit-refresh for stable rate)
+        -v                 : verbose; prints video metadata and other info.
         -f                 : Loop forever.
 
 General LED matrix options:
@@ -229,6 +239,17 @@ General LED matrix options:
 # Play video. If you observe that the Pi has trouble to keep up (extensive
 # flickering), transcode the video first to the exact size of your display.
 sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
+
+# If you observe flicker you can try to synchronize video output with
+# the refresh rate of the panel. For that, first figure out with
+# --led-show-refresh what the 'natural' refresh rate is of your LED panel.
+# Then choose one that is lower and a multiple of the frame-rate of the
+# video. Let's say we have a video with a framerate of 25fps and find that
+# our panel can refresh with more than 200Hz (after the usual refresh
+# tweakings such as with --led-pwm-dither-bits).
+# Let's fix the refresh rate to 200 and sync a new frame with every
+# 8th refresh to get the desired video fps (200/8 = 25)
+sudo ./video-viewer --led-chain=4 --led-parallel=3 --led-limit-refresh=200 -V8 myvideo.webm
 
 # Another way to avoid flicker playback with best possible results even with
 # very high framerate: create a preprocessed stream first, then replay it with
@@ -244,3 +265,5 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
 # different frame rate.
 sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```
+
+[youtube-dl]: https://youtube-dl.org/

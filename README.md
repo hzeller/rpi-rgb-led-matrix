@@ -335,6 +335,42 @@ If you are tweaking these parameters, showing the refresh rate can be a
 useful tool.
 
 ```
+--led-limit-refresh=<Hz>  : Limit refresh rate to this frequency in Hz. Useful to keep a
+                            constant refresh rate on loaded system. 0=no limit. Default: 0
+```
+
+This allows to limit the refresh rate to a particular frequency to approach
+a fixed refresh rate.
+
+This can be used to mitigate some situations in which you have a faint flicker,
+which can happen due to hardware events (network access)
+or other situations such as other IO or heavy memory access by other
+processes. Also when you see wildly changing refresh frequencies with
+`--led-show-refresh`.
+
+You trade a slightly slower refresh rate and display brightness for less
+visible flicker situations.
+
+For this to calibrate, run your program for a while with --led-show-refresh
+and watch the line that shows the current refresh rate and minimum refresh
+rate observed. So wait a while until that value doesn't
+change anymore (e.g. a minute, so that you catch tasks that happen once
+a minute, such as ntp updated).
+Use this as a guidance what value to choose with `--led-limit-refresh`.
+
+The refresh rate will now be adapted to always reach this value
+between frames, so faster refreshes will be slowed down, but the occasional
+delayed frame will fit into the time-window as well, thus reducing visible
+brightness fluctuations.
+
+You can play with value a little and reduce until you find a good balance
+between refresh rate and flicker suppression.
+
+Use this also if you want to have a stable baseline refresh rate when using
+the vsync-multiple flag `-V` in the [led-image-viewer] or
+[video-viewer] utility programs.
+
+```
 --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
 ```
 
@@ -713,6 +749,8 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 
 ![](./img/user-action-shot.jpg)
 
+[led-image-viewer]: ./utils#image-viewer
+[video-viewer]: ./utils#video-viewer
 [matrix64]: ./img/chained-64x64.jpg
 [sparkfun]: https://www.sparkfun.com/products/12584
 [ada]: http://www.adafruit.com/product/1484

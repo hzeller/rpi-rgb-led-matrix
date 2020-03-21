@@ -53,8 +53,11 @@ using namespace internal;
 class RGBMatrix::UpdateThread : public Thread {
 public:
   UpdateThread(GPIO *io, FrameCanvas *initial_frame,
-               int pwm_dither_bits, bool show_refresh)
-    : io_(io), show_refresh_(show_refresh), running_(true),
+               int pwm_dither_bits, bool show_refresh,
+               int limit_refresh_hz)
+    : io_(io), show_refresh_(show_refresh),
+      target_frame_usec_(limit_refresh_hz < 1 ? 0 : 1e6/limit_refresh_hz),
+      running_(true),
       current_frame_(initial_frame), next_frame_(NULL),
       requested_frame_multiple_(1) {
     pthread_cond_init(&frame_done_, NULL);
@@ -127,19 +130,23 @@ public:
       ++frame_count;
       ++low_bit_sequence;
 
-#ifdef FIXED_FRAME_MICROSECONDS
-      while ((GetMicrosecondCounter() - start_time_us) < (uint32_t)FIXED_FRAME_MICROSECONDS) {
-        // busy wait.
+      if (target_frame_usec_) {
+        while ((GetMicrosecondCounter() - start_time_us) < target_frame_usec_) {
+          // busy wait. We have our dedicated core, so ok to burn cycles.
+        }
       }
-#endif
+
       const uint32_t end_time_us = GetMicrosecondCounter();
       if (show_refresh_) {
         uint32_t usec = end_time_us - start_time_us;
         printf("\b\b\b\b\b\b\b\b%6.1fHz", 1e6 / usec);
         if (usec > largest_time && max_measure_enabled) {
           largest_time = usec;
-          printf(" max: %uusec\b\b\b\b\b\b\b\b\b\b\b\b\b\b", largest_time);
+          const float lowest_hz = 1e6 / largest_time;
+          printf(" (lowest: %.1fHz)"
+                 "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", lowest_hz);
         } else {
+          // Don't measure at startup, as times will be janky.
           max_measure_enabled = (end_time_us - initial_holdoff_start) > kHoldffTimeUs;
         }
       }
@@ -169,6 +176,7 @@ private:
 
   GPIO *const io_;
   const bool show_refresh_;
+  const uint32_t target_frame_usec_;
   uint32_t start_bit_[4];
 
   Mutex running_mutex_;
@@ -235,7 +243,12 @@ RGBMatrix::Options::Options() :
 #endif
   led_rgb_sequence("RGB"),
   pixel_mapper_config(NULL),
-  panel_type(NULL)
+  panel_type(NULL),
+#ifdef FIXED_FRAME_MICROSECONDS
+  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS)
+#else
+  limit_refresh_rate_hz(0)
+#endif
 {
   // Nothing to see here.
 }
@@ -345,7 +358,8 @@ void RGBMatrix::SetGPIO(GPIO *io, bool start_thread) {
 bool RGBMatrix::StartRefresh() {
   if (updater_ == NULL && io_ != NULL) {
     updater_ = new UpdateThread(io_, active_, params_.pwm_dither_bits,
-                                params_.show_refresh_rate);
+                                params_.show_refresh_rate,
+                                params_.limit_refresh_rate_hz);
     // If we have multiple processors, the kernel
     // jumps around between these, creating some global flicker.
     // So let's tie it to the last CPU available.

@@ -104,6 +104,7 @@ static int usage(const char *progname, const char *msg = nullptr) {
           "\t-V<vsync-multiple> : Instead of native video framerate, playback framerate\n"
           "\t                     is a fraction of matrix refresh. In particular with a stable refresh,\n"
           "\t                     this can result in more smooth playback. Choose multiple for desired framerate.\n"
+          "\t                     (Tip: use --led-limit-refresh for stable rate)\n"
           "\t-v                 : verbose; prints video metadata and other info.\n"
           "\t-f                 : Loop forever.\n");
 
@@ -118,6 +119,45 @@ static void add_nanos(struct timespec *accumulator, long nanoseconds) {
     accumulator->tv_nsec -= 1000000000;
     accumulator->tv_sec += 1;
   }
+}
+
+// Convert deprecated color formats to new and manually set the color range.
+// YUV has funny ranges (16-235), while the YUVJ are 0-255. SWS prefers to
+// deal with the YUV range, but then requires to set the output range.
+// https://libav.org/documentation/doxygen/master/pixfmt_8h.html#a9a8e335cf3be472042bc9f0cf80cd4c5
+SwsContext *CreateSWSContext(const AVCodecContext *codec_ctx,
+                             int display_width, int display_height) {
+  AVPixelFormat pix_fmt;
+  bool src_range_extended_yuvj = true;
+  // Remap deprecated to new pixel format.
+  switch (codec_ctx->pix_fmt) {
+  case AV_PIX_FMT_YUVJ420P: pix_fmt = AV_PIX_FMT_YUV420P; break;
+  case AV_PIX_FMT_YUVJ422P: pix_fmt = AV_PIX_FMT_YUV422P; break;
+  case AV_PIX_FMT_YUVJ444P: pix_fmt = AV_PIX_FMT_YUV444P; break;
+  case AV_PIX_FMT_YUVJ440P: pix_fmt = AV_PIX_FMT_YUV440P; break;
+  default:
+    src_range_extended_yuvj = false;
+    pix_fmt = codec_ctx->pix_fmt;
+  }
+  SwsContext *swsCtx = sws_getContext(codec_ctx->width, codec_ctx->height,
+                                      pix_fmt,
+                                      display_width, display_height,
+                                      AV_PIX_FMT_RGB24, SWS_BILINEAR,
+                                      NULL, NULL, NULL);
+  if (src_range_extended_yuvj) {
+    // Manually set the source range to be extended. Read modify write.
+    int dontcare[4];
+    int src_range, dst_range;
+    int brightness, contrast, saturation;
+    sws_getColorspaceDetails(swsCtx, (int**)&dontcare, &src_range,
+                             (int**)&dontcare, &dst_range, &brightness,
+                             &contrast, &saturation);
+    const int* coefs = sws_getCoefficients(SWS_CS_DEFAULT);
+    src_range = 1;  // New src range.
+    sws_setColorspaceDetails(swsCtx, coefs, src_range, coefs, dst_range,
+                             brightness, contrast, saturation);
+  }
+  return swsCtx;
 }
 
 int main(int argc, char *argv[]) {
@@ -311,15 +351,8 @@ int main(int argc, char *argv[]) {
   }
 
   // initialize SWS context for software scaling
-  SwsContext *const sws_ctx = sws_getContext(pCodecCtx->width,
-                                             pCodecCtx->height,
-                                             pCodecCtx->pix_fmt,
-                                             display_width, display_height,
-                                             AV_PIX_FMT_RGB24,
-                                             SWS_BILINEAR,
-                                             NULL,
-                                             NULL,
-                                             NULL);
+  SwsContext *const sws_ctx = CreateSWSContext(pCodecCtx,
+                                               display_width, display_height);
   if (!sws_ctx) {
     fprintf(stderr, "Trouble doing scaling to %dx%d :(\n",
             matrix->width(), matrix->height());

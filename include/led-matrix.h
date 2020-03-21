@@ -148,6 +148,10 @@ public:
     // Panel type. Typically an empty string or NULL, but some panels need
     // a particular initialization sequence, so this is used for that.
     const char *panel_type;  // Flag: --led-panel-type
+
+    // Limit refresh rate of LED panel. This will help on a loaded system
+    // to keep a constant refresh rate. <= 0 for no limit.
+    int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
   };
 
   // Create an RGBMatrix.
