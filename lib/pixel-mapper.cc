@@ -228,6 +228,14 @@ public:
   virtual bool SetParameters(int chain, int parallel, const char *param) {
     chain_ = chain;
     parallel_ = parallel;
+    // optional argument :Z allow for every other panel to be flipped
+    // upside down so that cabling can be shorter:
+    // [ I - O ]   without Z       [ I - O ]
+    //    `--,      <----            ^
+    // [ I - O ]                   [ O - I ]
+    //    `--,            with Z         ^
+    // [ I - O ]            --->   [ I - O ]
+    z_ = (param && strcmp(param, "Z") == 0) ? 1 : 0;
     return true;
   }
 
@@ -236,12 +244,10 @@ public:
     const {
     *visible_width = matrix_width * parallel_ / chain_;
     *visible_height = matrix_height * chain_ / parallel_;
-#if 0
-    fprintf(stderr, "%s: C:%d P:%d. Turning W:%d H:%d Physical "
-            "into W:%d H:%d Virtual\n",
-            GetName(), chain_, parallel_,
-            *visible_width, *visible_height, matrix_width, matrix_height);
-#endif
+      fprintf(stderr, "%s: C:%d P:%d. Turning W:%d H:%d Physical "
+	      "into W:%d H:%d Virtual\n",
+              GetName(), chain_, parallel_,
+	      *visible_width, *visible_height, matrix_width, matrix_height);
     return true;
   }
 
@@ -250,11 +256,33 @@ public:
                                   int *matrix_x, int *matrix_y) const {
     int panel_width  = matrix_width  / chain_;
     int panel_height = matrix_height / parallel_;
+
     *matrix_x = (x % panel_width) +  int(y/panel_height)* panel_width;
     *matrix_y = (y % panel_height) + int(x/panel_width) * panel_height;
+
+    if (z_) {
+	int x_panel_offset_cnt = *matrix_x / panel_width;
+	int x_panel_offset = x_panel_offset_cnt * panel_width;
+	int y_panel_offset_cnt = *matrix_y / panel_height;
+	int y_panel_offset = y_panel_offset_cnt * panel_height;
+
+	if (x_panel_offset_cnt % 2) {
+
+	    *matrix_x = panel_width - (*matrix_x - x_panel_offset) - 1;
+	    *matrix_y = panel_height - (*matrix_y - y_panel_offset) - 1;
+
+	    *matrix_x += x_panel_offset;
+	    *matrix_y += y_panel_offset;
+	}
+	fprintf(stderr, "%s: Panel-W:%d Panel-H:%d. XOffC: %d, XOff: %3d, YOffC: %d, YOff: %3d, X: %3d -> %3d, Y: %3d -> %3d\n",
+		  GetName(), panel_width, panel_height, x_panel_offset_cnt, x_panel_offset, y_panel_offset_cnt, y_panel_offset, x, *matrix_x, y, *matrix_y);
+    } else 
+	fprintf(stderr, "%s: Panel-W:%d Panel-H:%d. X: %3d -> %3d, Y: %3d -> %3d\n",
+	      GetName(), panel_width, panel_height, x, *matrix_x, y, *matrix_y);
   }
 
 private:
+  int z_;
   int chain_;
   int parallel_;
 };
