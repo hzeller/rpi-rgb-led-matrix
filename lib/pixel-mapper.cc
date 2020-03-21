@@ -244,11 +244,13 @@ public:
     const {
     *visible_width = matrix_width * parallel_ / chain_;
     *visible_height = matrix_height * chain_ / parallel_;
+#if 0
       fprintf(stderr, "%s: C:%d P:%d. Turning W:%d H:%d Physical "
 	      "into W:%d H:%d Virtual\n",
               GetName(), chain_, parallel_,
 	      *visible_width, *visible_height, matrix_width, matrix_height);
     return true;
+#endif
   }
 
   virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
@@ -274,11 +276,7 @@ public:
 	    *matrix_x += x_panel_offset;
 	    *matrix_y += y_panel_offset;
 	}
-	fprintf(stderr, "%s: Panel-W:%d Panel-H:%d. XOffC: %d, XOff: %3d, YOffC: %d, YOff: %3d, X: %3d -> %3d, Y: %3d -> %3d\n",
-		  GetName(), panel_width, panel_height, x_panel_offset_cnt, x_panel_offset, y_panel_offset_cnt, y_panel_offset, x, *matrix_x, y, *matrix_y);
-    } else 
-	fprintf(stderr, "%s: Panel-W:%d Panel-H:%d. X: %3d -> %3d, Y: %3d -> %3d\n",
-	      GetName(), panel_width, panel_height, x, *matrix_x, y, *matrix_y);
+    }
   }
 
 private:
