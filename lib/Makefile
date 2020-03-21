@@ -104,7 +104,6 @@ HARDWARE_DESC?=regular
 # Transformers will be removed from the code-base soon to avoid confusion.
 #DEFINES+=-DINCLUDE_DEPRECATED_TRANSFORMERS
 
-# --- EXPERIMENTAL --
 # This allows to fix the refresh rate to a particular refresh time in
 # microseconds.
 #
@@ -134,6 +133,7 @@ HARDWARE_DESC?=regular
 # You can play with value a little and reduce until you find a good balance
 # between refresh rate (which is reduce the higher this value is) and
 # flicker suppression (which is better with higher values).
+# Flag: --led-limit-refresh
 #DEFINES+=-DFIXED_FRAME_MICROSECONDS=5000
 
 # ---- Pinout options for hardware variants; usually no change needed here ----

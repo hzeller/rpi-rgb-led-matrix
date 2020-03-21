@@ -223,6 +223,7 @@ static int usage(const char *progname) {
           "For animations: override the delay between frames given in the\n"
           "\t                            gif/stream animation with this value. Use -1 to use default value.\n"
           "\t-V<vsync-multiple>        : For animation (expert): Only do frame vsync-swaps on multiples of refresh (default: 1)\n"
+          "\t                            (Tip: use --led-limit-refresh for stable rate)\n"
 
           "\nOptions affecting display of multiple images:\n"
           "\t-f                        : "

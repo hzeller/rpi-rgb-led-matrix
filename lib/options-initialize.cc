@@ -178,6 +178,9 @@ static bool FlagInit(int &argc, char **&argv,
       if (ConsumeIntFlag("row-addr-type", it, end,
                          &mopts->row_address_type, &err))
         continue;
+      if (ConsumeIntFlag("limit-refresh", it, end,
+                         &mopts->limit_refresh_rate_hz, &err))
+        continue;
       if (ConsumeBoolFlag("show-refresh", it, &mopts->show_refresh_rate))
         continue;
       if (ConsumeBoolFlag("inverse", it, &mopts->inverse_colors))
@@ -391,6 +394,8 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct "
           "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
+          "\t--led-limit-refresh=<Hz>  : Limit refresh rate to this frequency in Hz. Useful to keep a\n"
+          "\t                            constant refresh rate on loaded system. 0=no limit. Default: %d\n"
           "\t--led-%sinverse             "
           ": Switch if your matrix has inverse colors %s.\n"
           "\t--led-rgb-sequence        : Switch if your matrix has led colors "
@@ -400,13 +405,14 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-pwm-dither-bits=<0..2> : Time dithering of lower bits "
           "(Default: 0)\n"
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n"
-          "\t--led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'\n",
+          "\t--led-panel-type=<name>  : Needed to initialize special panels. Supported: 'FM6126A', 'FM6127'\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
           available_mappers.c_str(),
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
+          d.limit_refresh_rate_hz,
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
           d.pwm_lsb_nanoseconds,
           !d.disable_hardware_pulsing ? "no-" : "",

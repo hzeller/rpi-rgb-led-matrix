@@ -147,6 +147,11 @@ struct RGBLedMatrixOptions {
   unsigned show_refresh_rate:1;  /* Corresponding flag: --led-show-refresh    */
   // unsigned swap_green_blue:1; /* deprecated, use led_sequence instead */
   unsigned inverse_colors:1;     /* Corresponding flag: --led-inverse         */
+
+  /* Limit refresh rate of LED panel. This will help on a loaded system
+   * to keep a constant refresh rate. <= 0 for no limit.
+   */
+  int limit_refresh_rate_hz;     /* Corresponding flag: --led-limit-refresh */
 };
 
 /**
