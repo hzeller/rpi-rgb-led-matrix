@@ -245,12 +245,12 @@ public:
     *visible_width = matrix_width * parallel_ / chain_;
     *visible_height = matrix_height * chain_ / parallel_;
 #if 0
-      fprintf(stderr, "%s: C:%d P:%d. Turning W:%d H:%d Physical "
-	      "into W:%d H:%d Virtual\n",
-              GetName(), chain_, parallel_,
-	      *visible_width, *visible_height, matrix_width, matrix_height);
-    return true;
+     fprintf(stderr, "%s: C:%d P:%d. Turning W:%d H:%d Physical "
+	     "into W:%d H:%d Virtual\n",
+             GetName(), chain_, parallel_,
+	     *visible_width, *visible_height, matrix_width, matrix_height);
 #endif
+    return true;
   }
 
   virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
