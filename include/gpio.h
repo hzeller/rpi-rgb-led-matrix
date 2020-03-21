@@ -33,13 +33,13 @@ class GPIO {
 
   // Initialize before use. Returns 'true' if successful, 'false' otherwise
   // (e.g. due to a permission problem).
-  bool Init(int
+  bool Init(int slowdown) {
 #if RGB_SLOWDOWN_GPIO
-            slowdown = RGB_SLOWDOWN_GPIO
+            slowdown = RGB_SLOWDOWN_GPIO;
 #else
-            slowdown = 1
+            slowdown = 1;
 #endif
-            );
+  }
 
   // Initialize outputs.
   // Returns the bits that were available and could be set for output.
