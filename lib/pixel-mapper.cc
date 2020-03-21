@@ -230,11 +230,11 @@ public:
     parallel_ = parallel;
     // optional argument :Z allow for every other panel to be flipped
     // upside down so that cabling can be shorter:
-    // [ I - O ]   without Z       [ I - O ]
-    //    `--,      <----            ^
-    // [ I - O ]                   [ O - I ]
-    //    `--,            with Z         ^
-    // [ I - O ]            --->   [ I - O ]
+    // [ O < I ]   without Z       [ O < I  ]
+    //   ,---^      <----                ^
+    // [ O < I ]                   [ I > O  ]
+    //   ,---^            with Z     ^    
+    // [ O < I ]            --->   [ O < I  ]
     z_ = (param && strcmp(param, "Z") == 0) ? 1 : 0;
     return true;
   }
