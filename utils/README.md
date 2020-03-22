@@ -208,6 +208,16 @@ of these:
     below).
   - Prepare an animation stream that you then later watch with led-image-viewer
     (see example below).
+  - Another route to watch videos is to run a [flaschen-taschen]
+    server on your Pi, that provides a network interface to your LED-Matrix.
+    Now, you can use [vlc] from some other computer on your network and
+    stream the output to your Pi.
+    You have to provide the IP address and size of the panel:
+    ```
+      vlc --vout flaschen --flaschen-display=<IP-address-of-your-pi> \
+           --flaschen-width=128 --flaschen-height=64 \
+           <video-filename-or-YouTube-URL>
+    ```
 
 ```
 sudo apt-get update
@@ -267,3 +277,5 @@ sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```
 
 [youtube-dl]: https://youtube-dl.org/
+[flaschen-taschen]: https://github.com/hzeller/flaschen-taschen/tree/master/server#rgb-matrix-panel-display
+[vlc]: https://www.videolan.org/vlc
