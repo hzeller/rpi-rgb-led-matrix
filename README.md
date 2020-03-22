@@ -754,7 +754,7 @@ Running arduino code with this driver
 If you are using arduino like chips (specifically teensy 3.6 or ESP32), SmartMatrix 
 is the best library you can use to drive RGBPanels. The library has a hard limit of 
 128x128 which only works with a low refresh rate on teensy, while ESP32 is currently 
-limited to 128x64. SmartMatrix also does not currently support AB or AC panels or 
+limited to 128x64. SmartMatrix also does not currently support AB or ABC panels or 
 other weird panels that this library supports.  
 So, if you have arduino code and you need bigger resolutions or panels that don't work
 with arduino drivers, there is now a solution from Marc MERLIN:
