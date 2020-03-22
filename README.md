@@ -764,8 +764,8 @@ This solution allows you to build arduino code so that it works on linux and use
 - https://github.com/marcmerlin/Framebuffer_GFX is the base arduino framebuffer that supports more 2D arduino code
 - https://github.com/marcmerlin/FastLED_RPIRGBPanel_GFX is the driver that bridges that framebuffer and the APIs it supports (FastLED, Adafruit::GFX, and LEDMatrix), with rpi-rgb-led-matrix for display
 
-Here is a demo of arduino code running on 9x 128x64 ABCDE panels connected via the active-3 board, running at 130Hz:
-![image](https://user-images.githubusercontent.com/1369412/77025606-c9123280-694e-11ea-9acd-cfd2b890321d.png)
+Here is a demo of Table Mark Estes arduino code running on 9x 128x64 ABCDE panels connected via the active-3 board, running at 130Hz:
+![image](/img/FastLED_RPIRGBPanel_GFX_example.jpg)
 
 
 [led-image-viewer]: ./utils#image-viewer
