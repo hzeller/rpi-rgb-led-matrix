@@ -262,17 +262,15 @@ public:
     *matrix_x = (x % panel_width) +  int(y/panel_height)* panel_width;
     *matrix_y = (y % panel_height) + int(x/panel_width) * panel_height;
 
-    if (z_) {
-	const int x_panel_offset_cnt = *matrix_x / panel_width;
+    const int x_panel_offset_cnt = *matrix_x / panel_width;
 
-	if (x_panel_offset_cnt % 2) {
-	    const int x_panel_offset = x_panel_offset_cnt * panel_width;
-	    const int y_panel_offset_cnt = *matrix_y / panel_height;
-	    const int y_panel_offset = y_panel_offset_cnt * panel_height;
-
-	    *matrix_x = panel_width - (*matrix_x - x_panel_offset) - 1 + x_panel_offset;
-	    *matrix_y = panel_height - (*matrix_y - y_panel_offset) - 1 + y_panel_offset;
-	}
+    if (z_ && x_panel_offset_cnt % 2) {
+      const int x_panel_offset = x_panel_offset_cnt * panel_width;
+      const int y_panel_offset_cnt = *matrix_y / panel_height;
+      const int y_panel_offset = y_panel_offset_cnt * panel_height;
+      
+      *matrix_x = panel_width - (*matrix_x - x_panel_offset) - 1 + x_panel_offset;
+      *matrix_y = panel_height - (*matrix_y - y_panel_offset) - 1 + y_panel_offset;
     }
   }
 
