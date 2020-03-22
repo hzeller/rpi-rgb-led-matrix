@@ -336,7 +336,7 @@ upper limit of what you can reasonably output without having an unusable fresh
 rate (Try these options to help: --led-pwm-bits=7 --led-pwm-dither-bits=1 and get about 100Hz)).
 
 This shows the wiring of a 3x5 Vmapper:Z array built by Marc MERLIN, using 15x 64x32 panels:
-![IMG_20200320_174436](https://user-images.githubusercontent.com/1369412/77215646-80838200-6ad2-11ea-977a-9d903933376c.jpg)
+![Vmapper_Z_192x160_3x5.jpg](../img/Vmapper_Z_192x160_3x5.jpg)
 With --led-pwm-bits=7 --led-pwm-dither-bits=1, it gets a better 300Hz refresh
 but only offers around 31K pixels instead of 98K pixels in the previous example.
 
