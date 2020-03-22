@@ -233,9 +233,9 @@ public:
     // [ O < I ]   without Z       [ O < I  ]
     //   ,---^      <----                ^
     // [ O < I ]                   [ I > O  ]
-    //   ,---^            with Z     ^    
+    //   ,---^            with Z     ^
     // [ O < I ]            --->   [ O < I  ]
-    z_ = (param && strcmp(param, "Z") == 0) ? 1 : 0;
+    z_ = (param && strcasecmp(param, "Z") == 0);
     return true;
   }
 
@@ -258,20 +258,17 @@ public:
                                   int *matrix_x, int *matrix_y) const {
     const int panel_width  = matrix_width  / chain_;
     const int panel_height = matrix_height / parallel_;
-
-    *matrix_x = (x % panel_width) +  int(y/panel_height)* panel_width;
-    *matrix_y = (y % panel_height) + int(x/panel_width) * panel_height;
-
-    const int x_panel_offset_cnt = *matrix_x / panel_width;
-
-    if (z_ && x_panel_offset_cnt % 2) {
-      const int x_panel_offset = x_panel_offset_cnt * panel_width;
-      const int y_panel_offset_cnt = *matrix_y / panel_height;
-      const int y_panel_offset = y_panel_offset_cnt * panel_height;
-      
-      *matrix_x = panel_width - (*matrix_x - x_panel_offset) - 1 + x_panel_offset;
-      *matrix_y = panel_height - (*matrix_y - y_panel_offset) - 1 + y_panel_offset;
-    }
+    const int x_panel_start = y / panel_height * panel_width;
+    const int y_panel_start = x / panel_width * panel_height;
+    const int x_within_panel = x % panel_width;
+    const int y_within_panel = y % panel_height;
+    const bool needs_flipping = z_ && (y / panel_height) % 2 == 1;
+    *matrix_x = x_panel_start + (needs_flipping
+                                 ? panel_width - 1 - x_within_panel
+                                 : x_within_panel);
+    *matrix_y = y_panel_start + (needs_flipping
+                                 ? panel_height - 1 - y_within_panel
+                                 : y_within_panel);
   }
 
 private:
