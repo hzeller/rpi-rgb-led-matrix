@@ -140,6 +140,12 @@ network protocols, such as the
 [PixelPusher implementation](https://github.com/hzeller/rpi-matrix-pixelpusher)
 (common in light art installations).
 
+If you have arduino code that uses RGBPanels, you'll likely hit limits around 128x64
+total resolution. If you nee more pixels, you should use this driver for rPi, and then
+you can use Marc's [FastLED_RPIRGBPanel_GFX](http://marc.merlins.org/perso/arduino/post_2020-01-01_Running-FastLED_-Adafruit_GFX_-and-LEDMatrix-code-on-High-Resolution-RGBPanels-with-a-Raspberry-Pi.html)
+that allows you run arduino code on linux/rPi and display on bigger RGBPanel matrices 
+with this driver.
+
 ### API
 
 The library comes as an API that you can use for your own utilities and use-cases.
