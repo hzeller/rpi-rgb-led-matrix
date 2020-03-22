@@ -53,13 +53,18 @@ as these are not compressed). This is in particular useful for large panels
 and animations with many frames: less loading time and less RAM used.
 See `-O` example below in the example section.
 
-To compile, you first need to install the GraphicsMagick dependencies first:
+##### Building
+
+The `led-image-viewer` requries the GraphicsMagick dependency first, then
+it can be built with `make led-image-viewer`.
 
 ```
 sudo apt-get update
 sudo apt-get install libgraphicsmagick++-dev libwebp-dev -y
 make led-image-viewer
 ```
+
+##### Usage
 
 The resulting binary has a couple of flags.
 ```
@@ -138,6 +143,13 @@ sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-o
 ### Text Scroller ###
 
 The text scoller allows to show some scrolling text.
+
+##### Building
+```
+make text-scroller
+```
+
+##### Usage
 
 ```
 usage: ./text-scroller [options] <text>
@@ -219,11 +231,18 @@ of these:
            <video-filename-or-YouTube-URL>
     ```
 
+##### Building
+
+The video-viewer requries some dependencies first, then it can be
+built with `make video-viewer`.
+
 ```
 sudo apt-get update
 sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev
 make video-viewer
 ```
+
+##### Usage
 
 ```
 usage: ./video-viewer [options] <video>
