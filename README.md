@@ -49,8 +49,9 @@ models (and the Pi Zero). With the faster models, the panels sometimes
 can't keep up with the speed; check out
 this [troubleshooting section](#troubleshooting) what to do.
 
-A lightweight, non-GUI, distribution such as [Raspbian Lite][raspbian-lite]
-or [DietPi] is recommended.
+A lightweight, non-GUI, distribution such as [DietPi] is recommended.
+[Raspbian Lite][raspbian-lite] is a bit easier to get started with and
+is a good second choice.
 
 Types of Displays
 -----------------
@@ -502,6 +503,8 @@ In general, run a minimal configuration on your Pi.
     might want to run ntp at system start-up but then not regularly updating.
     There might be other things running regularly you don't need;
     consider a `sudo systemctl stop cron` for instance.
+    To address some irregular flicker, consider the
+    [`--led-limit-refresh`](#misc-options) option.
 
   * There are probably other processes that are running that you don't need
     and remove them; I usually remove right away stuff I really don't need e.g.
@@ -524,7 +527,8 @@ In general, run a minimal configuration on your Pi.
 
 The default install of **[Raspbian Lite][raspbian-lite]** or **[DietPi]**
 seem to be good starting points, as they have a reasonably minimal
-configuration to begin with.
+configuration to begin with. Raspbian Lite is not as lite anymore
+as it used to be; I prefer DietPi these days.
 
 ### Bad interaction with Sound
 If sound is enabled on your Pi, this will not work together with the LED matrix,
