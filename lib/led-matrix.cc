@@ -253,9 +253,44 @@ RGBMatrix::Options::Options() :
   // Nothing to see here.
 }
 
+#define DEBUG_MATRIX_OPTIONS 0
+
+#if DEBUG_MATRIX_OPTIONS
+static void PrintOptions(const RGBMatrix::Options &o) {
+#define P_INT(val) fprintf(stderr, "%s : %d\n", #val, o.val)
+#define P_STR(val) fprintf(stderr, "%s : %s\n", #val, o.val)
+#define P_BOOL(val) fprintf(stderr, "%s : %s\n", #val, o.val ? "true":"false")
+  P_STR(hardware_mapping);
+  P_INT(rows);
+  P_INT(cols);
+  P_INT(chain_length);
+  P_INT(parallel);
+  P_INT(pwm_bits);
+  P_INT(pwm_lsb_nanoseconds);
+  P_INT(pwm_dither_bits);
+  P_INT(brightness);
+  P_INT(scan_mode);
+  P_INT(row_address_type);
+  P_INT(multiplexing);
+  P_BOOL(disable_hardware_pulsing);
+  P_BOOL(show_refresh_rate);
+  P_BOOL(inverse_colors);
+  P_STR(led_rgb_sequence);
+  P_STR(pixel_mapper_config);
+  P_STR(panel_type);
+  P_INT(limit_refresh_rate_hz);
+#undef P_INT
+#undef P_STR
+#undef P_BOOL
+}
+#endif  // DEBUG_MATRIX_OPTIONS
+
 RGBMatrix::RGBMatrix(GPIO *io, const Options &options)
   : params_(options), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL) {
   assert(params_.Validate(NULL));
+#if DEBUG_MATRIX_OPTIONS
+  PrintOptions(params_);
+#endif
   const MultiplexMapper *multiplex_mapper = NULL;
   if (params_.multiplexing > 0) {
     const MuxMapperList &multiplexers = GetRegisteredMultiplexMappers();
@@ -292,6 +327,10 @@ RGBMatrix::RGBMatrix(GPIO *io, int rows, int chained_displays,
   params_.chain_length = chained_displays;
   params_.parallel = parallel_displays;
   assert(params_.Validate(NULL));
+#if DEBUG_MATRIX_OPTIONS
+  PrintOptions(params_);
+#endif
+
   Framebuffer::InitHardwareMapping(params_.hardware_mapping);
   active_ = CreateFrameCanvas();
   Clear();
