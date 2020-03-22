@@ -16,3 +16,6 @@ $(RGB_LIBRARY):
 
 build: $(CSHARP_LIB)
 	$(MAKE) -C $(EXAMPLES_DIR) all
+
+clean:
+	rm -f $(CSHARP_LIB)
