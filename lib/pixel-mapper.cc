@@ -270,10 +270,8 @@ public:
 	    const int y_panel_offset_cnt = *matrix_y / panel_height;
 	    const int y_panel_offset = y_panel_offset_cnt * panel_height;
 
-	    *matrix_x = panel_width - (*matrix_x - x_panel_offset) - 1;
-	    *matrix_y = panel_height - (*matrix_y - y_panel_offset) - 1;
-	    *matrix_x += x_panel_offset;
-	    *matrix_y += y_panel_offset;
+	    *matrix_x = panel_width - (*matrix_x - x_panel_offset) - 1 + x_panel_offset;
+	    *matrix_y = panel_height - (*matrix_y - y_panel_offset) - 1 + y_panel_offset;
 	}
     }
   }
