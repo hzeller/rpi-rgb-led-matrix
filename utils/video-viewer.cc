@@ -238,23 +238,25 @@ int main(int argc, char *argv[]) {
   int               frameFinished;
 
   const char *movie_file = argv[optind];
+  if (strcmp(movie_file, "-") == 0) {
+    movie_file = "/dev/stdin";
+  }
 
   // Register all formats and codecs
   av_register_all();
   avformat_network_init();
 
-  // Open video file
-  if(avformat_open_input(&pFormatCtx, movie_file, NULL, NULL)!=0)
-    return -1; // Couldn't open file
-
-  // Retrieve stream information
-  if(avformat_find_stream_info(pFormatCtx, NULL)<0)
-    return -1; // Couldn't find stream information
-
-  // Dump information about file onto standard error
-  if (verbose) {
-    av_dump_format(pFormatCtx, 0, movie_file, 0);
+  if (avformat_open_input(&pFormatCtx, movie_file, NULL, NULL) != 0) {
+    perror("Issue opening file: ");
+    return -1;
   }
+
+  if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
+    fprintf(stderr, "Couldn't find stream information\n");
+    return -1;
+  }
+
+  if (verbose) av_dump_format(pFormatCtx, 0, movie_file, 0);
 
   long frame_count = 0;
   runtime_opt.do_gpio_init = (stream_output_fd < 0);
