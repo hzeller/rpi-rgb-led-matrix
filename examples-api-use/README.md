@@ -291,16 +291,18 @@ two chains with 8 panels each
 
 (`--led-chain=8 --led-parallel=2 --led-pixel-mapper="U-mapper"`).
 
-#### V-mapper (Vertical arrangement)
+#### V-mapper and Vmapper:Z (Vertical arrangement)
 
 By default, when you add panels on a chain, they are added horizontally.
-If you have 2 panels of 64x32, you get 128x32. If you wanted 64x64, you can
-use a U-mapper, but it would require that some panels are 'upside down', which
-might not be desirable.
-The V-mapper allows the stacking to be vertical and not horizontal.
+If you have 2 panels of 64x32, you get 128x32.
+The V-mapper allows the stacking to be vertical and not horizontal and
+get the 64x64 you might want.
 
-Unlike the U mapper, all the panels are correct side up, and you need
-more cable length as you need to cross back to the start of the next panel.
+By default, all the panels are correct side up, and you need more cable length
+as you need to cross back to the start of the next panel.
+If you wish to use shorter cables, you can add use Vmapper:Z which will give
+you serpentine cabling and every other panel will be upside down (see below
+for an example).
 
 It is compatible with parallel chains, so you can have multiple stacks
 of panels all building a coherent overall display.
@@ -315,23 +317,31 @@ Here an example with 3 chains of 4 panels (128x64) for a total of about
 Viewed looking the LED-side of the panels:
 
 ```
-  [O < I] [O < I] [O < I]
-   ,---^   ,---^   ,---^
-  [O < I] [O < I] [O < I]
-   ,---^   ,---^   ,---^
-  [O < I] [O < I] [O < I]
-   ,---^   ,---^   ,---^
-  [O < I] [O < I] [O < I]
-       ^       ^       ^
-      #1      #2       #3 Pi connector (three parallel chains of len 4)
+         Vmapper                             Vmapper:Z
+
+  [O < I] [O < I] [O < I]             [I > O] [I > O] [I > O]
+   ,---^   ,---^   ,---^               ^       ^       ^
+  [O < I] [O < I] [O < I]             [O < I] [O < I] [O < I]
+   ,---^   ,---^   ,---^                   ^       ^       ^
+  [O < I] [O < I] [O < I]             [I > O] [I > O] [I > O]
+   ,---^   ,---^   ,---^               ^       ^       ^
+  [O < I] [O < I] [O < I]             [O < I] [O < I] [O < I]
+       ^       ^       ^                   ^       ^       ^
+      #1      #2       #3                 #1      #2       #3
+         Pi connector (three parallel chains of len 4)
 ```
 
- (This is also a good time to notice that such large arrangement is probably an
+ (This is also a good time to notice that 384x256 with 12 128x64 panels, is probably an
 upper limit of what you can reasonably output without having an unusable fresh
 rate (Try these options to help: --led-pwm-bits=7 --led-pwm-dither-bits=1 and get about 100Hz)).
 
-This can also be used to improve the refresh rate of a long display even
-if it is only one panel high (e.g. for a text running output) by
+This shows the wiring of a 3x5 Vmapper:Z array built by Marc MERLIN, using 15x 64x32 panels:
+![Vmapper_Z_192x160_3x5.jpg](../img/Vmapper_Z_192x160_3x5.jpg)
+With --led-pwm-bits=7 --led-pwm-dither-bits=1, it gets a better 300Hz refresh
+but only offers around 31K pixels instead of 98K pixels in the previous example.
+
+Please note that Vmapper can also be used to improve the refresh rate of a long
+display even if it is only one panel high (e.g. for a text running output) by
 splitting the load into multiple parallel chains.
 
 ```
