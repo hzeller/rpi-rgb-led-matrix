@@ -256,23 +256,22 @@ public:
   virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
                                   int x, int y,
                                   int *matrix_x, int *matrix_y) const {
-    int panel_width  = matrix_width  / chain_;
-    int panel_height = matrix_height / parallel_;
+    const int panel_width  = matrix_width  / chain_;
+    const int panel_height = matrix_height / parallel_;
 
     *matrix_x = (x % panel_width) +  int(y/panel_height)* panel_width;
     *matrix_y = (y % panel_height) + int(x/panel_width) * panel_height;
 
     if (z_) {
-	int x_panel_offset_cnt = *matrix_x / panel_width;
-	int x_panel_offset = x_panel_offset_cnt * panel_width;
-	int y_panel_offset_cnt = *matrix_y / panel_height;
-	int y_panel_offset = y_panel_offset_cnt * panel_height;
+	const int x_panel_offset_cnt = *matrix_x / panel_width;
 
 	if (x_panel_offset_cnt % 2) {
+	    const int x_panel_offset = x_panel_offset_cnt * panel_width;
+	    const int y_panel_offset_cnt = *matrix_y / panel_height;
+	    const int y_panel_offset = y_panel_offset_cnt * panel_height;
 
 	    *matrix_x = panel_width - (*matrix_x - x_panel_offset) - 1;
 	    *matrix_y = panel_height - (*matrix_y - y_panel_offset) - 1;
-
 	    *matrix_x += x_panel_offset;
 	    *matrix_y += y_panel_offset;
 	}
@@ -280,7 +279,7 @@ public:
   }
 
 private:
-  int z_;
+  bool z_;
   int chain_;
   int parallel_;
 };
