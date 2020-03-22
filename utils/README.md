@@ -208,9 +208,12 @@ sudo ./text-scroller -f ../fonts/texgyre-27.bdf --led-chain=4 -y-11 "Large Font"
 The video viewer allows to play common video formats on the RGB matrix (just
 the picture, no sound).
 
-Note, this is CPU intensive and decoding can result in an output that is not
-smooth or presents flicker. If you observe that, it is suggested to do one
-of these:
+This is currently doing a software decode; if you are familiar with the
+av libraries, a pull request that adds hardware deocding is welcome.
+
+Right now, this is CPU intensive and decoding can result in an output that
+is not smooth or presents flicker. If you observe that, it is suggested to
+do one of these:
 
   - Transcode the video first to the width and height of the final output size.
   - If you use tools such as [youtube-dl] to acquire the video, tell it
