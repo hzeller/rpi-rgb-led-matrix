@@ -132,7 +132,7 @@ struct RGBLedMatrixOptions {
   const char *pixel_mapper_config;  /* Corresponding flag: --led-pixel-mapper */
 
   /*
-   * Panel type. Typically just NULL, but certain panels (AM6126) require
+   * Panel type. Typically just NULL, but certain panels (FM6126) require
    * an initialization sequence
    */
   const char *panel_type;  /* Corresponding flag: --led-panel-type */
@@ -143,10 +143,9 @@ struct RGBLedMatrixOptions {
    * anything if output enable is not connected to GPIO 18.
    * Corresponding flag: --led-hardware-pulse
    */
-  unsigned disable_hardware_pulsing:1;
-  unsigned show_refresh_rate:1;  /* Corresponding flag: --led-show-refresh    */
-  // unsigned swap_green_blue:1; /* deprecated, use led_sequence instead */
-  unsigned inverse_colors:1;     /* Corresponding flag: --led-inverse         */
+  char disable_hardware_pulsing;
+  char show_refresh_rate;     /* Corresponding flag: --led-show-refresh    */
+  char inverse_colors;        /* Corresponding flag: --led-inverse         */
 
   /* Limit refresh rate of LED panel. This will help on a loaded system
    * to keep a constant refresh rate. <= 0 for no limit.

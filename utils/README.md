@@ -53,13 +53,18 @@ as these are not compressed). This is in particular useful for large panels
 and animations with many frames: less loading time and less RAM used.
 See `-O` example below in the example section.
 
-To compile, you first need to install the GraphicsMagick dependencies first:
+##### Building
+
+The `led-image-viewer` requries the GraphicsMagick dependency first, then
+it can be built with `make led-image-viewer`.
 
 ```
 sudo apt-get update
 sudo apt-get install libgraphicsmagick++-dev libwebp-dev -y
 make led-image-viewer
 ```
+
+##### Usage
 
 The resulting binary has a couple of flags.
 ```
@@ -139,6 +144,13 @@ sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-o
 
 The text scoller allows to show some scrolling text.
 
+##### Building
+```
+make text-scroller
+```
+
+##### Usage
+
 ```
 usage: ./text-scroller [options] <text>
 Takes text and scrolls it with speed -s
@@ -196,9 +208,12 @@ sudo ./text-scroller -f ../fonts/texgyre-27.bdf --led-chain=4 -y-11 "Large Font"
 The video viewer allows to play common video formats on the RGB matrix (just
 the picture, no sound).
 
-Note, this is CPU intensive and decoding can result in an output that is not
-smooth or presents flicker. If you observe that, it is suggested to do one
-of these:
+This is currently doing a software decode; if you are familiar with the
+av libraries, a pull request that adds hardware deocding is welcome.
+
+Right now, this is CPU intensive and decoding can result in an output that
+is not smooth or presents flicker. If you observe that, it is suggested to
+do one of these:
 
   - Transcode the video first to the width and height of the final output size.
   - If you use tools such as [youtube-dl] to acquire the video, tell it
@@ -208,12 +223,29 @@ of these:
     below).
   - Prepare an animation stream that you then later watch with led-image-viewer
     (see example below).
+  - Another route to watch videos is to run a [flaschen-taschen]
+    server on your Pi, that provides a network interface to your LED-Matrix.
+    Now, you can use [vlc] from some other computer on your network and
+    stream the output to your Pi.
+    You have to provide the IP address and size of the panel:
+    ```
+      vlc --vout flaschen --flaschen-display=<IP-address-of-your-pi> \
+           --flaschen-width=128 --flaschen-height=64 \
+           <video-filename-or-YouTube-URL>
+    ```
+
+##### Building
+
+The video-viewer requries some dependencies first, then it can be
+built with `make video-viewer`.
 
 ```
 sudo apt-get update
 sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev
 make video-viewer
 ```
+
+##### Usage
 
 ```
 usage: ./video-viewer [options] <video>
@@ -267,3 +299,5 @@ sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```
 
 [youtube-dl]: https://youtube-dl.org/
+[flaschen-taschen]: https://github.com/hzeller/flaschen-taschen/tree/master/server#rgb-matrix-panel-display
+[vlc]: https://www.videolan.org/vlc
