@@ -135,10 +135,11 @@ instructions how to compile.
 
 There are external projects that use this library and provide higher level
 network protocols, such as the
-[FlaschenTaschen implementation](https://github.com/hzeller/flaschen-taschen)
-(VLC can send videos to it natively) or the
-[PixelPusher implementation](https://github.com/hzeller/rpi-matrix-pixelpusher)
-(common in light art installations).
+ * [FlaschenTaschen implementation](https://github.com/hzeller/flaschen-taschen)
+   (VLC can send videos to it natively)
+ * [PixelPusher implementation](https://github.com/hzeller/rpi-matrix-pixelpusher) (common in light art installations)
+ * [ZeroMQ-server](https://github.com/Knifa/led-matrix-zmq-server) to receive
+   content.
 
 ### API
 
