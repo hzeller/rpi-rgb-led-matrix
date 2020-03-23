@@ -685,31 +685,29 @@ so fast to a string of panels before you get flickering due to too low a refresh
 rate (less than 80-100Hz), or before you refresh the panel lines too fast and they
 appear too dim because each line is not displayed long enough before it is turned off.
 
-AB panels also known as outdoor panels, help with performance (you can drive them a bit
-faster and they'll still look bright enough), but as you drive them faster, you'll
-eventually run into the same limits.  
-Ultimately a Raspberri Pi3 is fast enough to push pixels as quickly as panels can accept them
-(actually, not quite an rPi4 goes a bit faster even with the required --led-slowdown-gpio=2).  
-Using an FPGA solution could work around some slight inefficiencies but ultimately run into 
-similar limits.  
-A general rule of thumb is that running 128x128 on a single channel, is already pushing
-limits and you will have to make tradeoffs in visual quality. 128x256 is definitely pushing
-things and you'll get 100Hz or less depending on the performance options you choose.  
-This puts the maximum reasonable resolution at 384x256 for 3 chains. You can see more examples
-and video capture on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)
-
-You can look at this bug for more details: 
-https://github.com/hzeller/rpi-rgb-led-matrix/issues/918#issuecomment-578281400
-
-Basic tips:
+Basic performance tips:
+- Use --led-show-refresh to see the refresh rate while you try parameters
 - use an active-3 board with led-parallel=3
-- led-pwm-dither-bits=1 and led-pwm-bits=7 decrease visual quality but increase refresh frequency
-- You can patch the code to allow led-pwm-lsb-nanoseconds=25 for slightly dimmer output at higher rate
-(some panels can go all the way down to 9 but they get much dimmer)
+- led-pwm-dither-bits=1 gives you a speed boost but less brightness
+- led-pwm-lsb-nanoseconds=50 also gives you a speed boost but less brightness
+- led-pwm-bits=7 or even lower decrease color depth but increases refresh speed
 - AB panels and other panels with that use values of led-multiplexing bigger than 0, 
-will also go faster, although as you tune more options, their advantage will decrease.
+will also go faster, although as you tune more options given above, their advantage will decrease.
+- 32x16 ABC panels are faster than ABCD which are faster than ABCDE, which are faster than 128x64 ABC panels
+(which do use 5 address lines, but over only 3 wires)
+- Use at least an rPi3 (rPi4 is still slightly faster but may need --led-slowdown-gpio=2)
 
-Ultimately, you should not expect to go past 256x256 using an active-3 board without significant
+Maximum resolutions reasonably achievable:
+A general rule of thumb is that running 16K pixels (128x128 or otherwise) on a single chain, 
+is already pushing limits and you will have to make tradeoffs in visual quality. 32K pixels 
+(like 128x256) is definitely pushing things and you'll get 100Hz or less depending on the 
+performance options you choose.  
+This puts the maximum reasonable resolution around 100K pixels (like 384x256) for 3 chains. 
+You can see more examples and video capture of speed on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)  
+If your refresh rate is below 300Hz, expect likely black bars when taking cell phone pictures. 
+A real camera with shutter speed lowered accordingly, will get around this.
+
+Ultimately, you should not expect to go past 64K pixels using 3 chains without significant
 quality tradeoffs. If you need bigger displays, you should use multiple boards and synchronize the
 output.
 
