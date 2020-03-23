@@ -360,6 +360,23 @@ protected:
   }
 };
 
+class P10CoremanMapper : public MultiplexMapperBase {
+public:
+  P10CoremanMapper() : MultiplexMapperBase("P10CoremanMapper", 4) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    //Row offset 8,8,8,8,0,0,0,0,8,8,8,8,0,0,0,0
+    int mulY = (y & 4) > 0 ? 0 : 8;
+
+    //Row offset 9,9,8,8,1,1,0,0,9,9,8,8,1,1,0,0
+    mulY += (y & 2) > 0 ? 0 : 1;
+    mulY += (x >> 2) & ~1; //Drop lsb
+
+    *matrix_x = (mulY << 3) + x % 8;
+    *matrix_y = (y & 1) + ((y >> 2) & ~1);
+  }
+};
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -383,6 +400,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P10Outdoor1R1G1BMultiplexMapper1());
   result->push_back(new P10Outdoor1R1G1BMultiplexMapper2());
   result->push_back(new P10Outdoor1R1G1BMultiplexMapper3());
+  result->push_back(new P10CoremanMapper());
   return result;
 }
 
