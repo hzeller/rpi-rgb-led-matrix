@@ -187,6 +187,9 @@ struct RGBLedMatrixOptions {
 struct RGBLedMatrix *led_matrix_create_from_options(
              struct RGBLedMatrixOptions *options, int *argc, char ***argv);
 
+/* Same, but does not modify the argv array. */
+struct RGBLedMatrix *led_matrix_create_from_options_const_argv(
+             struct RGBLedMatrixOptions *options, int argc, char **argv);
 
 /**
  * Print available LED matrix options.

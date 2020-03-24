@@ -14,10 +14,10 @@ namespace rpi_rgb_led_matrix_sharp
         internal static extern IntPtr led_matrix_create(int rows, int chained, int parallel);
 
         [DllImport("librgbmatrix.so", CallingConvention= CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr led_matrix_create_from_options(
+        internal static extern IntPtr led_matrix_create_from_options_const_argv(
             ref InternalRGBLedMatrixOptions options,
-            ref int argc,
-            ref string[] argv);
+            int argc,
+            string[] argv);
 
         [DllImport("librgbmatrix.so")]
         internal static extern void led_matrix_delete(IntPtr matrix);
@@ -100,7 +100,7 @@ namespace rpi_rgb_led_matrix_sharp
 
                 int argc = argv.Length;
 
-                matrix = led_matrix_create_from_options(ref opt,ref argc,ref argv);
+                matrix = led_matrix_create_from_options_const_argv(ref opt, argc, argv);
             }
             finally
             {

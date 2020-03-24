@@ -51,8 +51,9 @@ static struct LedFont *from_font(rgb_matrix::Font *font) {
 }
 
 
-struct RGBLedMatrix *led_matrix_create_from_options(
-  struct RGBLedMatrixOptions *opts, int *argc, char ***argv) {
+static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
+  struct RGBLedMatrixOptions *opts, int *argc, char ***argv,
+  bool remove_consumed_flags) {
   rgb_matrix::RuntimeOptions default_rt;
   default_rt.drop_privileges = 0;  // Usually, this is on, but let user choose.
   default_rt.daemon = 0;
@@ -90,7 +91,8 @@ struct RGBLedMatrix *led_matrix_create_from_options(
   rgb_matrix::RGBMatrix::Options matrix_options = default_opts;
   rgb_matrix::RuntimeOptions runtime_opt = default_rt;
   if (argc != NULL && argv != NULL) {
-    if (!ParseOptionsFromFlags(argc, argv, &matrix_options, &runtime_opt)) {
+    if (!ParseOptionsFromFlags(argc, argv, &matrix_options, &runtime_opt,
+                               remove_consumed_flags)) {
       rgb_matrix::PrintMatrixFlags(stderr, default_opts, default_rt);
       return NULL;
     }
@@ -123,6 +125,18 @@ struct RGBLedMatrix *led_matrix_create_from_options(
   rgb_matrix::RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options,
                                                           runtime_opt);
   return from_matrix(matrix);
+}
+
+struct RGBLedMatrix *led_matrix_create_from_options(
+  struct RGBLedMatrixOptions *opts, int *argc, char ***argv) {
+  return led_matrix_create_from_options_optional_edit(opts, argc, argv,
+                                                      true);
+}
+
+struct RGBLedMatrix *led_matrix_create_from_options_const_argv(
+  struct RGBLedMatrixOptions *opts, int argc, char **argv) {
+  return led_matrix_create_from_options_optional_edit(opts, &argc, &argv,
+                                                      false);
 }
 
 struct RGBLedMatrix *led_matrix_create(int rows, int chained, int parallel) {
