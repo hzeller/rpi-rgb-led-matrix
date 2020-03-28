@@ -8,3 +8,5 @@ minimal-example
 text-example
 *.dll
 *.exe
+.vs
+node_modules

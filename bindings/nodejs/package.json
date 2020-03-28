@@ -1,0 +1,18 @@
+{
+  "name": "rpi-rgb-led-matrix",
+  "version": "1.0.0",
+  "description": "A nodejs wrapper library for rpi-rgb-led-matrix",
+  "main": "rpi-rgb-led-matrix.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "LED"
+  ],
+  "author": "digital.synapse.software@gmail.com",
+  "license": "GPL-2.0",
+  "dependencies": {
+    "edge": "^7.10.1",
+    "node-gyp": "^6.1.0"
+  }
+}
