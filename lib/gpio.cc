@@ -133,7 +133,10 @@ namespace rgb_matrix {
    (1 << 22) | (1 << 23) | (1 << 24) | (1 << 25)| (1 << 27) |
    // support for A+/B+ and RPi2 with additional GPIO pins.
    (1 <<  5) | (1 <<  6) | (1 << 12) | (1 << 13) | (1 << 16) |
-   (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26)
+   (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26) |
+   // support for P5 GPIO pins.
+   (1 <<  28) | (1 <<  29) | (1 << 30) | (1 << 31)
+
 );
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
@@ -185,7 +188,7 @@ uint32_t GPIO::RequestInputs(uint32_t inputs) {
 
   inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (uint32_t b = 0; b <= 27; ++b) {
+  for (uint32_t b = 0; b <= 31; ++b) {
     if (inputs & (1 << b)) {
       INP_GPIO(b);
     }
