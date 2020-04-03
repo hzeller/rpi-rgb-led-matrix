@@ -170,7 +170,7 @@ uint32_t GPIO::InitOutputs(uint32_t outputs,
 
   outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (uint32_t b = 0; b <= 27; ++b) {
+  for (uint32_t b = 0; b <= 31; ++b) {
     if (outputs & (1 << b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
