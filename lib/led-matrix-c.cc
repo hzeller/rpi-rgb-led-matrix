@@ -209,6 +209,14 @@ struct LedFont *load_font(const char *bdf_font_file) {
   return from_font(font);
 }
 
+int baseline_font(struct LedFont * font) {
+  return to_font(font)->baseline();
+}
+
+int height_font(struct LedFont * font) {
+  return to_font(font)->height();
+}
+
 void delete_font(struct LedFont *font) {
   delete to_font(font);
 }
