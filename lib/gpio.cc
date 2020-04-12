@@ -171,7 +171,7 @@ uint64_t GPIO::InitOutputs(uint64_t outputs,
 
   outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (uint32_t b = 0; b <= 27; ++b) {
+  for (uint64_t b = 0; b <= 41; ++b) {
     if (outputs & (1 << b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
@@ -181,7 +181,7 @@ uint64_t GPIO::InitOutputs(uint64_t outputs,
   return outputs;
 }
 
-uint32_t GPIO::RequestInputs(uint32_t inputs) {
+uint64_t GPIO::RequestInputs(uint64_t inputs) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init inputs but not yet Init()-ialized.\n");
     return 0;
@@ -189,7 +189,7 @@ uint32_t GPIO::RequestInputs(uint32_t inputs) {
 
   inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (uint32_t b = 0; b <= 27; ++b) {
+  for (uint64_t b = 0; b <= 41; ++b) {
     if (inputs & (1 << b)) {
       INP_GPIO(b);
     }

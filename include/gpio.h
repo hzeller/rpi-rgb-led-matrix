@@ -49,7 +49,7 @@ class GPIO {
 
   // Request given bitmap of GPIO inputs.
   // Returns the bits that were available and could be reserved.
-  uint32_t RequestInputs(uint32_t inputs);
+  uint64_t RequestInputs(uint64_t inputs);
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(uint32_t value) {
