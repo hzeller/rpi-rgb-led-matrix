@@ -27,7 +27,7 @@ namespace rgb_matrix {
 class GPIO {
  public:
   // Available bits that actually have pins.
-  static const uint32_t kValidBits;
+  static const uint64_t kValidBits;
 
   GPIO();
 
@@ -45,7 +45,7 @@ class GPIO {
   // Returns the bits that were available and could be set for output.
   // (never use the optional adafruit_hack_needed parameter, it is used
   // internally to this library).
-  uint32_t InitOutputs(uint32_t outputs, bool adafruit_hack_needed = false);
+  uint64_t InitOutputs(uint64_t outputs, bool adafruit_hack_needed = false);
 
   // Request given bitmap of GPIO inputs.
   // Returns the bits that were available and could be reserved.

@@ -438,8 +438,8 @@ Framebuffer::~Framebuffer() {
   const bool is_some_adafruit_hat = (0 == strncmp(h.name, "adafruit-hat",
                                                   strlen("adafruit-hat")));
   // Initialize outputs, make sure that all of these are supported bits.
-  const uint32_t result = io->InitOutputs(all_used_bits, is_some_adafruit_hat);
-  assert(result == all_used_bits);  // Impl: all bits declared in gpio.cc ?
+  const uint64_t result = io->InitOutputs(all_used_bits, is_some_adafruit_hat);
+  assert(result == (uint32_t)all_used_bits);  // Impl: all bits declared in gpio.cc ?
 
   std::vector<int> bitplane_timings;
   uint32_t timing_ns = pwm_lsb_nanoseconds;
@@ -637,7 +637,7 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
     plane_bits |= ((blue & mask) == mask)  ? fill.b_bit : 0;
 
     for (int row = 0; row < double_rows_; ++row) {
-      uint32_t *row_data = ValueAt(row, 0, b);
+      uint64_t *row_data = ValueAt(row, 0, b);
       for (int col = 0; col < columns_; ++col) {
         *row_data++ = plane_bits;
       }
@@ -657,7 +657,7 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   uint16_t red, green, blue;
   MapColors(r, g, b, &red, &green, &blue);
 
-  uint32_t *bits = bitplane_buffer_ + pos;
+  uint64_t *bits = bitplane_buffer_ + pos;
   const int min_bit_plane = kBitPlanes - pwm_bits_;
   bits += (columns_ * min_bit_plane);
   const uint32_t r_bits = designator->r_bit;
@@ -698,7 +698,7 @@ gpio_bits_t Framebuffer::GetGpioFromLedSequence(char col,
 void Framebuffer::InitDefaultDesignator(int x, int y, const char *seq,
                                         PixelDesignator *d) {
   const struct HardwareMapping &h = *hardware_mapping_;
-  uint32_t *bits = ValueAt(y % double_rows_, x, 0);
+  uint64_t *bits = ValueAt(y % double_rows_, x, 0);
   d->gpio_word = bits - bitplane_buffer_;
   d->r_bit = d->g_bit = d->b_bit = 0;
   if (y < rows_) {

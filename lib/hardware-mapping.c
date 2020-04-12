@@ -19,7 +19,7 @@
  */
 #include "hardware-mapping.h"
 
-#define GPIO_BIT(b) (1<<(b))
+#define GPIO_BIT(b) ((uint64_t)1<<(b))
 
 struct HardwareMapping matrix_hardware_mappings[] = {
   /*
@@ -211,6 +211,29 @@ struct HardwareMapping matrix_hardware_mappings[] = {
     .p0_r2         = GPIO_BIT(23),
     .p0_g2         = GPIO_BIT(24),
     .p0_b2         = GPIO_BIT(25),
+  },
+
+  /*
+   * Custom pin-out for compute-module
+   */
+  {
+    .name          = "compute-module",
+
+    .output_enable = GPIO_BIT(2),
+    .clock         = GPIO_BIT(0),
+    .strobe        = GPIO_BIT(1),
+
+    .a             = GPIO_BIT(3),
+    .b             = GPIO_BIT(4),
+    .c             = GPIO_BIT(5),
+    .d             = GPIO_BIT(6),
+
+    .p0_r1         = GPIO_BIT(7),
+    .p0_g1         = GPIO_BIT(8),
+    .p0_b1         = GPIO_BIT(9),
+    .p0_r2         = GPIO_BIT(33),
+    .p0_g2         = GPIO_BIT(34),
+    .p0_b2         = GPIO_BIT(35),
   },
 
   {0}

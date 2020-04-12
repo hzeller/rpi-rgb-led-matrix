@@ -125,7 +125,7 @@ static volatile uint32_t *s_PWM_registers = NULL;
 static volatile uint32_t *s_CLK_registers = NULL;
 
 namespace rgb_matrix {
-/*static*/ const uint32_t GPIO::kValidBits
+/*static*/ const uint64_t GPIO::kValidBits
 = ((1 <<  0) | (1 <<  1) | // RPi 1 - Revision 1 accessible
    (1 <<  2) | (1 <<  3) | // RPi 1 - Revision 2 accessible
    (1 <<  4) | (1 <<  7) | (1 << 8) | (1 <<  9) |
@@ -133,14 +133,18 @@ namespace rgb_matrix {
    (1 << 22) | (1 << 23) | (1 << 24) | (1 << 25)| (1 << 27) |
    // support for A+/B+ and RPi2 with additional GPIO pins.
    (1 <<  5) | (1 <<  6) | (1 << 12) | (1 << 13) | (1 << 16) |
-   (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26)
+   (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26) |
+   //Compute Module GPIO pins
+   (1 << 28) | (1 << 29) | (1 << 30) | (1 << 31) |
+   ((uint64_t)1 << 32) | ((uint64_t)1 << 33) | ((uint64_t)1 << 34) | ((uint64_t)1 << 35) |
+   ((uint64_t)1 << 36) | ((uint64_t)1 << 37) | ((uint64_t)1 << 38) | ((uint64_t)1 << 39) | ((uint64_t)1 << 40) | ((uint64_t)1 << 41)
 );
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
                slowdown_(1) {
 }
 
-uint32_t GPIO::InitOutputs(uint32_t outputs,
+uint64_t GPIO::InitOutputs(uint64_t outputs,
                            bool adafruit_pwm_transition_hack_needed) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
