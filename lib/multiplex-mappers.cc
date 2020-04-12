@@ -378,6 +378,56 @@ public:
 };
 
 /*
+ * P8 1R1G1B Outdoor P8-5S-V3.2-HX 20x40
+ */
+class P8Outdoor1R1G1BMultiplexBase : public MultiplexMapperBase {
+public:
+  P8Outdoor1R1G1BMultiplexBase(const char *name)
+    : MultiplexMapperBase(name, 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const int vblock_is_odd = (y / tile_height_) % 2;
+    const int vblock_is_even = 1 - vblock_is_odd;
+    const int even_vblock_shift = vblock_is_even * even_vblock_offset_;
+    const int odd_vblock_shift = vblock_is_odd * odd_vblock_offset_;
+
+    MapPanel(x, y, matrix_x, matrix_y,
+             vblock_is_even, vblock_is_odd,
+             even_vblock_shift, odd_vblock_shift);
+  }
+
+protected:
+  virtual void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
+                        int vblock_is_even, int vblock_is_odd,
+                        int even_vblock_shift, int odd_vblock_shift) const = 0;
+
+  static const int tile_width_ = 8;
+  static const int tile_height_ = 5;
+  static const int even_vblock_offset_ = 0;
+  static const int odd_vblock_offset_ = 8;
+};
+
+class P8Outdoor1R1G1BMultiplexMapper : public P8Outdoor1R1G1BMultiplexBase {
+public:
+  P8Outdoor1R1G1BMultiplexMapper()
+    : P8Outdoor1R1G1BMultiplexBase("P8Outdoor1R1G1") {}
+
+protected:
+  void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
+                const int vblock_is_even, const int vblock_is_odd,
+                const int even_vblock_shift, const int odd_vblock_shift) const {
+
+
+    *matrix_x = vblock_is_even
+      ? tile_width_ * (1 + tile_width_ - 2 * (x / tile_width_)) + tile_width_ - (x % tile_width_) - 1
+      : tile_width_ * (1 + tile_width_ - 2 * (x / tile_width_)) - tile_width_ + (x % tile_width_);
+
+    *matrix_y = (tile_height_ - y % tile_height_) + tile_height_ * (1 - y / (tile_height_ * 2)) -1;
+
+  }
+};
+
+/*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
  * made available in the --led-multiplexing commandline option.
@@ -401,6 +451,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P10Outdoor1R1G1BMultiplexMapper2());
   result->push_back(new P10Outdoor1R1G1BMultiplexMapper3());
   result->push_back(new P10CoremanMapper());
+  result->push_back(new P8Outdoor1R1G1BMultiplexMapper());
   return result;
 }
 
