@@ -5,7 +5,7 @@ A library to control commonly available 64x64, 32x32 or 16x32 RGB LED panels
 with the Raspberry Pi. Can support PWM up to 11Bit per channel, providing
 true 24bpp color with CIE1931 profile.
 
-Supports 3 chains with many panels each.
+Supports 3 chains with many panels each on a regular Pi. Supports upto 6 chains on Compute Module.
 On a Raspberry Pi 2 or 3, you can easily chain 12 panels in that chain
 (so 36 panels total), but you can theoretically stretch that to up
 to 96-ish panels (32 chain length) and still reach
@@ -40,10 +40,11 @@ All Raspberry Pi versions supported
 -----------------------------------
 
 This supports the old Raspberry Pi's Version 1 with 26 pin header and also the
-B+ models, the Pi Zero, as well as the Raspberry Pi 2 and 3 with 40 pins.
+B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well as the
+Compute Modules which have 44 GPIOs.
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
-
+The Compute Module can drive **up to 6 chains in parallel**.
 The Raspberry Pi 2 and 3 are faster and generally perferred to the older
 models (and the Pi Zero). With the faster models, the panels sometimes
 can't keep up with the speed; check out
@@ -174,13 +175,14 @@ First things first: if you have a different wiring than described in
 choose these here:
 
 ```
---led-gpio-mapping=<gpio-mapping>: Name of GPIO mapping used. Default "regular"
+--led-gpio-mapping=<gpio-mapping>: Name of GPIO mapping used. Default "regular", for CM "compute-module"
 ```
 
 This can have values such as
   - `--led-gpio-mapping=regular` The standard mapping of this library, described in the [wiring](./wiring.md) page.
   - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT/Bonnet, that uses this library or
   - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
+  - `--led-gpio-mapping=compute-module` Additional 3 parallel chains can be used with the Compute Module.
 
 Learn more about the mappings in the [wiring documentation](wiring.md#alternative-hardware-mappings).
 
@@ -208,7 +210,7 @@ The next most important flags describe the type and number of displays connected
 --led-rows=<rows>        : Panel rows. Typically 8, 16, 32 or 64. (Default: 32).
 --led-cols=<cols>        : Panel columns. Typically 32 or 64. (Default: 32).
 --led-chain=<chained>    : Number of daisy-chained panels. (Default: 1).
---led-parallel=<parallel>: For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1).
+--led-parallel=<parallel>: For A/B+ models or RPi2,3b: parallel chains. range=1..3 (Default: 1, 6 for Compute Module).
 ```
 
 These are the most important ones: here you choose how many panels you have
