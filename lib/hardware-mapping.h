@@ -22,7 +22,7 @@ extern "C" {
 
 #include <stdint.h>
 
-typedef uint32_t gpio_bits_t;  /* this should probably come from gpio.h */
+typedef uint64_t gpio_bits_t;  /* this should probably come from gpio.h */
 
 struct HardwareMapping {
   const char *name;
@@ -42,6 +42,15 @@ struct HardwareMapping {
 
   gpio_bits_t p2_r1, p2_g1, p2_b1;
   gpio_bits_t p2_r2, p2_g2, p2_b2;
+
+  gpio_bits_t p3_r1, p3_g1, p3_b1;
+  gpio_bits_t p3_r2, p3_g2, p3_b2;
+
+  gpio_bits_t p4_r1, p4_g1, p4_b1;
+  gpio_bits_t p4_r2, p4_g2, p4_b2;
+
+  gpio_bits_t p5_r1, p5_g1, p5_b1;
+  gpio_bits_t p5_r2, p5_g2, p5_b2;
 };
 
 extern struct HardwareMapping matrix_hardware_mappings[];

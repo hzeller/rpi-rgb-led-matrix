@@ -87,7 +87,7 @@ public:
     unsigned frame_count = 0;
     unsigned low_bit_sequence = 0;
     uint32_t largest_time = 0;
-    uint32_t last_gpio_bits = 0;
+    uint64_t last_gpio_bits = 0;
 
     // Let's start measure max time only after a we were running for a few
     // seconds to not pick up start-up glitches.
@@ -119,7 +119,7 @@ public:
       }
 
       // Read input bits.
-      const uint32_t inputs = io_->Read();
+      const uint64_t inputs = io_->Read();
       if (inputs != last_gpio_bits) {
         last_gpio_bits = inputs;
         MutexLock l(&input_sync_);
@@ -162,7 +162,7 @@ public:
     return previous;
   }
 
-  uint32_t AwaitInputChange(int timeout_ms) {
+  uint64_t AwaitInputChange(int timeout_ms) {
     MutexLock l(&input_sync_);
     input_sync_.WaitOn(&input_change_, timeout_ms);
     return gpio_inputs_;
@@ -184,7 +184,7 @@ private:
 
   Mutex input_sync_;
   pthread_cond_t input_change_;
-  uint32_t gpio_inputs_;
+  uint64_t gpio_inputs_;
 
   Mutex frame_sync_;
   pthread_cond_t frame_done_;
@@ -441,7 +441,7 @@ FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other,
   return previous;
 }
 
-uint32_t RGBMatrix::AwaitInputChange(int timeout_ms) {
+uint64_t RGBMatrix::AwaitInputChange(int timeout_ms) {
   if (!updater_) return 0;
   return updater_->AwaitInputChange(timeout_ms);
 }
