@@ -35,10 +35,11 @@ public:
   // (e.g. due to a permission problem).
   bool Init(int
           #if RGB_SLOWDOWN_GPIO
-            slowdown = RGB_SLOWDOWN_GPIO
+            slowdown = RGB_SLOWDOWN_GPIO,
     #else
-            slowdown = 1
+            slowdown = 1,
     #endif
+            bool enable_64 = false
       );
 
   // Initialize outputs.
@@ -84,12 +85,14 @@ private:
   inline uint64_t ReadRegisters() const { return *gpio_read_bits_low_ | (static_cast<uint64_t>(*gpio_read_bits_low_) << 32);}
   inline void WriteSetBits(uint64_t value) {
     *gpio_set_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
-    *gpio_set_bits_high_ = static_cast<uint32_t>((value & 0xFFFFFFFF00000000ull) >> 32);
+    if (enable_64_)
+      *gpio_set_bits_high_ = static_cast<uint32_t>((value & 0xFFFFFFFF00000000ull) >> 32);
   }
 
   inline void WriteClrBits(uint64_t value) {
     *gpio_clr_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
-    *gpio_clr_bits_high_ = static_cast<uint32_t>((value & 0xFFFFFFFF00000000ull) >> 32);
+    if (enable_64_)
+      *gpio_clr_bits_high_ = static_cast<uint32_t>((value & 0xFFFFFFFF00000000ull) >> 32);
   }
 
 private:
@@ -97,6 +100,7 @@ private:
   uint64_t input_bits_;
   uint64_t reserved_bits_;
   int slowdown_;
+  bool enable_64_;
   volatile uint32_t *gpio_set_bits_low_;
   volatile uint32_t *gpio_set_bits_high_;
   volatile uint32_t *gpio_clr_bits_low_;
