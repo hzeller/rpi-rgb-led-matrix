@@ -110,8 +110,8 @@
 #define PWM_BASE_TIME_NS 2
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x).
-#define INP_GPIO(g) *(s_GPIO_registers+((g)/10)) &= ~(7u<<(((g)%10)*3))
-#define OUT_GPIO(g) *(s_GPIO_registers+((g)/10)) |=  (1u<<(((g)%10)*3))
+#define INP_GPIO(g) *(s_GPIO_registers+((g)/10)) &= ~(7ull<<(((g)%10)*3))
+#define OUT_GPIO(g) *(s_GPIO_registers+((g)/10)) |=  (1ull<<(((g)%10)*3))
 
 #define GPIO_SET *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
@@ -172,7 +172,7 @@ uint64_t GPIO::InitOutputs(uint64_t outputs,
   outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
   for (uint64_t b = 0; b <= 41; ++b) {
-    if (outputs & (1 << b)) {
+    if (outputs & (1ull << b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
     }
@@ -190,7 +190,7 @@ uint64_t GPIO::RequestInputs(uint64_t inputs) {
   inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
   for (uint64_t b = 0; b <= 41; ++b) {
-    if (inputs & (1 << b)) {
+    if (inputs & (1ull << b)) {
       INP_GPIO(b);
     }
   }
