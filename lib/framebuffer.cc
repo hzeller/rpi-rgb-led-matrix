@@ -457,12 +457,12 @@ Framebuffer::~Framebuffer() {
 // able to abstract this more.
 
 static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
-  const uint32_t bits_on
+  const uint64_t bits_on
     = h.p0_r1 | h.p0_g1 | h.p0_b1 | h.p0_r2 | h.p0_g2 | h.p0_b2
     | h.p1_r1 | h.p1_g1 | h.p1_b1 | h.p1_r2 | h.p1_g2 | h.p1_b2
     | h.p2_r1 | h.p2_g1 | h.p2_b1 | h.p2_r2 | h.p2_g2 | h.p2_b2
     | h.a;  // Address bit 'A' is always on.
-  const uint32_t bits_off = h.a;
+  const uint64_t bits_off = h.a;
 
   // Init bits. TODO: customize, as we can do things such as brightness here,
   // which would allow more higher quality output.
@@ -472,7 +472,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.clock | h.strobe);
 
   for (int i = 0; i < columns; ++i) {
-    uint32_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
+    uint64_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 12) value |= h.strobe;
     io->Write(value);
     io->SetBits(h.clock);
@@ -481,7 +481,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.strobe);
 
   for (int i = 0; i < columns; ++i) {
-    uint32_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
+    uint64_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 13) value |= h.strobe;
     io->Write(value);
     io->SetBits(h.clock);
@@ -493,18 +493,18 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
 // The FM6217 is very similar to the FM6216.
 // FM6217 adds Register 3 to allow for automatic bad pixel supression.
 static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
-  const uint32_t bits_r_on= h.p0_r1 | h.p0_r2;
-  const uint32_t bits_g_on= h.p0_g1 | h.p0_g2;
-  const uint32_t bits_b_on= h.p0_b1 | h.p0_b2;
-  const uint32_t bits_on= bits_r_on | bits_g_on | bits_b_on;
-  const uint32_t bits_off = 0;
+  const uint64_t bits_r_on= h.p0_r1 | h.p0_r2;
+  const uint64_t bits_g_on= h.p0_g1 | h.p0_g2;
+  const uint64_t bits_b_on= h.p0_b1 | h.p0_b2;
+  const uint64_t bits_on= bits_r_on | bits_g_on | bits_b_on;
+  const uint64_t bits_off = 0;
 
   static const char* init_b12 = "1111111111001110";  // register 1
   static const char* init_b13 = "1110000001100010";  // register 2.
   static const char* init_b11 = "0101111100000000";  // register 3.
   io->ClearBits(h.clock | h.strobe);
   for (int i = 0; i < columns; ++i) {
-    uint32_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
+    uint64_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 12) value |= h.strobe;
     io->Write(value);
     io->SetBits(h.clock);
@@ -513,7 +513,7 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.strobe);
 
   for (int i = 0; i < columns; ++i) {
-    uint32_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
+    uint64_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 13) value |= h.strobe;
     io->Write(value);
     io->SetBits(h.clock);
@@ -522,7 +522,7 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   io->ClearBits(h.strobe);
 
   for (int i = 0; i < columns; ++i) {
-    uint32_t value = init_b11[i % 16] == '0' ? bits_off : bits_on;
+    uint64_t value = init_b11[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 11) value |= h.strobe;
     io->Write(value);
     io->SetBits(h.clock);
@@ -651,7 +651,7 @@ int Framebuffer::height() const { return (*shared_mapper_)->height(); }
 void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   const PixelDesignator *designator = (*shared_mapper_)->get(x, y);
   if (designator == NULL) return;
-  const int pos = designator->gpio_word;
+  const long pos = designator->gpio_word;
   if (pos < 0) return;  // non-used pixel marker.
 
   uint16_t red, green, blue;
@@ -660,12 +660,12 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   uint64_t *bits = bitplane_buffer_ + pos;
   const int min_bit_plane = kBitPlanes - pwm_bits_;
   bits += (columns_ * min_bit_plane);
-  const uint32_t r_bits = designator->r_bit;
-  const uint32_t g_bits = designator->g_bit;
-  const uint32_t b_bits = designator->b_bit;
-  const uint32_t designator_mask = designator->mask;
+  const uint64_t r_bits = designator->r_bit;
+  const uint64_t g_bits = designator->g_bit;
+  const uint64_t b_bits = designator->b_bit;
+  const uint64_t designator_mask = designator->mask;
   for (uint16_t mask = 1<<min_bit_plane; mask != 1<<kBitPlanes; mask <<=1 ) {
-    uint32_t color_bits = 0;
+    uint64_t color_bits = 0;
     if (red & mask)   color_bits |= r_bits;
     if (green & mask) color_bits |= g_bits;
     if (blue & mask)  color_bits |= b_bits;
