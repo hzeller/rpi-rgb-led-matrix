@@ -110,8 +110,8 @@
 #define PWM_BASE_TIME_NS 2
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x).
-#define INP_GPIO(g) *(s_GPIO_registers+((g)/10)) &= ~(7<<(((g)%10)*3))
-#define OUT_GPIO(g) *(s_GPIO_registers+((g)/10)) |=  (1<<(((g)%10)*3))
+#define INP_GPIO(g) *(s_GPIO_registers+((g)/10)) &= ~(7ull<<(((g)%10)*3))
+#define OUT_GPIO(g) *(s_GPIO_registers+((g)/10)) |=  (1ull<<(((g)%10)*3))
 
 #define GPIO_SET *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
 #define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
@@ -135,9 +135,9 @@ namespace rgb_matrix {
    (1 <<  5) | (1 <<  6) | (1 << 12) | (1 << 13) | (1 << 16) |
    (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26) |
    //Compute Module GPIO pins
-   (1 << 28) | (1 << 29) | (1 << 30) | (1 << 31) |
-   ((uint64_t)1 << 32) | ((uint64_t)1 << 33) | ((uint64_t)1 << 34) | ((uint64_t)1 << 35) |
-   ((uint64_t)1 << 36) | ((uint64_t)1 << 37) | ((uint64_t)1 << 38) | ((uint64_t)1 << 39) | ((uint64_t)1 << 40) | ((uint64_t)1 << 41)
+   (1 << 28) | (1 << 29) | (1 << 30) | (1ull << 31) |
+   (1ull << 32) | (1ull << 33) | (1ull << 34) | (1ull << 35) |
+   (1ull << 36) | (1ull << 37) | (1ull << 38) | (1ull << 39) | (1ull << 40) | (1ull << 41)
 );
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
@@ -172,7 +172,7 @@ uint64_t GPIO::InitOutputs(uint64_t outputs,
   outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
   for (uint64_t b = 0; b <= 41; ++b) {
-    if (outputs & (1 << b)) {
+    if (outputs & (1ull << b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
     }
@@ -190,7 +190,7 @@ uint64_t GPIO::RequestInputs(uint64_t inputs) {
   inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
   for (uint64_t b = 0; b <= 41; ++b) {
-    if (inputs & (1 << b)) {
+    if (inputs & (1ull << b)) {
       INP_GPIO(b);
     }
   }
@@ -342,9 +342,12 @@ bool GPIO::Init(int slowdown) {
   if (!mmap_all_bcm_registers_once())
     return false;
 
-  gpio_set_bits_ = s_GPIO_registers + (0x1C / sizeof(uint32_t));
-  gpio_clr_bits_ = s_GPIO_registers + (0x28 / sizeof(uint32_t));
-  gpio_read_bits_ = s_GPIO_registers + (0x34 / sizeof(uint32_t));
+  gpio_set_bits_low_ = s_GPIO_registers + (0x1C / sizeof(uint32_t));
+  gpio_set_bits_high_ = s_GPIO_registers + (0x20 / sizeof(uint32_t));
+  gpio_clr_bits_low_ = s_GPIO_registers + (0x28 / sizeof(uint32_t));
+  gpio_clr_bits_high_ = s_GPIO_registers + (0x2C / sizeof(uint32_t));
+  gpio_read_bits_low_ = s_GPIO_registers + (0x34 / sizeof(uint32_t));
+  gpio_read_bits_high_ = s_GPIO_registers + (0x38 / sizeof(uint32_t));
   return true;
 }
 
@@ -367,7 +370,7 @@ public:
 // to get the timing, but not optimal.
 class TimerBasedPinPulser : public PinPulser {
 public:
-  TimerBasedPinPulser(GPIO *io, uint32_t bits,
+  TimerBasedPinPulser(GPIO *io, uint64_t bits,
                       const std::vector<int> &nano_specs)
     : io_(io), bits_(bits), nano_specs_(nano_specs) {
     if (!s_Timer1Mhz) {
@@ -385,7 +388,7 @@ public:
 
 private:
   GPIO *const io_;
-  const uint32_t bits_;
+  const uint64_t bits_;
   const std::vector<int> nano_specs_;
 };
 
@@ -558,7 +561,7 @@ static void print_overshoot_histogram() {
 // It only works on GPIO-12 or 18 though.
 class HardwarePinPulser : public PinPulser {
 public:
-  static bool CanHandle(uint32_t gpio_mask) {
+  static bool CanHandle(uint64_t gpio_mask) {
 #ifdef DISABLE_HARDWARE_PULSES
     return false;
 #else
@@ -581,7 +584,7 @@ public:
 #endif
   }
 
-  HardwarePinPulser(uint32_t pins, const std::vector<int> &specs)
+  HardwarePinPulser(uint64_t pins, const std::vector<int> &specs)
     : triggered_(false) {
     assert(CanHandle(pins));
     assert(s_CLK_registers && s_PWM_registers && s_Timer1Mhz);
@@ -749,7 +752,7 @@ private:
 } // end anonymous namespace
 
 // Public PinPulser factory
-PinPulser *PinPulser::Create(GPIO *io, uint32_t gpio_mask,
+PinPulser *PinPulser::Create(GPIO *io, uint64_t gpio_mask,
                              bool allow_hardware_pulsing,
                              const std::vector<int> &nano_wait_spec) {
   if (!Timers::Init()) return NULL;
