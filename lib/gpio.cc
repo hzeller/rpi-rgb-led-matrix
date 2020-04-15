@@ -333,8 +333,9 @@ static bool mmap_all_bcm_registers_once() {
   return true;
 }
 
-bool GPIO::Init(int slowdown) {
+bool GPIO::Init(int slowdown, bool enable_64) {
   slowdown_ = slowdown;
+  enable_64_ = enable_64;
 
   // Pre-mmap all bcm registers we need now and possibly in the future, as to
   // allow  dropping privileges after GPIO::Init() even as some of these

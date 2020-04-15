@@ -411,6 +411,8 @@ struct RuntimeOptions {
 
   int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
 
+  bool enable_64_gpio; // Enabling working with high part of GPIO (with number > 31) (Can reduce refresh rate)
+
   // ----------
   // If the following options are set to disabled with -1, they are not
   // even offered via the command line flags.
