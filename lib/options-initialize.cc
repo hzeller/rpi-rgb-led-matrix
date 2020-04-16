@@ -34,7 +34,6 @@ RuntimeOptions::RuntimeOptions() :
 #else
   gpio_slowdown(1),
 #endif
-  enable_64_gpio(false),
   daemon(0),            // Don't become a daemon by default.
   drop_privileges(1),    // Encourage good practice: drop privileges by default.
   do_gpio_init(true)
@@ -215,8 +214,6 @@ static bool FlagInit(int &argc, char **&argv,
       //-- Runtime options.
       if (ConsumeIntFlag("slowdown-gpio", it, end, &ropts->gpio_slowdown, &err))
         continue;
-      if (ConsumeBoolFlag("use-64", it, &ropts->enable_64_gpio))
-        continue;
       if (ropts->daemon >= 0 && ConsumeBoolFlag("daemon", it, &bool_scratch)) {
         ropts->daemon = bool_scratch ? 1 : 0;
         continue;
@@ -309,7 +306,7 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
 
   static GPIO io;  // This static var is a little bit icky.
   if (runtime_options.do_gpio_init &&
-      !io.Init(runtime_options.gpio_slowdown, runtime_options.enable_64_gpio)) {
+      !io.Init(runtime_options.gpio_slowdown)) {
     fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
             "Prepend 'sudo' to the command\n");
     return NULL;
@@ -424,9 +421,6 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
   fprintf(out, "\t--led-slowdown-gpio=<0..4>: "
           "Slowdown GPIO. Needed for faster Pis/slower panels "
           "(Default: %d).\n", r.gpio_slowdown);
-  fprintf(out, "\t--led-%suse-64      : "
-          "%s working with GPIO with number >= 32 (Can reduce refresh rate).\n",
-          r.enable_64_gpio ? "no-" : "", r.enable_64_gpio ? "Disables" : "Enables");
   if (r.daemon >= 0) {
     const bool on = (r.daemon > 0);
     fprintf(out,

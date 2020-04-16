@@ -135,9 +135,10 @@ namespace rgb_matrix {
    (1 <<  5) | (1 <<  6) | (1 << 12) | (1 << 13) | (1 << 16) |
    (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26) |
    //Compute Module GPIO pins
-   (1 << 28) | (1 << 29) | (1 << 30) | (1ull << 31) |
-   (1ull << 32) | (1ull << 33) | (1ull << 34) | (1ull << 35) |
-   (1ull << 36) | (1ull << 37) | (1ull << 38) | (1ull << 39) | (1ull << 40) | (1ull << 41)
+   (1 << 28) | (1 << 29) | (1 << 30) | (1 << 31) |
+   (1ull << 32) | (1ull << 33) | (1ull << 34) | (1ull << 35) | (1ull << 36) |
+   (1ull << 37) | (1ull << 38) | (1ull << 39) | (1ull << 40) | (1ull << 41) |
+   (1ull << 42) | (1ull << 43) | (1ull << 44) | (1ull << 45)
 );
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
@@ -171,7 +172,9 @@ uint64_t GPIO::InitOutputs(uint64_t outputs,
 
   outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (uint64_t b = 0; b <= 41; ++b) {
+  for (uint64_t b = 0; b <= 45; ++b) {
+    if ((outputs & 0xFFFFFFFF00000000) != 0)
+       enable_64_ = true;
     if (outputs & (1ull << b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
@@ -189,7 +192,9 @@ uint64_t GPIO::RequestInputs(uint64_t inputs) {
 
   inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (uint64_t b = 0; b <= 41; ++b) {
+  for (uint64_t b = 0; b <= 45; ++b) {
+    if ((inputs & 0xFFFFFFFF00000000) != 0)
+       enable_64_ = true;
     if (inputs & (1ull << b)) {
       INP_GPIO(b);
     }
