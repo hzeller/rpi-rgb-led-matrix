@@ -471,7 +471,7 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (parallel < 1 || parallel > 6) {
+  if ((parallel < 1 || parallel > 3) && (strcmp(hardware_mapping,"compute-module") || (parallel < 1 || parallel > 6))) {
     err->append("Parallel outside usable range (1..3 allowed, upto 6 only for CM3).\n");
     success = false;
   }
