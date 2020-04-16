@@ -381,7 +381,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-chain=<chained>     : Number of daisy-chained panels. "
           "(Default: %d).\n"
-          "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
+          "\t--led-parallel=<parallel> : Parallel chains. range=1..3 (6 for CM3)"
           "(Default: %d).\n"
           "\t--led-multiplexing=<0..%d> : Mux type: 0=direct; %s (Default: 0)\n"
           "\t--led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.\n"
@@ -471,8 +471,8 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (parallel < 1 || parallel > 3) {
-    err->append("Parallel outside usable range (1..3 allowed).\n");
+  if (parallel < 1 || parallel > 6) {
+    err->append("Parallel outside usable range (1..3 allowed, upto 6 only for CM3).\n");
     success = false;
   }
 
