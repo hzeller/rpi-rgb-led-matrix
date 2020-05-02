@@ -422,7 +422,10 @@ static void WriteTo(const char *filename, const char *str) {
 // So let's tell it not to do that.
 static void DisableRealtimeThrottling() {
   if (GetNumCores() == 1) return;   // Not safe if we don't have > 1 core.
-  WriteTo("/proc/sys/kernel/sched_rt_runtime_us", "-1");
+  // We need to leave the kernel a little bit of time, as it does not like
+  // us to hog the kernel solidly. The default of 950000 leaves 50ms that
+  // can generate visible flicker, so we reduce that to 1ms.
+  WriteTo("/proc/sys/kernel/sched_rt_runtime_us", "999000");
 }
 
 bool Timers::Init() {
