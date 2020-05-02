@@ -12,8 +12,6 @@
 // the led-image-viewer.
 //
 // Pull requests are welcome to address
-//    * Ancient code: this is based on a very old ffmpeg demo. The API probably
-//      evolved over time.
 //    * Use hardware acceleration if possible. The Pi does have some
 //      acceleration features IIRC, so if we could use these, that would be
 //      great.
@@ -34,6 +32,7 @@
 extern "C" {
 #  include <libavcodec/avcodec.h>
 #  include <libavformat/avformat.h>
+#  include <libavutil/imgutils.h>
 #  include <libswscale/swscale.h>
 }
 
@@ -59,12 +58,6 @@ volatile bool interrupt_received = false;
 static void InterruptHandler(int) {
   interrupt_received = true;
 }
-
-// compatibility with newer API
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(55,28,1)
-#  define av_frame_alloc avcodec_alloc_frame
-#  define av_frame_free avcodec_free_frame
-#endif
 
 struct LedPixel {
   uint8_t r, g, b;
@@ -228,35 +221,23 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  // Initalizing these to NULL prevents segfaults!
-  AVFormatContext   *pFormatCtx = NULL;
-  int               i, videoStream;
-  AVCodecContext    *pCodecCtxOrig = NULL;
-  AVCodecContext    *pCodecCtx = NULL;
-  AVCodec           *pCodec = NULL;
-  AVPacket          packet;
-  int               frameFinished;
-
   const char *movie_file = argv[optind];
   if (strcmp(movie_file, "-") == 0) {
     movie_file = "/dev/stdin";
   }
 
-  // Register all formats and codecs
-  av_register_all();
-  avformat_network_init();
-
-  if (avformat_open_input(&pFormatCtx, movie_file, NULL, NULL) != 0) {
+  AVFormatContext *format_context = avformat_alloc_context();
+  if (avformat_open_input(&format_context, movie_file, NULL, NULL) != 0) {
     perror("Issue opening file: ");
     return -1;
   }
 
-  if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
+  if (avformat_find_stream_info(format_context, NULL) < 0) {
     fprintf(stderr, "Couldn't find stream information\n");
     return -1;
   }
 
-  if (verbose) av_dump_format(pFormatCtx, 0, movie_file, 0);
+  if (verbose) av_dump_format(format_context, 0, movie_file, 0);
 
   long frame_count = 0;
   runtime_opt.do_gpio_init = (stream_output_fd < 0);
@@ -276,52 +257,43 @@ int main(int argc, char *argv[]) {
       forever = false;
     }
   }
+
   // Find the first video stream
-  videoStream=-1;
-  for (i=0; i < (int)pFormatCtx->nb_streams; ++i) {
-    if (pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO) {
-      videoStream=i;
+  int videoStream = -1;
+  AVCodecParameters *codec_parameters = nullptr;
+  AVCodec *av_codec = nullptr;
+  for (int i = 0; i < (int)format_context->nb_streams; ++i) {
+    codec_parameters = format_context->streams[i]->codecpar;
+    av_codec = avcodec_find_decoder(codec_parameters->codec_id);
+    if (!av_codec) continue;
+    if (codec_parameters->codec_type == AVMEDIA_TYPE_VIDEO) {
+      videoStream = i;
       break;
     }
   }
   if (videoStream == -1)
-    return -1; // Didn't find a video stream
+    return false;
 
-  // Get a pointer to the codec context for the video stream
-  pCodecCtxOrig = pFormatCtx->streams[videoStream]->codec;
-  double fps = av_q2d(pFormatCtx->streams[videoStream]->avg_frame_rate);
-  if (fps < 0) {
-    fps = 1.0 / av_q2d(pFormatCtx->streams[videoStream]->codec->time_base);
-  }
-  if (verbose) fprintf(stderr, "FPS: %f\n", fps);
+  // Frames per second; calculate wait time between frames.
+  AVStream *const stream = format_context->streams[videoStream];
+  AVRational rate = av_guess_frame_rate(format_context, stream, nullptr);
+  const long frame_wait_nanos = 1e9 * rate.den / rate.num;
+  if (verbose) fprintf(stderr, "FPS: %f\n", 1.0*rate.num / rate.den);
 
-  // Find the decoder for the video stream
-  pCodec=avcodec_find_decoder(pCodecCtxOrig->codec_id);
-  if (pCodec==NULL) {
-    fprintf(stderr, "Unsupported codec!\n");
+  AVCodecContext *codec_context = avcodec_alloc_context3(av_codec);
+  if (avcodec_parameters_to_context(codec_context, codec_parameters) < 0)
     return -1;
-  }
-  // Copy context
-  pCodecCtx = avcodec_alloc_context3(pCodec);
-  if (avcodec_copy_context(pCodecCtx, pCodecCtxOrig) != 0) {
-    fprintf(stderr, "Couldn't copy codec context");
+  if (avcodec_open2(codec_context, av_codec, NULL) < 0)
     return -1;
-  }
-
-  // Open codec
-  if (avcodec_open2(pCodecCtx, pCodec, NULL)<0)
-    return -1;
-
 
   /*
    * Prepare frame to hold the scaled target frame to be send to matrix.
    */
-  AVFrame *output_frame = av_frame_alloc();  // Target frame for output
-  int display_width = pCodecCtx->width;
-  int display_height = pCodecCtx->height;
+  int display_width = codec_context->width;
+  int display_height = codec_context->height;
   if (maintain_aspect_ratio) {
-    display_width = pCodecCtx->width;
-    display_height = pCodecCtx->height;
+    display_width = codec_context->width;
+    display_height = codec_context->height;
     // Make display fit within canvas.
     ScaleToFitKeepAscpet(matrix->width(), matrix->height(),
                          &display_width, &display_height);
@@ -333,27 +305,23 @@ int main(int argc, char *argv[]) {
   const int display_offset_x = (matrix->width() - display_width)/2;
   const int display_offset_y = (matrix->height() - display_height)/2;
 
-  // Allocate buffer to meet output size requirements
-  const size_t output_size = avpicture_get_size(AV_PIX_FMT_RGB24,
-                                                display_width,
-                                                display_height);
-  uint8_t *output_buffer = (uint8_t *) av_malloc(output_size);
-
-  // Assign appropriate parts of buffer to image planes in output_frame.
-  // Note that output_frame is an AVFrame, but AVFrame is a superset
-  // of AVPicture
-  avpicture_fill((AVPicture *)output_frame, output_buffer, AV_PIX_FMT_RGB24,
-                 display_width, display_height);
+  // The output_frame_ will receive the scaled result.
+  AVFrame *output_frame = av_frame_alloc();
+  if (av_image_alloc(output_frame->data, output_frame->linesize,
+                     display_width, display_height, AV_PIX_FMT_RGB24,
+                     64) < 0) {
+    return -1;
+  }
 
   if (verbose) {
     fprintf(stderr, "Scaling %dx%d -> %dx%d; black border x:%d y:%d\n",
-            pCodecCtx->width, pCodecCtx->height,
+            codec_context->width, codec_context->height,
             display_width, display_height,
             display_offset_x, display_offset_y);
   }
 
   // initialize SWS context for software scaling
-  SwsContext *const sws_ctx = CreateSWSContext(pCodecCtx,
+  SwsContext *const sws_ctx = CreateSWSContext(codec_context,
                                                display_width, display_height);
   if (!sws_ctx) {
     fprintf(stderr, "Trouble doing scaling to %dx%d :(\n",
@@ -364,58 +332,60 @@ int main(int argc, char *argv[]) {
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
 
-  const long frame_wait_nanos = 1e9 / fps;
   struct timespec next_frame;
 
+  AVPacket *packet = av_packet_alloc();
   AVFrame *decode_frame = av_frame_alloc();  // Decode video into this
   do {
     unsigned int frames_left = framecount_limit;
     unsigned int frames_to_skip = frame_skip;
     if (forever) {
-      av_seek_frame(pFormatCtx, videoStream, 0, AVSEEK_FLAG_ANY);
-      avcodec_flush_buffers(pCodecCtx);
+      av_seek_frame(format_context, videoStream, 0, AVSEEK_FLAG_ANY);
+      avcodec_flush_buffers(codec_context);
     }
     clock_gettime(CLOCK_MONOTONIC, &next_frame);
-    while (!interrupt_received && av_read_frame(pFormatCtx, &packet) >= 0
+    while (!interrupt_received && av_read_frame(format_context, packet) >= 0
            && frames_left > 0) {
       // Is this a packet from the video stream?
-      if (packet.stream_index==videoStream) {
+      if (packet->stream_index == videoStream) {
         // Determine absolute end of this frame now so that we don't include
         // decoding overhead. TODO: skip frames if getting too slow ?
         add_nanos(&next_frame, frame_wait_nanos);
 
         // Decode video frame
-        avcodec_decode_video2(pCodecCtx, decode_frame, &frameFinished, &packet);
+        if (avcodec_send_packet(codec_context, packet) < 0)
+          continue;
+
+        if (avcodec_receive_frame(codec_context, decode_frame) < 0)
+          continue;
 
         if (frames_to_skip) { frames_to_skip--; continue; }
 
-        // Did we get a video frame?
-        if (frameFinished) {
-          // Convert the image from its native format to RGB
-          sws_scale(sws_ctx, (uint8_t const * const *)decode_frame->data,
-                    decode_frame->linesize, 0, pCodecCtx->height,
-                    output_frame->data, output_frame->linesize);
-          CopyFrame(output_frame, offscreen_canvas,
-                    display_offset_x, display_offset_y,
-                    display_width, display_height);
-          frame_count++;
-          frames_left--;
-          if (stream_writer) {
-            if (verbose) fprintf(stderr, "%6ld", frame_count);
-            stream_writer->Stream(*offscreen_canvas, frame_wait_nanos/1000);
-          } else {
-            offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas,
-                                                   vsync_multiple);
-          }
-        }
-        if (!stream_writer && !use_vsync_for_frame_timing) {
-          clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_frame, NULL);
+        // Convert the image from its native format to RGB
+        sws_scale(sws_ctx, (uint8_t const * const *)decode_frame->data,
+                  decode_frame->linesize, 0, codec_context->height,
+                  output_frame->data, output_frame->linesize);
+        CopyFrame(output_frame, offscreen_canvas,
+                  display_offset_x, display_offset_y,
+                  display_width, display_height);
+        frame_count++;
+        frames_left--;
+        if (stream_writer) {
+          if (verbose) fprintf(stderr, "%6ld", frame_count);
+          stream_writer->Stream(*offscreen_canvas, frame_wait_nanos/1000);
+        } else {
+          offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas,
+                                                 vsync_multiple);
         }
       }
-      // Free the packet that was allocated by av_read_frame
-      av_free_packet(&packet);
+      if (!stream_writer && !use_vsync_for_frame_timing) {
+        clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_frame, NULL);
+      }
+      av_packet_unref(packet);
     }
   } while (forever && !interrupt_received);
+
+  av_packet_free(&packet);
 
   if (interrupt_received) {
     // Feedback for Ctrl-C, but most importantly, force a newline
@@ -425,16 +395,10 @@ int main(int argc, char *argv[]) {
 
   delete matrix;
 
-  av_free(output_buffer);
   av_frame_free(&output_frame);
   av_frame_free(&decode_frame);
-
-  // Close the codecs
-  avcodec_close(pCodecCtx);
-  avcodec_close(pCodecCtxOrig);
-
-  // Close the video file
-  avformat_close_input(&pFormatCtx);
+  avcodec_close(codec_context);
+  avformat_close_input(&format_context);
 
   delete stream_writer;
   delete stream_io;
