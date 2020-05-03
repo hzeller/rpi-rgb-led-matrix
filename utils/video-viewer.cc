@@ -226,6 +226,11 @@ int main(int argc, char *argv[]) {
     movie_file = "/dev/stdin";
   }
 
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 9, 100)
+  av_register_all();
+#endif
+  avformat_network_init();
+
   AVFormatContext *format_context = avformat_alloc_context();
   if (avformat_open_input(&format_context, movie_file, NULL, NULL) != 0) {
     perror("Issue opening file: ");
