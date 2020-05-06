@@ -217,7 +217,49 @@ private:
   int parallel_;
 };
 
+class ZArrangementMapper : public PixelMapper {
+public:
+  ZArrangementMapper(): chain_(0), panel_columns_(2) {}
 
+  virtual const char *GetName() const { return "Z-mapper"; }
+
+  virtual bool SetParameters(int chain, int parallel, const char *param) {
+    chain_ = chain;
+    if (param != NULL) {
+      char *errpos;
+      panel_columns_ = strtol(param, &errpos, 10);
+      if (*errpos != '\0') {
+        fprintf(stderr, "Invalid panel columns parameter '%s'\n", param);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  virtual bool GetSizeMapping(int matrix_width, int matrix_height,
+                              int *visible_width, int *visible_height) const {
+    int panel_width = matrix_width / chain_;
+    int panel_height = matrix_height;
+    int panel_rows = chain_ / panel_columns_;
+    *visible_width = panel_width * panel_columns_;
+    *visible_height = panel_height * panel_rows;
+    return true;
+  }
+
+  virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
+                                  int x, int y,
+                                  int *matrix_x, int *matrix_y) const {
+    int panel_width = matrix_width / chain_;
+    int panel_height = matrix_height;
+    const int block = y / panel_height;
+    *matrix_x = x + (block * (panel_width * panel_columns_));
+    *matrix_y = y % panel_height;
+  }
+
+private:
+  int chain_;
+  int panel_columns_;
+};
 
 class VerticalMapper : public PixelMapper {
 public:
@@ -294,6 +336,7 @@ static MapperByName *CreateMapperMap() {
   // Register all the default PixelMappers here.
   RegisterPixelMapperInternal(result, new RotatePixelMapper());
   RegisterPixelMapperInternal(result, new UArrangementMapper());
+  RegisterPixelMapperInternal(result, new ZArrangementMapper());
   RegisterPixelMapperInternal(result, new VerticalMapper());
   RegisterPixelMapperInternal(result, new MirrorPixelMapper());
   return result;
