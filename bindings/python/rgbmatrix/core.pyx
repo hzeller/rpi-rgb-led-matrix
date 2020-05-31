@@ -174,6 +174,10 @@ cdef class RGBMatrixOptions:
         def __get__(self): return self.__options.pwm_dither_bits
         def __set__(self, uint8_t value): self.__options.pwm_dither_bits = value
 
+    property limit_refresh_rate_hz:
+        def __get__(self): return self.__options.limit_refresh_rate_hz
+        def __set__(self, value): self.__options.limit_refresh_rate_hz = value
+
 
     # RuntimeOptions properties
 
