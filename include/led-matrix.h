@@ -21,6 +21,8 @@
 #define RPI_RGBMATRIX_H
 
 #include <stdint.h>
+#include <stddef.h>
+
 #include <string>
 #include <vector>
 
