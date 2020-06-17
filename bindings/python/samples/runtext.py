@@ -9,10 +9,10 @@ class RunText(SampleBase):
     def __init__(self, *args, **kwargs):
         super(RunText, self).__init__(*args, **kwargs)
         self.parser.add_argument("-t", "--text", help="The text to scroll on the RGB LED panel", default="Hello world!")
-        self.parser.add_argument("-s", "--speed", help="Approximate letters per second.", default="-s0",type=int)
+        self.parser.add_argument("-s", "--speed", help="Approximate letters per second.", default="-s0",type=float)
         #self.parser.add_argument("--led-panel-type", action="store", help="Needed to initialize special panels. Supported: 'FM6126A'", default="", type=str)
 
-    def run(self):
+    def run(self, s):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
@@ -20,14 +20,16 @@ class RunText(SampleBase):
         pos = offscreen_canvas.width
         my_text = self.args.text
 
-        while True:
+        #while True:
+        if(s > 0.0):
             offscreen_canvas.Clear()
             len = graphics.DrawText(offscreen_canvas, font, pos, 10, textColor, my_text)
             pos -= 1
             if (pos + len < 0):
                 pos = offscreen_canvas.width
 
-            time.sleep(0.05)
+            #time.sleep(0.05)
+            time.sleep(s)
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
 
 
