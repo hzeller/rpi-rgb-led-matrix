@@ -115,6 +115,10 @@ int DrawText(Canvas *c, const Font &font, int x, int y,
              const Color &color, const Color *background_color,
              const char *utf8_text, int kerning_offset = 0);
 
+int DrawText(Canvas *c, const Font &font, int x, int y,
+const Color &color, const Color *background_color,
+const char *utf8_text, int speed, int kerning_offset = 0;
+
 // Same without background. Deprecated, use the one above instead.
 int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color,
              const char *utf8_text);
