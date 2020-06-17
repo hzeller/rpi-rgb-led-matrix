@@ -79,13 +79,13 @@ bool SetImage(Canvas *c, int canvas_offset_x, int canvas_offset_y,
 
 int DrawText(Canvas *c, const Font &font,
              int x, int y, const Color &color,
-             const char *utf8_text, int speed) {
-  return DrawText(c, font, x, y, color, NULL, utf8_text, speed);
+             const char *utf8_text) {
+  return DrawText(c, font, x, y, color, NULL, utf8_text);
 }
 
 int DrawText(Canvas *c, const Font &font,
              int x, int y, const Color &color, const Color *background_color,
-             const char *utf8_text, int speed, int extra_spacing) {
+             const char *utf8_text, int extra_spacing) {
   const int start_x = x;
   while (*utf8_text) {
     const uint32_t cp = utf8_next_codepoint(utf8_text);
@@ -101,8 +101,8 @@ int DrawText(Canvas *c, const Font &font,
 // of months.
 int DrawText(Canvas *c, const Font &font,
              int x, int y, const Color &color, const Color *background_color,
-             const char *utf8_text, int speed) {
-  return DrawText(c, font, x, y, color, background_color, utf8_text, 0, speed);
+             const char *utf8_text) {
+  return DrawText(c, font, x, y, color, background_color, utf8_text, 0);
 }
 
 int VerticalDrawText(Canvas *c, const Font &font, int x, int y,

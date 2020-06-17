@@ -242,9 +242,9 @@ void set_image(struct LedCanvas *c, int canvas_offset_x, int canvas_offset_y,
 // negative)
 // Returns how many pixels we advanced on the screen.
 int draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
-              uint8_t r, uint8_t g, uint8_t b, const char *utf8_text, int speed, int kerning_offset) {
+              uint8_t r, uint8_t g, uint8_t b, const char *utf8_text, int kerning_offset) {
   const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
-  return DrawText(to_canvas(c), *to_font(font), x, y, col, NULL, utf8_text, speed, kerning_offset);
+  return DrawText(to_canvas(c), *to_font(font), x, y, col, NULL, utf8_text, kerning_offset);
 }
 
 // Draw text, a standard NUL terminated C-string encoded in UTF-8,
