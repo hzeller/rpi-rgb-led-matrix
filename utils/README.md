@@ -248,7 +248,8 @@ make video-viewer
 ##### Usage
 
 ```
-usage: ./video-viewer [options] <video>
+Show one or a sequence of video files on the RGB-Matrix
+usage: ./video-viewer [options] <video> [<video>...]
 Options:
         -F                 : Full screen without black bars; aspect ratio might suffer
         -O<streamfile>     : Output to stream-file instead of matrix (don't need to be root).
