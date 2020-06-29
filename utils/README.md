@@ -55,7 +55,7 @@ See `-O` example below in the example section.
 
 ##### Building
 
-The `led-image-viewer` requries the GraphicsMagick dependency first, then
+The `led-image-viewer` requires the GraphicsMagick dependency first, then
 it can be built with `make led-image-viewer`.
 
 ```
@@ -123,7 +123,7 @@ sudo ./led-image-viewer -f -w3 *.png *.jpg   # Loop forever through a list of im
 sudo ./led-image-viewer -f -s *.png  # Loop forever but randomize (shuffle) each round.
 
 # Show image.png and animated.gif in a loop. Show the static image for 3 seconds
-# while the animation is shown for 5 seconds (-t takes precendence for animated
+# while the animation is shown for 5 seconds (-t takes precedence for animated
 # images over -w)
 sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 
@@ -142,7 +142,7 @@ sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-o
 
 ### Text Scroller ###
 
-The text scoller allows to show some scrolling text.
+The text scroller allows to show some scrolling text.
 
 ##### Building
 ```
@@ -209,7 +209,7 @@ The video viewer allows to play common video formats on the RGB matrix (just
 the picture, no sound).
 
 This is currently doing a software decode; if you are familiar with the
-av libraries, a pull request that adds hardware deocding is welcome.
+av libraries, a pull request that adds hardware decoding is welcome.
 
 Right now, this is CPU intensive and decoding can result in an output that
 is not smooth or presents flicker. If you observe that, it is suggested to
@@ -236,7 +236,7 @@ do one of these:
 
 ##### Building
 
-The video-viewer requries some dependencies first, then it can be
+The video-viewer requires some dependencies first, then it can be
 built with `make video-viewer`.
 
 ```
