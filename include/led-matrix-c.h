@@ -131,16 +131,26 @@ struct RGBLedMatrixOptions {
    */
   const char *pixel_mapper_config;  /* Corresponding flag: --led-pixel-mapper */
 
+  /*
+   * Panel type. Typically just NULL, but certain panels (FM6126) require
+   * an initialization sequence
+   */
+  const char *panel_type;  /* Corresponding flag: --led-panel-type */
+
   /** The following are boolean flags, all off by default **/
 
   /* Allow to use the hardware subsystem to create pulses. This won't do
    * anything if output enable is not connected to GPIO 18.
    * Corresponding flag: --led-hardware-pulse
    */
-  unsigned disable_hardware_pulsing:1;
-  unsigned show_refresh_rate:1;  /* Corresponding flag: --led-show-refresh    */
-  // unsigned swap_green_blue:1; /* deprecated, use led_sequence instead */
-  unsigned inverse_colors:1;     /* Corresponding flag: --led-inverse         */
+  char disable_hardware_pulsing;
+  char show_refresh_rate;     /* Corresponding flag: --led-show-refresh    */
+  char inverse_colors;        /* Corresponding flag: --led-inverse         */
+
+  /* Limit refresh rate of LED panel. This will help on a loaded system
+   * to keep a constant refresh rate. <= 0 for no limit.
+   */
+  int limit_refresh_rate_hz;     /* Corresponding flag: --led-limit-refresh */
 };
 
 /**
@@ -177,6 +187,9 @@ struct RGBLedMatrixOptions {
 struct RGBLedMatrix *led_matrix_create_from_options(
              struct RGBLedMatrixOptions *options, int *argc, char ***argv);
 
+/* Same, but does not modify the argv array. */
+struct RGBLedMatrix *led_matrix_create_from_options_const_argv(
+             struct RGBLedMatrixOptions *options, int argc, char **argv);
 
 /**
  * Print available LED matrix options.
@@ -222,7 +235,7 @@ void led_canvas_get_size(const struct LedCanvas *canvas,
 
 /** Set pixel at (x, y) with color (r,g,b). */
 void led_canvas_set_pixel(struct LedCanvas *canvas, int x, int y,
-			  uint8_t r, uint8_t g, uint8_t b);
+                          uint8_t r, uint8_t g, uint8_t b);
 
 /** Clear screen (black). */
 void led_canvas_clear(struct LedCanvas *canvas);
@@ -256,19 +269,54 @@ struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
 uint8_t led_matrix_get_brightness(struct RGBLedMatrix *matrix);
 void led_matrix_set_brightness(struct RGBLedMatrix *matrix, uint8_t brightness);
 
+// Utility function: set an image from the given buffer containting pixels.
+//
+// Draw image of size "image_width" and "image_height" from pixel at
+// canvas-offset "canvas_offset_x", "canvas_offset_y". Image will be shown
+// cropped on the edges if needed.
+//
+// The canvas offset can be negative, i.e. the image start can be shifted
+// outside the image frame on the left/top edge.
+//
+// The buffer needs to be organized as rows with columns of three bytes
+// organized as rgb or bgr. Thus the size of the buffer needs to be exactly
+// (3 * image_width * image_height) bytes.
+//
+// The "image_buffer" parameters contains the data, "buffer_size_bytes" the
+// size in bytes.
+//
+// If "is_bgr" is 1, the buffer is treated as BGR pixel arrangement instead
+// of RGB with is_bgr = 0.
+void set_image(struct LedCanvas *c, int canvas_offset_x, int canvas_offset_y,
+               const uint8_t *image_buffer, size_t buffer_size_bytes,
+               int image_width, int image_height,
+               char is_bgr);
+
+// Load a font given a path to a font file containing a bdf font.
 struct LedFont *load_font(const char *bdf_font_file);
+
+// Read the baseline of a font
+int baseline_font(struct LedFont *font);
+
+// Read the height of a font
+int height_font(struct LedFont *font);
+
+// Delete a font originally created from load_font.
 void delete_font(struct LedFont *font);
 
 int draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
-	uint8_t r, uint8_t g, uint8_t b,
-	const char *utf8_text, int kerning_offset);
+              uint8_t r, uint8_t g, uint8_t b,
+              const char *utf8_text, int kerning_offset);
 
 int vertical_draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
-	uint8_t r, uint8_t g, uint8_t b, const char *utf8_text, int kerning_offset);
+                       uint8_t r, uint8_t g, uint8_t b,
+                       const char *utf8_text, int kerning_offset);
 
-void draw_circle(struct LedCanvas *c, int xx, int y, int radius, uint8_t r, uint8_t g, uint8_t b);
+void draw_circle(struct LedCanvas *c, int x, int y, int radius,
+                 uint8_t r, uint8_t g, uint8_t b);
 
-void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1, uint8_t r, uint8_t g, uint8_t b);
+void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1,
+               uint8_t r, uint8_t g, uint8_t b);
 
 #ifdef  __cplusplus
 }  // extern C

@@ -47,7 +47,9 @@ public:
 
   virtual const char *GetName() const { return name_; }
 
-  // The MapVisibleToMatrix() as required by PanelMatrix here does
+  // The MapVisibleToMatrix() as required by PanelMatrix here breaks it
+  // down to the individual panel, so that derived classes only need to
+  // implement MapSinglePanel().
   virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
                                   int visible_x, int visible_y,
                                   int *matrix_x, int *matrix_y) const {
@@ -65,8 +67,11 @@ public:
 
   // Map the coordinates for a single panel. This is to be overridden in
   // derived classes.
+  // Input parameter is the visible position on the matrix, and this method
+  // should return the internal multiplexed position.
   virtual void MapSinglePanel(int visible_x, int visible_y,
                               int *matrix_x, int *matrix_y) const = 0;
+
 protected:
   const char *const name_;
   const int panel_stretch_factor_;
@@ -239,6 +244,189 @@ public:
   }
 };
 
+class QiangLiQ8 : public MultiplexMapperBase {
+public:
+  QiangLiQ8() : MultiplexMapperBase("QiangLiQ8", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const int column = x + (4+ 4*(x/4));
+    *matrix_x = column;
+    if ((y >= 15 && y <=19) || (y >= 5 && y <= 9)) {
+      const int reverseColumn = x + (4*(x/4));
+      *matrix_x = reverseColumn;
+    }
+    *matrix_y = y % 5 + (y/10) *5;
+  }
+};
+
+class InversedZStripe : public MultiplexMapperBase {
+public:
+  InversedZStripe() : MultiplexMapperBase("InversedZStripe", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    static const int tile_width = 8;
+    static const int tile_height = 4;
+
+    const int vert_block_is_odd = ((y / tile_height) % 2);
+    const int evenOffset[8] = {7, 5, 3, 1, -1, -3, -5, -7};
+
+    if (vert_block_is_odd) {
+      *matrix_x = x + (x / tile_width) * tile_width;
+    } else {
+      *matrix_x = x + (x / tile_width) * tile_width + 8 + evenOffset[x % 8];
+    }
+    *matrix_y = (y % tile_height) + tile_height * (y / (tile_height * 2));
+  }
+};
+
+
+/*
+ * Vairous P10 1R1G1B Outdoor implementations for 16x16 modules with separate
+ * RGB LEDs, e.g.:
+ * https://www.ledcontrollercard.com/english/p10-outdoor-rgb-led-module-160x160mm-dip.html
+ *
+ */
+class P10Outdoor1R1G1BMultiplexBase : public MultiplexMapperBase {
+public:
+  P10Outdoor1R1G1BMultiplexBase(const char *name)
+    : MultiplexMapperBase(name, 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const int vblock_is_odd = (y / tile_height_) % 2;
+    const int vblock_is_even = 1 - vblock_is_odd;
+    const int even_vblock_shift = vblock_is_even * even_vblock_offset_;
+    const int odd_vblock_shift = vblock_is_odd * odd_vblock_offset_;
+
+    MapPanel(x, y, matrix_x, matrix_y,
+             vblock_is_even, vblock_is_odd,
+             even_vblock_shift, odd_vblock_shift);
+  }
+
+protected:
+  virtual void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
+                        int vblock_is_even, int vblock_is_odd,
+                        int even_vblock_shift, int odd_vblock_shift) const = 0;
+
+  static const int tile_width_ = 8;
+  static const int tile_height_ = 4;
+  static const int even_vblock_offset_ = 0;
+  static const int odd_vblock_offset_ = 8;
+};
+
+class P10Outdoor1R1G1BMultiplexMapper1 : public P10Outdoor1R1G1BMultiplexBase {
+public:
+  P10Outdoor1R1G1BMultiplexMapper1()
+    : P10Outdoor1R1G1BMultiplexBase("P10Outdoor1R1G1-1") {}
+
+protected:
+  void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
+                const int vblock_is_even, const int vblock_is_odd,
+                const int even_vblock_shift, const int odd_vblock_shift) const {
+    *matrix_x = tile_width_ * (1 + vblock_is_even + 2 * (x / tile_width_))
+      - (x % tile_width_) - 1;
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
+
+class P10Outdoor1R1G1BMultiplexMapper2 : public P10Outdoor1R1G1BMultiplexBase {
+public:
+  P10Outdoor1R1G1BMultiplexMapper2()
+    : P10Outdoor1R1G1BMultiplexBase("P10Outdoor1R1G1-2") {}
+
+protected:
+  void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
+                const int vblock_is_even, const int vblock_is_odd,
+                const int even_vblock_shift, const int odd_vblock_shift) const {
+    *matrix_x = vblock_is_even
+      ? tile_width_ * (1 + 2 * (x / tile_width_)) - (x % tile_width_) - 1
+      : x + ((x + even_vblock_shift) / tile_width_) * tile_width_ + odd_vblock_shift;
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
+
+class P10Outdoor1R1G1BMultiplexMapper3 : public P10Outdoor1R1G1BMultiplexBase {
+public:
+  P10Outdoor1R1G1BMultiplexMapper3()
+    : P10Outdoor1R1G1BMultiplexBase("P10Outdoor1R1G1-3") {}
+
+protected:
+  void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
+                const int vblock_is_even, const int vblock_is_odd,
+                const int even_vblock_shift, const int odd_vblock_shift) const {
+    *matrix_x = vblock_is_odd
+      ? tile_width_ * (2 + 2 * (x / tile_width_)) - (x % tile_width_) - 1
+      : x + ((x + even_vblock_shift) / tile_width_) * tile_width_ + odd_vblock_shift;
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
+
+class P10CoremanMapper : public MultiplexMapperBase {
+public:
+  P10CoremanMapper() : MultiplexMapperBase("P10CoremanMapper", 4) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    //Row offset 8,8,8,8,0,0,0,0,8,8,8,8,0,0,0,0
+    int mulY = (y & 4) > 0 ? 0 : 8;
+
+    //Row offset 9,9,8,8,1,1,0,0,9,9,8,8,1,1,0,0
+    mulY += (y & 2) > 0 ? 0 : 1;
+    mulY += (x >> 2) & ~1; //Drop lsb
+
+    *matrix_x = (mulY << 3) + x % 8;
+    *matrix_y = (y & 1) + ((y >> 2) & ~1);
+  }
+};
+
+/*
+ * P8 1R1G1B Outdoor P8-5S-V3.2-HX 20x40
+ */
+class P8Outdoor1R1G1BMultiplexBase : public MultiplexMapperBase {
+public:
+  P8Outdoor1R1G1BMultiplexBase(const char *name)
+    : MultiplexMapperBase(name, 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const int vblock_is_odd = (y / tile_height_) % 2;
+    const int vblock_is_even = 1 - vblock_is_odd;
+    const int even_vblock_shift = vblock_is_even * even_vblock_offset_;
+    const int odd_vblock_shift = vblock_is_odd * odd_vblock_offset_;
+
+    MapPanel(x, y, matrix_x, matrix_y,
+             vblock_is_even, vblock_is_odd,
+             even_vblock_shift, odd_vblock_shift);
+  }
+
+protected:
+  virtual void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
+                        int vblock_is_even, int vblock_is_odd,
+                        int even_vblock_shift, int odd_vblock_shift) const = 0;
+
+  static const int tile_width_ = 8;
+  static const int tile_height_ = 5;
+  static const int even_vblock_offset_ = 0;
+  static const int odd_vblock_offset_ = 8;
+};
+
+class P8Outdoor1R1G1BMultiplexMapper : public P8Outdoor1R1G1BMultiplexBase {
+public:
+  P8Outdoor1R1G1BMultiplexMapper()
+    : P8Outdoor1R1G1BMultiplexBase("P8Outdoor1R1G1") {}
+
+protected:
+  void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
+                const int vblock_is_even, const int vblock_is_odd,
+                const int even_vblock_shift, const int odd_vblock_shift) const {
+
+
+    *matrix_x = vblock_is_even
+      ? tile_width_ * (1 + tile_width_ - 2 * (x / tile_width_)) + tile_width_ - (x % tile_width_) - 1
+      : tile_width_ * (1 + tile_width_ - 2 * (x / tile_width_)) - tile_width_ + (x % tile_width_);
+
+    *matrix_y = (tile_height_ - y % tile_height_) + tile_height_ * (1 - y / (tile_height_ * 2)) -1;
+
+  }
+};
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -257,7 +445,13 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new Kaler2ScanMapper());
   result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0));
   result->push_back(new P10MapperZ());
-
+  result->push_back(new QiangLiQ8());
+  result->push_back(new InversedZStripe());
+  result->push_back(new P10Outdoor1R1G1BMultiplexMapper1());
+  result->push_back(new P10Outdoor1R1G1BMultiplexMapper2());
+  result->push_back(new P10Outdoor1R1G1BMultiplexMapper3());
+  result->push_back(new P10CoremanMapper());
+  result->push_back(new P8Outdoor1R1G1BMultiplexMapper());
   return result;
 }
 

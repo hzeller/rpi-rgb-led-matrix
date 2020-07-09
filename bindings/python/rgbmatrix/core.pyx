@@ -164,9 +164,19 @@ cdef class RGBMatrixOptions:
             self.__py_encoded_pixel_mapper_config = value.encode('utf-8')
             self.__options.pixel_mapper_config = self.__py_encoded_pixel_mapper_config
 
+    property panel_type:
+        def __get__(self): return self.__options.panel_type
+        def __set__(self, value):
+            self.__py_encoded_panel_type = value.encode('utf-8')
+            self.__options.panel_type = self.__py_encoded_panel_type
+
     property pwm_dither_bits:
         def __get__(self): return self.__options.pwm_dither_bits
         def __set__(self, uint8_t value): self.__options.pwm_dither_bits = value
+
+    property limit_refresh_rate_hz:
+        def __get__(self): return self.__options.limit_refresh_rate_hz
+        def __set__(self, value): self.__options.limit_refresh_rate_hz = value
 
 
     # RuntimeOptions properties

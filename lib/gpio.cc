@@ -365,7 +365,13 @@ class TimerBasedPinPulser : public PinPulser {
 public:
   TimerBasedPinPulser(GPIO *io, uint32_t bits,
                       const std::vector<int> &nano_specs)
-    : io_(io), bits_(bits), nano_specs_(nano_specs) {}
+    : io_(io), bits_(bits), nano_specs_(nano_specs) {
+    if (!s_Timer1Mhz) {
+      fprintf(stderr, "FYI: not running as root which means we can't properly "
+              "control timing unless this is a real-time kernel. Expect color "
+              "degradation. Consider running as root with sudo.\n");
+    }
+  }
 
   virtual void SendPulse(int time_spec_number) {
     io_->ClearBits(bits_);
@@ -416,7 +422,10 @@ static void WriteTo(const char *filename, const char *str) {
 // So let's tell it not to do that.
 static void DisableRealtimeThrottling() {
   if (GetNumCores() == 1) return;   // Not safe if we don't have > 1 core.
-  WriteTo("/proc/sys/kernel/sched_rt_runtime_us", "-1");
+  // We need to leave the kernel a little bit of time, as it does not like
+  // us to hog the kernel solidly. The default of 950000 leaves 50ms that
+  // can generate visible flicker, so we reduce that to 1ms.
+  WriteTo("/proc/sys/kernel/sched_rt_runtime_us", "999000");
 }
 
 bool Timers::Init() {
@@ -554,9 +563,18 @@ public:
 #else
     const bool can_handle = gpio_mask == (1 << 18) || gpio_mask == (1 << 12);
     if (can_handle && (s_PWM_registers == NULL || s_CLK_registers == NULL)) {
-      fprintf(stderr, "Flicker alert: you have to run as root to use improved "
-              "hardware pulse generation.\n");
-      return false;
+      // Instead of silently not using the hardware pin pulser and falling back
+      // to timing based loops, complain loudly and request the user to make
+      // a choice before continuing.
+      fprintf(stderr, "Need root. You are configured to use the hardware pulse "
+              "generator "
+              "for\n\tsmooth color rendering, however the necessary hardware\n"
+              "\tregisters can't be accessed because you probably don't run\n"
+              "\twith root permissions or privileges have been dropped.\n"
+              "\tSo you either have to run as root (e.g. using sudo) or\n"
+              "\tsupply the --led-no-hardware-pulse command-line flag.\n\n"
+              "\tExiting; run as root or with --led-no-hardware-pulse\n\n");
+      exit(1);
     }
     return can_handle;
 #endif

@@ -171,7 +171,7 @@ public:
     const int cent_y = canvas()->height() / 2;
 
     // The square to rotate (inner square + black frame) needs to cover the
-    // whole area, even if diagnoal. Thus, when rotating, the outer pixels from
+    // whole area, even if diagonal. Thus, when rotating, the outer pixels from
     // the previous frame are cleared.
     const int rotate_square = min(canvas()->width(), canvas()->height()) * 1.41;
     const int min_rotate = cent_x - rotate_square / 2;
@@ -236,7 +236,7 @@ public:
   // _very_ simplified. Can only read binary P6 PPM. Expects newlines in headers
   // Not really robust. Use at your own risk :)
   // This allows reload of an image while things are running, e.g. you can
-  // life-update the content.
+  // live-update the content.
   bool LoadPPM(const char *filename) {
     FILE *f = fopen(filename, "r");
     // check if file exists
@@ -1224,7 +1224,6 @@ int main(int argc, char *argv[]) {
   if (runtime_seconds > 0) {
     sleep(runtime_seconds);
   } else {
-    // The
     printf("Press <CTRL-C> to exit and reset LEDs\n");
     while (!interrupt_received) {
       sleep(1); // Time doesn't really matter. The syscall will be interrupted.

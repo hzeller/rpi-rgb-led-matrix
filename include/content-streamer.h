@@ -11,8 +11,11 @@
 // These abstractions are used in util/led-image-viewer.cc to read and
 // write such animations to disk. It is also used in util/video-viewer.cc
 // to write a version to disk that then can be played with the led-image-viewer.
+
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 #include <string>
 
@@ -97,9 +100,9 @@ private:
   bool ReadFileHeader(const FrameCanvas &frame);
 
   StreamIO *io_;
-  size_t buf_size_;
+  size_t frame_buf_size_;
   State state_;
 
-  char *buffer_;
+  char *header_frame_buffer_;
 };
 }

@@ -150,6 +150,9 @@ static bool FlagInit(int &argc, char **&argv,
       if (ConsumeStringFlag("pixel-mapper", it, end,
                             &mopts->pixel_mapper_config, &err))
         continue;
+      if (ConsumeStringFlag("panel-type", it, end,
+                            &mopts->panel_type, &err))
+        continue;
       if (ConsumeIntFlag("rows", it, end, &mopts->rows, &err))
         continue;
       if (ConsumeIntFlag("cols", it, end, &mopts->cols, &err))
@@ -174,6 +177,9 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("row-addr-type", it, end,
                          &mopts->row_address_type, &err))
+        continue;
+      if (ConsumeIntFlag("limit-refresh", it, end,
+                         &mopts->limit_refresh_rate_hz, &err))
         continue;
       if (ConsumeBoolFlag("show-refresh", it, &mopts->show_refresh_rate))
         continue;
@@ -291,7 +297,8 @@ RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
     return NULL;
   }
 
-  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 4) {
+  // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
+  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 5) {
     fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
             runtime_options.gpio_slowdown);
     return NULL;
@@ -384,9 +391,11 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
-          "\t--led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct row select"
+          "\t--led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct "
           "(Default: 0).\n"
           "\t--led-%sshow-refresh        : %show refresh rate.\n"
+          "\t--led-limit-refresh=<Hz>  : Limit refresh rate to this frequency in Hz. Useful to keep a\n"
+          "\t                            constant refresh rate on loaded system. 0=no limit. Default: %d\n"
           "\t--led-%sinverse             "
           ": Switch if your matrix has inverse colors %s.\n"
           "\t--led-rgb-sequence        : Switch if your matrix has led colors "
@@ -395,19 +404,21 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d)\n"
           "\t--led-pwm-dither-bits=<0..2> : Time dithering of lower bits "
           "(Default: 0)\n"
-          "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n",
+          "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n"
+          "\t--led-panel-type=<name>  : Needed to initialize special panels. Supported: 'FM6126A', 'FM6127'\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
           available_mappers.c_str(),
           d.pwm_bits, d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
+          d.limit_refresh_rate_hz,
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
           d.pwm_lsb_nanoseconds,
           !d.disable_hardware_pulsing ? "no-" : "",
           !d.disable_hardware_pulsing ? "Don't u" : "U");
 
-  fprintf(out, "\t--led-slowdown-gpio=<0..2>: "
+  fprintf(out, "\t--led-slowdown-gpio=<0..4>: "
           "Slowdown GPIO. Needed for faster Pis/slower panels "
           "(Default: %d).\n", r.gpio_slowdown);
   if (r.daemon >= 0) {
@@ -455,8 +466,8 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (row_address_type < 0 || row_address_type > 2) {
-    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select)\n");
+  if (row_address_type < 0 || row_address_type > 4) {
+    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 (ABC address), 4 (ABC Shift + DE direct).\n");
     success = false;
   }
 

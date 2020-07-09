@@ -19,20 +19,22 @@ Options:
         --led-cols=<cols>         : Panel columns. Typically 32 or 64. (Default: 32).
         --led-chain=<chained>     : Number of daisy-chained panels. (Default: 1).
         --led-parallel=<parallel> : Parallel chains. range=1..3 (Default: 1).
-        --led-multiplexing=<0..6> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman (Default: 0)
+        --led-multiplexing=<0..10> : Mux type: 0=direct; 1=Stripe; 2=Checkered; 3=Spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven; 9=P10-128x4-Z; 10=QiangLiQ8 (Default: 0)
         --led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.
                                     Optional params after a colon e.g. "U-mapper;Rotate:90"
-                                    Available: "Rotate", "U-mapper". Default: ""
+                                    Available: "Mirror", "Rotate", "U-mapper". Default: ""
         --led-pwm-bits=<1..11>    : PWM bits (Default: 11).
         --led-brightness=<percent>: Brightness in percent (Default: 100).
         --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
-        --led-row-addr-type=<0..2>: 0 = default; 1 = AB-addressed panels; 2 = direct row select(Default: 0).
+        --led-row-addr-type=<0..3>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels (experimental) (Default: 0).
         --led-show-refresh        : Show refresh rate.
         --led-inverse             : Switch if your matrix has inverse colors on.
         --led-rgb-sequence        : Switch if your matrix has led colors swapped (Default: "RGB")
         --led-pwm-lsb-nanoseconds : PWM Nanoseconds for LSB (Default: 130)
+        --led-pwm-dither-bits=<0..2> : Time dithering of lower bits (Default: 0)
         --led-no-hardware-pulse   : Don't use hardware pin-pulse generation.
-        --led-slowdown-gpio=<0..2>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
+        --led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A'
+        --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
         --led-daemon              : Make the process run in the background as daemon.
         --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
 Demos, choosen with -D
@@ -65,6 +67,27 @@ convenience, there is a little runtext.ppm example included:
 
 Here is a video of how it looks
 [![Runtext][run-vid]](http://youtu.be/OJvEWyvO4ro)
+
+Other Examples
+--------------
+
+There are a few other examples that you can use as starting point for your
+own exploration of the API. If you just type `make` in this directory, the
+Makefile will build all of these, so they are ready to use. Some examples
+need BDF fonts, of which there are a few provided in [../fonts](../fonts).
+
+Some of these example programs are described in more detail further down this
+page.
+
+ * [minimal-example](./minimal-example.cc) Good to get started with the API
+ * [text-example](./text-example.cc) Reads text from stdin and displays it.
+ * [scrolling-text-example](./scrolling-text-example.cc) Scrolls a text
+   given on the command-line.
+ * [clock](./clock.cc) Shows a clock.
+ * [input-example](./input-example.cc) Example how to use the LED-Matrix but
+   also read inputs from free GPIO-pins. Needed if you build some interactive
+   piece.
+ * [ledcat](./ledcat.cc) LED-cat compatible reading of pixels from stdin.
 
 Using the API
 -------------
@@ -147,6 +170,13 @@ public domain fonts available in the [`../fonts/`](../fonts) directory. Any
 other fonts you might want to use or scale to the size you need can be
 converted to a BDF format (either with a font editor or the [otf2bdf] tool).
 
+Here is an example how you could create a 30pixel high BDF font from some
+TrueType font:
+
+```bash
+otf2bdf -v -o myfont.bdf -r 72 -p 30 /path/to/font-Bold.ttf
+```
+
 Integrating in your own application
 -----------------------------------
 Until this library shows up in your favorite Linux distribution, you can just
@@ -220,7 +250,7 @@ some re-mapping options, and also programmatic ways to do so.
 
 ### Standard mappers
 
-#### U-mapper
+#### U-mapper (U-shape connection)
 Say you have 4 displays with 32x32 and only a single output
 like with a Raspberry Pi 1 or the Adafruit HAT -- if we chain
 them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
@@ -231,7 +261,7 @@ of 64x64 pixels:
 [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
 
 ```
-So the following chain
+So the following chain (Viewed looking at the LED-side of the panels)
     [<][<][<][<] }- Raspbery Pi connector
 
 is arranged in this U-shape (on its side)
@@ -261,6 +291,66 @@ two chains with 8 panels each
 
 (`--led-chain=8 --led-parallel=2 --led-pixel-mapper="U-mapper"`).
 
+#### V-mapper and Vmapper:Z (Vertical arrangement)
+
+By default, when you add panels on a chain, they are added horizontally.
+If you have 2 panels of 64x32, you get 128x32.
+The V-mapper allows the stacking to be vertical and not horizontal and
+get the 64x64 you might want.
+
+By default, all the panels are correct side up, and you need more cable length
+as you need to cross back to the start of the next panel.
+If you wish to use shorter cables, you can add use Vmapper:Z which will give
+you serpentine cabling and every other panel will be upside down (see below
+for an example).
+
+It is compatible with parallel chains, so you can have multiple stacks
+of panels all building a coherent overall display.
+
+Here an example with 3 chains of 4 panels (128x64) for a total of about
+98k display pixels.
+
+```
+  ./demo --led-rows=64 --led-cols=128 --led-chain=4 -led-parallel=3 --led-pixel-mapper=V-mapper -D0
+```
+
+Viewed looking the LED-side of the panels:
+
+```
+         Vmapper                             Vmapper:Z
+
+  [O < I] [O < I] [O < I]             [I > O] [I > O] [I > O]
+   ,---^   ,---^   ,---^               ^       ^       ^
+  [O < I] [O < I] [O < I]             [O < I] [O < I] [O < I]
+   ,---^   ,---^   ,---^                   ^       ^       ^
+  [O < I] [O < I] [O < I]             [I > O] [I > O] [I > O]
+   ,---^   ,---^   ,---^               ^       ^       ^
+  [O < I] [O < I] [O < I]             [O < I] [O < I] [O < I]
+       ^       ^       ^                   ^       ^       ^
+      #1      #2       #3                 #1      #2       #3
+         Pi connector (three parallel chains of len 4)
+```
+
+ (This is also a good time to notice that 384x256 with 12 128x64 panels, is probably an
+upper limit of what you can reasonably output without having an unusable fresh
+rate (Try these options to help: --led-pwm-bits=7 --led-pwm-dither-bits=1 and get about 100Hz)).
+
+This shows the wiring of a 3x5 Vmapper:Z array built by Marc MERLIN, using 15x 64x32 panels:
+![Vmapper_Z_192x160_3x5.jpg](../img/Vmapper_Z_192x160_3x5.jpg)
+With --led-pwm-bits=7 --led-pwm-dither-bits=1, it gets a better 300Hz refresh
+but only offers around 31K pixels instead of 98K pixels in the previous example.
+
+Please note that Vmapper can also be used to improve the refresh rate of a long
+display even if it is only one panel high (e.g. for a text running output) by
+splitting the load into multiple parallel chains.
+
+```
+
+  [O < I] [O < I] [O < I]
+       ^       ^       ^
+      #1      #2       #3 Pi connector (three parallel chains of len 1)
+```
+
 #### Rotate
 
 The "Rotate" mapper allows you to rotate your screen. It takes an angle
@@ -268,6 +358,16 @@ as parameter after a colon:
 
 ```
   ./demo --led-pixel-mapper="Rotate:90"
+```
+
+#### Mirror
+
+The 'Mirror' mapper allows to mirror the output horizontally or vertically.
+Without parameter, it mirrors horizontally. The parameter is a single character
+'H' or 'V' for horizontal or vertical mirroring.
+
+```
+  ./demo --led-pixel-mapper="Mirror:H"
 ```
 
 #### Combining Mappers
