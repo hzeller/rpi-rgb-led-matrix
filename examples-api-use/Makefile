@@ -1,7 +1,7 @@
-CFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter
+CFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter -fpermissive
 CXXFLAGS=$(CFLAGS)
-OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o scrolling-text-example.o clock.o ledcat.o input-example.o
-BINARIES=demo minimal-example c-example text-example scrolling-text-example clock ledcat input-example
+OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o scrolling-text-example.o clock.o cclock.o ledcat.o input-example.o static-text.o json.o accuweather.o
+BINARIES=demo minimal-example c-example text-example scrolling-text-example clock cclock ledcat input-example static-text
 
 # Where our library resides. You mostly only need to change the
 # RGB_LIB_DISTRIBUTION, this is where the library is checked out.
@@ -10,7 +10,7 @@ RGB_INCDIR=$(RGB_LIB_DISTRIBUTION)/include
 RGB_LIBDIR=$(RGB_LIB_DISTRIBUTION)/lib
 RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
-LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread -lcurl -ljansson  -linih
 
 all : $(BINARIES)
 
@@ -23,6 +23,7 @@ demo : demo-main.o $(RGB_LIBRARY)
 minimal-example : minimal-example.o
 input-example : input-example.o
 text-example: text-example.o
+static-text: static-text.o
 scrolling-text-example : scrolling-text-example.o
 clock : clock.o
 ledcat : ledcat.o
@@ -31,6 +32,8 @@ ledcat : ledcat.o
 % : %.o $(RGB_LIBRARY)
 	$(CXX) $< -o $@ $(LDFLAGS)
 
+cclock : json.o accuweather.o cclock.o
+	$(CC)  cclock.o accuweather.o json.o -o $@ $(LDFLAGS) -lstdc++
 
 # Since the C example uses the C++ library underneath, which depends on C++
 # runtime stuff, you still have to also link -lstdc++

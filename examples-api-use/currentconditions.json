@@ -1,0 +1,25 @@
+[
+  {
+    "LocalObservationDateTime": "2019-08-11T17:23:00-04:00",
+    "EpochTime": 1565558580,
+    "WeatherText": "Mostly cloudy",
+    "WeatherIcon": 6,
+    "HasPrecipitation": false,
+    "PrecipitationType": null,
+    "IsDayTime": true,
+    "Temperature": {
+      "Metric": {
+        "Value": 25.6,
+        "Unit": "C",
+        "UnitType": 17
+      },
+      "Imperial": {
+        "Value": 78,
+        "Unit": "F",
+        "UnitType": 18
+      }
+    },
+    "MobileLink": "http://m.accuweather.com/en/us/new-york-ny/10007/current-weather/3719_pc?lang=en-us",
+    "Link": "http://www.accuweather.com/en/us/new-york-ny/10007/current-weather/3719_pc?lang=en-us"
+  }
+]

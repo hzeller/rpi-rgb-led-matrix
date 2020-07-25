@@ -1,0 +1,46 @@
+{
+  "Headline": {
+    "EffectiveDate": "2019-08-13T08:00:00-04:00",
+    "EffectiveEpochDate": 1565697600,
+    "Severity": 3,
+    "Text": "Thunderstorms Tuesday",
+    "Category": "thunderstorm",
+    "EndDate": "2019-08-13T20:00:00-04:00",
+    "EndEpochDate": 1565740800,
+    "MobileLink": "http://m.accuweather.com/en/us/new-york-ny/10007/extended-weather-forecast/3719_pc?lang=en-us",
+    "Link": "http://www.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?lang=en-us"
+  },
+  "DailyForecasts": [
+    {
+      "Date": "2019-08-11T07:00:00-04:00",
+      "EpochDate": 1565521200,
+      "Temperature": {
+        "Minimum": {
+          "Value": 66,
+          "Unit": "F",
+          "UnitType": 18
+        },
+        "Maximum": {
+          "Value": 80,
+          "Unit": "F",
+          "UnitType": 18
+        }
+      },
+      "Day": {
+        "Icon": 3,
+        "IconPhrase": "Partly sunny",
+        "HasPrecipitation": false
+      },
+      "Night": {
+        "Icon": 33,
+        "IconPhrase": "Clear",
+        "HasPrecipitation": false
+      },
+      "Sources": [
+        "AccuWeather"
+      ],
+      "MobileLink": "http://m.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?day=1&lang=en-us",
+      "Link": "http://www.accuweather.com/en/us/new-york-ny/10007/daily-weather-forecast/3719_pc?day=1&lang=en-us"
+    }
+  ]
+}
