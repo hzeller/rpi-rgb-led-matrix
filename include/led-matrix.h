@@ -304,22 +304,6 @@ public:
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
-
-#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
-  //--- deprecated section: transformers. Use PixelMapper instead.
-  void ApplyStaticTransformer(const CanvasTransformer &transformer) __attribute__((deprecated)) {
-    ApplyStaticTransformerDeprecated(transformer);
-  }
-  void SetTransformer(CanvasTransformer *t) __attribute__((deprecated)) {
-    transformer_ = t;
-    if (t) ApplyStaticTransformerDeprecated(*t);
-  }
-  CanvasTransformer *transformer() __attribute__((deprecated)) {
-    return transformer_;
-  }
-  // --- end deprecated section.
-#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
-
 private:
   class UpdateThread;
   friend class UpdateThread;
@@ -329,10 +313,6 @@ private:
   void ApplyNamedPixelMappers(const char *pixel_mapper_config,
                               int chain, int parallel);
 
-#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
-  void ApplyStaticTransformerDeprecated(const CanvasTransformer &transformer);
-#endif  // INCLUDE_DEPRECATED_TRANSFORMERS
-
   Options params_;
   bool do_luminance_correct_;
 
@@ -340,9 +320,6 @@ private:
 
   GPIO *io_;
   Mutex active_frame_sync_;
-#ifdef INCLUDE_DEPRECATED_TRANSFORMERS
-  CanvasTransformer *transformer_;  // deprecated. To be removed.
-#endif
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
   internal::PixelDesignatorMap *shared_pixel_mapper_;

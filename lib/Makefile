@@ -6,8 +6,7 @@
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
         thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o \
         pixel-mapper.o multiplex-mappers.o \
-	content-streamer.o \
-        deprecated-transformer.o
+	content-streamer.o
 
 TARGET=librgbmatrix
 
@@ -97,12 +96,6 @@ HARDWARE_DESC?=regular
 # a good choice.
 # Flag: --led-no-hardware-pulses
 #DEFINES+=-DDISABLE_HARDWARE_PULSES
-
-# If defined, include support for deprecated transformers.
-# This might be useful to support very old code, but you
-# should be use pixel-mappers instead (include/pixel-mapper.h).
-# Transformers will be removed from the code-base soon to avoid confusion.
-#DEFINES+=-DINCLUDE_DEPRECATED_TRANSFORMERS
 
 # This allows to fix the refresh rate to a particular refresh time in
 # microseconds.
