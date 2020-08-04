@@ -12,7 +12,6 @@
 #include <stdio.h>
 #include <signal.h>
 
-using rgb_matrix::GPIO;
 using rgb_matrix::RGBMatrix;
 using rgb_matrix::Canvas;
 

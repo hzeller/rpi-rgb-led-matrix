@@ -33,7 +33,8 @@
 namespace rgb_matrix {
 class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
-class GPIO;
+
+struct RuntimeOptions;
 
 namespace internal {
 class Framebuffer;
@@ -156,65 +157,75 @@ public:
     int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
   };
 
-  // -- Note, these don't work anymore as there is no access to an GPIO
-  // instance anymore for the user.
-  // TODO: remove in further cleanup of API.
+  // Factory to create a matrix and possibly other things such as dropping
+  // privileges and becoming a daemon.
+  // Returns NULL, if there was a problem (a message then is written to stderr).
+  static RGBMatrix *CreateFromOptions(const Options &options,
+                                      const RuntimeOptions &runtime_options);
 
-  // Create an RGBMatrix.
+  // A factory that parses your main() commandline flags to read options
+  // meant to configure the the matrix and returns a freshly allocated matrix.
   //
-  // Needs an initialized GPIO object and configuration options from the
-  // RGBMatrix::Options struct.
+  // Optionally,  you can pass in option structs with a couple of defaults
+  // which are used unless overwritten on the command line.
+  // A matrix is created and returned; also the options structs are
+  // updated to reflect the values that were used.
   //
-  // If you pass an GPIO object (which has to be Init()ialized), it will start
-  // the internal thread to start the screen immediately.
+  // If you allow the user to start a daemon with --led-daemon, make sure to
+  // call this function before you have started any threads, so early on in
+  // main() (see RuntimeOptions doc above).
   //
-  // If you need finer control over when the refresh thread starts (which you
-  // might when you become a daemon), pass NULL here and see SetGPIO() method.
-  //
-  // The resulting canvas is (options.rows * options.parallel) high and
-  // (32 * options.chain_length) wide.
-  RGBMatrix(GPIO *io, const Options &options);
-
-  // Simple constructor if you don't need the fine-control with the
-  // Options object.
-  RGBMatrix(GPIO *io, int rows = 32, int chained_displays = 1,
-            int parallel_displays = 1);
+  // Note, the permissions are dropped by default from 'root' to 'daemon', so
+  // if you are required to stay root after this, disable this option in
+  // the default RuntimeOptions (set drop_privileges = -1).
+  // Returns NULL, if there was a problem (a message then is written to stderr).
+  static RGBMatrix *CreateFromFlags(int *argc, char ***argv,
+                                    RGBMatrix::Options *default_options = NULL,
+                                    RuntimeOptions *default_runtime_opts = NULL,
+                                    bool remove_consumed_flags = true);
 
   virtual ~RGBMatrix();
 
-  // Set GPIO output if it was not set already in constructor (otherwise: NoOp).
-  // If "start_thread" is true, starts the refresh thread.
-  //
-  // When would you want to start the thread separately from setting the GPIO ?
-  // If you are becoming a daemon, you must start the thread _after_ that,
-  // because all threads are stopped at the fork().
-  // However, you need to set the GPIO before dropping privileges (which you
-  // usually do when running as daemon).
-  //
-  // So if want to manually crate a daemon with dropping privileges, this is
-  // the pseudocode of what you need to do:
-  // ------------
-  //   RGBMatrix::Options opts;
-  //   RGBMatrix *matrix = new RGBMatrix(NULL, opts);  // No init with gpio yet.
-  //   GPIO gpio;
-  //   gpio.Init();
-  //   matrix->SetGPIO(&gpio, false);   // First init GPIO use, but no thread.
-  //   // Now, GPIOs are all initialized, so we can drop privileges
-  //   drop_privileges();               // .. then drop privileges.
-  //   daemon(0, 0);                    // .. start daemon before threads.
-  //   matrix->StartRefresh();          // Now start thread.
-  // -------------
-  // (Note, that there is a convenience function (CreateMatrixFromOptions())
-  // that does all these things).
-  void SetGPIO(GPIO *io, bool start_thread = true);
+  // -- Canvas interface. These write to the active FrameCanvas
+  // (see documentation in canvas.h)
+  virtual int width() const;
+  virtual int height() const;
+  virtual void SetPixel(int x, int y,
+                        uint8_t red, uint8_t green, uint8_t blue);
+  virtual void Clear();
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
-  // Start thread. Typically, you don't need to call this, see SetGPIO()
-  // description when you might want it.
-  // It doesn't harm to call if the thread is already started, it is a no-op
-  // then.
-  // Returns 'false' if it couldn't start because GPIO was not set yet.
-  bool StartRefresh();
+  //-- Double- and Multibuffering.
 
+  // Create a new buffer to be used for multi-buffering. The returned new
+  // Buffer implements a Canvas with the same size of thie RGBMatrix.
+  // You can use it to draw off-screen on it, then swap it with the active
+  // buffer using SwapOnVSync(). That would be classic double-buffering.
+  //
+  // You can also create as many FrameCanvas as you like and for instance use
+  // them to pre-fill scenes of an animation for fast playback later.
+  //
+  // The ownership of the created Canvases remains with the RGBMatrix, so you
+  // don't have to worry about deleting them.
+  FrameCanvas *CreateFrameCanvas();
+
+  // This method waits to the next VSync and swaps the active buffer with the
+  // supplied buffer. The formerly active buffer is returned.
+  //
+  // If you pass in NULL, the active buffer is returned, but it won't be
+  // replaced with NULL. You can use the NULL-behavior to just wait on
+  // VSync or to retrieve the initial buffer when preparing a multi-buffer
+  // animation.
+  //
+  // The optional "framerate_fraction" parameter allows to choose which
+  // multiple of the global frame-count to use. So it slows down your animation
+  // to an exact fraction of the refresh rate.
+  // Default is 1, so immediately next available frame.
+  // (Say you have 140Hz refresh rate, then a value of 5 would give you an
+  // 28Hz animation, nicely locked to the frame-rate).
+  FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction = 1);
+
+  // -- Setting shape and behavior of matrix.
   // Apply a pixel mapper. This is used to re-map pixels according to some
   // scheme implemented by the PixelMapper. Does not take ownership of the
   // mapper. Mapper can be NULL, in which case nothing happens.
@@ -250,7 +261,7 @@ public:
   // Request inputs.
   // This function allows you to request pins you'd like to read with
   // AwaitInputChange().
-  uint64_t RequestInputs(uint64_t);
+  uint64_t RequestInputs(uint64_t all_interested_bits);
 
   // This function will return whenever the GPIO input pins
   // change (pins that are not already in use for output, that is) or the
@@ -276,64 +287,17 @@ public:
   // Don't use.
   RGBMatrix *gpio() __attribute__((deprecated)) { return this; }
 
-  //-- Double- and Multibuffering.
-
-  // Create a new buffer to be used for multi-buffering. The returned new
-  // Buffer implements a Canvas with the same size of thie RGBMatrix.
-  // You can use it to draw off-screen on it, then swap it with the active
-  // buffer using SwapOnVSync(). That would be classic double-buffering.
-  //
-  // You can also create as many FrameCanvas as you like and for instance use
-  // them to pre-fill scenes of an animation for fast playback later.
-  //
-  // The ownership of the created Canvases remains with the RGBMatrix, so you
-  // don't have to worry about deleting them.
-  FrameCanvas *CreateFrameCanvas();
-
-  // This method waits to the next VSync and swaps the active buffer with the
-  // supplied buffer. The formerly active buffer is returned.
-  //
-  // If you pass in NULL, the active buffer is returned, but it won't be
-  // replaced with NULL. You can use the NULL-behavior to just wait on
-  // VSync or to retrieve the initial buffer when preparing a multi-buffer
-  // animation.
-  //
-  // The optional "framerate_fraction" parameter allows to choose which
-  // multiple of the global frame-count to use. So it slows down your animation
-  // to an exact fraction of the refresh rate.
-  // Default is 1, so immediately next available frame.
-  // (Say you have 140Hz refresh rate, then a value of 5 would give you an
-  // 28Hz animation, nicely locked to the frame-rate).
-  FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction = 1);
-
-  // -- Canvas interface. These write to the active FrameCanvas
-  // (see documentation in canvas.h)
-  virtual int width() const;
-  virtual int height() const;
-  virtual void SetPixel(int x, int y,
-                        uint8_t red, uint8_t green, uint8_t blue);
-  virtual void Clear();
-  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  //--  Rarely needed
+  // Start the refresh thread.
+  // This is only needed if you chose RuntimeOptions::daemon = -1 (see below),
+  // otherwise the refresh thread is already started.
+  bool StartRefresh();
 
 private:
-  class UpdateThread;
-  friend class UpdateThread;
+  class Impl;
 
-  // Apply pixel mappers that have been passed down via a configuration
-  // string.
-  void ApplyNamedPixelMappers(const char *pixel_mapper_config,
-                              int chain, int parallel);
-
-  Options params_;
-  bool do_luminance_correct_;
-
-  FrameCanvas *active_;
-
-  GPIO *io_;
-  Mutex active_frame_sync_;
-  UpdateThread *updater_;
-  std::vector<FrameCanvas*> created_frames_;
-  internal::PixelDesignatorMap *shared_pixel_mapper_;
+  RGBMatrix(Impl *impl) : impl_(impl) {}
+  Impl *const impl_;
 };
 
 class FrameCanvas : public Canvas {
@@ -406,8 +370,15 @@ struct RuntimeOptions {
   // even offered via the command line flags.
   // ----------
 
-  // If daemon is disabled (= -1), the user has to call StartRefresh() manually
-  // once the matrix is created, to leave the decision to become a daemon
+  // Thre are three possible values here
+  //   -1 : don't leave becoming daemon to RGBMatrix library. If set to -1,
+  //        the --led-daemon option is not offered.
+  //    0 : do not becoma a daemon, run in forgreound.
+  //    1 : become a daemon, run in background.
+  //
+  // If daemon is disabled (= -1), the user has to call
+  // RGBMatrix::StartRefresh() manually once the matrix is created, to leave
+  // the decision to become a daemon
   // after the call (which requires that no threads have been started yet).
   // In the other cases (off or on), the choice is already made, so the thread
   // is conveniently already started for you.
@@ -417,10 +388,12 @@ struct RuntimeOptions {
   // This is usually a good idea unless you need to stay on elevated privs.
   int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
 
-  // By default, the gpio is initialized for you, but if you want to manually
-  // do that yourself, set this flag to false.
-  // Then, you have to initialize the matrix yourself with SetGPIO().
+  // By default, the gpio is initialized for you, but if you run on a platform
+  // not the Raspberry Pi, this will fail. If you don't need to access GPIO
+  // e.g. you want to just create a stream output (see content-streamer.h),
+  // set this to false.
   bool do_gpio_init;
+
 };
 
 // Convenience utility functions to read standard rgb-matrix flags and create
@@ -449,7 +422,7 @@ int main(int argc, char **argv) {
   while (getopt()) {...}
 
   // Looks like we're ready to start
-  RGBMatrix *matrix = CreateMatrixFromOptions(led_options, runtime);
+  RGBMatrix *matrix = RGBMatrix::CreateFromOptions(led_options, runtime);
   if (matrix == NULL) {
     return 1;
   }
@@ -472,29 +445,23 @@ bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RuntimeOptions *rt_options,
                            bool remove_consumed_flags = true);
 
-// Factory to create a matrix and possibly other things such as dropping
-// privileges and becoming a daemon.
-// Returns NULL, if there was a problem (a message then is written to stderr).
-RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
-                                   const RuntimeOptions &runtime_options);
+// Legacy version of RGBMatrix::CreateFromOptions()
+inline RGBMatrix *CreateMatrixFromOptions(
+  const RGBMatrix::Options &options,
+  const RuntimeOptions &runtime_options) {
+  return RGBMatrix::CreateFromOptions(options, runtime_options);
+}
 
-// A convenience function that combines the previous two steps. Optionally,
-// you can pass in option structs with a couple of defaults. A matrix is
-// created and returned; also the options structs are updated to reflect
-// the values that were used.
-//
-// If you allow the user to start a daemon with --led-daemon, make sure to
-// call this function before you have started any threads, so early on in
-// main() (see RuntimeOptions doc above).
-//
-// Note, the permissions are dropped by default from 'root' to 'daemon', so
-// if you are required to stay root after this, disable this option in
-// the default RuntimeOptions (set drop_privileges = -1).
-// Returns NULL, if there was a problem (a message then is written to stderr).
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
-                                 RGBMatrix::Options *default_options = NULL,
-                                 RuntimeOptions *default_runtime_opts = NULL,
-                                 bool remove_consumed_flags = true);
+// Legacy version of RGBMatrix::CreateFromFlags()
+inline RGBMatrix *CreateMatrixFromFlags(
+  int *argc, char ***argv,
+  RGBMatrix::Options *default_options = NULL,
+  RuntimeOptions *default_runtime_opts = NULL,
+  bool remove_consumed_flags = true) {
+  return RGBMatrix::CreateFromFlags(argc, argv,
+                                    default_options, default_runtime_opts,
+                                    remove_consumed_flags);
+}
 
 // Show all the available options for CreateMatrixFromFlags().
 void PrintMatrixFlags(FILE *out,

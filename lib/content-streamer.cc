@@ -185,10 +185,12 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
     state_ = STREAM_ERROR;
     return false;
   }
-  if (header.is_wide_gpio && sizeof(gpio_bits_t) == 4) {
-    fprintf(stderr, "This stream was written with wide GPIO support "
-            "for compute module; this library is compiled for regular GPIO "
-            "support\n");
+  if (header.is_wide_gpio != (sizeof(gpio_bits_t) == 8)) {
+    fprintf(stderr, "This stream was written with %s GPIO width support but "
+            "this library is compiled with %d bit GPIO width (see "
+            "ENABLE_WIDE_GPIO_COMPUTE_MODULE setting in lib/Makefile)\n",
+            header.is_wide_gpio ? "wide (64-bit)" : "narrow (32-bit)",
+            int(sizeof(gpio_bits_t) * 8));
     state_ = STREAM_ERROR;
     return false;
   }

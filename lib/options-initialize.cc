@@ -37,8 +37,7 @@ RuntimeOptions::RuntimeOptions() :
   gpio_slowdown(1),
 #endif
   daemon(0),            // Don't become a daemon by default.
-  drop_privileges(1),    // Encourage good practice: drop privileges by default.
-  do_gpio_init(true)
+  drop_privileges(1)    // Encourage good practice: drop privileges by default.
 {
   // Nothing to see here.
 }
@@ -247,34 +246,6 @@ static bool FlagInit(int &argc, char **&argv,
   return true;
 }
 
-static bool drop_privs(const char *priv_user, const char *priv_group) {
-  uid_t ruid, euid, suid;
-  if (getresuid(&ruid, &euid, &suid) >= 0) {
-    if (euid != 0)   // not root anyway. No priv dropping.
-      return true;
-  }
-
-  struct group *g = getgrnam(priv_group);
-  if (g == NULL) {
-    perror("group lookup.");
-    return false;
-  }
-  if (setresgid(g->gr_gid, g->gr_gid, g->gr_gid) != 0) {
-    perror("setresgid()");
-    return false;
-  }
-  struct passwd *p = getpwnam(priv_user);
-  if (p == NULL) {
-    perror("user lookup.");
-    return false;
-  }
-  if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) != 0) {
-    perror("setresuid()");
-    return false;
-  }
-  return true;
-}
-
 }  // namespace
 
 bool ParseOptionsFromFlags(int *argc, char ***argv,
@@ -291,50 +262,6 @@ bool ParseOptionsFromFlags(int *argc, char ***argv,
   return FlagInit(*argc, *argv, mopt, ropt, remove_consumed_options);
 }
 
-RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
-                                   const RuntimeOptions &runtime_options) {
-  std::string error;
-  if (!options.Validate(&error)) {
-    fprintf(stderr, "%s\n", error.c_str());
-    return NULL;
-  }
-
-  // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
-  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 5) {
-    fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
-            runtime_options.gpio_slowdown);
-    return NULL;
-  }
-
-  static GPIO io;  // This static var is a little bit icky.
-  if (runtime_options.do_gpio_init &&
-      !io.Init(runtime_options.gpio_slowdown)) {
-    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command\n");
-    return NULL;
-  }
-
-  if (runtime_options.daemon > 0 && daemon(1, 0) != 0) {
-    perror("Failed to become daemon");
-  }
-
-  RGBMatrix *result = new RGBMatrix(NULL, options);
-  // Allowing daemon also means we are allowed to start the thread now.
-  const bool allow_daemon = !(runtime_options.daemon < 0);
-  if (runtime_options.do_gpio_init)
-    result->SetGPIO(&io, allow_daemon);
-
-  // TODO(hzeller): if we disallow daemon, then we might also disallow
-  // drop privileges: we can't drop privileges until we have created the
-  // realtime thread that usually requires root to be established.
-  // Double check and document.
-  if (runtime_options.drop_privileges > 0) {
-    drop_privs("daemon", "daemon");
-  }
-
-  return result;
-}
-
 static std::string CreateAvailableMultiplexString(
   const internal::MuxMapperList &m) {
   std::string result;
@@ -345,22 +272,6 @@ static std::string CreateAvailableMultiplexString(
     result.append(buffer);
   }
   return result;
-}
-
-// Public interface.
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
-                                 RGBMatrix::Options *m_opt_in,
-                                 RuntimeOptions *rt_opt_in,
-                                 bool remove_consumed_options) {
-  RGBMatrix::Options scratch_matrix;
-  RGBMatrix::Options *mopt = (m_opt_in != NULL) ? m_opt_in : &scratch_matrix;
-
-  RuntimeOptions scratch_rt;
-  RuntimeOptions *ropt = (rt_opt_in != NULL) ? rt_opt_in : &scratch_rt;
-
-  if (!ParseOptionsFromFlags(argc, argv, mopt, ropt, remove_consumed_options))
-    return NULL;
-  return CreateMatrixFromOptions(*mopt, *ropt);
 }
 
 void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
