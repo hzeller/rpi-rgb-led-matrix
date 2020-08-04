@@ -79,7 +79,6 @@ public:
     SetBits(value & mask);
   }
 
-  inline void Write(gpio_bits_t value) { WriteMaskedBits(value, output_bits_); }
   inline gpio_bits_t Read() const { return ReadRegisters() & input_bits_; }
 
 private:

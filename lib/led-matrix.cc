@@ -97,6 +97,9 @@ public:
   uint64_t RequestInputs(uint64_t);
   uint64_t AwaitInputChange(int timeout_ms);
 
+  uint64_t RequestOutputs(uint64_t output_bits);
+  void OutputGPIO(uint64_t output_bits);
+
   void Clear();
 private:
   friend class RGBMatrix;
@@ -116,6 +119,7 @@ private:
   UpdateThread *updater_;
   std::vector<FrameCanvas*> created_frames_;
   internal::PixelDesignatorMap *shared_pixel_mapper_;
+  uint64_t user_output_bits_;
 };
 
 using namespace internal;
@@ -357,7 +361,8 @@ static void PrintOptions(const RGBMatrix::Options &o) {
 #endif  // DEBUG_MATRIX_OPTIONS
 
 RGBMatrix::Impl::Impl(GPIO *io, const Options &options)
-  : params_(options), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL) {
+  : params_(options), io_(NULL), updater_(NULL), shared_pixel_mapper_(NULL),
+    user_output_bits_(0) {
   assert(params_.Validate(NULL));
 #if DEBUG_MATRIX_OPTIONS
   PrintOptions(params_);
@@ -414,6 +419,16 @@ RGBMatrix::~RGBMatrix() {
 
 uint64_t RGBMatrix::Impl::RequestInputs(uint64_t bits) {
   return io_->RequestInputs(bits);
+}
+
+uint64_t RGBMatrix::Impl::RequestOutputs(uint64_t output_bits) {
+  uint64_t success_bits = io_->InitOutputs(output_bits);
+  user_output_bits_ |= success_bits;
+  return success_bits;
+}
+
+void RGBMatrix::Impl::OutputGPIO(uint64_t output_bits) {
+  io_->WriteMaskedBits(output_bits, user_output_bits_);
 }
 
 void RGBMatrix::Impl::ApplyNamedPixelMappers(const char *pixel_mapper_config,
@@ -687,6 +702,13 @@ uint64_t RGBMatrix::RequestInputs(uint64_t all_interested_bits) {
 }
 uint64_t RGBMatrix::AwaitInputChange(int timeout_ms) {
   return impl_->AwaitInputChange(timeout_ms);
+}
+
+uint64_t RGBMatrix::RequestOutputs(uint64_t all_interested_bits) {
+  return impl_->RequestOutputs(all_interested_bits);
+}
+void RGBMatrix::OutputGPIO(uint64_t output_bits) {
+  impl_->OutputGPIO(output_bits);
 }
 
 bool RGBMatrix::StartRefresh() { return impl_->StartRefresh(); }
