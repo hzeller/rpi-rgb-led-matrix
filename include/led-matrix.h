@@ -263,7 +263,7 @@ public:
   // convenient as it allows to wait for a change.
   //
   // Returns the bitmap of all GPIO input pins.
-  uint64_t AwaitInputChange(int timeout_ms);
+  gpio_bits_t AwaitInputChange(int timeout_ms);
 
   //-- Double- and Multibuffering.
 
