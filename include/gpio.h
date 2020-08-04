@@ -37,10 +37,10 @@ public:
 #if RGB_SLOWDOWN_GPIO
             slowdown = RGB_SLOWDOWN_GPIO,
 #else
-            slowdown = 1,
+            slowdown = 1
 #endif
-            bool enable_64 = false
       );
+
 
   // Initialize outputs.
   // Returns the bits that were available and could be set for output.
