@@ -12,7 +12,12 @@
 
 #include <algorithm>
 
+#include "gpio-bits.h"
+
 namespace rgb_matrix {
+
+// Pre-c++11 helper
+#define STATIC_ASSERT(msg, c) typedef int static_assert_##msg[(c) ? 1 : -1]
 
 namespace {
 // We write magic values as integers to automatically detect endian issues.
@@ -26,8 +31,10 @@ struct FileHeader {
   uint32_t width;
   uint32_t height;
   uint64_t future_use1;
-  uint64_t future_use2;
+  uint64_t is_wide_gpio : 1;
+  uint64_t flags_future_use : 63;
 };
+STATIC_ASSERT(file_header_size_changed, sizeof(FileHeader) == 32);
 
 static const uint32_t kFrameMagicValue = 0x12345678;
 struct FrameHeader {
@@ -38,6 +45,7 @@ struct FrameHeader {
   uint64_t future_use2;
   uint64_t future_use3;
 };
+STATIC_ASSERT(file_header_size_changed, sizeof(FrameHeader) == 32);
 }
 
 FileStreamIO::FileStreamIO(int fd) : fd_(fd) {
@@ -115,6 +123,7 @@ void StreamWriter::WriteFileHeader(const FrameCanvas &frame, size_t len) {
   header.width = frame.width();
   header.height = frame.height();
   header.buf_size = len;
+  header.is_wide_gpio = (sizeof(gpio_bits_t) > 4);
   FullAppend(io_, &header, sizeof(header));
   header_written_ = true;
 }
@@ -173,6 +182,13 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
     fprintf(stderr, "This stream is for %dx%d, can't play on %dx%d. "
             "Please use the same settings for record/replay\n",
             header.width, header.height, frame.width(), frame.height());
+    state_ = STREAM_ERROR;
+    return false;
+  }
+  if (header.is_wide_gpio && sizeof(gpio_bits_t) == 4) {
+    fprintf(stderr, "This stream was written with wide GPIO support "
+            "for compute module; this library is compiled for regular GPIO "
+            "support\n");
     state_ = STREAM_ERROR;
     return false;
   }
