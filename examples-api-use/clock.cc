@@ -136,8 +136,7 @@ int main(int argc, char *argv[]) {
     outline_font = font.CreateOutlineFont();
   }
 
-  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromOptions(matrix_options,
-                                                          runtime_opt);
+  RGBMatrix *matrix = RGBMatrix::CreateFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
 

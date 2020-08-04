@@ -129,8 +129,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  RGBMatrix *canvas = rgb_matrix::CreateMatrixFromOptions(matrix_options,
-                                                          runtime_opt);
+  RGBMatrix *canvas = RGBMatrix::CreateFromOptions(matrix_options, runtime_opt);
   if (canvas == NULL)
     return 1;
 
