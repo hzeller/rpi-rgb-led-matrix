@@ -19,6 +19,10 @@
 #define RPI_GPIOBITS_H
 
 #include <stdint.h>
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
 typedef uint64_t gpio_bits_t;
+#else
+typedef uint32_t gpio_bits_t;
+#endif
 
 #endif

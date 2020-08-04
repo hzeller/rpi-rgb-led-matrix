@@ -213,6 +213,7 @@ struct HardwareMapping matrix_hardware_mappings[] = {
     .p0_b2         = GPIO_BIT(25),
   },
 
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
   /*
    * Custom pin-out for compute-module
    */
@@ -280,6 +281,7 @@ struct HardwareMapping matrix_hardware_mappings[] = {
     .p5_g2         = GPIO_BIT(44),
     .p5_b2         = GPIO_BIT(45),
   },
+#endif
 
   {0}
 };

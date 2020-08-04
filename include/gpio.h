@@ -20,6 +20,11 @@
 
 #include <vector>
 
+// TODO: reduce the public interface, so that we're not depending on
+// compile-time gpio-bits.h.
+// All of the interface that should be needed for users is RequestInputs()
+// and Read().
+
 // Putting this in our namespace to not collide with other things called like
 // this.
 namespace rgb_matrix {
@@ -46,12 +51,12 @@ public:
   // Returns the bits that were available and could be set for output.
   // (never use the optional adafruit_hack_needed parameter, it is used
   // internally to this library).
-  gpio_bits_t InitOutputs(gpio_bits_t outputs,
-                          bool adafruit_hack_needed = false);
+  uint64_t InitOutputs(uint64_t outputs,
+                       bool adafruit_hack_needed = false);
 
   // Request given bitmap of GPIO inputs.
   // Returns the bits that were available and could be reserved.
-  gpio_bits_t RequestInputs(gpio_bits_t inputs);
+  uint64_t RequestInputs(uint64_t inputs);
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(gpio_bits_t value) {
@@ -85,19 +90,26 @@ public:
 private:
   inline gpio_bits_t ReadRegisters() const {
     return (static_cast<gpio_bits_t>(*gpio_read_bits_low_)
-            | (static_cast<gpio_bits_t>(*gpio_read_bits_low_) << 32));
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+            | (static_cast<gpio_bits_t>(*gpio_read_bits_low_) << 32)
+#endif
+            );
   }
 
   inline void WriteSetBits(gpio_bits_t value) {
     *gpio_set_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
     if (enable_64_)
-      *gpio_set_bits_high_ = static_cast<uint32_t>((value & 0xFFFFFFFF00000000ull) >> 32);
+      *gpio_set_bits_high_ = static_cast<uint32_t>(value >> 32);
+#endif
   }
 
   inline void WriteClrBits(gpio_bits_t value) {
     *gpio_clr_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
     if (enable_64_)
-      *gpio_clr_bits_high_ = static_cast<uint32_t>((value & 0xFFFFFFFF00000000ull) >> 32);
+      *gpio_clr_bits_high_ = static_cast<uint32_t>(value >> 32);
+#endif
   }
 
 private:
@@ -105,13 +117,17 @@ private:
   gpio_bits_t input_bits_;
   gpio_bits_t reserved_bits_;
   int slowdown_;
-  bool enable_64_;
+
   volatile uint32_t *gpio_set_bits_low_;
-  volatile uint32_t *gpio_set_bits_high_;
   volatile uint32_t *gpio_clr_bits_low_;
-  volatile uint32_t *gpio_clr_bits_high_;
   volatile uint32_t *gpio_read_bits_low_;
+
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+  bool enable_64_;
+  volatile uint32_t *gpio_set_bits_high_;
+  volatile uint32_t *gpio_clr_bits_high_;
   volatile uint32_t *gpio_read_bits_high_;
+#endif
 };
 
 // A PinPulser is a utility class that pulses a GPIO pin. There can be various
