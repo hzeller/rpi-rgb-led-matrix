@@ -157,8 +157,8 @@ GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
 {
 }
 
-uint64_t GPIO::InitOutputs(uint64_t outputs,
-                           bool adafruit_pwm_transition_hack_needed) {
+gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
+                              bool adafruit_pwm_transition_hack_needed) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
     return 0;
@@ -201,7 +201,7 @@ uint64_t GPIO::InitOutputs(uint64_t outputs,
   return outputs;
 }
 
-uint64_t GPIO::RequestInputs(uint64_t inputs) {
+gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init inputs but not yet Init()-ialized.\n");
     return 0;

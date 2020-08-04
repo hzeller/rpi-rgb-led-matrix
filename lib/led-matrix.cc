@@ -354,6 +354,10 @@ RGBMatrix::~RGBMatrix() {
   delete shared_pixel_mapper_;
 }
 
+uint64_t RGBMatrix::RequestInputs(uint64_t bits) {
+  return io_->RequestInputs(bits);
+}
+
 void RGBMatrix::ApplyNamedPixelMappers(const char *pixel_mapper_config,
                                        int chain, int parallel) {
   if (pixel_mapper_config == NULL || strlen(pixel_mapper_config) == 0)
@@ -441,7 +445,7 @@ FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other,
   return previous;
 }
 
-gpio_bits_t RGBMatrix::AwaitInputChange(int timeout_ms) {
+uint64_t RGBMatrix::AwaitInputChange(int timeout_ms) {
   if (!updater_) return 0;
   return updater_->AwaitInputChange(timeout_ms);
 }

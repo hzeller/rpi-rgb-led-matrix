@@ -27,6 +27,8 @@
 
 #include "multiplex-mappers-internal.h"
 
+#include "gpio.h"
+
 namespace rgb_matrix {
 RuntimeOptions::RuntimeOptions() :
 #ifdef RGB_SLOWDOWN_GPIO

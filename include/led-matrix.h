@@ -26,7 +26,6 @@
 #include <string>
 #include <vector>
 
-#include "gpio.h"
 #include "canvas.h"
 #include "thread.h"
 #include "pixel-mapper.h"
@@ -34,6 +33,7 @@
 namespace rgb_matrix {
 class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
+class GPIO;
 
 namespace internal {
 class Framebuffer;
@@ -156,6 +156,10 @@ public:
     int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
   };
 
+  // -- Note, these don't work anymore as there is no access to an GPIO
+  // instance anymore for the user.
+  // TODO: remove in further cleanup of API.
+
   // Create an RGBMatrix.
   //
   // Needs an initialized GPIO object and configuration options from the
@@ -239,15 +243,16 @@ public:
 
   //-- GPIO interaction
 
-  // Return pointer to GPIO object for your own interaction with free
-  // pins. But don't mess with bits already in use by the matrix :)
-  GPIO *gpio() { return io_; }
+  // Request inputs.
+  // This function allows you to request pins you'd like to read with
+  // AwaitInputChange().
+  uint64_t RequestInputs(uint64_t);
 
   // This function will return whenever the GPIO input pins
   // change (pins that are not already in use for output, that is) or the
   // timeout is reached. You need to have reserved the inputs with
-  // gpio()->RequestInputs(...) first (e.g.
-  //   gpio()->RequestInputs((1<<25)|(1<<24));
+  // matrix->RequestInputs(...) first (e.g.
+  //   matrix->RequestInputs((1<<25)|(1<<24));
   //
   // A positive timeout waits the given amount of milliseconds for a change
   // (e.g. a button-press) to occur; if there is no change, it will just
@@ -256,14 +261,16 @@ public:
   // timeout.
   // A negative number waits forever and will only return if there is a change.
   //
-  // Note, while you can poll the gpio()->Read() function directly, it is
-  // not recommended as this might occur during the display update which might
-  // result in flicker.
   // This function only samples between display refreshes and is more
   // convenient as it allows to wait for a change.
   //
   // Returns the bitmap of all GPIO input pins.
-  gpio_bits_t AwaitInputChange(int timeout_ms);
+  uint64_t AwaitInputChange(int timeout_ms);
+
+  // Legacy way to set gpio pins. We're not doing this anymore but need to
+  // be compatible with old calls in the form matrix->gpio()->RequestInputs(..)
+  // Don't use.
+  RGBMatrix *gpio() __attribute__((deprecated)) { return this; }
 
   //-- Double- and Multibuffering.
 
