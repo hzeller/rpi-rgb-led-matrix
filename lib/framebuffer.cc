@@ -482,6 +482,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
     | h.p5_r1 | h.p5_g1 | h.p5_b1 | h.p5_r2 | h.p5_g2 | h.p5_b2
     | h.a;  // Address bit 'A' is always on.
   const gpio_bits_t bits_off = h.a;
+  const gpio_bits_t mask = bits_on | h.strobe;
 
   // Init bits. TODO: customize, as we can do things such as brightness here,
   // which would allow more higher quality output.
@@ -493,7 +494,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
   for (int i = 0; i < columns; ++i) {
     gpio_bits_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 12) value |= h.strobe;
-    io->Write(value);
+    io->WriteMaskedBits(value, mask);
     io->SetBits(h.clock);
     io->ClearBits(h.clock);
   }
@@ -502,7 +503,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
   for (int i = 0; i < columns; ++i) {
     gpio_bits_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 13) value |= h.strobe;
-    io->Write(value);
+    io->WriteMaskedBits(value, mask);
     io->SetBits(h.clock);
     io->ClearBits(h.clock);
   }
@@ -518,6 +519,8 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   const gpio_bits_t bits_on= bits_r_on | bits_g_on | bits_b_on;
   const gpio_bits_t bits_off = 0;
 
+  const gpio_bits_t mask = bits_on | h.strobe;
+
   static const char* init_b12 = "1111111111001110";  // register 1
   static const char* init_b13 = "1110000001100010";  // register 2.
   static const char* init_b11 = "0101111100000000";  // register 3.
@@ -525,7 +528,7 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   for (int i = 0; i < columns; ++i) {
     gpio_bits_t value = init_b12[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 12) value |= h.strobe;
-    io->Write(value);
+    io->WriteMaskedBits(value, mask);
     io->SetBits(h.clock);
     io->ClearBits(h.clock);
   }
@@ -534,7 +537,7 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   for (int i = 0; i < columns; ++i) {
     gpio_bits_t value = init_b13[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 13) value |= h.strobe;
-    io->Write(value);
+    io->WriteMaskedBits(value, mask);
     io->SetBits(h.clock);
     io->ClearBits(h.clock);
   }
@@ -543,7 +546,7 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   for (int i = 0; i < columns; ++i) {
     gpio_bits_t value = init_b11[i % 16] == '0' ? bits_off : bits_on;
     if (i > columns - 11) value |= h.strobe;
-    io->Write(value);
+    io->WriteMaskedBits(value, mask);
     io->SetBits(h.clock);
     io->ClearBits(h.clock);
   }

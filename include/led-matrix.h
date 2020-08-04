@@ -252,11 +252,17 @@ public:
   void SetBrightness(uint8_t brightness);
   uint8_t brightness();
 
-  //-- GPIO interaction
+  //-- GPIO interaction.
+  // This library uses the GPIO pins to drive the matrix; this is a safe way
+  // to request the 'remaining' bits to be used for user purposes.
 
-  // Request inputs.
+  // Request user readable GPIO bits.
   // This function allows you to request pins you'd like to read with
   // AwaitInputChange().
+  // Only bits that are not already in use for reading or wrtiting
+  // by the matrix are allowed.
+  // Input is a bitmap of all the GPIO bits you're interested in; returns all
+  // the bits that are actually available.
   uint64_t RequestInputs(uint64_t all_interested_bits);
 
   // This function will return whenever the GPIO input pins
@@ -272,15 +278,26 @@ public:
   // timeout.
   // A negative number waits forever and will only return if there is a change.
   //
-  // This function only samples between display refreshes and is more
-  // convenient as it allows to wait for a change.
+  // This function only samples between display refreshes so polling some
+  // input does not generate flicker and provide a convenient change interface.
   //
   // Returns the bitmap of all GPIO input pins.
   uint64_t AwaitInputChange(int timeout_ms);
 
+  // Request user writable GPIO bits.
+  // This allows to request a bitmap of GPIO-bits to be used by the user for
+  // writing.
+  // Only bits that are not already in use for reading or wrtiting
+  // by the matrix are allowed.
+  // Returns the subset bits that are _actually_ available,
+  uint64_t RequestOutputs(uint64_t output_bits);
+
+  // Set the user-settable bits according to output bits.
+  void OutputGPIO(uint64_t output_bits);
+
   // Legacy way to set gpio pins. We're not doing this anymore but need to
   // be compatible with old calls in the form matrix->gpio()->RequestInputs(..)
-  // Don't use.
+  // Don't use, use AwaitInputChange() directly.
   RGBMatrix *gpio() __attribute__((deprecated)) { return this; }
 
   //--  Rarely needed
