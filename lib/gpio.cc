@@ -137,20 +137,27 @@ namespace rgb_matrix {
 
    // support for A+/B+ and RPi2 with additional GPIO pins.
    GPIO_BIT( 5) | GPIO_BIT( 6) | GPIO_BIT(12) | GPIO_BIT(13) | GPIO_BIT(16) |
-   GPIO_BIT(19) | GPIO_BIT(20) | GPIO_BIT(21) | GPIO_BIT(26) |
+   GPIO_BIT(19) | GPIO_BIT(20) | GPIO_BIT(21) | GPIO_BIT(26)
 
-   //Compute Module GPIO pins
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+   |
+   // Compute Module GPIO pins
    GPIO_BIT(28) | GPIO_BIT(29) | GPIO_BIT(30) | GPIO_BIT(31) |
    GPIO_BIT(32) | GPIO_BIT(33) | GPIO_BIT(34) | GPIO_BIT(35) | GPIO_BIT(36) |
    GPIO_BIT(37) | GPIO_BIT(38) | GPIO_BIT(39) | GPIO_BIT(40) | GPIO_BIT(41) |
    GPIO_BIT(42) | GPIO_BIT(43) | GPIO_BIT(44) | GPIO_BIT(45)
+#endif
 );
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
-               slowdown_(1), enable_64_(false) {
+               slowdown_(1)
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+             , enable_64_(false)
+#endif
+{
 }
 
-gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
+uint64_t GPIO::InitOutputs(uint64_t outputs,
                            bool adafruit_pwm_transition_hack_needed) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
@@ -177,9 +184,14 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
 
   outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (gpio_bits_t b = 0; b <= 45; ++b) {
-    if ((outputs & 0xFFFFFFFF00000000) != 0)
-       enable_64_ = true;
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+  if ((outputs & 0xFFFFFFFF00000000) != 0)
+    enable_64_ = true;
+  const int kMaxAvailableBit = 45;
+#else
+  const int kMaxAvailableBit = 26;
+#endif
+  for (int b = 0; b <= kMaxAvailableBit; ++b) {
     if (outputs & GPIO_BIT(b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
@@ -189,7 +201,7 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
   return outputs;
 }
 
-gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
+uint64_t GPIO::RequestInputs(uint64_t inputs) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init inputs but not yet Init()-ialized.\n");
     return 0;
@@ -197,9 +209,14 @@ gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
 
   inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (gpio_bits_t b = 0; b <= 45; ++b) {
-    if ((inputs & 0xFFFFFFFF00000000) != 0)
-       enable_64_ = true;
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+  if ((inputs & 0xFFFFFFFF00000000) != 0)
+    enable_64_ = true;
+  const int kMaxAvailableBit = 45;
+#else
+  const int kMaxAvailableBit = 26;
+#endif
+  for (int b = 0; b <= kMaxAvailableBit; ++b) {
     if (inputs & GPIO_BIT(b)) {
       INP_GPIO(b);
     }
@@ -353,11 +370,15 @@ bool GPIO::Init(int slowdown) {
     return false;
 
   gpio_set_bits_low_ = s_GPIO_registers + (0x1C / sizeof(uint32_t));
-  gpio_set_bits_high_ = s_GPIO_registers + (0x20 / sizeof(uint32_t));
   gpio_clr_bits_low_ = s_GPIO_registers + (0x28 / sizeof(uint32_t));
-  gpio_clr_bits_high_ = s_GPIO_registers + (0x2C / sizeof(uint32_t));
   gpio_read_bits_low_ = s_GPIO_registers + (0x34 / sizeof(uint32_t));
+
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+  gpio_set_bits_high_ = s_GPIO_registers + (0x20 / sizeof(uint32_t));
+  gpio_clr_bits_high_ = s_GPIO_registers + (0x2C / sizeof(uint32_t));
   gpio_read_bits_high_ = s_GPIO_registers + (0x38 / sizeof(uint32_t));
+#endif
+
   return true;
 }
 

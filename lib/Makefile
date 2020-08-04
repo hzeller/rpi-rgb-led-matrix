@@ -129,6 +129,9 @@ HARDWARE_DESC?=regular
 # Flag: --led-limit-refresh
 #DEFINES+=-DFIXED_FRAME_MICROSECONDS=5000
 
+# Enable wide 64 bit GPIO offered with the compute module
+DEFINES+=-DENABLE_WIDE_GPIO_COMPUTE_MODULE
+
 # ---- Pinout options for hardware variants; usually no change needed here ----
 
 # Uncomment if you want to use the Adafruit HAT with stable PWM timings.
