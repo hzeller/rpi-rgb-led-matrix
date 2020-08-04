@@ -213,5 +213,29 @@ struct HardwareMapping matrix_hardware_mappings[] = {
     .p0_b2         = GPIO_BIT(25),
   },
 
+{
+    .name          = "classic-pi1b-P5",
+
+    .output_enable = GPIO_BIT(18),
+    .clock         = GPIO_BIT(7),
+    .strobe        = GPIO_BIT(4),
+
+    /* Address lines */
+    .a             = GPIO_BIT(8),
+    .b             = GPIO_BIT(23),
+    .c             = GPIO_BIT(24),
+    .d             = GPIO_BIT(25),
+    .e             = GPIO_BIT(15),  /* RxD kept free unless 1:64 */
+
+    .p0_r1         = GPIO_BIT(30),  /* on P5 header */
+    .p0_g1         = GPIO_BIT(2),
+    .p0_b1         = GPIO_BIT(3),
+    .p0_r2         = GPIO_BIT(28),  /* on P5 header */
+    .p0_g2         = GPIO_BIT(29),  /* on P5 header */
+    .p0_b2         = GPIO_BIT(31),  /* on P5 header */
+
+    /* No more chains - there are not enough GPIO */
+  },
+
   {0}
 };
