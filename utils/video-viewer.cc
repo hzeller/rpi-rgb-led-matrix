@@ -226,7 +226,7 @@ int main(int argc, char *argv[]) {
 
   // We want to have the matrix start unless we actually write to a stream.
   runtime_opt.do_gpio_init = (stream_output_fd < 0);
-  RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
+  RGBMatrix *matrix = RGBMatrix::CreateFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL) {
     return 1;
   }

@@ -20,7 +20,9 @@ MAGICK_LDFLAGS?=$(shell GraphicsMagick++-config --ldflags --libs)
 AV_CXXFLAGS=$(shell pkg-config --cflags  libavcodec libavformat libswscale libavutil)
 AV_LDFLAGS=$(shell pkg-config --cflags --libs  libavcodec libavformat libswscale libavutil)
 
-all : $(BINARIES)
+simple: $(BINARIES)
+
+all : $(BINARIES) $(OPTIONAL_BINARIES)
 
 $(RGB_LIBRARY): FORCE
 	$(MAKE) -C $(RGB_LIBDIR)

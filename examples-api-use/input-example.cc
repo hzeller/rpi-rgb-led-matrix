@@ -25,8 +25,7 @@ int main(int argc, char *argv[]) {
   defaults.rows = 32;
   defaults.chain_length = 1;
   defaults.parallel = 1;
-  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv,
-                                                        &defaults);
+  RGBMatrix *matrix = RGBMatrix::CreateFromFlags(&argc, &argv, &defaults);
   if (matrix == NULL)
     return 1;
 

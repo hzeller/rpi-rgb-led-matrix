@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
   defaults.rows = 32;
   defaults.chain_length = 1;
   defaults.parallel = 1;
-  Canvas *canvas = rgb_matrix::CreateMatrixFromFlags(&argc, &argv, &defaults);
+  Canvas *canvas = RGBMatrix::CreateFromFlags(&argc, &argv, &defaults);
   if (canvas == NULL) {
     return 1;
   }

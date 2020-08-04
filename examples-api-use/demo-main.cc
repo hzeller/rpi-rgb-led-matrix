@@ -1137,7 +1137,7 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
-  RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
+  RGBMatrix *matrix = RGBMatrix::CreateFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
 
