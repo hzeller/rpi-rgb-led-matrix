@@ -16,7 +16,7 @@
 #ifndef RPI_GPIO_H
 #define RPI_GPIO_H
 
-#include <stdint.h>
+#include "gpio-bits.h"
 
 #include <vector>
 
@@ -27,18 +27,18 @@ namespace rgb_matrix {
 class GPIO {
 public:
   // Available bits that actually have pins.
-  static const uint64_t kValidBits;
+  static const gpio_bits_t kValidBits;
 
   GPIO();
 
   // Initialize before use. Returns 'true' if successful, 'false' otherwise
   // (e.g. due to a permission problem).
   bool Init(int
-          #if RGB_SLOWDOWN_GPIO
+#if RGB_SLOWDOWN_GPIO
             slowdown = RGB_SLOWDOWN_GPIO,
-    #else
+#else
             slowdown = 1,
-    #endif
+#endif
             bool enable_64 = false
       );
 
@@ -46,14 +46,15 @@ public:
   // Returns the bits that were available and could be set for output.
   // (never use the optional adafruit_hack_needed parameter, it is used
   // internally to this library).
-  uint64_t InitOutputs(uint64_t outputs, bool adafruit_hack_needed = false);
+  gpio_bits_t InitOutputs(gpio_bits_t outputs,
+                          bool adafruit_hack_needed = false);
 
   // Request given bitmap of GPIO inputs.
   // Returns the bits that were available and could be reserved.
-  uint64_t RequestInputs(uint64_t inputs);
+  gpio_bits_t RequestInputs(gpio_bits_t inputs);
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
-  inline void SetBits(uint64_t value) {
+  inline void SetBits(gpio_bits_t value) {
     if (!value) return;
     WriteSetBits(value);
     for (int i = 0; i < slowdown_; ++i) {
@@ -62,7 +63,7 @@ public:
   }
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
-  inline void ClearBits(uint64_t value) {
+  inline void ClearBits(gpio_bits_t value) {
     if (!value) return;
     WriteClrBits(value);
     for (int i = 0; i < slowdown_; ++i) {
@@ -71,34 +72,38 @@ public:
   }
 
   // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
-  inline void WriteMaskedBits(uint64_t value, uint64_t mask) {
+  inline void WriteMaskedBits(gpio_bits_t value, gpio_bits_t mask) {
     // Writing a word is two operations. The IO is actually pretty slow, so
     // this should probably  be unnoticable.
     ClearBits(~value & mask);
     SetBits(value & mask);
   }
 
-  inline void Write(uint64_t value) { WriteMaskedBits(value, output_bits_); }
-  inline uint64_t Read() const { return ReadRegisters() & input_bits_; }
+  inline void Write(gpio_bits_t value) { WriteMaskedBits(value, output_bits_); }
+  inline gpio_bits_t Read() const { return ReadRegisters() & input_bits_; }
 
 private:
-  inline uint64_t ReadRegisters() const { return *gpio_read_bits_low_ | (static_cast<uint64_t>(*gpio_read_bits_low_) << 32);}
-  inline void WriteSetBits(uint64_t value) {
+  inline gpio_bits_t ReadRegisters() const {
+    return (static_cast<gpio_bits_t>(*gpio_read_bits_low_)
+            | (static_cast<gpio_bits_t>(*gpio_read_bits_low_) << 32));
+  }
+
+  inline void WriteSetBits(gpio_bits_t value) {
     *gpio_set_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
     if (enable_64_)
       *gpio_set_bits_high_ = static_cast<uint32_t>((value & 0xFFFFFFFF00000000ull) >> 32);
   }
 
-  inline void WriteClrBits(uint64_t value) {
+  inline void WriteClrBits(gpio_bits_t value) {
     *gpio_clr_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
     if (enable_64_)
       *gpio_clr_bits_high_ = static_cast<uint32_t>((value & 0xFFFFFFFF00000000ull) >> 32);
   }
 
 private:
-  uint64_t output_bits_;
-  uint64_t input_bits_;
-  uint64_t reserved_bits_;
+  gpio_bits_t output_bits_;
+  gpio_bits_t input_bits_;
+  gpio_bits_t reserved_bits_;
   int slowdown_;
   bool enable_64_;
   volatile uint32_t *gpio_set_bits_low_;
@@ -119,7 +124,7 @@ public:
   //   need negative pulses, this is what it does)
   // "nano_wait_spec" contains a list of time periods we'd like
   //   invoke later. This can be used to pre-process timings if needed.
-  static PinPulser *Create(GPIO *io, uint64_t gpio_mask,
+  static PinPulser *Create(GPIO *io, gpio_bits_t gpio_mask,
                            bool allow_hardware_pulsing,
                            const std::vector<int> &nano_wait_spec);
 

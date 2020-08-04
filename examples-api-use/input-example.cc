@@ -39,7 +39,8 @@ int main(int argc, char *argv[]) {
   // Let's request all input bits and see which are actually available.
   // This will differ depending on which hardware mapping you use and how
   // many parallel chains you have.
-  const uint32_t available_inputs = matrix->gpio()->RequestInputs(0xffffffff);
+  const gpio_bits_t available_inputs
+    = matrix->gpio()->RequestInputs(0xffffffff);
   fprintf(stderr, "Available GPIO-bits: ");
   for (int b = 0; b < 32; ++b) {
       if (available_inputs & (1<<b))

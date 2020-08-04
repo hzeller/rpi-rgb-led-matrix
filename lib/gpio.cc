@@ -125,27 +125,32 @@ static volatile uint32_t *s_PWM_registers = NULL;
 static volatile uint32_t *s_CLK_registers = NULL;
 
 namespace rgb_matrix {
-/*static*/ const uint64_t GPIO::kValidBits
-= ((1 <<  0) | (1 <<  1) | // RPi 1 - Revision 1 accessible
-   (1 <<  2) | (1 <<  3) | // RPi 1 - Revision 2 accessible
-   (1 <<  4) | (1 <<  7) | (1 << 8) | (1 <<  9) |
-   (1 << 10) | (1 << 11) | (1 << 14) | (1 << 15)| (1 <<17) | (1 << 18) |
-   (1 << 22) | (1 << 23) | (1 << 24) | (1 << 25)| (1 << 27) |
+#define GPIO_BIT(x) (1ull << x)
+
+/*static*/ const gpio_bits_t GPIO::kValidBits
+= (GPIO_BIT( 0) | GPIO_BIT( 1) | // RPi 1 - Revision 1 accessible
+   GPIO_BIT( 2) | GPIO_BIT( 3) | // RPi 1 - Revision 2 accessible
+   GPIO_BIT( 4) | GPIO_BIT( 7) | GPIO_BIT( 8) | GPIO_BIT( 9) |
+   GPIO_BIT(10) | GPIO_BIT(11) | GPIO_BIT(14) | GPIO_BIT(15) |
+   GPIO_BIT(17) | GPIO_BIT(18) | GPIO_BIT(22) | GPIO_BIT(23) |
+   GPIO_BIT(24) | GPIO_BIT(25)| GPIO_BIT(27) |
+
    // support for A+/B+ and RPi2 with additional GPIO pins.
-   (1 <<  5) | (1 <<  6) | (1 << 12) | (1 << 13) | (1 << 16) |
-   (1 << 19) | (1 << 20) | (1 << 21) | (1 << 26) |
+   GPIO_BIT( 5) | GPIO_BIT( 6) | GPIO_BIT(12) | GPIO_BIT(13) | GPIO_BIT(16) |
+   GPIO_BIT(19) | GPIO_BIT(20) | GPIO_BIT(21) | GPIO_BIT(26) |
+
    //Compute Module GPIO pins
-   (1 << 28) | (1 << 29) | (1 << 30) | (1 << 31) |
-   (1ull << 32) | (1ull << 33) | (1ull << 34) | (1ull << 35) | (1ull << 36) |
-   (1ull << 37) | (1ull << 38) | (1ull << 39) | (1ull << 40) | (1ull << 41) |
-   (1ull << 42) | (1ull << 43) | (1ull << 44) | (1ull << 45)
+   GPIO_BIT(28) | GPIO_BIT(29) | GPIO_BIT(30) | GPIO_BIT(31) |
+   GPIO_BIT(32) | GPIO_BIT(33) | GPIO_BIT(34) | GPIO_BIT(35) | GPIO_BIT(36) |
+   GPIO_BIT(37) | GPIO_BIT(38) | GPIO_BIT(39) | GPIO_BIT(40) | GPIO_BIT(41) |
+   GPIO_BIT(42) | GPIO_BIT(43) | GPIO_BIT(44) | GPIO_BIT(45)
 );
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
                slowdown_(1) {
 }
 
-uint64_t GPIO::InitOutputs(uint64_t outputs,
+gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
                            bool adafruit_pwm_transition_hack_needed) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init outputs but not yet Init()-ialized.\n");
@@ -167,15 +172,15 @@ uint64_t GPIO::InitOutputs(uint64_t outputs,
     // Even with PWM enabled, GPIO4 still can not be used, because it is
     // now connected to the GPIO18 and thus must stay an input.
     // So reserve this bit if it is not set in outputs.
-    reserved_bits_ = (1<<4) & ~outputs;
+    reserved_bits_ = GPIO_BIT(4) & ~outputs;
   }
 
   outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (uint64_t b = 0; b <= 45; ++b) {
+  for (gpio_bits_t b = 0; b <= 45; ++b) {
     if ((outputs & 0xFFFFFFFF00000000) != 0)
        enable_64_ = true;
-    if (outputs & (1ull << b)) {
+    if (outputs & GPIO_BIT(b)) {
       INP_GPIO(b);   // for writing, we first need to set as input.
       OUT_GPIO(b);
     }
@@ -184,7 +189,7 @@ uint64_t GPIO::InitOutputs(uint64_t outputs,
   return outputs;
 }
 
-uint64_t GPIO::RequestInputs(uint64_t inputs) {
+gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init inputs but not yet Init()-ialized.\n");
     return 0;
@@ -192,10 +197,10 @@ uint64_t GPIO::RequestInputs(uint64_t inputs) {
 
   inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
-  for (uint64_t b = 0; b <= 45; ++b) {
+  for (gpio_bits_t b = 0; b <= 45; ++b) {
     if ((inputs & 0xFFFFFFFF00000000) != 0)
        enable_64_ = true;
-    if (inputs & (1ull << b)) {
+    if (inputs & GPIO_BIT(b)) {
       INP_GPIO(b);
     }
   }
@@ -376,7 +381,7 @@ public:
 // to get the timing, but not optimal.
 class TimerBasedPinPulser : public PinPulser {
 public:
-  TimerBasedPinPulser(GPIO *io, uint64_t bits,
+  TimerBasedPinPulser(GPIO *io, gpio_bits_t bits,
                       const std::vector<int> &nano_specs)
     : io_(io), bits_(bits), nano_specs_(nano_specs) {
     if (!s_Timer1Mhz) {
@@ -394,7 +399,7 @@ public:
 
 private:
   GPIO *const io_;
-  const uint64_t bits_;
+  const gpio_bits_t bits_;
   const std::vector<int> nano_specs_;
 };
 
@@ -570,11 +575,11 @@ static void print_overshoot_histogram() {
 // It only works on GPIO-12 or 18 though.
 class HardwarePinPulser : public PinPulser {
 public:
-  static bool CanHandle(uint64_t gpio_mask) {
+  static bool CanHandle(gpio_bits_t gpio_mask) {
 #ifdef DISABLE_HARDWARE_PULSES
     return false;
 #else
-    const bool can_handle = gpio_mask == (1 << 18) || gpio_mask == (1 << 12);
+    const bool can_handle = gpio_mask==GPIO_BIT(18) || gpio_mask==GPIO_BIT(12);
     if (can_handle && (s_PWM_registers == NULL || s_CLK_registers == NULL)) {
       // Instead of silently not using the hardware pin pulser and falling back
       // to timing based loops, complain loudly and request the user to make
@@ -593,7 +598,7 @@ public:
 #endif
   }
 
-  HardwarePinPulser(uint64_t pins, const std::vector<int> &specs)
+  HardwarePinPulser(gpio_bits_t pins, const std::vector<int> &specs)
     : triggered_(false) {
     assert(CanHandle(pins));
     assert(s_CLK_registers && s_PWM_registers && s_Timer1Mhz);
@@ -624,10 +629,10 @@ public:
     // Get relevant registers
     fifo_ = s_PWM_registers + PWM_FIFO;
 
-    if (pins == (1<<18)) {
+    if (pins == GPIO_BIT(18)) {
       // set GPIO 18 to PWM0 mode (Alternative 5)
       SetGPIOMode(s_GPIO_registers, 18, 2);
-    } else if (pins == (1<<12)) {
+    } else if (pins == GPIO_BIT(12)) {
       // set GPIO 12 to PWM0 mode (Alternative 0)
       SetGPIOMode(s_GPIO_registers, 12, 4);
     } else {
@@ -761,7 +766,7 @@ private:
 } // end anonymous namespace
 
 // Public PinPulser factory
-PinPulser *PinPulser::Create(GPIO *io, uint64_t gpio_mask,
+PinPulser *PinPulser::Create(GPIO *io, gpio_bits_t gpio_mask,
                              bool allow_hardware_pulsing,
                              const std::vector<int> &nano_wait_spec) {
   if (!Timers::Init()) return NULL;
