@@ -13,17 +13,12 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
-#ifndef RPI_GPIO_H
-#define RPI_GPIO_H
+#ifndef RPI_GPIO_INTERNAL_H
+#define RPI_GPIO_INTERNAL_H
 
 #include "gpio-bits.h"
 
 #include <vector>
-
-// TODO: reduce the public interface, so that we're not depending on
-// compile-time gpio-bits.h.
-// All of the interface that should be needed for users is RequestInputs()
-// and Read().
 
 // Putting this in our namespace to not collide with other things called like
 // this.
@@ -51,12 +46,12 @@ public:
   // Returns the bits that were available and could be set for output.
   // (never use the optional adafruit_hack_needed parameter, it is used
   // internally to this library).
-  uint64_t InitOutputs(uint64_t outputs,
-                       bool adafruit_hack_needed = false);
+  gpio_bits_t InitOutputs(gpio_bits_t outputs,
+                          bool adafruit_hack_needed = false);
 
   // Request given bitmap of GPIO inputs.
   // Returns the bits that were available and could be reserved.
-  uint64_t RequestInputs(uint64_t inputs);
+  gpio_bits_t RequestInputs(gpio_bits_t inputs);
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(gpio_bits_t value) {
@@ -159,4 +154,4 @@ uint32_t GetMicrosecondCounter();
 
 }  // end namespace rgb_matrix
 
-#endif  // RPI_GPIO_H
+#endif  // RPI_GPIO_INGERNALH
