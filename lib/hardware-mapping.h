@@ -20,9 +20,7 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
-
-typedef uint64_t gpio_bits_t;  /* this should probably come from gpio.h */
+#include "gpio-bits.h"
 
 struct HardwareMapping {
   const char *name;

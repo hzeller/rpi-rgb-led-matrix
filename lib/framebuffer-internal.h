@@ -31,10 +31,10 @@ class RowAddressSetter;
 struct PixelDesignator {
   PixelDesignator() : gpio_word(-1), r_bit(0), g_bit(0), b_bit(0), mask(~0u){}
   long gpio_word;
-  uint64_t r_bit;
-  uint64_t g_bit;
-  uint64_t b_bit;
-  uint64_t mask;
+  gpio_bits_t r_bit;
+  gpio_bits_t g_bit;
+  gpio_bits_t b_bit;
+  gpio_bits_t mask;
 };
 
 class PixelDesignatorMap {
