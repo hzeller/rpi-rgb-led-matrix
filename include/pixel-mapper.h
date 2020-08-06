@@ -83,8 +83,8 @@ public:
 };
 
 // This is a place to register PixelMappers globally. If you register your
-// PixelMapper before calling CreateMatrixFromFlags(), the named PixelMapper
-// is available in the --led-pixel-mapper options.
+// PixelMapper before calling RGBMatrix::CreateFromFlags(), the named
+// PixelMapper is available in the --led-pixel-mapper options.
 //
 // Note, you don't _have_ to register your mapper, you can always call
 // RGBMatrix::ApplyPixelMapper() directly. Registering is for convenience and
