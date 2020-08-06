@@ -102,7 +102,7 @@ Getting started
 The relevant part to start with is to look at
 [led-matrix.h](../include/led-matrix.h).
 
-You can would typically use the `CreateMatrixFromFlags()` factory to
+You can would typically use the `RGBMatrix::CreateFromFlags()` factory to
 create an RGBMatrix and then go from there.
 
 ```C++
@@ -117,10 +117,13 @@ int main(int argc, char **argv) {
   my_defaults.chain_length = 3;
   my_defaults.show_refresh_rate = true;
   rgb_matrix::RuntimeOptions runtime_defaults;
+  // If you drop privileges, the root user you start the program with
+  // to be able to initialize the hardware will be switched to an unprivileged
+  // user to minimize a potential security attack surface.
   runtime_defaults.drop_privileges = 1;
-  RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(&argc, &argv,
-                                                        &my_defaults,
-                                                        &runtime_defaults);
+  RGBMatrix *matrix = RGBMatrix::CreateFromFlags(&argc, &argv,
+                                                 &my_defaults,
+                                                 &runtime_defaults);
   if (matrix == NULL) {
     PrintMatrixFlags(stderr, my_defaults, runtime_defaults);
     return 1;
@@ -415,7 +418,7 @@ provided in the `--led-pixel-mapper` command line option:
 
 ```
    RegisterPixelMapper(new MyOwnPixelMapper());
-   RGBMatrix *matrix = rgb_matrix::CreateMatrixFromFlags(...);
+   RGBMatrix *matrix = RGBMatrix::CreateFromFlags(...);
 ```
 
 Now your mapper can be used alongside (and combined with) the standard

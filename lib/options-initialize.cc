@@ -294,7 +294,10 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "(Default: %d).\n"
           "\t--led-chain=<chained>     : Number of daisy-chained panels. "
           "(Default: %d).\n"
-          "\t--led-parallel=<parallel> : Parallel chains. range=1..3 (6 for CM3)"
+          "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+          "(6 for CM3) "
+#endif
           "(Default: %d).\n"
           "\t--led-multiplexing=<0..%d> : Mux type: 0=direct; %s (Default: 0)\n"
           "\t--led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.\n"
@@ -384,9 +387,17 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
   const bool is_cm = (strcmp(hardware_mapping, "compute-module") == 0);
+#else
+  const bool is_cm = false;
+#endif
   if (parallel < 1 || parallel > (is_cm ? 6 : 3)) {
-    err->append("Parallel outside usable range (1..3 allowed, up to 6 only for CM3).\n");
+    err->append("Parallel outside usable range (1..3 allowed"
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+                ", up to 6 only for CM3"
+#endif
+                ").\n");
     success = false;
   }
 
@@ -434,28 +445,6 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   }
 
   return success;
-}
-
-// Linker trick: is someone was linking the old library that didn't have the
-// optional parameter defined, the linking will fail it wouldn't find the symbol
-// with less parameters. But we don't want to clutter the header with simple
-// delegation calls.
-//
-// So we define this symbol here and doing the delegation call until
-// really everyone had recompiled their code with the new header.
-//
-// Should be removed in a couple of months (March 2017ish)
-bool ParseOptionsFromFlags(int *argc, char ***argv,
-                           RGBMatrix::Options *default_options,
-                           RuntimeOptions *rt_options) {
-  return ParseOptionsFromFlags(argc, argv, default_options, rt_options,
-                               true);
-}
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
-                                 RGBMatrix::Options *default_options,
-                                 RuntimeOptions *default_rt_opts) {
-  return CreateMatrixFromFlags(argc, argv, default_options, default_rt_opts,
-                               true);
 }
 
 }  // namespace rgb_matrix
