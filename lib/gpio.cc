@@ -152,7 +152,7 @@ namespace rgb_matrix {
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
                slowdown_(1)
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
-             , enable_64_(false)
+             , uses_64_bit_(false)
 #endif
 {
 }
@@ -185,9 +185,8 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
   outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
-  if ((outputs & 0xFFFFFFFF00000000) != 0)
-    enable_64_ = true;
   const int kMaxAvailableBit = 45;
+  uses_64_bit_ |= (outputs >> 32) != 0;
 #else
   const int kMaxAvailableBit = 26;
 #endif
@@ -210,9 +209,8 @@ gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
   inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
-  if ((inputs & 0xFFFFFFFF00000000) != 0)
-    enable_64_ = true;
   const int kMaxAvailableBit = 45;
+  uses_64_bit_ |= (inputs >> 32) != 0;
 #else
   const int kMaxAvailableBit = 26;
 #endif

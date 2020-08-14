@@ -39,7 +39,7 @@ struct RuntimeOptions;
 // update the LED matrix.
 //
 // This implement the Canvas interface that represents the display with
-// (32 * chained_displays)x(rows * parallel_displays) pixels.
+// (led_cols * chained_displays)x(rows * parallel_displays) pixels.
 //
 // If can do multi-buffering using the CreateFrameCanvas() and SwapOnVSync()
 // methods. This is useful for animations and to prevent tearing.
@@ -109,7 +109,7 @@ public:
     // Flag: --led-brightness
     int brightness;
 
-    // Scan mode: 0=progressive, 1=interlaced
+    // Scan mode: 0=progressive, 1=interlaced.
     // Flag: --led-scan-mode
     int scan_mode;
 
@@ -118,7 +118,8 @@ public:
     // typically some 64x64 panels
     int row_address_type;  // Flag --led-row-addr-type
 
-    // Type of multiplexing. 0 = direct, 1 = stripe, 2 = checker (typical 1:8)
+    // Type of multiplexing. 0 = direct, 1 = stripe, 2 = checker,...
+    // Flag: --led-multiplexing
     int multiplexing;
 
     // Disable the PWM hardware subsystem to create pulses.
@@ -127,14 +128,17 @@ public:
     // sound system.
     // This won't do anything if output enable is not connected to GPIO 18 in
     // non-standard wirings.
-    // Flag: --led-hardware-pulse
-    bool disable_hardware_pulsing;
-    bool show_refresh_rate;    // Flag: --led-show-refresh
-    // bool swap_green_blue; (Deprecated: use led_sequence instead)
-    bool inverse_colors;       // Flag: --led-inverse
+    bool disable_hardware_pulsing;     // Flag: --led-hardware-pulse
+
+    // Show refresh rate on the terminal for debugging and tweaking purposes.
+    bool show_refresh_rate;            // Flag: --led-show-refresh
+
+    // Some panels have inversed colors.
+    bool inverse_colors;                // Flag: --led-inverse
 
     // In case the internal sequence of mapping is not "RGB", this contains the
-    // real mapping. Some panels mix up these colors.
+    // real mapping. Some panels mix up these colors. String of length three
+    // which has to contain all characters R, G and B.
     const char *led_rgb_sequence;  // Flag: --led-rgb-sequence
 
     // A string describing a sequence of pixel mappers that should be applied
@@ -144,6 +148,7 @@ public:
 
     // Panel type. Typically an empty string or NULL, but some panels need
     // a particular initialization sequence, so this is used for that.
+    // This can be e.g. "FM6126A" for that particular panel type.
     const char *panel_type;  // Flag: --led-panel-type
 
     // Limit refresh rate of LED panel. This will help on a loaded system
@@ -151,7 +156,7 @@ public:
     int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
   };
 
-  // Factory to create a matrix and possibly other things such as dropping
+  // Factory to create a matrix. Additional functionality includes dropping
   // privileges and becoming a daemon.
   // Returns NULL, if there was a problem (a message then is written to stderr).
   static RGBMatrix *CreateFromOptions(const Options &options,
