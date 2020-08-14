@@ -7,6 +7,7 @@
 #include "led-matrix.h"
 #include "graphics.h"
 
+#include <ctype.h>
 #include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
@@ -21,14 +22,22 @@ static void InterruptHandler(int signo) {
   interrupt_received = true;
 }
 
+static void InteractiveUseMessage() {
+  fprintf(stderr,
+          "Move around with common movement keysets \n"
+          " W,A,S,D (gaming move style) or\n"
+          " H,J,K,L (vi console move style)\n"
+          " Quit with 'q' or <ESC>\n"
+          "The pixel position cannot be less than 0 or greater than the "
+          "display height and width.\n");
+}
+
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options]\n", progname);
-  fprintf(stderr, "Display single pixel with any colour and brightness.\n"
-          "Move around with W,A,S,D keys.\n"
-          "The pixel position cannot be less than 0 or greater than the display height and width.\n");
+  fprintf(stderr, "Display single pixel with any colour.\n");
+  InteractiveUseMessage();
   fprintf(stderr, "Options:\n\n");
   fprintf(stderr,
-          "\t-b <brightness>           : Sets brightness percent. Default: 100.\n"
           "\t-C <r,g,b>                : Color. Default 255,255,0\n\n"
           );
   rgb_matrix::PrintMatrixFlags(stderr);
@@ -37,12 +46,6 @@ static int usage(const char *progname) {
 
 static bool parseColor(Color *c, const char *str) {
   return sscanf(str, "%hhu,%hhu,%hhu", &c->r, &c->g, &c->b) == 3;
-}
-
-static bool FullSaturation(const Color &c) {
-  return (c.r == 0 || c.r == 255)
-    && (c.g == 0 || c.g == 255)
-    && (c.b == 0 || c.b == 255);
 }
 
 static char getch() {
@@ -79,12 +82,10 @@ int main(int argc, char *argv[]) {
   }
 
   Color color(255, 255, 0);
-  int brightness = 100;
 
   int opt;
-  while ((opt = getopt(argc, argv, "C:b:")) != -1) {
+  while ((opt = getopt(argc, argv, "C:")) != -1) {
     switch (opt) {
-    case 'b': brightness = atoi(optarg); break;
     case 'C':
       if (!parseColor(&color, optarg)) {
         fprintf(stderr, "Invalid color spec: %s\n", optarg);
@@ -95,53 +96,55 @@ int main(int argc, char *argv[]) {
       return usage(argv[0]);
     }
   }
-  if (brightness < 1 || brightness > 100) {
-    fprintf(stderr, "Brightness is outside usable range.\n");
-    return 1;
-  }
 
   RGBMatrix *canvas = rgb_matrix::CreateMatrixFromOptions(matrix_options,
                                                           runtime_opt);
   if (canvas == NULL)
-    return 1;
-
-  canvas->SetBrightness(brightness);
-
-  const bool all_extreme_colors = (brightness == 100)
-    && FullSaturation(color);
-  if (all_extreme_colors)
-    canvas->SetPWMBits(1);
+    return usage(argv[0]);
 
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
 
-  int x_pos=0;
-  int y_pos=0;
+  int x_pos = 0;
+  int y_pos = 0;
 
-  fprintf(stderr, "Move around with W,A,S,D keys.\n"
-          "The pixel position cannot be less than 0 or greater than "
-          "the display height or width.\n");
+  InteractiveUseMessage();
+  const bool output_is_terminal = isatty(STDOUT_FILENO);
 
-  while (!interrupt_received) {
+  bool running = true;
+  while (!interrupt_received && running) {
     canvas->Clear();
     canvas->SetPixel(x_pos,y_pos, color.r, color.g, color.b);
-    fprintf(stderr, "X,Y Position : %d,%d\n",x_pos,y_pos);   //display the pixel position
-    switch(getch()) {
-    case 'w':
+    printf("%sX,Y = %d,%d%s",
+           output_is_terminal ? "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" : "",
+           x_pos, y_pos,
+           output_is_terminal ? " " : "\n");
+    fflush(stdout);
+
+    const char c = tolower(getch());
+    switch (c) {
+    case 'w': case 'k':   // Up
       if (y_pos > 0)
         y_pos--;
       break;
-    case 's':
+    case 's': case 'j':  // Down
       if (y_pos < canvas->height() - 1)
         y_pos++;
       break;
-    case 'a':
+    case 'a': case 'h':  // Left
       if (x_pos > 0)
         x_pos--;
       break;
-    case 'd':
+    case 'd': case 'l':  // Right
       if (x_pos < canvas->width() - 1)
         x_pos++;
+      break;
+      // All kinds of conditions which we use to exit
+    case 0x1B:           // Escape
+    case 'q':            // 'Q'uit
+    case 0x04:           // End of file
+    case 0x00:           // Other issue from getch()
+      running = false;
       break;
     }
   }
@@ -149,6 +152,6 @@ int main(int argc, char *argv[]) {
   // Finished. Shut down the RGB matrix.
   canvas->Clear();
   delete canvas;
-
+  printf("\n");
   return 0;
 }
