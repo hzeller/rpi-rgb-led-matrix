@@ -88,7 +88,7 @@ page.
    also read inputs from free GPIO-pins. Needed if you build some interactive
    piece.
  * [ledcat](./ledcat.cc) LED-cat compatible reading of pixels from stdin.
- * [pixel-example](./pixel-example.cc) Displays individual pixel on the display
+ * [pixel-mover](./pixel-mover.cc) Displays individual pixel on the display
    and it's expected position on the terminal. Helpful for testing panels.
    Can move around the pixel with W-Up, S-Down, A-Left, D-Right keys.
 
