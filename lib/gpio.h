@@ -93,7 +93,7 @@ private:
   inline void WriteSetBits(gpio_bits_t value) {
     *gpio_set_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
-    if (enable_64_)
+    if (uses_64_bit_)
       *gpio_set_bits_high_ = static_cast<uint32_t>(value >> 32);
 #endif
   }
@@ -101,7 +101,7 @@ private:
   inline void WriteClrBits(gpio_bits_t value) {
     *gpio_clr_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
-    if (enable_64_)
+    if (uses_64_bit_)
       *gpio_clr_bits_high_ = static_cast<uint32_t>(value >> 32);
 #endif
   }
@@ -117,7 +117,7 @@ private:
   volatile uint32_t *gpio_read_bits_low_;
 
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
-  bool enable_64_;
+  bool uses_64_bit_;
   volatile uint32_t *gpio_set_bits_high_;
   volatile uint32_t *gpio_clr_bits_high_;
   volatile uint32_t *gpio_read_bits_high_;

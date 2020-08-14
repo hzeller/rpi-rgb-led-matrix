@@ -164,7 +164,7 @@ DEFINES+=$(USER_DEFINES)
 
 DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
-CFLAGS=-Wall -O3 -g -fPIC $(DEFINES) -Wextra -Wno-unused-parameter
+CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES)
 CXXFLAGS=$(CFLAGS) -fno-exceptions
 
 all : $(TARGET).a $(TARGET).so.1
