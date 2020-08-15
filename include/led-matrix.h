@@ -217,6 +217,10 @@ public:
   // Returns a boolean indicating if this was successful.
   bool ApplyPixelMapper(const PixelMapper *mapper);
 
+  // Note, there used to be ApplyStaticTransformer(), which has been deprecated
+  // since 2018 and changed to a compile-time option, then finally removed
+  // in 2020. Use PixelMapper instead, which is simpler and more intuitive.
+
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // limited comic-colors, 1 might be sufficient. Lower require less CPU and
   // increases refresh-rate.
