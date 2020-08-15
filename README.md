@@ -5,7 +5,7 @@ A library to control commonly available 64x64, 32x32 or 16x32 RGB LED panels
 with the Raspberry Pi. Can support PWM up to 11Bit per channel, providing
 true 24bpp color with CIE1931 profile.
 
-Supports 3 chains with many panels each on a regular Pi. Supports upto 6 chains on Compute Module.
+Supports 3 chains with many panels each on a regular Pi.
 On a Raspberry Pi 2 or 3, you can easily chain 12 panels in that chain
 (so 36 panels total), but you can theoretically stretch that to up
 to 96-ish panels (32 chain length) and still reach
@@ -175,7 +175,7 @@ First things first: if you have a different wiring than described in
 choose these here:
 
 ```
---led-gpio-mapping=<gpio-mapping>: Name of GPIO mapping used. Default "regular", for CM "compute-module"
+--led-gpio-mapping=<gpio-mapping>: Name of GPIO mapping used. Default "regular"
 ```
 
 This can have values such as
