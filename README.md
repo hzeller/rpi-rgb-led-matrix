@@ -240,7 +240,7 @@ If you have some 'outdoor' panels or panels with different multiplexing,
 the following will be useful:
 
 ```
---led-multiplexing=<0..16> : Mux type: 0=direct; 1=Stripe; 2=Checkered...
+--led-multiplexing=<0..17> : Mux type: 0=direct; 1=Stripe; 2=Checkered...
 ```
 
 The outdoor panels have different multiplexing which allows them to be faster
