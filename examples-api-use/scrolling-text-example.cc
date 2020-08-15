@@ -30,21 +30,21 @@ static int usage(const char *progname) {
   fprintf(stderr, "usage: %s [options] <text>\n", progname);
   fprintf(stderr, "Takes text and scrolls it with speed -s\n");
   fprintf(stderr, "Options:\n");
-  rgb_matrix::PrintMatrixFlags(stderr);
   fprintf(stderr,
           "\t-s <speed>        : Approximate letters per second. "
           "(Zero for no scrolling)\n"
           "\t-l <loop-count>   : Number of loops through the text. "
           "-1 for endless (default)\n"
           "\t-f <font-file>    : Use given font.\n"
-          "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
           "\t-x <x-origin>     : X-Origin of displaying text (Default: 0)\n"
           "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
           "\t-t <track=spacing>: Spacing pixels between letters (Default: 0)\n"
           "\n"
           "\t-C <r,g,b>        : Text-Color. Default 255,255,0\n"
           "\t-B <r,g,b>        : Background-Color. Default 0,0,0\n"
+          "\n"
           );
+  rgb_matrix::PrintMatrixFlags(stderr);
   return 1;
 }
 
@@ -76,17 +76,15 @@ int main(int argc, char *argv[]) {
                                * matrix_options.cols) + 5;
   int x_orig = x_default_start;
   int y_orig = 0;
-  int brightness = 100;
   int letter_spacing = 0;
   float speed = 7.0f;
   int loops = -1;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:b:t:s:l:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:t:s:l:")) != -1) {
     switch (opt) {
     case 's': speed = atof(optarg); break;
     case 'l': loops = atoi(optarg); break;
-    case 'b': brightness = atoi(optarg); break;
     case 'x': x_orig = atoi(optarg); break;
     case 'y': y_orig = atoi(optarg); break;
     case 'f': bdf_font_file = strdup(optarg); break;
@@ -131,19 +129,12 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  if (brightness < 1 || brightness > 100) {
-    fprintf(stderr, "Brightness is outside usable range.\n");
-    return 1;
-  }
-
   RGBMatrix *canvas = rgb_matrix::CreateMatrixFromOptions(matrix_options,
                                                           runtime_opt);
   if (canvas == NULL)
     return 1;
 
-  canvas->SetBrightness(brightness);
-
-  const bool all_extreme_colors = (brightness == 100)
+  const bool all_extreme_colors = (matrix_options.brightness == 100)
     && FullSaturation(color)
     && FullSaturation(bg_color);
   if (all_extreme_colors)
@@ -188,7 +179,6 @@ int main(int argc, char *argv[]) {
   }
 
   // Finished. Shut down the RGB matrix.
-  canvas->Clear();
   delete canvas;
 
   return 0;

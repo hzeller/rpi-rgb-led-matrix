@@ -36,7 +36,6 @@ static int usage(const char *progname) {
           "\t                    Can be provided multiple times for multiple "
           "lines\n"
           "\t-f <font-file>    : Use given font.\n"
-          "\t-b <brightness>   : Sets brightness percent. Default: 100.\n"
           "\t-x <x-origin>     : X-Origin of displaying text (Default: 0)\n"
           "\t-y <y-origin>     : Y-Origin of displaying text (Default: 0)\n"
           "\t-s <line-spacing> : Extra spacing between lines when multiple -d given\n"
@@ -79,15 +78,13 @@ int main(int argc, char *argv[]) {
   const char *bdf_font_file = NULL;
   int x_orig = 0;
   int y_orig = 0;
-  int brightness = 100;
   int letter_spacing = 0;
   int line_spacing = 0;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:b:s:S:d:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:s:S:d:")) != -1) {
     switch (opt) {
     case 'd': format_lines.push_back(optarg); break;
-    case 'b': brightness = atoi(optarg); break;
     case 'x': x_orig = atoi(optarg); break;
     case 'y': y_orig = atoi(optarg); break;
     case 'f': bdf_font_file = strdup(optarg); break;
@@ -139,19 +136,12 @@ int main(int argc, char *argv[]) {
     outline_font = font.CreateOutlineFont();
   }
 
-  if (brightness < 1 || brightness > 100) {
-    fprintf(stderr, "Brightness is outside usable range.\n");
-    return 1;
-  }
-
   RGBMatrix *matrix = rgb_matrix::CreateMatrixFromOptions(matrix_options,
                                                           runtime_opt);
   if (matrix == NULL)
     return 1;
 
-  matrix->SetBrightness(brightness);
-
-  const bool all_extreme_colors = (brightness == 100)
+  const bool all_extreme_colors = (matrix_options.brightness == 100)
     && FullSaturation(color)
     && FullSaturation(bg_color)
     && FullSaturation(outline_color);

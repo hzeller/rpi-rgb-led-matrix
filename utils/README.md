@@ -158,7 +158,6 @@ Options:
         -s <speed>        : Approximate letters per second. (Zero for no scrolling)
         -l <loop-count>   : Number of loops through the text. -1 for endless (default)
         -f <font-file>    : Path to *.bdf-font to be used.
-        -b <brightness>   : Sets brightness percent. Default: 100.
         -x <x-origin>     : Shift X-Origin of displaying text (Default: 0)
         -y <y-origin>     : Shift Y-Origin of displaying text (Default: 0)
         -t <track-spacing>: Spacing pixels between letters (Default: 0)

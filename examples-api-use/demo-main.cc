@@ -1082,47 +1082,6 @@ int main(int argc, char *argv[]) {
       scroll_ms = atoi(optarg);
       break;
 
-      // These used to be options we understood, but deprecated now. Accept
-      // but don't mention in usage()
-    case 'R':
-      fprintf(stderr, "-R is deprecated. "
-              "Use --led-pixel-mapper=\"Rotate:%s\" instead.\n", optarg);
-      return 1;
-      break;
-
-    case 'L':
-      fprintf(stderr, "-L is deprecated. Use\n\t--led-pixel-mapper=\"U-mapper\" --led-chain=4\ninstead.\n");
-      return 1;
-      break;
-
-    case 'd':
-      runtime_opt.daemon = 1;
-      break;
-
-    case 'r':
-      fprintf(stderr, "Instead of deprecated -r, use --led-rows=%s instead.\n",
-              optarg);
-      matrix_options.rows = atoi(optarg);
-      break;
-
-    case 'P':
-      matrix_options.parallel = atoi(optarg);
-      break;
-
-    case 'c':
-      fprintf(stderr, "Instead of deprecated -c, use --led-chain=%s instead.\n",
-              optarg);
-      matrix_options.chain_length = atoi(optarg);
-      break;
-
-    case 'p':
-      matrix_options.pwm_bits = atoi(optarg);
-      break;
-
-    case 'b':
-      matrix_options.brightness = atoi(optarg);
-      break;
-
     default: /* '?' */
       return usage(argv[0]);
     }
