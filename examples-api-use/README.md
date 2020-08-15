@@ -83,7 +83,8 @@ page.
  * [text-example](./text-example.cc) Reads text from stdin and displays it.
  * [scrolling-text-example](./scrolling-text-example.cc) Scrolls a text
    given on the command-line.
- * [clock](./clock.cc) Shows a clock.
+ * [clock](./clock.cc) Shows a clock with choosable date format string in
+   one or multiple lines.
  * [input-example](./input-example.cc) Example how to use the LED-Matrix but
    also read inputs from free GPIO-pins. Needed if you build some interactive
    piece.
@@ -167,7 +168,7 @@ hello
 How about a clock ?
 
 ```
-sudo ./clock -f ../fonts/7x13.bdf --led-chain=2 -d "%H:%M:%S"
+sudo ./clock -f ../fonts/7x13.bdf --led-chain=2 -d "%A" -d "%H:%M:%S"
 ```
 <img src="../img/time-display.jpg" height="100px">
 
