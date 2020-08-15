@@ -5,7 +5,7 @@ A library to control commonly available 64x64, 32x32 or 16x32 RGB LED panels
 with the Raspberry Pi. Can support PWM up to 11Bit per channel, providing
 true 24bpp color with CIE1931 profile.
 
-Supports 3 chains with many panels each on a regular Pi. Supports upto 6 chains on Compute Module.
+Supports 3 chains with many panels each on a regular Pi.
 On a Raspberry Pi 2 or 3, you can easily chain 12 panels in that chain
 (so 36 panels total), but you can theoretically stretch that to up
 to 96-ish panels (32 chain length) and still reach
@@ -175,7 +175,7 @@ First things first: if you have a different wiring than described in
 choose these here:
 
 ```
---led-gpio-mapping=<gpio-mapping>: Name of GPIO mapping used. Default "regular", for CM "compute-module"
+--led-gpio-mapping=<gpio-mapping>: Name of GPIO mapping used. Default "regular"
 ```
 
 This can have values such as
@@ -726,8 +726,8 @@ utilize it then. Still, I'd typically recommend it.
 
 Performance improvements and limits
 -----------------------------------
-Regardless of which driving hardware you use, ultimately you can only push pixels 
-so fast to a string of panels before you get flickering due to too low a refresh 
+Regardless of which driving hardware you use, ultimately you can only push pixels
+so fast to a string of panels before you get flickering due to too low a refresh
 rate (less than 80-100Hz), or before you refresh the panel lines too fast and they
 appear too dim because each line is not displayed long enough before it is turned off.
 
@@ -737,20 +737,20 @@ Basic performance tips:
 - led-pwm-dither-bits=1 gives you a speed boost but less brightness
 - led-pwm-lsb-nanoseconds=50 also gives you a speed boost but less brightness
 - led-pwm-bits=7 or even lower decrease color depth but increases refresh speed
-- AB panels and other panels with that use values of led-multiplexing bigger than 0, 
+- AB panels and other panels with that use values of led-multiplexing bigger than 0,
 will also go faster, although as you tune more options given above, their advantage will decrease.
 - 32x16 ABC panels are faster than ABCD which are faster than ABCDE, which are faster than 128x64 ABC panels
 (which do use 5 address lines, but over only 3 wires)
 - Use at least an rPi3 (rPi4 is still slightly faster but may need --led-slowdown-gpio=2)
 
 Maximum resolutions reasonably achievable:
-A general rule of thumb is that running 16K pixels (128x128 or otherwise) on a single chain, 
-is already pushing limits and you will have to make tradeoffs in visual quality. 32K pixels 
-(like 128x256) is definitely pushing things and you'll get 100Hz or less depending on the 
-performance options you choose.  
-This puts the maximum reasonable resolution around 100K pixels (like 384x256) for 3 chains. 
-You can see more examples and video capture of speed on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)  
-If your refresh rate is below 300Hz, expect likely black bars when taking cell phone pictures. 
+A general rule of thumb is that running 16K pixels (128x128 or otherwise) on a single chain,
+is already pushing limits and you will have to make tradeoffs in visual quality. 32K pixels
+(like 128x256) is definitely pushing things and you'll get 100Hz or less depending on the
+performance options you choose.
+This puts the maximum reasonable resolution around 100K pixels (like 384x256) for 3 chains.
+You can see more examples and video capture of speed on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)
+If your refresh rate is below 300Hz, expect likely black bars when taking cell phone pictures.
 A real camera with shutter speed lowered accordingly, will get around this.
 
 Ultimately, you should not expect to go past 64K pixels using 3 chains without significant

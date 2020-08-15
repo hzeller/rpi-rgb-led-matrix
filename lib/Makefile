@@ -134,7 +134,8 @@ HARDWARE_DESC?=regular
 # caches can't be utilized as much.
 # So only switch this on if you really use the compute module and use more
 # than 3 parallel chains.
-DEFINES+=-DENABLE_WIDE_GPIO_COMPUTE_MODULE
+# (this is untested right now, waiting for hardware to arrive for testing)
+#DEFINES+=-DENABLE_WIDE_GPIO_COMPUTE_MODULE
 
 # ---- Pinout options for hardware variants; usually no change needed here ----
 
