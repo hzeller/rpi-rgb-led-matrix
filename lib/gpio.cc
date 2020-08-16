@@ -127,30 +127,6 @@ static volatile uint32_t *s_CLK_registers = NULL;
 namespace rgb_matrix {
 #define GPIO_BIT(x) (1ull << x)
 
-/*static*/ const gpio_bits_t GPIO::kValidBits
-= (GPIO_BIT( 0) | GPIO_BIT( 1) | // RPi 1 - Revision 1 accessible
-   GPIO_BIT( 2) | GPIO_BIT( 3) | // RPi 1 - Revision 2 accessible
-   GPIO_BIT( 4) | GPIO_BIT( 7) | GPIO_BIT( 8) | GPIO_BIT( 9) |
-   GPIO_BIT(10) | GPIO_BIT(11) | GPIO_BIT(14) | GPIO_BIT(15) |
-   GPIO_BIT(17) | GPIO_BIT(18) | GPIO_BIT(22) | GPIO_BIT(23) |
-   GPIO_BIT(24) | GPIO_BIT(25) | GPIO_BIT(27) |
-
-   // support for A+/B+ and RPi2 with additional GPIO pins.
-   GPIO_BIT( 5) | GPIO_BIT( 6) | GPIO_BIT(12) | GPIO_BIT(13) | GPIO_BIT(16) |
-   GPIO_BIT(19) | GPIO_BIT(20) | GPIO_BIT(21) | GPIO_BIT(26) |
-
-   // Pins on P5 header
-   GPIO_BIT(28) | GPIO_BIT(29) | GPIO_BIT(30) | GPIO_BIT(31)
-
-#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
-   |
-   // Compute Module GPIO pins
-   GPIO_BIT(32) | GPIO_BIT(33) | GPIO_BIT(34) | GPIO_BIT(35) | GPIO_BIT(36) |
-   GPIO_BIT(37) | GPIO_BIT(38) | GPIO_BIT(39) | GPIO_BIT(40) | GPIO_BIT(41) |
-   GPIO_BIT(42) | GPIO_BIT(43) | GPIO_BIT(44) | GPIO_BIT(45)
-#endif
-);
-
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
                slowdown_(1)
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
@@ -184,7 +160,6 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
     reserved_bits_ = GPIO_BIT(4) & ~outputs;
   }
 
-  outputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
   const int kMaxAvailableBit = 45;
@@ -208,7 +183,6 @@ gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
     return 0;
   }
 
-  inputs &= kValidBits;     // Sanitize: only bits on GPIO header allowed.
   inputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
   const int kMaxAvailableBit = 45;

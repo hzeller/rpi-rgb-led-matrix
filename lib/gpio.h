@@ -26,9 +26,6 @@ namespace rgb_matrix {
 // For now, everything is initialized as output.
 class GPIO {
 public:
-  // Available bits that actually have pins.
-  static const gpio_bits_t kValidBits;
-
   GPIO();
 
   // Initialize before use. Returns 'true' if successful, 'false' otherwise
