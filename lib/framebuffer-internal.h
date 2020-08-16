@@ -65,6 +65,24 @@ private:
 // written out.
 class Framebuffer {
 public:
+  // Maximum usable bitplanes.
+  //
+  // 11 bits seems to be a sweet spot in which we still get somewhat useful
+  // refresh rate and have good color richness. This is the default setting
+  // However, in low-light situations, we want to be able to scale down
+  // brightness more, having more bits at the bottom.
+  // TODO(hzeller): make the default 15 bit or so, but slide the use of
+  //  timing to lower bits if fewer bits requested to not affect the overall
+  //  refresh in that case.
+  //  This needs to be balanced to not create too agressive timing however.
+  //  To be explored in a separete commit.
+  //
+  // For now, if someone needs very low level of light, change this to
+  // say 13 and recompile. Run with --led-pwm-bits=13. Also, consider
+  // --led-pwm-dither-bits=2 to have the refresh rate not suffer too much.
+  static constexpr int kBitPlanes = 11;
+  static constexpr int kDefaultBitPlanes = 11;
+
   Framebuffer(int rows, int columns, int parallel,
               int scan_mode,
               const char* led_sequence, bool inverse_color,

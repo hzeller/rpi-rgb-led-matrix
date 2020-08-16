@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "multiplex-mappers-internal.h"
+#include "framebuffer-internal.h"
 
 #include "gpio.h"
 
@@ -246,7 +247,7 @@ static bool FlagInit(int &argc, char **&argv,
   return true;
 }
 
-}  // namespace
+}  // anonymous namespace
 
 bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RGBMatrix::Options *m_opt_in,
@@ -303,7 +304,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.\n"
           "\t                            Optional params after a colon e.g. \"U-mapper;Rotate:90\"\n"
           "\t                            Available: %s. Default: \"\"\n"
-          "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
+          "\t--led-pwm-bits=<1..%d>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
@@ -326,7 +327,8 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           d.rows, d.cols, d.chain_length, d.parallel,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
           available_mappers.c_str(),
-          d.pwm_bits, d.brightness, d.scan_mode,
+          internal::Framebuffer::kBitPlanes, d.pwm_bits,
+          d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.limit_refresh_rate_hz,
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
@@ -406,8 +408,12 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (pwm_bits <= 0 || pwm_bits > 11) {
-    err->append("Invalid range of pwm-bits (1..11 allowed).\n");
+  if (pwm_bits <= 0 || pwm_bits > internal::Framebuffer::kBitPlanes) {
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer),
+             "Invalid range of pwm-bits (1..%d allowed).\n",
+             internal::Framebuffer::kBitPlanes);
+    err->append(buffer);
     success = false;
   }
 

@@ -33,10 +33,6 @@
 
 namespace rgb_matrix {
 namespace internal {
-enum {
-  kBitPlanes = 11  // maximum usable bitplanes.
-};
-
 // We need one global instance of a timing correct pulser. There are different
 // implementations depending on the context.
 static PinPulser *sOutputEnablePulser = NULL;
@@ -594,9 +590,9 @@ void Framebuffer::Clear() {
 
 // Do CIE1931 luminance correction and scale to output bitplanes
 static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
-  float out_factor = ((1 << kBitPlanes) - 1);
+  float out_factor = ((1 << internal::Framebuffer::kBitPlanes) - 1);
   float v = (float) c * brightness / 255.0;
-  return out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3));
+  return roundf(out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3)));
 }
 
 struct ColorLookup {
@@ -621,7 +617,8 @@ static inline uint16_t DirectMapColor(uint8_t brightness, uint8_t c) {
   // simple scale down the color value
   c = c * brightness / 100;
 
-  enum {shift = kBitPlanes - 8};  //constexpr; shift to be left aligned.
+  // shift to be left aligned with top-most bits.
+  constexpr int shift = internal::Framebuffer::kBitPlanes - 8;
   return (shift > 0) ? (c << shift) : (c >> -shift);
 }
 
