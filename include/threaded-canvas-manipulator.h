@@ -14,6 +14,14 @@
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
 // Utility base class for continuously updating the canvas.
+
+// Note: considering removing this, as real applications likely have something
+// similar, but this might not be quite usable.
+// Since it is just a few lines of code, it is probably better
+// implemented in the application for readability.
+//
+// So for simplicity of the API, consider ThreadedCanvasManipulator deprecated.
+
 #ifndef RPI_THREADED_CANVAS_MANIPULATOR_H
 #define RPI_THREADED_CANVAS_MANIPULATOR_H
 
@@ -47,8 +55,8 @@ namespace rgb_matrix {
   };
 
   // Later, in your main method.
-  RGBMatrix matrix(&gpio);
-  MyCrazyDemo *demo = new MyCrazyDemo(&matrix);
+  RGBMatrix *matrix = RGBMatrix::CreateFromOptions(...);
+  MyCrazyDemo *demo = new MyCrazyDemo(matrix);
   demo->Start();   // Start doing things.
   // This now runs in the background, you can do other things here,
   // e.g. aquiring new data or simply wait. But for waiting, you wouldn't

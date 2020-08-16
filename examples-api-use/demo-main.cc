@@ -6,7 +6,7 @@
 //
 // This is a grab-bag of various demos and not very readable.
 #include "led-matrix.h"
-#include "threaded-canvas-manipulator.h"
+
 #include "pixel-mapper.h"
 #include "graphics.h"
 
@@ -35,20 +35,33 @@ static void InterruptHandler(int signo) {
   interrupt_received = true;
 }
 
+class DemoRunner {
+protected:
+  DemoRunner(Canvas *canvas) : canvas_(canvas) {}
+  inline Canvas *canvas() { return canvas_; }
+
+public:
+  virtual ~DemoRunner() {}
+  virtual void Run() = 0;
+
+private:
+  Canvas *const canvas_;
+};
+
 /*
  * The following are demo image generators. They all use the utility
- * class ThreadedCanvasManipulator to generate new frames.
+ * class DemoRunner to generate new frames.
  */
 
 // Simple generator that pulses through RGB and White.
-class ColorPulseGenerator : public ThreadedCanvasManipulator {
+class ColorPulseGenerator : public DemoRunner {
 public:
-  ColorPulseGenerator(RGBMatrix *m) : ThreadedCanvasManipulator(m), matrix_(m) {
+  ColorPulseGenerator(RGBMatrix *m) : DemoRunner(m), matrix_(m) {
     off_screen_canvas_ = m->CreateFrameCanvas();
   }
-  void Run() {
+  void Run() override {
     uint32_t continuum = 0;
-    while (running() && !interrupt_received) {
+    while (!interrupt_received) {
       usleep(5 * 1000);
       continuum += 1;
       continuum %= 3 * 255;
@@ -77,16 +90,16 @@ private:
 };
 
 // Simple generator that pulses through brightness on red, green, blue and white
-class BrightnessPulseGenerator : public ThreadedCanvasManipulator {
+class BrightnessPulseGenerator : public DemoRunner {
 public:
   BrightnessPulseGenerator(RGBMatrix *m)
-    : ThreadedCanvasManipulator(m), matrix_(m) {}
-  void Run() {
+    : DemoRunner(m), matrix_(m) {}
+  void Run() override {
     const uint8_t max_brightness = matrix_->brightness();
     const uint8_t c = 255;
     uint8_t count = 0;
 
-    while (running() && !interrupt_received) {
+    while (!interrupt_received) {
       if (matrix_->brightness() < 1) {
         matrix_->SetBrightness(max_brightness);
         count++;
@@ -109,10 +122,10 @@ private:
   RGBMatrix *const matrix_;
 };
 
-class SimpleSquare : public ThreadedCanvasManipulator {
+class SimpleSquare : public DemoRunner {
 public:
-  SimpleSquare(Canvas *m) : ThreadedCanvasManipulator(m) {}
-  void Run() {
+  SimpleSquare(Canvas *m) : DemoRunner(m) {}
+  void Run() override {
     const int width = canvas()->width() - 1;
     const int height = canvas()->height() - 1;
     // Borders
@@ -127,17 +140,17 @@ public:
   }
 };
 
-class GrayScaleBlock : public ThreadedCanvasManipulator {
+class GrayScaleBlock : public DemoRunner {
 public:
-  GrayScaleBlock(Canvas *m) : ThreadedCanvasManipulator(m) {}
-  void Run() {
+  GrayScaleBlock(Canvas *m) : DemoRunner(m) {}
+  void Run() override {
     const int sub_blocks = 16;
     const int width = canvas()->width();
     const int height = canvas()->height();
     const int x_step = max(1, width / sub_blocks);
     const int y_step = max(1, height / sub_blocks);
     uint8_t count = 0;
-    while (running() && !interrupt_received) {
+    while (!interrupt_received) {
       for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
           int c = sub_blocks * (y / y_step) + x / x_step;
@@ -156,9 +169,9 @@ public:
 };
 
 // Simple class that generates a rotating block on the screen.
-class RotatingBlockGenerator : public ThreadedCanvasManipulator {
+class RotatingBlockGenerator : public DemoRunner {
 public:
-  RotatingBlockGenerator(Canvas *m) : ThreadedCanvasManipulator(m) {}
+  RotatingBlockGenerator(Canvas *m) : DemoRunner(m) {}
 
   uint8_t scale_col(int val, int lo, int hi) {
     if (val < lo) return 0;
@@ -166,7 +179,7 @@ public:
     return 255 * (val - lo) / (hi - lo);
   }
 
-  void Run() {
+  void Run() override {
     const int cent_x = canvas()->width() / 2;
     const int cent_y = canvas()->height() / 2;
 
@@ -184,7 +197,7 @@ public:
 
     const float deg_to_rad = 2 * 3.14159265 / 360;
     int rotation = 0;
-    while (running() && !interrupt_received) {
+    while (!interrupt_received) {
       ++rotation;
       usleep(15 * 1000);
       rotation %= 360;
@@ -216,21 +229,16 @@ private:
   }
 };
 
-class ImageScroller : public ThreadedCanvasManipulator {
+class ImageScroller : public DemoRunner {
 public:
   // Scroll image with "scroll_jumps" pixels every "scroll_ms" milliseconds.
   // If "scroll_ms" is negative, don't do any scrolling.
   ImageScroller(RGBMatrix *m, int scroll_jumps, int scroll_ms = 30)
-    : ThreadedCanvasManipulator(m), scroll_jumps_(scroll_jumps),
+    : DemoRunner(m), scroll_jumps_(scroll_jumps),
       scroll_ms_(scroll_ms),
       horizontal_position_(0),
       matrix_(m) {
     offscreen_ = matrix_->CreateFrameCanvas();
-  }
-
-  virtual ~ImageScroller() {
-    Stop();
-    WaitStopped();   // only now it is safe to delete our instance variables.
   }
 
   // _very_ simplified. Can only read binary P6 PPM. Expects newlines in headers
@@ -279,10 +287,10 @@ public:
     return true;
   }
 
-  void Run() {
+  void Run() override {
     const int screen_height = offscreen_->height();
     const int screen_width = offscreen_->width();
-    while (running() && !interrupt_received) {
+    while (!interrupt_received) {
       {
         MutexLock l(&mutex_new_image_);
         if (new_image_.IsValid()) {
@@ -367,10 +375,10 @@ private:
 
 // Abelian sandpile
 // Contributed by: Vliedel
-class Sandpile : public ThreadedCanvasManipulator {
+class Sandpile : public DemoRunner {
 public:
   Sandpile(Canvas *m, int delay_ms=50)
-    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms) {
+    : DemoRunner(m), delay_ms_(delay_ms) {
     width_ = canvas()->width() - 1; // We need an odd width
     height_ = canvas()->height() - 1; // We need an odd height
 
@@ -404,8 +412,8 @@ public:
     delete [] newValues_;
   }
 
-  void Run() {
-    while (running() && !interrupt_received) {
+  void Run() override {
+    while (!interrupt_received) {
       // Drop a sand grain in the centre
       values_[width_/2][height_/2]++;
       updateValues();
@@ -478,10 +486,10 @@ private:
 
 // Conway's game of life
 // Contributed by: Vliedel
-class GameLife : public ThreadedCanvasManipulator {
+class GameLife : public DemoRunner {
 public:
   GameLife(Canvas *m, int delay_ms=500, bool torus=true)
-    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms), torus_(torus) {
+    : DemoRunner(m), delay_ms_(delay_ms), torus_(torus) {
     width_ = canvas()->width();
     height_ = canvas()->height();
 
@@ -533,8 +541,8 @@ public:
     delete [] newValues_;
   }
 
-  void Run() {
-    while (running() && !interrupt_received) {
+  void Run() override {
+    while (!interrupt_received) {
 
       updateValues();
 
@@ -632,10 +640,10 @@ private:
 
 // Langton's ant
 // Contributed by: Vliedel
-class Ant : public ThreadedCanvasManipulator {
+class Ant : public DemoRunner {
 public:
   Ant(Canvas *m, int delay_ms=500)
-    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms) {
+    : DemoRunner(m), delay_ms_(delay_ms) {
     numColors_ = 4;
     width_ = canvas()->width();
     height_ = canvas()->height();
@@ -652,7 +660,7 @@ public:
     delete [] values_;
   }
 
-  void Run() {
+  void Run() override {
     antX_ = width_/2;
     antY_ = height_/2-3;
     antDir_ = 0;
@@ -663,7 +671,7 @@ public:
       }
     }
 
-    while (running() && !interrupt_received) {
+    while (!interrupt_received) {
       // LLRR
       switch (values_[antX_][antY_]) {
       case 0:
@@ -736,10 +744,10 @@ private:
 // Imitation of volume bars
 // Purely random height doesn't look realistic
 // Contributed by: Vliedel
-class VolumeBars : public ThreadedCanvasManipulator {
+class VolumeBars : public DemoRunner {
 public:
   VolumeBars(Canvas *m, int delay_ms=50, int numBars=8)
-    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms),
+    : DemoRunner(m), delay_ms_(delay_ms),
       numBars_(numBars), t_(0) {
   }
 
@@ -749,7 +757,7 @@ public:
     delete [] barMeans_;
   }
 
-  void Run() {
+  void Run() override {
     const int width = canvas()->width();
     height_ = canvas()->height();
     barWidth_ = width/numBars_;
@@ -775,7 +783,7 @@ public:
     }
 
     // Start the loop
-    while (running() && !interrupt_received) {
+    while (!interrupt_received) {
       if (t_ % 8 == 0) {
         // Change the means
         for (int i=0; i<numBars_; ++i) {
@@ -845,10 +853,10 @@ private:
 /// Genetic Colors
 /// A genetic algorithm to evolve colors
 /// by bbhsu2 + anonymous
-class GeneticColors : public ThreadedCanvasManipulator {
+class GeneticColors : public DemoRunner {
 public:
   GeneticColors(Canvas *m, int delay_ms = 200)
-    : ThreadedCanvasManipulator(m), delay_ms_(delay_ms) {
+    : DemoRunner(m), delay_ms_(delay_ms) {
     width_ = canvas()->width();
     height_ = canvas()->height();
     popSize_ = width_ * height_;
@@ -866,7 +874,7 @@ public:
 
   static int rnd (int i) { return rand() % i; }
 
-  void Run() {
+  void Run() override {
     // Set a random target_
     target_ = rand() & 0xFFFFFF;
 
@@ -875,7 +883,7 @@ public:
       children_[i].dna = rand() & 0xFFFFFF;
     }
 
-    while (running() && !interrupt_received) {
+    while (!interrupt_received) {
       swap();
       sort();
       mate();
@@ -1048,7 +1056,6 @@ static int usage(const char *progname) {
 }
 
 int main(int argc, char *argv[]) {
-  int runtime_seconds = -1;
   int demo = -1;
   int scroll_ms = 30;
 
@@ -1068,14 +1075,10 @@ int main(int argc, char *argv[]) {
   }
 
   int opt;
-  while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:LR:")) != -1) {
+  while ((opt = getopt(argc, argv, "dD:r:P:c:p:b:m:LR:")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
-      break;
-
-    case 't':
-      runtime_seconds = atoi(optarg);
       break;
 
     case 'm':
@@ -1105,12 +1108,12 @@ int main(int argc, char *argv[]) {
 
   Canvas *canvas = matrix;
 
-  // The ThreadedCanvasManipulator objects are filling
+  // The DemoRunner objects are filling
   // the matrix continuously.
-  ThreadedCanvasManipulator *image_gen = NULL;
+  DemoRunner *demo_runner = NULL;
   switch (demo) {
   case 0:
-    image_gen = new RotatingBlockGenerator(canvas);
+    demo_runner = new RotatingBlockGenerator(canvas);
     break;
 
   case 1:
@@ -1121,7 +1124,7 @@ int main(int argc, char *argv[]) {
                                                   scroll_ms);
       if (!scroller->LoadPPM(demo_parameter))
         return 1;
-      image_gen = scroller;
+      demo_runner = scroller;
     } else {
       fprintf(stderr, "Demo %d Requires PPM image as parameter\n", demo);
       return 1;
@@ -1129,68 +1132,57 @@ int main(int argc, char *argv[]) {
     break;
 
   case 3:
-    image_gen = new SimpleSquare(canvas);
+    demo_runner = new SimpleSquare(canvas);
     break;
 
   case 4:
-    image_gen = new ColorPulseGenerator(matrix);
+    demo_runner = new ColorPulseGenerator(matrix);
     break;
 
   case 5:
-    image_gen = new GrayScaleBlock(canvas);
+    demo_runner = new GrayScaleBlock(canvas);
     break;
 
   case 6:
-    image_gen = new Sandpile(canvas, scroll_ms);
+    demo_runner = new Sandpile(canvas, scroll_ms);
     break;
 
   case 7:
-    image_gen = new GameLife(canvas, scroll_ms);
+    demo_runner = new GameLife(canvas, scroll_ms);
     break;
 
   case 8:
-    image_gen = new Ant(canvas, scroll_ms);
+    demo_runner = new Ant(canvas, scroll_ms);
     break;
 
   case 9:
-    image_gen = new VolumeBars(canvas, scroll_ms, canvas->width()/2);
+    demo_runner = new VolumeBars(canvas, scroll_ms, canvas->width()/2);
     break;
 
   case 10:
-    image_gen = new GeneticColors(canvas, scroll_ms);
+    demo_runner = new GeneticColors(canvas, scroll_ms);
     break;
 
   case 11:
-    image_gen = new BrightnessPulseGenerator(matrix);
+    demo_runner = new BrightnessPulseGenerator(matrix);
     break;
   }
 
-  if (image_gen == NULL)
+  if (demo_runner == NULL)
     return usage(argv[0]);
 
   // Set up an interrupt handler to be able to stop animations while they go
-  // on. Note, each demo tests for while (running() && !interrupt_received) {},
+  // on. Each demo tests for while (!interrupt_received) {},
   // so they exit as soon as they get a signal.
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
 
-  // Image generating demo is crated. Now start the thread.
-  image_gen->Start();
+  printf("Press <CTRL-C> to exit and reset LEDs\n");
 
-  // Now, the image generation runs in the background. We can do arbitrary
-  // things here in parallel. In this demo, we're essentially just
-  // waiting for one of the conditions to exit.
-  if (runtime_seconds > 0) {
-    sleep(runtime_seconds);
-  } else {
-    printf("Press <CTRL-C> to exit and reset LEDs\n");
-    while (!interrupt_received) {
-      sleep(1); // Time doesn't really matter. The syscall will be interrupted.
-    }
-  }
+  // All the runners look for
+  demo_runner->Run();
 
-  // Stop image generating thread. The delete triggers
-  delete image_gen;
+  delete demo_runner;
   delete canvas;
 
   printf("\%s. Exiting.\n",

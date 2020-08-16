@@ -242,7 +242,6 @@ code:
      using rgb_matrix::Canvas;
      using rgb_matrix::GPIO;
      using rgb_matrix::RGBMatrix;
-     using rgb_matrix::ThreadedCanvasManipulator;
 
 Or, if you are lazy, just import the whole namespace:
 
