@@ -1179,13 +1179,12 @@ int main(int argc, char *argv[]) {
 
   printf("Press <CTRL-C> to exit and reset LEDs\n");
 
-  // All the runners look for
+  // Now, run our particular demo; it will exit when it sees interrupt_received.
   demo_runner->Run();
 
   delete demo_runner;
   delete canvas;
 
-  printf("\%s. Exiting.\n",
-         interrupt_received ? "Received CTRL-C" : "Timeout reached");
+  printf("Received CTRL-C. Exiting.\n");
   return 0;
 }
