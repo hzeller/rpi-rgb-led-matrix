@@ -1032,7 +1032,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n");
   fprintf(stderr,
           "\t-D <demo-nr>              : Always needs to be set\n"
-          "\t-t <seconds>              : Run for these number of seconds, then exit.\n");
+          );
 
 
   rgb_matrix::PrintMatrixFlags(stderr);
@@ -1050,8 +1050,8 @@ static int usage(const char *progname) {
           "\t9  - Volume bars (-m <time-step-ms>)\n"
           "\t10 - Evolution of color (-m <time-step-ms>)\n"
           "\t11 - Brightness pulse generator\n");
-  fprintf(stderr, "Example:\n\t%s -t 10 -D 1 runtext.ppm\n"
-          "Scrolls the runtext for 10 seconds\n", progname);
+  fprintf(stderr, "Example:\n\t%s -D 1 runtext.ppm\n"
+          "Scrolls the runtext until Ctrl-C is pressed\n", progname);
   return 1;
 }
 
