@@ -217,10 +217,14 @@ int height_font(struct LedFont * font) {
   return to_font(font)->height();
 }
 
+struct LedFont *create_outline_font(struct LedFont * font) {
+  rgb_matrix::Font* outlineFont = to_font(font)->CreateOutlineFont();
+  return from_font(outlineFont);
+}
+
 void delete_font(struct LedFont *font) {
   delete to_font(font);
 }
-
 
 // -- Some utility functions.
 
