@@ -133,16 +133,18 @@ namespace rgb_matrix {
    GPIO_BIT( 4) | GPIO_BIT( 7) | GPIO_BIT( 8) | GPIO_BIT( 9) |
    GPIO_BIT(10) | GPIO_BIT(11) | GPIO_BIT(14) | GPIO_BIT(15) |
    GPIO_BIT(17) | GPIO_BIT(18) | GPIO_BIT(22) | GPIO_BIT(23) |
-   GPIO_BIT(24) | GPIO_BIT(25)| GPIO_BIT(27) |
+   GPIO_BIT(24) | GPIO_BIT(25) | GPIO_BIT(27) |
 
    // support for A+/B+ and RPi2 with additional GPIO pins.
    GPIO_BIT( 5) | GPIO_BIT( 6) | GPIO_BIT(12) | GPIO_BIT(13) | GPIO_BIT(16) |
-   GPIO_BIT(19) | GPIO_BIT(20) | GPIO_BIT(21) | GPIO_BIT(26)
+   GPIO_BIT(19) | GPIO_BIT(20) | GPIO_BIT(21) | GPIO_BIT(26) |
+
+   // Pins on P5 header
+   GPIO_BIT(28) | GPIO_BIT(29) | GPIO_BIT(30) | GPIO_BIT(31)
 
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
    |
    // Compute Module GPIO pins
-   GPIO_BIT(28) | GPIO_BIT(29) | GPIO_BIT(30) | GPIO_BIT(31) |
    GPIO_BIT(32) | GPIO_BIT(33) | GPIO_BIT(34) | GPIO_BIT(35) | GPIO_BIT(36) |
    GPIO_BIT(37) | GPIO_BIT(38) | GPIO_BIT(39) | GPIO_BIT(40) | GPIO_BIT(41) |
    GPIO_BIT(42) | GPIO_BIT(43) | GPIO_BIT(44) | GPIO_BIT(45)
@@ -188,7 +190,7 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
   const int kMaxAvailableBit = 45;
   uses_64_bit_ |= (outputs >> 32) != 0;
 #else
-  const int kMaxAvailableBit = 26;
+  const int kMaxAvailableBit = 31;
 #endif
   for (int b = 0; b <= kMaxAvailableBit; ++b) {
     if (outputs & GPIO_BIT(b)) {
@@ -212,7 +214,7 @@ gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
   const int kMaxAvailableBit = 45;
   uses_64_bit_ |= (inputs >> 32) != 0;
 #else
-  const int kMaxAvailableBit = 26;
+  const int kMaxAvailableBit = 31;
 #endif
   for (int b = 0; b <= kMaxAvailableBit; ++b) {
     if (inputs & GPIO_BIT(b)) {
