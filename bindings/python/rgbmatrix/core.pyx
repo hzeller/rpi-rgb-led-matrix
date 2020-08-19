@@ -184,20 +184,9 @@ cdef class RGBMatrixOptions:
         def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
 
 cdef class RGBMatrix(Canvas):
-    def __cinit__(self, RGBMatrixOptions options = None,
-                  int rows = 0, int chains = 0, int parallel = 0):
-
-        # If RGBMatrixOptions not provided, create defaults and set any optional
-        # parameters supplied
-        if options == None:
-            options = RGBMatrixOptions()
-
-        if rows > 0:
-            options.rows = rows
-        if chains > 0:
-            options.chain_length = chains
-        if parallel > 0:
-            options.parallel = parallel
+    def __cinit__(self, RGBMatrixOptions options):
+        if not isinstance(options, RGBMatrixOptions):
+            raise ValueError('Options should be of type `RGBMatrixOptions`.')
 
         self.__matrix = cppinc.CreateMatrixFromOptions(options.__options,
             options.__runtime_options)
