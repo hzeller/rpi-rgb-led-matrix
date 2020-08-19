@@ -184,7 +184,14 @@ cdef class RGBMatrixOptions:
         def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
 
 cdef class RGBMatrix(Canvas):
-    def __cinit__(self, RGBMatrixOptions options):
+    def __cinit__(self, RGBMatrixOptions options, **kwargs):
+        # Show a DeprecationWarning since this behaviour is backwards incompatible.
+        if any(kwargs.pop(kwarg, None) for kwarg in ['rows', 'chains', 'parallel']):
+            raise DeprecationWarning('To specify matrix options, you must use the RGBMatrixOptions object.')
+        # Mimic python's built in TypeError for kwargs.
+        if kwargs:
+            raise TypeError('Unexpected keyword argument: {}'.format(kwargs.keys()[0]))
+
         if not isinstance(options, RGBMatrixOptions):
             raise ValueError('Options should be of type `RGBMatrixOptions`.')
 
