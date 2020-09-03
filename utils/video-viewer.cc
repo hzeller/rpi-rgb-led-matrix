@@ -84,7 +84,7 @@ void ScaleToFitKeepAscpet(int fit_in_width, int fit_in_height,
   *height = roundf(*height / ratio);
 }
 
-static int usage(const char *progname, const char *msg = nullptr) {
+static int usage(const char *progname, const char *msg = NULL) {
   if (msg) {
     fprintf(stderr, "%s\n", msg);
   }
@@ -279,8 +279,8 @@ int main(int argc, char *argv[]) {
 
       // Find the first video stream
       int videoStream = -1;
-      AVCodecParameters *codec_parameters = nullptr;
-      AVCodec *av_codec = nullptr;
+      AVCodecParameters *codec_parameters = NULL;
+      AVCodec *av_codec = NULL;
       for (int i = 0; i < (int)format_context->nb_streams; ++i) {
         codec_parameters = format_context->streams[i]->codecpar;
         av_codec = avcodec_find_decoder(codec_parameters->codec_id);
@@ -295,7 +295,7 @@ int main(int argc, char *argv[]) {
 
       // Frames per second; calculate wait time between frames.
       AVStream *const stream = format_context->streams[videoStream];
-      AVRational rate = av_guess_frame_rate(format_context, stream, nullptr);
+      AVRational rate = av_guess_frame_rate(format_context, stream, NULL);
       const long frame_wait_nanos = 1e9 * rate.den / rate.num;
       if (verbose) fprintf(stderr, "FPS: %f\n", 1.0*rate.num / rate.den);
 

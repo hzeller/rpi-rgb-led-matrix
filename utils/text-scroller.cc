@@ -207,14 +207,14 @@ int main(int argc, char *argv[]) {
       // we then write on top.
       rgb_matrix::DrawText(offscreen_canvas, *outline_font,
                            x - 1, y + font.baseline(),
-                           outline_color, nullptr,
+                           outline_color, NULL,
                            line.c_str(), letter_spacing - 2);
     }
 
     // length = holds how many pixels our text takes up
     length = rgb_matrix::DrawText(offscreen_canvas, font,
                                   x, y + font.baseline(),
-                                  color, nullptr,
+                                  color, NULL,
                                   line.c_str(), letter_spacing);
 
     --x;
