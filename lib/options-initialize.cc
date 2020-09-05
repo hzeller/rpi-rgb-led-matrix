@@ -253,6 +253,10 @@ bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RGBMatrix::Options *m_opt_in,
                            RuntimeOptions *rt_opt_in,
                            bool remove_consumed_options) {
+  if (argc == NULL || argv == NULL) {
+    fprintf(stderr, "Called ParseOptionsFromFlags() without argc/argv\n");
+    return false;
+  }
   // Replace NULL arguments with some scratch-space.
   RGBMatrix::Options scratch_matrix;
   RGBMatrix::Options *mopt = (m_opt_in != NULL) ? m_opt_in : &scratch_matrix;
