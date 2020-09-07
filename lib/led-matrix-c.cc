@@ -57,6 +57,8 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
   rgb_matrix::RuntimeOptions default_rt;
   default_rt.drop_privileges = 0;  // Usually, this is on, but let user choose.
   default_rt.daemon = 0;
+  default_rt.gpio_slowdown = 0;
+  default_rt.do_gpio_init = false;  // Usually, this is on, but let user choose.
 
   rgb_matrix::RGBMatrix::Options default_opts;
 
@@ -96,6 +98,10 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
       rgb_matrix::PrintMatrixFlags(stderr, default_opts, default_rt);
       return NULL;
     }
+  } else {
+    // CL args not provided. Assume defaults for RT options
+    runtime_opt.drop_privileges = 1;
+    runtime_opt.do_gpio_init = true;
   }
 
   if (opts) {

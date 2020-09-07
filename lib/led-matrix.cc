@@ -514,6 +514,7 @@ FrameCanvas *RGBMatrix::Impl::CreateFrameCanvas() {
 FrameCanvas *RGBMatrix::Impl::SwapOnVSync(FrameCanvas *other,
                                           unsigned frame_fraction) {
   if (frame_fraction == 0) frame_fraction = 1; // correct user error.
+  if (!updater_) return NULL;
   FrameCanvas *const previous = updater_->SwapOnVSync(other, frame_fraction);
   if (other) active_ = other;
   return previous;
