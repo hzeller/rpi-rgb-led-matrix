@@ -38,7 +38,8 @@ RuntimeOptions::RuntimeOptions() :
   gpio_slowdown(1),
 #endif
   daemon(0),            // Don't become a daemon by default.
-  drop_privileges(1)    // Encourage good practice: drop privileges by default.
+  drop_privileges(1),   // Encourage good practice: drop privileges by default.
+  do_gpio_init(true)
 {
   // Nothing to see here.
 }

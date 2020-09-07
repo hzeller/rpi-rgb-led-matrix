@@ -154,6 +154,43 @@ struct RGBLedMatrixOptions {
 };
 
 /**
+ * Runtime options to simplify doing common things for many programs such as
+ * dropping privileges and becoming a daemon.
+ */
+struct RGBLedRuntimeOptions {
+  int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
+
+  // ----------
+  // If the following options are set to disabled with -1, they are not
+  // even offered via the command line flags.
+  // ----------
+
+  // Thre are three possible values here
+  //   -1 : don't leave choise of becoming daemon to the command line parsing.
+  //        If set to -1, the --led-daemon option is not offered.
+  //    0 : do not becoma a daemon, run in forgreound (default value)
+  //    1 : become a daemon, run in background.
+  //
+  // If daemon is disabled (= -1), the user has to call
+  // RGBMatrix::StartRefresh() manually once the matrix is created, to leave
+  // the decision to become a daemon
+  // after the call (which requires that no threads have been started yet).
+  // In the other cases (off or on), the choice is already made, so the thread
+  // is conveniently already started for you.
+  int daemon;           // -1 disabled. 0=off, 1=on. Flag: --led-daemon
+
+  // Drop privileges from 'root' to 'daemon' once the hardware is initialized.
+  // This is usually a good idea unless you need to stay on elevated privs.
+  int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
+
+  // By default, the gpio is initialized for you, but if you run on a platform
+  // not the Raspberry Pi, this will fail. If you don't need to access GPIO
+  // e.g. you want to just create a stream output (see content-streamer.h),
+  // set this to false.
+  bool do_gpio_init;
+};
+
+/**
  * Universal way to create and initialize a matrix.
  * The "options" struct (if not NULL) contains all default configuration values
  * chosen by the programmer to create the matrix.
@@ -190,6 +227,35 @@ struct RGBLedMatrix *led_matrix_create_from_options(
 /* Same, but does not modify the argv array. */
 struct RGBLedMatrix *led_matrix_create_from_options_const_argv(
              struct RGBLedMatrixOptions *options, int argc, char **argv);
+
+/**
+ * The way to completely initialize your matrix without using command line
+ * flags to initialize some things.
+ *
+ * The actual options used are filled back into the "options" and "rt_options"
+ * struct if not NULL. If they are null, the default value is used.
+ *
+ * Usage:
+ * ----------------
+ * int main(int argc, char **argv) {
+ *   struct RGBLedMatrixOptions options;
+ *   struct RGBLedRuntimeOptions rt_options;
+ *   memset(&options, 0, sizeof(options));
+ *   memset(&rt_options, 0, sizeof(rt_options));
+ *   options.rows = 32;            // You can set defaults if you want.
+ *   options.chain_length = 1;
+ *   rt_options.gpio_slowdown = 4;
+ *   struct RGBLedMatrix *matrix = led_matrix_create_from_options_and_rt_options(&options, &rt_options);
+ *   if (matrix == NULL) {
+ *      led_matrix_print_flags(stderr);
+ *      return 1;
+ *   }
+ *   // do additional commandline handling; then use matrix...
+ * }
+ * ----------------
+ */
+struct RGBLedMatrix *led_matrix_create_from_options_and_rt_options(
+  struct RGBLedMatrixOptions *opts, struct RGBLedRuntimeOptions * rt_opts);
 
 /**
  * Print available LED matrix options.
