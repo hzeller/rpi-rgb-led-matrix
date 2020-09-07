@@ -29,6 +29,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -247,7 +248,6 @@ struct RGBLedMatrix *led_matrix_create_from_options_const_argv(
  *   rt_options.gpio_slowdown = 4;
  *   struct RGBLedMatrix *matrix = led_matrix_create_from_options_and_rt_options(&options, &rt_options);
  *   if (matrix == NULL) {
- *      led_matrix_print_flags(stderr);
  *      return 1;
  *   }
  *   // do additional commandline handling; then use matrix...
