@@ -51,8 +51,8 @@ void Thread::Start(int priority, uint32_t affinity_mask) {
     struct sched_param p;
     p.sched_priority = priority;
     if ((err = pthread_setschedparam(thread_, SCHED_FIFO, &p))) {
-      char binary[PATH_MAX];
-      realpath("/proc/self/exe", binary);  // Linux specific.
+      char buffer[PATH_MAX];
+      const char *bin = realpath("/proc/self/exe", buffer);  // Linux specific.
       fprintf(stderr, "Can't set realtime thread priority=%d: %s.\n"
               "\tYou are probably not running as root ?\n"
               "\tThis will seriously mess with color stability and flicker\n"
@@ -60,7 +60,7 @@ void Thread::Start(int priority, uint32_t affinity_mask) {
               "\tprogram with `sudo`), or setting the capability on this\n"
               "\tbinary by calling\n"
               "\tsudo setcap 'cap_sys_nice=eip' %s\n",
-              p.sched_priority, strerror(err), binary);
+              p.sched_priority, strerror(err), bin ? bin : "<this binary>");
     }
   }
 

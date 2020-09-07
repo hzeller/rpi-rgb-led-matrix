@@ -423,7 +423,7 @@ static void (*busy_wait_impl)(long) = busy_wait_nanos_rpi_3;
 static void WriteTo(const char *filename, const char *str) {
   const int fd = open(filename, O_WRONLY);
   if (fd < 0) return;
-  write(fd, str, strlen(str));
+  (void) write(fd, str, strlen(str));  // Best effort. Ignore return value.
   close(fd);
 }
 
