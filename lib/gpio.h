@@ -32,7 +32,7 @@ public:
   // (e.g. due to a permission problem).
   bool Init(int
 #if RGB_SLOWDOWN_GPIO
-            slowdown = RGB_SLOWDOWN_GPIO,
+            slowdown = RGB_SLOWDOWN_GPIO
 #else
             slowdown = 1
 #endif
