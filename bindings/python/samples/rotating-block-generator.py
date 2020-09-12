@@ -11,6 +11,19 @@ def scale_col(val, lo, hi):
     return 255 * (val - lo) / (hi - lo)
 
 
+def rotate_about_point(x, y, cent_x, cent_y, sin, cos):
+    # translate so that the origin is now (cent_x, cent_y)
+    x -= cent_x
+    y -= cent_y
+    # rotate about the new origin
+    new_x = x * cos - y * sin
+    new_y = x * sin + y * cos
+    # translate back
+    new_x += cent_x
+    new_y += cent_y
+    return new_x, new_y
+
+
 class RotatingBlockGenerator(SampleBase):
     def __init__(self, *args, **kwargs):
         super(RotatingBlockGenerator, self).__init__(*args, **kwargs)
@@ -35,35 +48,20 @@ class RotatingBlockGenerator(SampleBase):
         for x in range(int(min_rotate), int(max_rotate)):
             col_table.insert(x, scale_col(x, min_display, max_display))
 
-        # Pre calculate angles
-        sin_table = []
-        cos_table = []
-
-        for rotation in range(0, 360):
-            angle = rotation * deg_to_rad
-            sin_table.insert(rotation, math.sin(angle))
-            cos_table.insert(rotation, math.cos(angle))
-
         offset_canvas = self.matrix.CreateFrameCanvas()
 
         while True:
             rotation += 1
             rotation %= 360
 
-            sin = sin_table[rotation]
-            cos = cos_table[rotation]
+            # calculate sin and cos once for each frame
+            angle = rotation * deg_to_rad
+            sin = math.sin(angle)
+            cos = math.cos(angle)
 
             for x in range(int(min_rotate), int(max_rotate)):
                 for y in range(int(min_rotate), int(max_rotate)):
-                    # translate so that the origin is now (cent_x, cent_y)
-                    temp_x = x - cent_x
-                    temp_y = y - cent_x
-                    # rotate about the new origin
-                    new_x = temp_x * cos - temp_y * sin
-                    new_y = temp_x * sin + temp_y * cos
-                    # translate back
-                    new_x += cent_x
-                    new_y += cent_y
+                    new_x, new_y = rotate_about_point(x, y, cent_x, cent_y, sin, cos)
 
                     if x >= min_display and x < max_display and y >= min_display and y < max_display:
                         x_col = col_table[x]
