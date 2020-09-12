@@ -3,22 +3,30 @@ from samplebase import SampleBase
 import math
 
 
+def scale_col(val, lo, hi):
+    if val < lo:
+        return 0
+    if val > hi:
+        return 255
+    return 255 * (val - lo) / (hi - lo)
+
+
+def rotate_about_point(x, y, cent_x, cent_y, sin, cos):
+    # translate so that the origin is now (cent_x, cent_y)
+    x -= cent_x
+    y -= cent_y
+    # rotate about the new origin
+    new_x = x * cos - y * sin
+    new_y = x * sin + y * cos
+    # translate back
+    new_x += cent_x
+    new_y += cent_y
+    return new_x, new_y
+
+
 class RotatingBlockGenerator(SampleBase):
     def __init__(self, *args, **kwargs):
         super(RotatingBlockGenerator, self).__init__(*args, **kwargs)
-
-    def rotate(self, x, y, angle):
-        return {
-            "new_x": x * math.cos(angle) - y * math.sin(angle),
-            "new_y": x * math.sin(angle) + y * math.cos(angle)
-        }
-
-    def scale_col(self, val, lo, hi):
-        if val < lo:
-            return 0
-        if val > hi:
-            return 255
-        return 255 * (val - lo) / (hi - lo)
 
     def run(self):
         cent_x = self.matrix.width / 2
@@ -34,24 +42,36 @@ class RotatingBlockGenerator(SampleBase):
 
         deg_to_rad = 2 * 3.14159265 / 360
         rotation = 0
+
+        # Pre calculate colors
+        col_table = []
+        for x in range(int(min_rotate), int(max_rotate)):
+            col_table.insert(x, scale_col(x, min_display, max_display))
+
         offset_canvas = self.matrix.CreateFrameCanvas()
 
         while True:
             rotation += 1
             rotation %= 360
 
+            # calculate sin and cos once for each frame
+            angle = rotation * deg_to_rad
+            sin = math.sin(angle)
+            cos = math.cos(angle)
+
             for x in range(int(min_rotate), int(max_rotate)):
                 for y in range(int(min_rotate), int(max_rotate)):
-                    ret = self.rotate(x - cent_x, y - cent_x, deg_to_rad * rotation)
-                    rot_x = ret["new_x"]
-                    rot_y = ret["new_y"]
+                    new_x, new_y = rotate_about_point(x, y, cent_x, cent_y, sin, cos)
 
                     if x >= min_display and x < max_display and y >= min_display and y < max_display:
-                        offset_canvas.SetPixel(rot_x + cent_x, rot_y + cent_y, self.scale_col(x, min_display, max_display), 255 - self.scale_col(y, min_display, max_display), self.scale_col(y, min_display, max_display))
+                        x_col = col_table[x]
+                        y_col = col_table[y]
+                        offset_canvas.SetPixel(new_x, new_y, x_col, 255 - y_col, y_col)
                     else:
-                        offset_canvas.SetPixel(rot_x + cent_x, rot_y + cent_y, 0, 0, 0)
+                        offset_canvas.SetPixel(new_x, new_y, 0, 0, 0)
 
             offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
+
 
 # Main function
 if __name__ == "__main__":
