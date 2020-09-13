@@ -11,17 +11,8 @@ def scale_col(val, lo, hi):
     return 255 * (val - lo) / (hi - lo)
 
 
-def rotate_about_point(x, y, cent_x, cent_y, sin, cos):
-    # translate so that the origin is now (cent_x, cent_y)
-    x -= cent_x
-    y -= cent_y
-    # rotate about the new origin
-    new_x = x * cos - y * sin
-    new_y = x * sin + y * cos
-    # translate back
-    new_x += cent_x
-    new_y += cent_y
-    return new_x, new_y
+def rotate(x, y, sin, cos):
+    return x * cos - y * sin, x * sin + y * cos
 
 
 class RotatingBlockGenerator(SampleBase):
@@ -61,14 +52,15 @@ class RotatingBlockGenerator(SampleBase):
 
             for x in range(int(min_rotate), int(max_rotate)):
                 for y in range(int(min_rotate), int(max_rotate)):
-                    new_x, new_y = rotate_about_point(x, y, cent_x, cent_y, sin, cos)
+                    # Our rotate center is always offset by cent_x
+                    rot_x, rot_y = rotate(x - cent_x, y - cent_x, sin, cos)
 
                     if x >= min_display and x < max_display and y >= min_display and y < max_display:
                         x_col = col_table[x]
                         y_col = col_table[y]
-                        offset_canvas.SetPixel(new_x, new_y, x_col, 255 - y_col, y_col)
+                        offset_canvas.SetPixel(rot_x + cent_x, rot_y + cent_y, x_col, 255 - y_col, y_col)
                     else:
-                        offset_canvas.SetPixel(new_x, new_y, 0, 0, 0)
+                        offset_canvas.SetPixel(rot_x + cent_x, rot_y + cent_y, 0, 0, 0)
 
             offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
 
