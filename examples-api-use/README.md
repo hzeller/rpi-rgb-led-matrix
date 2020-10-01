@@ -121,7 +121,6 @@ using rgb_matrix::RGBMatrix;
 int main(int argc, char **argv) {
   // Set some defaults
   RGBMatrix::Options my_defaults;
-  my_defaults.hardware_mapping = "regular";  // or e.g. "adafruit-hat" or "adafruit-hat-pwm"
   my_defaults.chain_length = 3;
   my_defaults.show_refresh_rate = true;
   rgb_matrix::RuntimeOptions runtime_defaults;
