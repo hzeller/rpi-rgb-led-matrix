@@ -10,6 +10,15 @@ OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
 
 TARGET=librgbmatrix
 
+###
+# After you change any of the following DEFINES, make sure to 'make' again.
+#
+# ###########      NOTE     ###########
+# all of these options can now can be set programmatically and
+# via command line flags as well. No real need to change them in the Makefile.
+# (So be prepared for these to be removed at some point)
+###
+
 # There are several different pinouts for various breakout boards that uses
 # this library. If you are using the described pinout in the toplevel README.md
 # or the standard active-3 breakout board, then 'regular' is the one you'd like
@@ -26,15 +35,6 @@ TARGET=librgbmatrix
 #   classic            # (deprecated) Classic Pi1/2/. Not used anymore.
 #   classic-pi1        # (deprecated) Classic pinout on Rasperry Pi 1
 HARDWARE_DESC?=regular
-
-###
-# After you change any of the following DEFINES, make sure to 'make' again.
-#
-# ###########      NOTE     ###########
-# all of these options can now can be set programmatically and
-# via command line flags as well. No real need to change them in the Makefile.
-# (So be prepared for these to be removed at some point)
-###
 
 # If you see that your display is inverse, you might have a matrix variant
 # has uses inverse logic for the RGB bits. In that case: uncomment this.
