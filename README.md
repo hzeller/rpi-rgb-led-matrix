@@ -618,16 +618,6 @@ flag.
 Just pass the option `--led-gpio-mapping=adafruit-hat`. This works on the C++
 and Python examples.
 
-If you want to have this a compiled-in default, add the following setting in
-front of your compilation:
-```
-HARDWARE_DESC=adafruit-hat make
-```
-(alternatively, you can modify the `lib/Makefile` and change it there directly)
-
-Then re-compile and the new flag default is now `adafruit-hat`, so
-no need to set it on the command line.
-
 ### Improving flicker
 
 To improve flicker, we need to do a little hardware modification,
@@ -637,13 +627,6 @@ following picture (click to enlarge):
 <a href="img/adafruit-mod.jpg"><img src="img/adafruit-mod.jpg" height="80px"></a>
 
 Then, start your programs with `--led-gpio-mapping=adafruit-hat-pwm`.
-
-If you want to make this the default setting your program starts with, you can
-also manually choose this with
-```
-HARDWARE_DESC=adafruit-hat-pwm make
-```
-to get this as default setting.
 
 Now you should have less visible flicker. This essentially
 switches on the hardware pulses feature for the Adafruit HAT/Bonnet.
