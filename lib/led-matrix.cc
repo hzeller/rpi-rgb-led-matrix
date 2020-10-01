@@ -36,18 +36,11 @@
 
 // Leave this in here for a while. Setting things from old defines.
 #if defined(ADAFRUIT_RGBMATRIX_HAT)
-# warning "You are using an old way to select the Adafruit HAT by defining -DADAFRUIT_RGBMATRIX_HAT"
-#  warning "The new way to do this is to set HARDWARE_DESC=adafruit-hat"
-# warning "Check out https://github.com/hzeller/rpi-rgb-led-matrix#switch-the-pinout"
-# undef DEFAULT_HARDWARE
-# define DEFAULT_HARDWARE "adafruit-hat"
+#  error "ADAFRUIT_RGBMATRIX_HAT has long been deprecated. Please use the Options struct or --led-gpio-mapping=adafruit-hat commandline flag"
 #endif
 
 #if defined(ADAFRUIT_RGBMATRIX_HAT_PWM)
-#  warning "You are using an old way to select the Adafruit HAT with flicker mod by defining -DADAFRUIT_RGBMATRIX_HAT_PWM"
-#  warning "The new way to do this is to set HARDWARE_DESC=adafruit-hat-pwm"
-# undef DEFAULT_HARDWARE
-# define DEFAULT_HARDWARE "adafruit-hat-pwm"
+#  error "ADAFRUIT_RGBMATRIX_HAT_PWM has long been deprecated. Please use the Options struct or --led-gpio-mapping=adafruit-hat-pwm commandline flag"
 #endif
 
 namespace rgb_matrix {
