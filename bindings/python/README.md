@@ -80,12 +80,12 @@ swap with `SwapOnVSync()` (this is the fastest method).
 Using the library
 -----------------
 
-Be aware of the fact, that using the RGBMatrix requires root privileges.
-Therefore you will need to run all you python scripts as using sudo.
+Be aware of the fact that using the full performance of the RGBMatrix requires root privileges.
+Therefore you should run all you python scripts as using `sudo`.
 
-You find examples in the [samples/](./samples) subdirectory.
+You may find examples in the [samples/](./samples) subdirectory.
 The examples all use the [samplebase.py](./samples/samplebase.py) that provides
-some utility to all example programs, such as command-line parsing: all
+some basic capabilities to all example programs, such as command-line parsing: all
 sample-programs accept `--led-rows`, `--led-chain` and `--led-parallel` as
 command line options to adapt to your configuration
 
@@ -100,7 +100,7 @@ you can use `--led-gpio-mapping` (or `-m`). For example, to use Adafruit HAT:
 sudo ./runtext.py --led-gpio-mapping=adafruit-hat
 ```
 
-Here a complete example how to write an image viewer:
+Here is a complete example showing how to write an image viewer:
 ```python
 #!/usr/bin/env python
 import time
@@ -137,3 +137,11 @@ try:
 except KeyboardInterrupt:
     sys.exit(0)
 ```
+
+## API
+
+The source of truth for what is available in the Python bindings may be found [here](rgbmatrix/core.pyx) (RGBMatrix, FrameCanvas, RGBMatrixOptions) and [here](rgbmatrix/graphics.pyx) (graphics).  The underlying implementation's ground truth documentation may be found [here](../../include), specifically for [RGBMatrix, RGBMatrixOptions, and FrameCanvas](../../include/led-matrix.h), [Canvas](../../include/canvas.h) (base class of RGBMatrix), and [graphics methods and Font](../../include/graphics.h).
+
+### User
+
+As noted in the Performance section above, Python programs not run as `root` will not be as high-performance as those run as `root`.  When running as `root`, be aware of a potentially-unexpected behavior: to reduce the security attack surface, initializing an RGBMatrix as `root` changes the user from `root` to `daemon` (see [#1170](https://github.com/hzeller/rpi-rgb-led-matrix/issues/1170) for more information) by default.  This means, for instance, that some file operations possible before initializing the RGBMatrix will not be possible after initialization.  To disable this behavior, set `drop_privileges=False` in RGBMatrixOptions, but be aware that doing so will reduce security.
