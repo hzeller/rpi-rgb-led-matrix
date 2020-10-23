@@ -22,6 +22,9 @@ The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org>, licensed with
 source and all your modifications available to the receiver of such product so
 that they have the freedom to adapt and improve).
 
+__If you'd like help, please do not file a bug, use the discussion board instead: 
+https://rpi-rgb-led-matrix.discourse.group/__.
+
 Overview
 --------
 The RGB LED matrix panels can be scored at [Sparkfun][sparkfun],
