@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
+
 
 #include <algorithm>
 #include <memory>
@@ -216,6 +218,77 @@ private:
     *new_x = x * cosf(angle) - y * sinf(angle);
     *new_y = x * sinf(angle) + y * cosf(angle);
   }
+};
+
+// Simple class that generates a random red dot on the screen.
+class RedDotGenerator : public ThreadedCanvasManipulator {
+public:
+  RedDotGenerator(RGBMatrix *m, int delta_x, int delta_y, int red_r, int scroll_ms)
+    : ThreadedCanvasManipulator(m),
+      matrix_(m),
+      delta_x_(delta_x),
+      delta_y_(delta_y),
+      red_r_(red_r),
+      scroll_ms_(scroll_ms),
+      scroll_us_(1000 * scroll_ms) {
+    offscreen_ = matrix_->CreateFrameCanvas();
+    min_x_ = red_r;
+    max_x_ = m->width() - red_r - 1;
+    min_y_ = red_r;
+    max_y_ = m->height() - red_r - 1;
+    x_ = m->width() / 2;
+    y_ = m->height() / 2;
+    red_ = Color(255, 0, 0);
+  }
+
+  // virtual ~RedDotGenerator() {
+  //   delete offscreen_;
+  // }
+
+  void Run() {
+    while (running() && !interrupt_received) {
+      int dx = rand() % 11 - 5;
+      int dy = rand() % 11 - 5;
+      x_ += dx;
+      y_ += dy;
+      if (x_ < min_x_) {
+        x_ = min_x_;
+      }
+      if (x_ > max_x_) {
+        x_ = max_x_;
+      }
+      if (y_ < min_y_) {
+        y_ = min_y_;
+      }
+      if (y_ > max_y_) {
+        y_ = max_y_;
+      }
+
+      offscreen_->Clear();
+      DrawDisc(offscreen_, x_, y_, red_r_, red_);
+      offscreen_ = matrix_->SwapOnVSync(offscreen_);
+      struct timeval tv;
+      gettimeofday(&tv, NULL);
+      usleep(scroll_us_ - ((tv.tv_usec + 1000000) % scroll_us_));
+    }
+  }
+
+private:
+  RGBMatrix* matrix_;
+  int delta_x_;
+  int delta_y_;
+  int red_r_;
+  int min_x_;
+  int max_x_;
+  int min_y_;
+  int max_y_;
+  int x_;
+  int y_;
+  int scroll_ms_;
+  int scroll_us_;
+  Color red_;
+  FrameCanvas* offscreen_;
+
 };
 
 class ImageScroller : public ThreadedCanvasManipulator {
@@ -1185,6 +1258,9 @@ int main(int argc, char *argv[]) {
   int runtime_seconds = -1;
   int demo = -1;
   int scroll_ms = 30;
+  int delta_x = 1;
+  int delta_y = 1;
+  int red_r = 10;
 
   const char *demo_parameter = NULL;
   RGBMatrix::Options matrix_options;
@@ -1202,7 +1278,7 @@ int main(int argc, char *argv[]) {
   }
 
   int opt;
-  while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:LR:")) != -1) {
+  while ((opt = getopt(argc, argv, "dD:t:r:P:c:p:b:m:u:LR:")) != -1) {
     switch (opt) {
     case 'D':
       demo = atoi(optarg);
@@ -1215,6 +1291,23 @@ int main(int argc, char *argv[]) {
     case 'm':
       scroll_ms = atoi(optarg);
       break;
+
+    case 'u':
+      fixed_frame_microseconds = atoi(optarg);
+      break;
+
+    case 'x':
+      delta_x = atoi(optarg);
+      break;
+
+    case 'y':
+      delta_y = atoi(optarg);
+      break;
+
+    case 'r':
+      red_r = atoi(optarg);
+      break;
+
 
       // These used to be options we understood, but deprecated now. Accept
       // but don't mention in usage()
@@ -1231,12 +1324,6 @@ int main(int argc, char *argv[]) {
 
     case 'd':
       runtime_opt.daemon = 1;
-      break;
-
-    case 'r':
-      fprintf(stderr, "Instead of deprecated -r, use --led-rows=%s instead.\n",
-              optarg);
-      matrix_options.rows = atoi(optarg);
       break;
 
     case 'P':
@@ -1303,20 +1390,6 @@ int main(int argc, char *argv[]) {
     }
     break;
 
-  case 12:
-    if (demo_parameter) {
-      ImageAnimator* animator = new ImageAnimator(matrix, scroll_ms);
-      while (optind < argc) {
-        animator->LoadPPM(argv[optind]);
-        ++optind;
-      }
-      image_gen = animator;
-    } else {
-      fprintf(stderr, "Demo %d Requires PPM images as parameters\n", demo);
-      return 1;
-    }
-
-    break;
   case 3:
     image_gen = new SimpleSquare(canvas);
     break;
@@ -1353,7 +1426,23 @@ int main(int argc, char *argv[]) {
     image_gen = new BrightnessPulseGenerator(matrix);
     break;
 
+  case 12:
+    if (demo_parameter) {
+      ImageAnimator* animator = new ImageAnimator(matrix, scroll_ms);
+      while (optind < argc) {
+        animator->LoadPPM(argv[optind]);
+        ++optind;
+      }
+      image_gen = animator;
+    } else {
+      fprintf(stderr, "Demo %d Requires PPM images as parameters\n", demo);
+      return 1;
+    }
+    break;
 
+  case 13:
+    image_gen = new RedDotGenerator(matrix, delta_x, delta_y, red_r, scroll_ms);
+    break;
 
   }
 

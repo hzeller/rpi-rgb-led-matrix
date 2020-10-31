@@ -33,6 +33,7 @@ namespace rgb_matrix {
 class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
 
+extern uint32_t fixed_frame_microseconds;
 namespace internal {
 class Framebuffer;
 class PixelDesignatorMap;

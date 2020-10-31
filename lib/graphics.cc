@@ -82,6 +82,21 @@ void DrawCircle(Canvas *c, int x0, int y0, int radius, const Color &color) {
   }
 }
 
+void DrawDisc(Canvas *c, int x0, int y0, int radius, const Color &color) {
+  int r2 = radius * radius;
+  for (int x = 0; x <= radius; ++x) {
+    for (int y = 0; y <= radius; ++y) {
+      if (x * x + y * y <= r2) {
+        c->SetPixel(x0 - x, y0 - y, color.r, color.g, color.b);
+        c->SetPixel(x0 + x, y0 - y, color.r, color.g, color.b);
+        c->SetPixel(x0 - x, y0 + y, color.r, color.g, color.b);
+        c->SetPixel(x0 + x, y0 + y, color.r, color.g, color.b);
+      }
+    }
+  }
+}
+
+
 void DrawLine(Canvas *c, int x0, int y0, int x1, int y1, const Color &color) {
   int dy = y1 - y0, dx = x1 - x0, gradient, x, y, shift = 0x10;
 

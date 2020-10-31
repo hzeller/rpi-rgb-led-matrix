@@ -134,6 +134,7 @@ HARDWARE_DESC?=ji-hat
 # between refresh rate (which is reduce the higher this value is) and
 # flicker suppression (which is better with higher values).
 #DEFINES+=-DFIXED_FRAME_MICROSECONDS=5000
+DEFINES+=-DFIXED_FRAME_MICROSECONDS=16667
 
 # ---- Pinout options for hardware variants; usually no change needed here ----
 

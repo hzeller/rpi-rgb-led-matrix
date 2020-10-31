@@ -52,6 +52,8 @@ namespace rgb_matrix {
 // purposes declared here (defined in gpio.cc).
 uint32_t GetMicrosecondCounter();
 
+uint32_t fixed_frame_microseconds = 0;
+
 using namespace internal;
 
 // Pump pixels to screen. Needs to be high priority real-time because jitter
@@ -132,11 +134,14 @@ public:
       ++frame_count;
       ++low_bit_sequence;
 
-#ifdef FIXED_FRAME_MICROSECONDS
-      while ((GetMicrosecondCounter() - start_time_us) < (uint32_t)FIXED_FRAME_MICROSECONDS) {
+// #ifdef FIXED_FRAME_MICROSECONDS
+//       while ((GetMicrosecondCounter() - start_time_us) < (uint32_t)FIXED_FRAME_MICROSECONDS) {
+//         // busy wait.
+//       }
+// #endif
+      while ((GetMicrosecondCounter() - start_time_us) < fixed_frame_microseconds) {
         // busy wait.
       }
-#endif
       const uint32_t end_time_us = GetMicrosecondCounter();
       if (show_refresh_) {
         uint32_t usec = end_time_us - start_time_us;
