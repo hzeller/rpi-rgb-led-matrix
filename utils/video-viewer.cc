@@ -365,6 +365,9 @@ int main(int argc, char *argv[]) {
                && frames_left > 0) {
           // Is this a packet from the video stream?
           if (packet->stream_index == videoStream) {
+
+            if (frames_to_skip) { frames_to_skip--; continue; }
+            
             // Determine absolute end of this frame now so that we don't include
             // decoding overhead. TODO: skip frames if getting too slow ?
             add_nanos(&next_frame, frame_wait_nanos);
@@ -375,8 +378,6 @@ int main(int argc, char *argv[]) {
 
             if (avcodec_receive_frame(codec_context, decode_frame) < 0)
               continue;
-
-            if (frames_to_skip) { frames_to_skip--; continue; }
 
             // Convert the image from its native format to RGB
             sws_scale(sws_ctx, (uint8_t const * const *)decode_frame->data,
