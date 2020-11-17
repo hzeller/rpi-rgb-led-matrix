@@ -34,11 +34,14 @@ struct HardwareMapping matrix_hardware_mappings[] = {
     .strobe        = GPIO_BIT(4),
 
     /* Address lines */
+#ifdef	ORG_SRC
+    // 20201105-it comments out entirely due to no address in static outdoor LED display.
     .a             = GPIO_BIT(22),
     .b             = GPIO_BIT(23),
     .c             = GPIO_BIT(24),
     .d             = GPIO_BIT(25),
     .e             = GPIO_BIT(15),  /* RxD kept free unless 1:64 */
+#endif//ORG_SRC
 
     /* Parallel chain 0, RGB for both sub-panels */
     .p0_r1         = GPIO_BIT(11),  /* masks: SPI0_SCKL  */
