@@ -6,6 +6,7 @@
 // (but note, that the led-matrix library this depends on is GPL v2)
 
 #include "led-matrix.h"
+#include "graphics.h"
 
 #include <unistd.h>
 #include <math.h>
@@ -27,10 +28,12 @@ static void DrawOnCanvas(Canvas *canvas) {
    */
   canvas->Fill(0, 0, 255);
 
+#ifdef	ORG_SRC
   int center_x = canvas->width() / 2;
   int center_y = canvas->height() / 2;
   float radius_max = canvas->width() / 2;
   float angle_step = 1.0 / 360;
+
   for (float a = 0, r = 0; r < radius_max; a += angle_step, r += angle_step) {
     if (interrupt_received)
       return;
@@ -40,6 +43,25 @@ static void DrawOnCanvas(Canvas *canvas) {
                      255, 0, 0);
     usleep(1 * 1000);  // wait a little to slow down things.
   }
+#else //DEBUG Ooutdoor 1:1 static LED Display
+  canvas->Fill(0, 0, 0);
+  float dot_x, dot_y;
+
+  #ifdef	DEBUG_PRINT
+  printf("width=%3d, height=%3d\n", canvas->width(), canvas->height());
+  #endif
+  for (dot_y = 0; dot_y < canvas->height(); dot_y++) {
+    for (dot_x = 0; dot_x < canvas->width(); dot_x++) {
+      if (interrupt_received)
+        return;
+      canvas->SetPixel(dot_x, dot_y, 255, 0, 0);
+  #ifdef DEBUG_PRINT
+      printf("%3d SetPixel(%3.0f, %3.0f)\n", ++i, dot_x, dot_y);
+  #endif
+      usleep(1 * 10000);  // wait a little to slow down things.
+    }
+  }
+#endif//ORG_SRC
 }
 
 int main(int argc, char *argv[]) {
