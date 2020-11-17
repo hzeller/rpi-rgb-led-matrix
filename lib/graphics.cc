@@ -140,6 +140,46 @@ void DrawCircle(Canvas *c, int x0, int y0, int radius, const Color &color) {
   }
 }
 
+// 2020-11-17 added DrawCircle with filling in specific color
+void DrawCircleFill(Canvas *c, int x0, int y0, int radius, const Color &color) {
+  DrawFastVLine(c, x0, y0 - radius, 2*radius + 1, color);
+  FillCircleHelper(c, x0, y0, radius, 3, 0, color);
+}
+
+void DrawFastVLine(Canvas *c, int x, int y, int h, const Color &color)
+{
+  DrawLine(c, x, y, x, y + h - 1, color);
+}
+
+void FillCircleHelper(Canvas *c, int x0, int y0, int radius, int cornername, int delta, const Color &color)
+{
+  int f     = 1 - radius;
+  int ddF_x = 1;
+  int ddF_y = -2 * radius;
+  int x     = 0;
+  int y     = radius;
+
+  while (x<y) {
+    if (f >= 0) {
+      y--;
+      ddF_y += 2;
+      f     += ddF_y;
+    }
+    x++;
+    ddF_x += 2;
+    f     += ddF_x;
+
+    if (cornername & 0x1) {
+      DrawFastVLine(c, x0+x, y0-y, 2*y+1+delta, color);
+      DrawFastVLine(c, x0+y, y0-x, 2*x+1+delta, color);
+    }
+    if (cornername & 0x2) {
+      DrawFastVLine(c, x0-x, y0-y, 2*y+1+delta, color);
+      DrawFastVLine(c, x0-y, y0-x, 2*x+1+delta, color);
+    }
+  }
+}
+
 void DrawLine(Canvas *c, int x0, int y0, int x1, int y1, const Color &color) {
   int dy = y1 - y0, dx = x1 - x0, gradient, x, y, shift = 0x10;
 
