@@ -364,9 +364,9 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   std::string scratch;
   std::string *err = err_in ? err_in : &scratch;
   bool success = true;
-  if (rows < 8 || rows > 64 || rows % 2 != 0) {
+  if (rows < 2 || rows > 64 || rows % 2 != 0) {
     err->append("Invalid number or rows per panel (--led-rows). "
-                "Should be in range of [8..64] and divisible by 2.\n");
+                "Should be in range of [2..64] and divisible by 2.\n");
     success = false;
   }
 
@@ -389,10 +389,11 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (row_address_type < 0 || row_address_type > 4) {
-    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 (ABC address), 4 (ABC Shift + DE direct).\n");
+  if (row_address_type < 0 || row_address_type > 5) {
+    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 (ABC address), 4 (ABC Shift + DE direct), 5 (NULL).\n");
     success = false;
   }
+
 
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
   const bool is_cm = (strcmp(hardware_mapping, "compute-module") == 0);
