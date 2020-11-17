@@ -280,6 +280,16 @@ private:
 
 }
 
+//
+// 2020-11-05-add null address for static LED display.
+//
+class NullRowAddressSetter : public RowAddressSetter {
+public:
+  NullRowAddressSetter (int, const HardwareMapping &) {}
+  virtual gpio_bits_t need_bits() const { return 0; }
+  virtual void SetRowAddress(GPIO *, int) {}
+};
+
 const struct HardwareMapping *Framebuffer::hardware_mapping_ = NULL;
 RowAddressSetter *Framebuffer::row_setter_ = NULL;
 
@@ -299,7 +309,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
   assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
-  assert(rows_ >=4 && rows_ <= 64 && rows_ % 2 == 0);
+  assert(rows_ >=2 && rows_ <= 64 && rows_ % 2 == 0);
   if (parallel > hardware_mapping_->max_parallel_chains) {
     fprintf(stderr, "The %s GPIO mapping only supports %d parallel chain%s, "
             "but %d was requested.\n", hardware_mapping_->name,
@@ -438,6 +448,9 @@ Framebuffer::~Framebuffer() {
     break;
   case 4:
     row_setter_ = new SM5266RowAddressSetter(double_rows, h);
+    break;
+  case 5:
+    row_setter_ = new NullRowAddressSetter (double_rows, h);
     break;
   default:
     assert(0);  // unexpected type.
