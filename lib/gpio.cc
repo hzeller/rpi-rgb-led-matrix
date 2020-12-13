@@ -252,9 +252,10 @@ static RaspberryPiModel DetermineRaspberryModel() {
     return PI_MODEL_2;
 
   case 0x11: /* Pi 4 */
+  case 0x14: /* CM4 */
     return PI_MODEL_4;
 
-  default:  /* a bunch of versions represneting Pi 3 */
+  default:  /* a bunch of versions representing Pi 3 */
     return PI_MODEL_3;
   }
 }
