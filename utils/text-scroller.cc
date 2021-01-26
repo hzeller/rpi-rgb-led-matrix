@@ -19,6 +19,7 @@
 #include <string>
 
 #include <getopt.h>
+#include <math.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,8 +39,9 @@ static int usage(const char *progname) {
   fprintf(stderr, "Takes text and scrolls it with speed -s\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr,
-          "\t-s <speed>        : Approximate letters per second. "
-          "(Zero for no scrolling)\n"
+          "\t-s <speed>        : Approximate letters per second. \n"
+          "\t                    Positive: scroll right to left; Negative: scroll left to right\n"
+          "\t                    (Zero for no scrolling)\n"
           "\t-l <loop-count>   : Number of loops through the text. "
           "-1 for endless (default)\n"
           "\t-f <font-file>    : Path to *.bdf-font to be used.\n"
@@ -92,10 +94,8 @@ int main(int argc, char *argv[]) {
 
   const char *bdf_font_file = NULL;
   std::string line;
-  /* x_origin is set by default just right of the screen */
-  const int x_default_start = (matrix_options.chain_length
-                               * matrix_options.cols) + 5;
-  int x_orig = x_default_start;
+  bool xorigin_configured = false;
+  int x_orig = 0;
   int y_orig = 0;
   int letter_spacing = 0;
   float speed = 7.0f;
@@ -106,7 +106,7 @@ int main(int argc, char *argv[]) {
     switch (opt) {
     case 's': speed = atof(optarg); break;
     case 'l': loops = atoi(optarg); break;
-    case 'x': x_orig = atoi(optarg); break;
+    case 'x': x_orig = atoi(optarg); xorigin_configured = true; break;
     case 'y': y_orig = atoi(optarg); break;
     case 'f': bdf_font_file = strdup(optarg); break;
     case 't': letter_spacing = atoi(optarg); break;
@@ -185,12 +185,20 @@ int main(int argc, char *argv[]) {
   // Create a new canvas to be used with led_matrix_swap_on_vsync
   FrameCanvas *offscreen_canvas = canvas->CreateFrameCanvas();
 
+  const int scroll_direction = (speed >= 0) ? -1 : 1;
+  speed = fabs(speed);
   int delay_speed_usec = 1000000;
   if (speed > 0) {
     delay_speed_usec = 1000000 / speed / font.CharacterWidth('W');
-  } else if (x_orig == x_default_start) {
-    // There would be no scrolling, so text would never appear. Move to front.
-    x_orig = with_outline ? 1 : 0;
+  }
+
+  if (!xorigin_configured) {
+    if (speed == 0) {
+      // There would be no scrolling, so text would never appear. Move to front.
+      x_orig = with_outline ? 1 : 0;
+    } else {
+      x_orig = scroll_direction < 0 ? canvas->width() : 0;
+    }
   }
 
   int x = x_orig;
@@ -217,9 +225,10 @@ int main(int argc, char *argv[]) {
                                   color, NULL,
                                   line.c_str(), letter_spacing);
 
-    --x;
-    if (speed > 0 && x + length < 0) {  // moved all the way left out of frame.
-      x = x_orig;
+    x += scroll_direction;
+    if ((scroll_direction < 0 && x + length < 0) ||
+        (scroll_direction > 0 && x > canvas->width())) {
+      x = x_orig + ((scroll_direction > 0) ? -length : 0);
       if (loops > 0) --loops;
     }
 
