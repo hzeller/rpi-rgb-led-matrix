@@ -155,11 +155,12 @@ make text-scroller
 usage: ./text-scroller [options] <text>
 Takes text and scrolls it with speed -s
 Options:
+        -f <font-file>    : Path to *.bdf-font to be used.
         -s <speed>        : Approximate letters per second.
                             Positive: scroll right to left; Negative: scroll left to right
                             (Zero for no scrolling)
         -l <loop-count>   : Number of loops through the text. -1 for endless (default)
-        -f <font-file>    : Path to *.bdf-font to be used.
+        -b <on-time>,<off-time>  : Blink while scrolling. Keep on and off for these amount of scrolled pixels.
         -x <x-origin>     : Shift X-Origin of displaying text (Default: 0)
         -y <y-origin>     : Shift Y-Origin of displaying text (Default: 0)
         -t <track-spacing>: Spacing pixels between letters (Default: 0)
