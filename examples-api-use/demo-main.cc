@@ -297,11 +297,14 @@ private:
   }
 };
 
+// 오늘은 이미지 스클로러를 한번 분석해 보겠습니다.
 class ImageScroller : public DemoRunner
 {
 public:
-  // Scroll image with "scroll_jumps" pixels every "scroll_ms" milliseconds.
-  // If "scroll_ms" is negative, don't do any scrolling.
+  // 매 scroll_ms 밀리세컨드마다 scroll_jumps 픽셀 수 만큼 이미지를 스크롤합니다.
+  // 예) ImageScroller(RGBMatrix *m, int scroll_jumps = 4, int scroll_ms = 30)
+  //     => 30 밀리세컨드마다 4 픽셀 씩 이미지를 스크롤합니다.
+  // scroll_jumps 값이 음수라면, 스크롤링이 진행되지 않습니다.
   ImageScroller(RGBMatrix *m, int scroll_jumps, int scroll_ms = 30)
       : DemoRunner(m), scroll_jumps_(scroll_jumps),
         scroll_ms_(scroll_ms),
@@ -310,17 +313,18 @@ public:
   {
     offscreen_ = matrix_->CreateFrameCanvas();
   }
-
-  // _very_ simplified. Can only read binary P6 PPM. Expects newlines in headers
-  // Not really robust. Use at your own risk :)
-  // This allows reload of an image while things are running, e.g. you can
-  // live-update the content.
+  // 이진 P6 PPM 파일만을 읽을 수 있는 메서드 입니다.
+  // 개발자의 말을 빌리자면 아직 완벽한 메서드는 아닌듯 하며 사용시 문제가 발생할 수 있답니다.
+  // 이 메서드는 주로 이미지를 라이브 업데이트 하는 용도로 사용됩니다.
   bool LoadPPM(const char *filename)
   {
+    // 파일 주소을 저장하는 포인터입니다.
     FILE *f = fopen(filename, "r");
-    // check if file exists
+    // 파일 존재 유무, 파일 권한(access from unistd) 확인
     if (f == NULL && access(filename, F_OK) == -1)
     {
+      // printf 를 쓸 경우, 출력 버퍼에 저장되어 있다가 출력하므로 오류 메시지를 출력하지 못할 수 도 있습니다.
+      // fprintf(stderr, ...) 를 쓸 경우 버퍼 없이 바로 출력 됩니다.
       fprintf(stderr, "File \"%s\" doesn't exist\n", filename);
       return false;
     }
@@ -328,25 +332,35 @@ public:
       return false;
     char header_buf[256];
     const char *line = ReadLine(f, header_buf, sizeof(header_buf));
+    // 오류 상황에 맞는 line을 출력하고 종료합니다.
 #define EXIT_WITH_MSG(m)                              \
   {                                                   \
     fprintf(stderr, "%s: %s |%s", filename, m, line); \
     fclose(f);                                        \
     return false;                                     \
   }
+    // 이부분을 이해하기 위해서는 sscanf 에 대해서 알아봅시다.
+    // 만약 P6 포맷의 PPM 파일이 아니라면
     if (sscanf(line, "P6 ") == EOF)
       EXIT_WITH_MSG("Can only handle P6 as PPM type.");
+
+    // 필드 높이, 너비 둘 중 하나라도 저장이 안된다면 값이 2가 안되겠죠?
     line = ReadLine(f, header_buf, sizeof(header_buf));
     int new_width, new_height;
     if (!line || sscanf(line, "%d %d ", &new_width, &new_height) != 2)
       EXIT_WITH_MSG("Width/height expected");
+
+    // value 에 제대로 픽셀이 할당되었는지 확인, 그리고 그 (최대)값이 255
     int value;
     line = ReadLine(f, header_buf, sizeof(header_buf));
     if (!line || sscanf(line, "%d ", &value) != 1 || value != 255)
       EXIT_WITH_MSG("Only 255 for maxval allowed.");
+
     const size_t pixel_count = new_width * new_height;
     Pixel *new_image = new Pixel[pixel_count];
+    // assert(bool ok)은 Ok가 거짓일 경우에 프로그램을 종료합니다.
     assert(sizeof(Pixel) == 3); // we make that assumption.
+    // fread는 결과적으로 읽어들인 원소의 갯수를 반환합니다. 의도대로 읽어들이지 못하면 다음 에러가 발생하겠죠?
     if (fread(new_image, sizeof(Pixel), pixel_count, f) != pixel_count)
     {
       line = "";
@@ -449,13 +463,14 @@ private:
   };
 
   // Read line, skip comments.
+  // result 문자열 속에 있는 글을 읽습니다. 주석은 제외 합니다.
   char *ReadLine(FILE *f, char *buffer, size_t len)
   {
     char *result;
     do
     {
       result = fgets(buffer, len, f);
-    } while (result != NULL && result[0] == '#');
+    } while (result != NULL && result[0] == '#'); // 주석 "#" 제외
     return result;
   }
 
