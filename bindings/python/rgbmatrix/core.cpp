@@ -1591,7 +1591,7 @@ static int __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_16hardware_mapping_2__se
 static PyObject *__pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4rows___get__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self); /* proto */
 static int __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4rows_2__set__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self, uint8_t __pyx_v_value); /* proto */
 static PyObject *__pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols___get__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self); /* proto */
-static int __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols_2__set__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self, uint8_t __pyx_v_value); /* proto */
+static int __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols_2__set__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self, uint32_t __pyx_v_value); /* proto */
 static PyObject *__pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_12chain_length___get__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self); /* proto */
 static int __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_12chain_length_2__set__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self, uint8_t __pyx_v_value); /* proto */
 static PyObject *__pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_8parallel___get__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self); /* proto */
@@ -4349,7 +4349,7 @@ static int __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4rows_2__set__(struct __
  * 
  *     property cols:
  *         def __get__(self): return self.__options.cols             # <<<<<<<<<<<<<<
- *         def __set__(self, uint8_t value): self.__options.cols = value
+ *         def __set__(self, uint32_t value): self.__options.cols = value
  * 
  */
 
@@ -4395,7 +4395,7 @@ static PyObject *__pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols___get__(stru
 /* "rgbmatrix/core.pyx":109
  *     property cols:
  *         def __get__(self): return self.__options.cols
- *         def __set__(self, uint8_t value): self.__options.cols = value             # <<<<<<<<<<<<<<
+ *         def __set__(self, uint32_t value): self.__options.cols = value             # <<<<<<<<<<<<<<
  * 
  *     property chain_length:
  */
@@ -4403,7 +4403,7 @@ static PyObject *__pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols___get__(stru
 /* Python wrapper */
 static int __pyx_pw_9rgbmatrix_4core_16RGBMatrixOptions_4cols_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_arg_value); /*proto*/
 static int __pyx_pw_9rgbmatrix_4core_16RGBMatrixOptions_4cols_3__set__(PyObject *__pyx_v_self, PyObject *__pyx_arg_value) {
-  uint8_t __pyx_v_value;
+  uint32_t __pyx_v_value;
   int __pyx_lineno = 0;
   const char *__pyx_filename = NULL;
   int __pyx_clineno = 0;
@@ -4411,7 +4411,7 @@ static int __pyx_pw_9rgbmatrix_4core_16RGBMatrixOptions_4cols_3__set__(PyObject 
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__set__ (wrapper)", 0);
   assert(__pyx_arg_value); {
-    __pyx_v_value = __Pyx_PyInt_As_uint8_t(__pyx_arg_value); if (unlikely((__pyx_v_value == ((uint8_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 109, __pyx_L3_error)
+    __pyx_v_value = __Pyx_PyInt_As_uint32_t(__pyx_arg_value); if (unlikely((__pyx_v_value == ((uint32_t)-1)) && PyErr_Occurred())) __PYX_ERR(0, 109, __pyx_L3_error)
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L3_error:;
@@ -4419,14 +4419,14 @@ static int __pyx_pw_9rgbmatrix_4core_16RGBMatrixOptions_4cols_3__set__(PyObject 
   __Pyx_RefNannyFinishContext();
   return -1;
   __pyx_L4_argument_unpacking_done:;
-  __pyx_r = __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols_2__set__(((struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *)__pyx_v_self), ((uint8_t)__pyx_v_value));
+  __pyx_r = __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols_2__set__(((struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *)__pyx_v_self), ((uint32_t)__pyx_v_value));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static int __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols_2__set__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self, uint8_t __pyx_v_value) {
+static int __pyx_pf_9rgbmatrix_4core_16RGBMatrixOptions_4cols_2__set__(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions *__pyx_v_self, uint32_t __pyx_v_value) {
   int __pyx_r;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("__set__", 0);

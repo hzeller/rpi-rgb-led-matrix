@@ -106,7 +106,7 @@ cdef class RGBMatrixOptions:
 
     property cols:
         def __get__(self): return self.__options.cols
-        def __set__(self, uint8_t value): self.__options.cols = value
+        def __set__(self, uint32_t value): self.__options.cols = value
 
     property chain_length:
         def __get__(self): return self.__options.chain_length
