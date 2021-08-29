@@ -45,6 +45,7 @@ extern "C" {
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <thread>
 
 #include "led-matrix.h"
 #include "content-streamer.h"
@@ -99,8 +100,10 @@ static int usage(const char *progname, const char *msg = NULL) {
           "\t                     is a fraction of matrix refresh. In particular with a stable refresh,\n"
           "\t                     this can result in more smooth playback. Choose multiple for desired framerate.\n"
           "\t                     (Tip: use --led-limit-refresh for stable rate)\n"
+	  "\t-T <threads>       : Number of threads used to decode (default 1, max=%d)\n"
           "\t-v                 : verbose; prints video metadata and other info.\n"
-          "\t-f                 : Loop forever.\n");
+          "\t-f                 : Loop forever.\n",
+	  (int)std::thread::hardware_concurrency());
 
   fprintf(stderr, "\nGeneral LED matrix options:\n");
   rgb_matrix::PrintMatrixFlags(stderr);
@@ -167,12 +170,13 @@ int main(int argc, char *argv[]) {
   bool maintain_aspect_ratio = true;
   bool verbose = false;
   bool forever = false;
+  unsigned thread_count = 1;
   int stream_output_fd = -1;
   unsigned int frame_skip = 0;
-  unsigned int framecount_limit = UINT_MAX;  // even at 60fps, that is > 2yrs
+  int64_t framecount_limit = INT64_MAX;
 
   int opt;
-  while ((opt = getopt(argc, argv, "vO:R:Lfc:s:FV:")) != -1) {
+  while ((opt = getopt(argc, argv, "vO:R:Lfc:s:FV:T:")) != -1) {
     switch (opt) {
     case 'v':
       verbose = true;
@@ -197,10 +201,13 @@ int main(int argc, char *argv[]) {
       return 1;
       break;
     case 'c':
-      framecount_limit = atoi(optarg);
+      framecount_limit = atoll(optarg);
       break;
     case 's':
       frame_skip = atoi(optarg);
+      break;
+    case 'T':
+      thread_count = atoi(optarg);
       break;
     case 'F':
       maintain_aspect_ratio = false;
@@ -300,6 +307,14 @@ int main(int argc, char *argv[]) {
       if (verbose) fprintf(stderr, "FPS: %f\n", 1.0*rate.num / rate.den);
 
       AVCodecContext *codec_context = avcodec_alloc_context3(av_codec);
+      if (thread_count > 1 &&
+          av_codec->capabilities & AV_CODEC_CAP_FRAME_THREADS &&
+          std::thread::hardware_concurrency() > 1) {
+        codec_context->thread_type = FF_THREAD_FRAME;
+        codec_context->thread_count =
+          std::min(thread_count, std::thread::hardware_concurrency());
+      }
+
       if (avcodec_parameters_to_context(codec_context, codec_parameters) < 0)
         return -1;
       if (avcodec_open2(codec_context, av_codec, NULL) < 0)
@@ -354,29 +369,51 @@ int main(int argc, char *argv[]) {
       AVPacket *packet = av_packet_alloc();
       AVFrame *decode_frame = av_frame_alloc();  // Decode video into this
       do {
-        unsigned int frames_left = framecount_limit;
+        int64_t frames_left = framecount_limit;
         unsigned int frames_to_skip = frame_skip;
         if (one_video_forever) {
           av_seek_frame(format_context, videoStream, 0, AVSEEK_FLAG_ANY);
           avcodec_flush_buffers(codec_context);
         }
         clock_gettime(CLOCK_MONOTONIC, &next_frame);
-        while (!interrupt_received && av_read_frame(format_context, packet) >= 0
-               && frames_left > 0) {
+
+        int decode_in_flight = 0;
+        bool state_reading = true;
+
+        while (!interrupt_received && frames_left > 0) {
+          if (state_reading &&
+              av_read_frame(format_context, packet) != 0) {
+            state_reading = false;  // ran out of packets from input
+          }
+
+          if (!state_reading && decode_in_flight == 0)
+            break;  // Decoder fully drained.
+
           // Is this a packet from the video stream?
-          if (packet->stream_index == videoStream) {
+          if (state_reading && packet->stream_index != videoStream) {
+            av_packet_unref(packet);
+            continue;  // Not interested in that.
+          }
+
+          if (state_reading) {
+            // Decode video frame
+            if (avcodec_send_packet(codec_context, packet) == 0) {
+              ++decode_in_flight;
+            }
+            av_packet_unref(packet);
+          } else {
+            avcodec_send_packet(codec_context, nullptr); // Trigger decode drain
+          }
+
+          while (decode_in_flight &&
+                 avcodec_receive_frame(codec_context, decode_frame) == 0) {
+            --decode_in_flight;
+
+            if (frames_to_skip) { frames_to_skip--; continue; }
+
             // Determine absolute end of this frame now so that we don't include
             // decoding overhead. TODO: skip frames if getting too slow ?
             add_nanos(&next_frame, frame_wait_nanos);
-
-            // Decode video frame
-            if (avcodec_send_packet(codec_context, packet) < 0)
-              continue;
-
-            if (avcodec_receive_frame(codec_context, decode_frame) < 0)
-              continue;
-
-            if (frames_to_skip) { frames_to_skip--; continue; }
 
             // Convert the image from its native format to RGB
             sws_scale(sws_ctx, (uint8_t const * const *)decode_frame->data,
@@ -394,11 +431,10 @@ int main(int argc, char *argv[]) {
               offscreen_canvas = matrix->SwapOnVSync(offscreen_canvas,
                                                      vsync_multiple);
             }
+            if (!stream_writer && !use_vsync_for_frame_timing) {
+              clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_frame, NULL);
+            }
           }
-          if (!stream_writer && !use_vsync_for_frame_timing) {
-            clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &next_frame, NULL);
-          }
-          av_packet_unref(packet);
         }
       } while (one_video_forever && !interrupt_received);
 
