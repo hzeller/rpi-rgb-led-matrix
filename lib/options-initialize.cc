@@ -35,7 +35,7 @@ RuntimeOptions::RuntimeOptions() :
 #ifdef RGB_SLOWDOWN_GPIO
   gpio_slowdown(RGB_SLOWDOWN_GPIO),
 #else
-  gpio_slowdown(1),
+  gpio_slowdown(GPIO::IsPi4() ? 2 : 1),
 #endif
   daemon(0),            // Don't become a daemon by default.
   drop_privileges(1),   // Encourage good practice: drop privileges by default.
@@ -343,7 +343,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
 
   fprintf(out, "\t--led-slowdown-gpio=<0..4>: "
           "Slowdown GPIO. Needed for faster Pis/slower panels "
-          "(Default: %d).\n", r.gpio_slowdown);
+          "(Default: %d (2 on Pi4, 1 other)).\n", r.gpio_slowdown);
   if (r.daemon >= 0) {
     const bool on = (r.daemon > 0);
     fprintf(out,

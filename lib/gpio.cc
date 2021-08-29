@@ -253,6 +253,7 @@ static RaspberryPiModel DetermineRaspberryModel() {
     return PI_MODEL_2;
 
   case 0x11: /* Pi 4 */
+  case 0x13: /* Pi 400 */
   case 0x14: /* CM4 */
     return PI_MODEL_4;
 
@@ -356,6 +357,10 @@ bool GPIO::Init(int slowdown) {
 #endif
 
   return true;
+}
+
+bool GPIO::IsPi4() {
+  return GetPiModel() == PI_MODEL_4;
 }
 
 /*
