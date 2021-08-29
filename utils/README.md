@@ -214,17 +214,22 @@ This is currently doing a software decode; if you are familiar with the
 av libraries, a pull request that adds hardware decoding is welcome.
 
 Right now, this is CPU intensive and decoding can result in an output that
-is not smooth or presents flicker. If you observe that, it is suggested to
-do one of these:
+is not smooth or presents flicker, in particular on older Pis.
+If you observe that, it is suggested to
+prepare a preprocessed stream that you then later watch with `led-image-viewer`
+(see example below). This will use a bit of disk-space, but it will result
+in best quality as all the expensive calculation has been done beforehand.
 
-  - Transcode the video first to the width and height of the final output size.
+Short of that, if you want to use the video viewer directly (e.g. because the
+stream file would be super-large), do the following when you observe flicker:
+  - Use the `-T` option to add more decode threads; `-T2` or `-T3` typically.
+  - Transcode the video first to the width and height of the final output size
+    so that decoding and scaling is much cheaper at runtime.
   - If you use tools such as [youtube-dl] to acquire the video, tell it
     to choose a low resolution version (e.g. for that program use option
     `-f"[height<480]"`).
   - Synchronize output as integer fraction of matrix refresh rate (example
     below).
-  - Prepare an animation stream that you then later watch with led-image-viewer
-    (see example below).
   - Another route to watch videos is to run a [flaschen-taschen]
     server on your Pi, that provides a network interface to your LED-Matrix.
     Now, you can use [vlc] from some other computer on your network and
@@ -261,6 +266,7 @@ Options:
                              is a fraction of matrix refresh. In particular with a stable refresh,
                              this can result in more smooth playback. Choose multiple for desired framerate.
                              (Tip: use --led-limit-refresh for stable rate)
+        -T <threads>       : Number of threads used to decode (default 1, max=4)
         -v                 : verbose; prints video metadata and other info.
         -f                 : Loop forever.
 
@@ -273,7 +279,7 @@ General LED matrix options:
 ```bash
 # Play video. If you observe that the Pi has trouble to keep up (extensive
 # flickering), transcode the video first to the exact size of your display.
-sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
+sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 myvideo.webm
 
 # If you observe flicker you can try to synchronize video output with
 # the refresh rate of the panel. For that, first figure out with
@@ -285,19 +291,30 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
 # Let's fix the refresh rate to 200 and sync a new frame with every
 # 8th refresh to get the desired video fps (200/8 = 25)
 sudo ./video-viewer --led-chain=4 --led-parallel=3 --led-limit-refresh=200 -V8 myvideo.webm
+```
 
-# Another way to avoid flicker playback with best possible results even with
+**Example preparing a preprocessed stream**
+
+```bash
+# A way to avoid flicker playback with best possible results even with
 # very high framerate: create a preprocessed stream first, then replay it with
 # led-image-viewer. This results in best quality (no CPU use at play-time), but
 # comes with a caveat: It can use _A LOT_ of disk, as it is not compressed.
 # Note:
+#  o We don't need to be root, as we don't write to the matrix, just to a file.
 #  o We have to supply all the options (rows, chain, parallel, hardware-mapping,
-#    rotation etc), that we would supply to the real viewer later.
-#  o We don't need to be root, as we don't write to the matrix
-./video-viewer --led-chain=5 --led-parallel=3 myvideo.webm -O/tmp/vid.stream
+#    rotation etc), that we would supply to the real viewer later as the
+#    framebuffer is fully pre-processed to avoid any overhead while playing.
+#  o You could even run this on your much faster regular Linux PC (little
+#    endian) and create a stream that you then can play on your Pi.
+# ----- STEP 1 Preprocessing ------
+./video-viewer --led-chain=5 --led-parallel=3 -T4 myvideo.mp4 -O/tmp/vid.stream
 
-#.. now play it with led-image-viewer. Also try using -D or -V to replay with
-# different frame rate.
+#.. now play the resulting stream with the with led-image-viewer. Also try
+# using -D or -V to replay with different frame rate.
+# Note, you need to give the same options (rows, chain, parallel etc.) as
+# you did when creating the stream.
+# ----- STEP 2 Actual Playing ------
 sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```
 
