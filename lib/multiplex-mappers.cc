@@ -439,6 +439,21 @@ protected:
   }
 };
 
+class P10Outdoor32x16HalfScanMapper : public MultiplexMapperBase {
+public:
+  P10Outdoor32x16HalfScanMapper() : MultiplexMapperBase("P10Outdoor32x16HalfScan", 4) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    int base = (x/8)*32;
+    bool reverse = (y%4)/2 == 0;
+    int offset = (3-((y%8)/2))*8;
+    int dx = x%8;
+
+    *matrix_y = (y/8 == 0) ? ((y%2 == 0) ? 0:1) : ((y%2 == 0) ? 2:3);
+    *matrix_x = base + (reverse ? offset + (7-dx) : offset + dx);
+  }
+};
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -465,6 +480,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P10CoremanMapper());
   result->push_back(new P8Outdoor1R1G1BMultiplexMapper());
   result->push_back(new FlippedStripeMultiplexMapper());
+  result->push_back(new P10Outdoor32x16HalfScanMapper());
   return result;
 }
 
