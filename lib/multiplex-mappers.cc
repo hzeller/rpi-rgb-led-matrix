@@ -441,7 +441,7 @@ protected:
 
 class P10Outdoor32x16HalfScanMapper : public MultiplexMapperBase {
 public:
-  P10OutdoorHalfScanMapper() : MultiplexMapperBase("P10Outdoor32x16HalfScan", 4) {}
+  P10Outdoor32x16HalfScanMapper() : MultiplexMapperBase("P10Outdoor32x16HalfScan", 4) {}
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     int base = (x/8)*32;
