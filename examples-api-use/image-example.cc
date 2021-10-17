@@ -153,7 +153,6 @@ int main(int argc, char *argv[]) {
     break;
   }
 
-  fprintf(stderr, "Got Ctrl-C\n");
   matrix->Clear();
   delete matrix;
 
