@@ -833,7 +833,7 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
   const int start_bit = std::max(pwm_low_bit, kBitPlanes - pwm_bits_);
 
   const int seg_bits = 4;
-  uint32_t counter = 0;
+  int counter = 0;
 
   const uint8_t half_double = double_rows_/2;
   for (int b = start_bit; b < kBitPlanes;) {
@@ -903,7 +903,7 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
     
     if (b < seg_bits)
       b = seg_bits;
-    else if (++counter >= (1 << (b / seg_bits)) {
+    else if (++counter >= (1 << (b / seg_bits))) {
           ++b;
           counter = 0;
     }
