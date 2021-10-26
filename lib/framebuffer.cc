@@ -832,45 +832,80 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
   // Depending if we do dithering, we might not always show the lowest bits.
   const int start_bit = std::max(pwm_low_bit, kBitPlanes - pwm_bits_);
 
+  const int seg_bits = 4;
+  uint32_t counter = 0;
+
   const uint8_t half_double = double_rows_/2;
-  for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
-    uint8_t d_row;
-    switch (scan_mode_) {
-    case 0:  // progressive
-    default:
-      d_row = row_loop;
-      break;
+  for (int b = start_bit; b < kBitPlanes;) {
+    for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
+      uint8_t d_row;
+      switch (scan_mode_) {
+      case 0:  // progressive
+      default:
+        d_row = row_loop;
+        break;
 
-    case 1:  // interlaced
-      d_row = ((row_loop < half_double)
-               ? (row_loop << 1)
-               : ((row_loop - half_double) << 1) + 1);
-    }
-
-    // Rows can't be switched very quickly without ghosting, so we do the
-    // full PWM of one row before switching rows.
-    for (int b = start_bit; b < kBitPlanes; ++b) {
-      gpio_bits_t *row_data = ValueAt(d_row, 0, b);
-      // While the output enable is still on, we can already clock in the next
-      // data.
-      for (int col = 0; col < columns_; ++col) {
-        const gpio_bits_t &out = *row_data++;
-        io->WriteMaskedBits(out, color_clk_mask);  // col + reset clock
-        io->SetBits(h.clock);               // Rising edge: clock color in.
+      case 1:  // interlaced
+        d_row = ((row_loop < half_double)
+                 ? (row_loop << 1)
+                 : ((row_loop - half_double) << 1) + 1);
       }
-      io->ClearBits(color_clk_mask);    // clock back to normal.
 
-      // OE of the previous row-data must be finished before strobe.
-      sOutputEnablePulser->WaitPulseFinished();
+      if (b < seg_bits) {
+        for (int b2 = b; b2 < seg_bits; b2++) {
+          gpio_bits_t *row_data = ValueAt(d_row, 0, b2);
+          // While the output enable is still on, we can already clock in the next
+          // data.
+          for (int col = 0; col < columns_; ++col) {
+            const gpio_bits_t &out = *row_data++;
+            io->WriteMaskedBits(out, color_clk_mask);  // col + reset clock
+            io->SetBits(h.clock);               // Rising edge: clock color in.
+          }
+          io->ClearBits(color_clk_mask);    // clock back to normal.
 
-      // Setting address and strobing needs to happen in dark time.
-      row_setter_->SetRowAddress(io, d_row);
+          // OE of the previous row-data must be finished before strobe.
+          sOutputEnablePulser->WaitPulseFinished();
 
-      io->SetBits(h.strobe);   // Strobe in the previously clocked in row.
-      io->ClearBits(h.strobe);
+          // Setting address and strobing needs to happen in dark time.
+          row_setter_->SetRowAddress(io, d_row);
 
-      // Now switch on for the sleep time necessary for that bit-plane.
-      sOutputEnablePulser->SendPulse(b);
+          io->SetBits(h.strobe);   // Strobe in the previously clocked in row.
+          io->ClearBits(h.strobe);
+          
+          // Now switch on for the sleep time necessary for that bit-plane.
+          sOutputEnablePulser->SendPulse(b2);
+        }
+      }
+      else {
+        gpio_bits_t *row_data = ValueAt(d_row, 0, b);
+        // While the output enable is still on, we can already clock in the next
+        // data.
+        for (int col = 0; col < columns_; ++col) {
+          const gpio_bits_t &out = *row_data++;
+          io->WriteMaskedBits(out, color_clk_mask);  // col + reset clock
+          io->SetBits(h.clock);               // Rising edge: clock color in.
+        }
+        io->ClearBits(color_clk_mask);    // clock back to normal.
+
+        // OE of the previous row-data must be finished before strobe.
+        sOutputEnablePulser->WaitPulseFinished();
+
+        // Setting address and strobing needs to happen in dark time.
+        row_setter_->SetRowAddress(io, d_row);
+
+        io->SetBits(h.strobe);   // Strobe in the previously clocked in row.
+        io->ClearBits(h.strobe);
+        
+        // Now switch on for the sleep time necessary for that bit-plane.
+        sOutputEnablePulser->SendPulse(seg_bits);
+      }
+    }
+    
+    if (b < seg_bits)
+      b = seg_bits;
+    else if (++counter >= (1 << (b / seg_bits)) {
+          ++b;
+          counter = 0;
     }
   }
 }
