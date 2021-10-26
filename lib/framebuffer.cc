@@ -903,7 +903,7 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
     
     if (b < seg_bits)
       b = seg_bits;
-    else if (++counter >= (1 << (b / seg_bits))) {
+    else if (++counter >= (1 << ((b / seg_bits) - 1))) {
           ++b;
           counter = 0;
     }
