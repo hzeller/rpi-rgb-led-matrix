@@ -832,7 +832,7 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
   // Depending if we do dithering, we might not always show the lowest bits.
   const int start_bit = std::max(pwm_low_bit, kBitPlanes - pwm_bits_);
 
-  const int seg_bits = 4;
+  const int seg_bits = 8;
   int counter = 0;
 
   const uint8_t half_double = double_rows_/2;
