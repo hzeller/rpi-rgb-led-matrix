@@ -24,10 +24,6 @@
 
 // Make sure C++ is in sync with C
 static_assert(sizeof(rgb_matrix::RGBMatrix::Options) == sizeof(RGBLedMatrixOptions), "C and C++ out of sync");
-
-char (*__kaboom)[sizeof( rgb_matrix::RGBMatrix::Options )] = 1;
-char (*__kaboom)[sizeof( RGBLedMatrixOptions )] = 1;
-
 static_assert(sizeof(rgb_matrix::RuntimeOptions) == sizeof(RGBLedRuntimeOptions), "C and C++ out of sync");
 
 // Our opaque dummy structs to communicate with the c-world
