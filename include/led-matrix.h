@@ -93,6 +93,11 @@ public:
     // Flag: --led-pwm-bits
     int pwm_bits;
 
+    // Set S-PWM segment bits used for output. Default is 8. Higher require less CPU and
+    // decreases refresh-rate.
+    // Flag: --led-pwm-bits
+    int seg_bits;
+
     // Change the base time-unit for the on-time in the lowest
     // significant bit in nanoseconds.
     // Higher numbers provide better quality (more accurate color, less
