@@ -102,6 +102,7 @@ public:
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.
   // Returns boolean to signify if value was within range.
   bool SetPWMBits(uint8_t value);
+  bool SetPWMBits(uint8_t value, uint8_t seg);
   uint8_t pwmbits() { return pwm_bits_; }
 
   // Map brightness of output linearly to input with CIE1931 profile.
@@ -153,6 +154,7 @@ private:
   const bool inverse_color_;
 
   uint8_t pwm_bits_;   // PWM bits to display.
+  uint8_t seg_bits_;
   bool do_luminance_correct_;
   uint8_t brightness_;
 

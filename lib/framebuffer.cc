@@ -293,7 +293,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     columns_(columns),
     scan_mode_(scan_mode),
     inverse_color_(inverse_color),
-    pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
+    pwm_bits_(kBitPlanes), seg_bits_(8), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_),
     buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
     shared_mapper_(mapper) {
@@ -566,9 +566,14 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
 }
 
 bool Framebuffer::SetPWMBits(uint8_t value) {
-  if (value < 1 || value > kBitPlanes)
+  return SetPWMBits(value, 8);
+}
+
+bool Framebuffer::SetPWMBits(uint8_t value, uint8_t seg) {
+  if (value < 1 || value > kBitPlanes || seg < 1 || seg > kBitPlanes)
     return false;
   pwm_bits_ = value;
+  seg_bits_ = seg;
   return true;
 }
 
@@ -831,8 +836,6 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
 
   // Depending if we do dithering, we might not always show the lowest bits.
   const int start_bit = std::max(pwm_low_bit, kBitPlanes - pwm_bits_);
-
-  const int seg_bits = 8;
   int counter = 0;
 
   const uint8_t half_double = double_rows_/2;
@@ -851,8 +854,8 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
                  : ((row_loop - half_double) << 1) + 1);
       }
 
-      if (b < seg_bits) {
-        for (int b2 = b; b2 < seg_bits; b2++) {
+      if (b < seg_bits_) {
+        for (int b2 = b; b2 < seg_bits_; b2++) {
           gpio_bits_t *row_data = ValueAt(d_row, 0, b2);
           // While the output enable is still on, we can already clock in the next
           // data.
@@ -897,13 +900,13 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
         io->ClearBits(h.strobe);
         
         // Now switch on for the sleep time necessary for that bit-plane.
-        sOutputEnablePulser->SendPulse(seg_bits);
+        sOutputEnablePulser->SendPulse(seg_bits_);
       }
     }
     
-    if (b < seg_bits)
-      b = seg_bits;
-    else if (++counter >= (1 << (b - seg_bits))) {
+    if (b < seg_bits_)
+      b = seg_bits_;
+    else if (++counter >= (1 << (b - seg_bits_))) {
           ++b;
           counter = 0;
     }

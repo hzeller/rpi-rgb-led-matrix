@@ -274,6 +274,7 @@ RGBMatrix::Options::Options() :
 
   rows(32), cols(32), chain_length(1), parallel(1),
   pwm_bits(internal::Framebuffer::kDefaultBitPlanes),
+  seg_bits(8),
 
 #ifdef LSB_PWM_NANOSECONDS
     pwm_lsb_nanoseconds(LSB_PWM_NANOSECONDS),
@@ -335,6 +336,7 @@ static void PrintOptions(const RGBMatrix::Options &o) {
   P_INT(chain_length);
   P_INT(parallel);
   P_INT(pwm_bits);
+  P_INT(seg_bits);
   P_INT(pwm_lsb_nanoseconds);
   P_INT(pwm_dither_bits);
   P_INT(brightness);
@@ -496,7 +498,7 @@ FrameCanvas *RGBMatrix::Impl::CreateFrameCanvas() {
     do_luminance_correct_ = result->framebuffer()->luminance_correct();
   }
 
-  result->framebuffer()->SetPWMBits(params_.pwm_bits);
+  result->framebuffer()->SetPWMBits(params_.pwm_bits, params_.seg_bits);
   result->framebuffer()->set_luminance_correct(do_luminance_correct_);
   result->framebuffer()->SetBrightness(params_.brightness);
 

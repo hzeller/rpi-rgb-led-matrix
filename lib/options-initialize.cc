@@ -172,6 +172,8 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       if (ConsumeIntFlag("pwm-bits", it, end, &mopts->pwm_bits, &err))
         continue;
+      if (ConsumeIntFlag("seg-bits", it, end, &mopts->seg_bits, &err))
+        continue;
       if (ConsumeIntFlag("pwm-lsb-nanoseconds", it, end,
                          &mopts->pwm_lsb_nanoseconds, &err))
         continue;
@@ -310,6 +312,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t                            Optional params after a colon e.g. \"U-mapper;Rotate:90\"\n"
           "\t                            Available: %s. Default: \"\"\n"
           "\t--led-pwm-bits=<1..%d>    : PWM bits (Default: %d).\n"
+          "\t--led-seg-bits=<1..%d>    : S-PWM segment bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
@@ -333,6 +336,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
           available_mappers.c_str(),
           internal::Framebuffer::kBitPlanes, d.pwm_bits,
+          internal::Framebuffer::kBitPlanes, d.seg_bits,
           d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.limit_refresh_rate_hz,
@@ -417,6 +421,15 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     char buffer[256];
     snprintf(buffer, sizeof(buffer),
              "Invalid range of pwm-bits (1..%d allowed).\n",
+             internal::Framebuffer::kBitPlanes);
+    err->append(buffer);
+    success = false;
+  }
+
+  if (seg_bits <= 0 || seg_bits > internal::Framebuffer::kBitPlanes) {
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer),
+             "Invalid range of seg-bits (1..%d allowed).\n",
              internal::Framebuffer::kBitPlanes);
     err->append(buffer);
     success = false;
