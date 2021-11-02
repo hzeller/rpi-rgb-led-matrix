@@ -274,7 +274,6 @@ RGBMatrix::Options::Options() :
 
   rows(32), cols(32), chain_length(1), parallel(1),
   pwm_bits(internal::Framebuffer::kDefaultBitPlanes),
-  seg_bits(8),
 
 #ifdef LSB_PWM_NANOSECONDS
     pwm_lsb_nanoseconds(LSB_PWM_NANOSECONDS),
@@ -315,10 +314,12 @@ RGBMatrix::Options::Options() :
   pixel_mapper_config(NULL),
   panel_type(NULL),
 #ifdef FIXED_FRAME_MICROSECONDS
-  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS)
+  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS),
 #else
-  limit_refresh_rate_hz(0)
+  limit_refresh_rate_hz(0),
 #endif
+
+  seg_bits(8)
 {
   // Nothing to see here.
 }
