@@ -250,6 +250,7 @@ static RaspberryPiModel DetermineRaspberryModel() {
     return PI_MODEL_1;
 
   case 0x04:  /* Pi 2 */
+  case 0x12:  /* Zero W 2 (behaves close to Pi 2) */
     return PI_MODEL_2;
 
   case 0x11: /* Pi 4 */
