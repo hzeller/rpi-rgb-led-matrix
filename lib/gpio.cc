@@ -125,6 +125,22 @@ static volatile uint32_t *s_PWM_registers = NULL;
 static volatile uint32_t *s_CLK_registers = NULL;
 
 namespace rgb_matrix {
+static bool LinuxHasModuleLoaded(const char *name) {
+  FILE *f = fopen("/proc/modules", "r");
+  if (f == NULL) return false; // don't care.
+  char buf[256];
+  const size_t namelen = strlen(name);
+  bool found = false;
+  while (fgets(buf, sizeof(buf), f) != NULL) {
+    if (strncmp(buf, name, namelen) == 0) {
+      found = true;
+      break;
+    }
+  }
+  fclose(f);
+  return found;
+}
+
 #define GPIO_BIT(x) (1ull << x)
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
@@ -161,6 +177,16 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
   }
 
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
+
+  // We don't know exactly what GPIO pins are occupied by 1-wire (can we
+  // easily do that ?), so let's complain only about the default GPIO.
+  if ((outputs & GPIO_BIT(4))
+      && LinuxHasModuleLoaded("w1_gpio")) {
+    fprintf(stderr, "This Raspberry Pi has the one-wire protocol enabled.\n"
+            "This will mess with the display if GPIO pins overlap.\n"
+            "Disable 1-wire in raspi-config (Interface Options).\n\n");
+  }
+
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
   const int kMaxAvailableBit = 45;
   uses_64_bit_ |= (outputs >> 32) != 0;
@@ -404,22 +430,6 @@ private:
   const gpio_bits_t bits_;
   const std::vector<int> nano_specs_;
 };
-
-static bool LinuxHasModuleLoaded(const char *name) {
-  FILE *f = fopen("/proc/modules", "r");
-  if (f == NULL) return false; // don't care.
-  char buf[256];
-  const size_t namelen = strlen(name);
-  bool found = false;
-  while (fgets(buf, sizeof(buf), f) != NULL) {
-    if (strncmp(buf, name, namelen) == 0) {
-      found = true;
-      break;
-    }
-  }
-  fclose(f);
-  return found;
-}
 
 // Check that 3 shows up in isolcpus
 static bool HasIsolCPUs() {
