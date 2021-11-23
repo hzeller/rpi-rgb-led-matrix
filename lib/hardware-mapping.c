@@ -219,6 +219,42 @@ struct HardwareMapping matrix_hardware_mappings[] = {
     .p0_b2           = GPIO_BIT(25),
   },
 
+  /*
+   * Maximus64's LED cube hat
+   */
+  {
+    .name            = "cubie-hat",
+
+    .output_enable   = GPIO_BIT(12), /* swap 18 -> 12 from regular */
+    .output_polarity = GPIO_ACTIVE_HIGH,
+    .clock           = GPIO_BIT(17),
+    .strobe          = GPIO_BIT(4),
+
+    /* Address lines */
+    .a               = GPIO_BIT(22),
+    .b               = GPIO_BIT(23),
+    .c               = GPIO_BIT(24),
+    .d               = GPIO_BIT(25),
+    .e               = GPIO_BIT(15),  /* RxD kept free unless 1:64 */
+
+    /* Chain 0 */
+    .p0_r1           = GPIO_BIT(14), /* masks: SPI0_CE1 swap 12 -> 14 from regular */
+    .p0_g1           = GPIO_BIT(5),
+    .p0_b1           = GPIO_BIT(6),
+    .p0_r2           = GPIO_BIT(16), /* swap 19 -> 16 from regular */
+    .p0_g2           = GPIO_BIT(13),
+    .p0_b2           = GPIO_BIT(26), /* swap 20 -> 26 from regular */
+
+    /* Chain 1 */
+    .p1_r1           = GPIO_BIT(11),  /* masks: SPI0_SCKL  */
+    .p1_g1           = GPIO_BIT(27),
+    .p1_b1           = GPIO_BIT(7),   /* masks: SPI0_CE1   */
+    .p1_r2           = GPIO_BIT(8),   /* masks: SPI0_CE0   */
+    .p1_g2           = GPIO_BIT(9),   /* masks: SPI0_MISO  */
+    .p1_b2           = GPIO_BIT(10),  /* masks: SPI0_MOSI  */
+  },
+
+
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
   /*
    * Custom pin-out for compute-module
