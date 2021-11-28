@@ -80,14 +80,14 @@ public:
   // For now, if someone needs very low level of light, change this to
   // say 13 and recompile. Run with --led-pwm-bits=13. Also, consider
   // --led-pwm-dither-bits=2 to have the refresh rate not suffer too much.
-  static constexpr int kBitPlanes = 11;
-  static constexpr int kDefaultBitPlanes = 11;
+  static constexpr int kBitPlanes = 16;
+  static constexpr int kDefaultBitPlanes = 16;
 
   Framebuffer(int rows, int columns, int parallel,
               int scan_mode,
               const char* led_sequence, bool inverse_color,
               PixelDesignatorMap **mapper);
-  ~Framebuffer();
+  virtual ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
   static void InitHardwareMapping(const char *named_hardware);
@@ -101,7 +101,7 @@ public:
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.
   // Returns boolean to signify if value was within range.
-  bool SetPWMBits(uint8_t value);
+  virtual bool SetPWMBits(uint8_t value);
   bool SetPWMBits(uint8_t value, uint8_t seg);
   uint8_t pwmbits() { return pwm_bits_; }
 
@@ -116,7 +116,7 @@ public:
   }
   uint8_t brightness() { return brightness_; }
 
-  void DumpToMatrix(GPIO *io, int pwm_bits_to_show);
+  virtual void DumpToMatrix(GPIO *io, int pwm_bits_to_show);
 
   void Serialize(const char **data, size_t *len) const;
   bool Deserialize(const char *data, size_t len);
@@ -130,7 +130,7 @@ public:
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
-private:
+protected:
   static const struct HardwareMapping *hardware_mapping_;
   static RowAddressSetter *row_setter_;
 
@@ -168,9 +168,26 @@ private:
   // Of course, that means that we store unrelated bits in the frame-buffer,
   // but it allows easy access in the critical section.
   gpio_bits_t *bitplane_buffer_;
-  inline gpio_bits_t *ValueAt(int double_row, int column, int bit);
+  inline virtual gpio_bits_t *ValueAt(int double_row, int column, int bit);
 
   PixelDesignatorMap **shared_mapper_;  // Storage in RGBMatrix.
+};
+  
+
+class PWMFramebuffer : public FrameBuffer {
+public:
+  PWMFramebuffer(int rows, int columns, int parallel,
+              int scan_mode,
+              const char* led_sequence, bool inverse_color,
+              PixelDesignatorMap **mapper);
+
+  virtual bool SetPWMBits(uint8_t value);
+  virtual void DumpToMatrix(GPIO *io, int pwm_bits_to_show);
+
+protected:
+  inline virtual gpio_bits_t *ValueAt(int double_row, int column, int bit);
+  
+  int driver_bits_;
 };
 }  // namespace internal
 }  // namespace rgb_matrix
