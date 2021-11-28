@@ -914,5 +914,20 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
     }
   }
 }
+
+PWMFrameBuffer::PWMFramebuffer(int rows, int columns, int parallel,
+              int scan_mode,
+              const char* led_sequence, bool inverse_color,
+              PixelDesignatorMap **mapper) {
+  
+}
+
+bool PWMFrameBuffer::SetPWMBits(uint8_t value) {
+  
+}
+  
+void PWMFrameBuffer::DumpToMatrix(GPIO *io, int pwm_bits_to_show) {
+  
+}
 }  // namespace internal
 }  // namespace rgb_matrix
