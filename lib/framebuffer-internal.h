@@ -186,6 +186,8 @@ public:
 
 protected:
   inline virtual gpio_bits_t *ValueAt(int double_row, int column, int bit);
+  
+  int driver_bits_;
 };
 }  // namespace internal
 }  // namespace rgb_matrix
