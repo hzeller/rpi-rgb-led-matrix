@@ -174,7 +174,7 @@ protected:
 };
   
 
-class PWMFramebuffer {
+class PWMFramebuffer : public FrameBuffer {
 public:
   PWMFramebuffer(int rows, int columns, int parallel,
               int scan_mode,
