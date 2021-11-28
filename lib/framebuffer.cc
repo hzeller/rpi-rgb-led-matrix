@@ -917,7 +917,8 @@ PWMFrameBuffer::PWMFramebuffer(int rows, int columns, int parallel,
               int scan_mode,
               const char* led_sequence, bool inverse_color,
               PixelDesignatorMap **mapper) : FrameBuffer(rows, colums, parallel, scan_mode, led_sequence, inverse_color, mapper) {
-  // Do nothing for now
+  driver_bits_ = 7;
+  SetPWMBits(driver_bits_);
 }
 
 bool PWMFrameBuffer::SetPWMBits(uint8_t value) {
@@ -925,11 +926,13 @@ bool PWMFrameBuffer::SetPWMBits(uint8_t value) {
 }
   
 void PWMFrameBuffer::DumpToMatrix(GPIO *io, int pwm_bits_to_show) {
-  
+  // TODO: Port ESP32 logic
 }
 
 inline gpio_bits_t *PWMFrameBuffer::ValueAt(int double_row, int column, int bit) {
-  
+  return &bitplane_buffer_[ double_row * (columns_ * kBitPlanes)
+                            + kBitPlanes * column
+                            + bit ];
 }
 }  // namespace internal
 }  // namespace rgb_matrix
