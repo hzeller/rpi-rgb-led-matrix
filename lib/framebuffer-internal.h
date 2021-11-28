@@ -130,7 +130,7 @@ public:
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
-private:
+protected:
   static const struct HardwareMapping *hardware_mapping_;
   static RowAddressSetter *row_setter_;
 
@@ -171,6 +171,22 @@ private:
   inline virtual gpio_bits_t *ValueAt(int double_row, int column, int bit);
 
   PixelDesignatorMap **shared_mapper_;  // Storage in RGBMatrix.
+};
+  
+
+class PWMFramebuffer {
+public:
+  PWMFramebuffer(int rows, int columns, int parallel,
+              int scan_mode,
+              const char* led_sequence, bool inverse_color,
+              PixelDesignatorMap **mapper);
+  ~PWMFramebuffer();
+
+  virtual bool SetPWMBits(uint8_t value);
+  virtual void DumpToMatrix(GPIO *io, int pwm_bits_to_show);
+
+protected:
+  inline virtual gpio_bits_t *ValueAt(int double_row, int column, int bit);
 };
 }  // namespace internal
 }  // namespace rgb_matrix
