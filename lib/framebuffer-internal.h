@@ -87,7 +87,7 @@ public:
               int scan_mode,
               const char* led_sequence, bool inverse_color,
               PixelDesignatorMap **mapper);
-  ~Framebuffer();
+  virtual ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
   static void InitHardwareMapping(const char *named_hardware);
@@ -180,7 +180,6 @@ public:
               int scan_mode,
               const char* led_sequence, bool inverse_color,
               PixelDesignatorMap **mapper);
-  ~PWMFramebuffer();
 
   virtual bool SetPWMBits(uint8_t value);
   virtual void DumpToMatrix(GPIO *io, int pwm_bits_to_show);
