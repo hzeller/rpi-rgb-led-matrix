@@ -293,7 +293,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     columns_(columns),
     scan_mode_(scan_mode),
     inverse_color_(inverse_color),
-    seg_bits_(8), do_luminance_correct_(true), brightness_(100),
+    pwm_bits_(kBitPlanes), seg_bits_(8), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_),
     buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
     shared_mapper_(mapper) {
@@ -308,8 +308,6 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     abort();
   }
   assert(parallel >= 1 && parallel <= 6);
-      
-  SetPWMBits(kBitPlanes);
 
   bitplane_buffer_ = new gpio_bits_t[double_rows_ * columns_ * kBitPlanes];
 
@@ -918,15 +916,19 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
 PWMFrameBuffer::PWMFramebuffer(int rows, int columns, int parallel,
               int scan_mode,
               const char* led_sequence, bool inverse_color,
-              PixelDesignatorMap **mapper) {
-  
+              PixelDesignatorMap **mapper) : FrameBuffer(rows, colums, parallel, scan_mode, led_sequence, inverse_color, mapper) {
+  // Do nothing for now
 }
 
 bool PWMFrameBuffer::SetPWMBits(uint8_t value) {
-  
+  return FrameBuffer::SetPWMBits(value % (driver_bits_ + 1));
 }
   
 void PWMFrameBuffer::DumpToMatrix(GPIO *io, int pwm_bits_to_show) {
+  
+}
+
+inline gpio_bits_t *PWMFrameBuffer::ValueAt(int double_row, int column, int bit) {
   
 }
 }  // namespace internal
