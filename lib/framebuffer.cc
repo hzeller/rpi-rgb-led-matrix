@@ -460,6 +460,7 @@ Framebuffer::~Framebuffer() {
     if (b >= dither_bits) timing_ns *= 2;
   }
   sOutputEnablePulser = PinPulser::Create(io, h.output_enable,
+                                          h.output_polarity,
                                           allow_hardware_pulsing,
                                           bitplane_timings);
 }

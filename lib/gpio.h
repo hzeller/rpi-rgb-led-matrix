@@ -128,6 +128,7 @@ public:
   // "nano_wait_spec" contains a list of time periods we'd like
   //   invoke later. This can be used to pre-process timings if needed.
   static PinPulser *Create(GPIO *io, gpio_bits_t gpio_mask,
+                           gpio_active_t polarity,
                            bool allow_hardware_pulsing,
                            const std::vector<int> &nano_wait_spec);
 
