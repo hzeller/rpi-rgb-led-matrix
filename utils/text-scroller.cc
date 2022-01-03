@@ -21,6 +21,7 @@
 #include <getopt.h>
 #include <math.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -217,12 +218,12 @@ int main(int argc, char *argv[]) {
 
   struct timespec next_frame = {0, 0};
 
-  uint frame_counter = 0;
+  uint64_t frame_counter = 0;
   while (!interrupt_received && loops != 0) {
     ++frame_counter;
     offscreen_canvas->Fill(bg_color.r, bg_color.g, bg_color.b);
     const bool draw_on_frame = (blink_on <= 0)
-      || (frame_counter % (blink_on + blink_off) < (uint)blink_on);
+      || (frame_counter % (blink_on + blink_off) < (uint64_t)blink_on);
 
     if (draw_on_frame) {
       if (outline_font) {
