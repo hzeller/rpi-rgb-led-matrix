@@ -116,6 +116,113 @@ public:
   }
 };
 
+class LedCardP5Outdoor : public MultiplexMapperBase {
+public:
+	LedCardP5Outdoor() : MultiplexMapperBase("LedCardP5Outdoor", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const
+  {
+	  //Tested with https://www.led-card.com/outdoor-p5-smd-fullcolor-module.html (64x32 P5 1/8 Outdoor RGB Panel)
+
+	int panel_cols_quarter = panel_cols_ / 4;
+	int panel_rows_quarter = panel_rows_ / 4;
+
+	if( (y < panel_rows_quarter) || ( (y > (2 * panel_rows_quarter-1)) && (y < (3 * panel_rows_quarter))) )
+	{
+    if(y > (panel_rows_quarter-1))
+      y = y - panel_rows_quarter;
+
+    if(x > (3 * panel_cols_quarter -1 ))
+      x = x + panel_cols_;
+    else if(x > (panel_cols_quarter -1))
+      x = x + 2 * panel_cols_quarter;
+  }
+	else
+  {
+    if(y < (2 * panel_rows_quarter))
+      y = y - panel_rows_quarter;
+    else
+      y = y - 2 * panel_rows_quarter;
+
+    if(x > (2 * panel_cols_quarter -1))
+      x = x + 3 * panel_cols_quarter;
+    else
+    x = x + panel_cols_quarter;
+  }
+
+
+  //
+  /* Original code, got by try & error
+  if(y < 8)
+  {
+    if(x > 47)
+    {
+      x = x + 64;
+    }
+    else if(x > 31)
+    {
+      x = x - 32 + 64;
+    }
+    else if(x > 15)
+    {
+      x = x + 32;
+    }
+  }
+  else if(y < 16)
+  {
+    y = y - 8;
+    if(x > 47)
+    {
+      x = x + 48;
+    }
+    else if(x > 31)
+    {
+      x = x + 48;
+    }
+    else
+    {
+      x = x + 16;
+    }
+  }
+  else if(y < 24)
+  {
+    y = y - 8;
+    if(x > 47)
+    {
+      x = x + 64;
+    }
+    else if(x > 31)
+    {
+      x = x - 32 + 64;
+    }
+    else if(x > 15)
+    {
+      x = x + 32;
+    }
+  }
+  else
+  {
+    y = y - 16;
+    if(x > 47)
+    {
+      x = x + 48;
+    }
+    else if(x > 31)
+    {
+      x = x + 48;
+    }
+    else
+    {
+      x = x + 16;
+    }
+  }
+  */
+
+    *matrix_x = x;
+    *matrix_y = y;
+  }
+};
+
 class CheckeredMultiplexMapper : public MultiplexMapperBase {
 public:
   CheckeredMultiplexMapper() : MultiplexMapperBase("Checkered", 2) {}
@@ -481,6 +588,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P8Outdoor1R1G1BMultiplexMapper());
   result->push_back(new FlippedStripeMultiplexMapper());
   result->push_back(new P10Outdoor32x16HalfScanMapper());
+  result->push_back(new LedCardP5Outdoor());
   return result;
 }
 
