@@ -1026,6 +1026,99 @@ private:
   citizen* parents_;
 };
 
+class MovePixelTest : public DemoRunner {
+
+private:
+  void printColorPixelByPixel(Color* color, int width, int height, int delayUs)
+  {
+    for(int y=0;y<height;y++)
+    {
+      for(int x=0;x<width;x++)
+      {
+        canvas()->SetPixel(x, y, color->r, color->g, color->b);
+        usleep(delayUs);
+      }
+    }
+  }
+
+public:
+  MovePixelTest(Canvas *m) : DemoRunner(m) {}
+  void Run() override {
+
+    int x = 0;
+    int y = 0;
+
+    char key = 0;
+
+    Color red(255, 0, 0);
+    Color green(0, 255, 0);
+    Color blue(0, 0, 255);
+    Color black(0,0,0);
+
+    Color colors[3] = {red, green, blue};
+    int currColor = 0;
+
+    printColorPixelByPixel(&red, canvas()->width(), canvas()->height(), 500);
+    printColorPixelByPixel(&green, canvas()->width(), canvas()->height(), 500);
+    printColorPixelByPixel(&blue, canvas()->width(), canvas()->height(), 500);
+    printColorPixelByPixel(&black, canvas()->width(), canvas()->height(), 500);
+
+    usleep(500000);
+
+    //Put 0,0 pixel to red
+    canvas()->SetPixel(x, y, colors[currColor].r, colors[currColor].g, colors[currColor].b);
+
+    bool printValue;
+    while(key != 3) //getchar prevents to read interrupts, we check it using ascii value of ctrl+c
+    {
+      key = getchar();
+      //Controlled by keyboard arrow keys or keypad (4 / 8 / 6 / 2 / 5 numbers)
+      //Up : '8' or 65
+      //Left : '4' or 68
+      //Right : '6' or 67
+      //Down : '2' or 66
+      //change color: '5' o 32 (spacebar)
+
+      //Put current pixel to black
+      canvas()->SetPixel(x, y, black.r, black.g, black.b);
+
+      //Read pulsed key and update cursor
+      printValue = true;
+      switch(key)
+      {
+      case '8':
+      case 65:
+        y = max(y-1, 0);
+        break;
+      case '2':
+      case 66:
+        y = min(y+1, canvas()->height()-1);
+        break;
+      case '4':
+      case 68:
+        x = max(x-1, 0);
+        break;
+      case '6':
+      case 67:
+        x = min(x+1, canvas()->width()-1);
+        break;
+      case '5':
+      case 32:
+        currColor = (currColor + 1) % 3;
+        break;
+      default:
+        printValue = false;
+      }
+
+      if(printValue)
+        printf("# key:%d, x:%d, y:%d, color:%d ", key, x, y, currColor);
+
+      canvas()->SetPixel(x, y, colors[currColor].r, colors[currColor].g, colors[currColor].b);
+    }
+  }
+};
+
+
 static int usage(const char *progname) {
   fprintf(stderr, "usage: %s <options> -D <demo-nr> [optional parameter]\n",
           progname);
@@ -1049,7 +1142,8 @@ static int usage(const char *progname) {
           "\t8  - Langton's ant (-m <time-step-ms>)\n"
           "\t9  - Volume bars (-m <time-step-ms>)\n"
           "\t10 - Evolution of color (-m <time-step-ms>)\n"
-          "\t11 - Brightness pulse generator\n");
+          "\t11 - Brightness pulse generator\n"
+          "\t12 - Move pixel around using arrow keys or keypad and change its color with spacebar or 5. Press 'q' to end\n");
   fprintf(stderr, "Example:\n\t%s -D 1 runtext.ppm\n"
           "Scrolls the runtext until Ctrl-C is pressed\n", progname);
   return 1;
@@ -1165,6 +1259,10 @@ int main(int argc, char *argv[]) {
 
   case 11:
     demo_runner = new BrightnessPulseGenerator(matrix);
+    break;
+
+  case 12:
+    demo_runner = new MovePixelTest(matrix);
     break;
   }
 
