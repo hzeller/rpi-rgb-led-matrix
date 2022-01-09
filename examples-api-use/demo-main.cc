@@ -1068,6 +1068,9 @@ public:
     //Put 0,0 pixel to red
     canvas()->SetPixel(x, y, colors[currColor].r, colors[currColor].g, colors[currColor].b);
 
+    /* use system call to make terminal send all keystrokes directly to stdin */
+    system ("/bin/stty raw");
+
     bool printValue;
     while(key != 3) //getchar prevents to read interrupts, we check it using ascii value of ctrl+c
     {
@@ -1115,6 +1118,8 @@ public:
 
       canvas()->SetPixel(x, y, colors[currColor].r, colors[currColor].g, colors[currColor].b);
     }
+    /* use system call to set terminal behaviour to more normal behaviour */
+    system ("/bin/stty cooked");
   }
 };
 
