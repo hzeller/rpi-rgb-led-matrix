@@ -65,14 +65,14 @@ public:
       //you can define your own shape here if you want
       //(x, y, z)
       double verts[8*3] = {
-        -1,-1,-1, //0       	  4---------5         ^ +z
-        -1,-1, 1, //1       	 /|		     /|         |
-        -1, 1,-1, //2	  		 	6-|-------7 |         |
-        -1, 1, 1, //3 			 	| |       | |         |
-         1,-1,-1, //4				 	| |       | |         o--------> +x
-         1,-1, 1, //5				 	| 0---------1
-         1, 1,-1, //6				 	|/		    |/
-         1, 1, 1  //7			  	2---------3
+        -1,-1,-1, //0           4---------5         ^ +z
+        -1,-1, 1, //1          /|        /|         |
+        -1, 1,-1, //2         6-|-------7 |         |
+        -1, 1, 1, //3         | |       | |         |
+         1,-1,-1, //4         | |       | |         o--------> +x
+         1,-1, 1, //5         | 0---------1
+         1, 1,-1, //6         |/        |/
+         1, 1, 1  //7         2---------3
       };
       
       uint16_t faces[6*4] = {
@@ -1177,7 +1177,7 @@ static int usage(const char *progname) {
           "\t9  - Volume bars (-m <time-step-ms>)\n"
           "\t10 - Evolution of color (-m <time-step-ms>)\n"
           "\t11 - Brightness pulse generator\n"
-          "\t12 - Rotating 3d cube\n");
+          "\t12 - Colorful rotating 3d cube\n");
   fprintf(stderr, "Example:\n\t%s -D 1 runtext.ppm\n"
           "Scrolls the runtext until Ctrl-C is pressed\n", progname);
   return 1;
