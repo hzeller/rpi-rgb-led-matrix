@@ -74,14 +74,11 @@ public:
          1, 1,-1, //6         |/        |/
          1, 1, 1  //7         2---------3
       };
-      
-      uint16_t faces[6*4] = {
-        4,6,7,5,
-        6,2,3,7,
-        7,3,1,5,
-        5,1,0,4,
-        4,0,2,6,
-        0,2,3,1,
+
+      uint16_t edges[12*4] = {
+        0,1,  1,3,  3,2,  2,0,
+        0,4,  1,5,  2,6,  3,7,
+        4,5,  5,7,  7,6,  6,4,
       };
       
       // create smooth color transitions
@@ -90,8 +87,8 @@ public:
       int blu = sin(freq*k + rad/3*3) * 128 + 127;
       
       // draw complete mesh with rotated vertices and color
-      int faceSize = sizeof(faces)/sizeof(faces[0]);
-      drawMesh(rotate(verts,8,k,k/3,k/2), faces,faceSize/4, red, grn, blu);
+      int edgeSize = sizeof(edges)/sizeof(edges[0]);
+      drawMesh(rotate(verts,8,k,k/3,k/2), edges, edgeSize/2, red, grn, blu);
       
       // sleep and then clear canvas
       usleep(20*1000);
@@ -110,34 +107,27 @@ private:
   double pi = 3.14159265;
   double rad = 2*pi;
 
-  void drawMesh(double verts[], uint16_t faces[],int faceCnt, int r, int g, int b)
+  void drawMesh(double verts[], uint16_t edges[],int edgeCnt, int r, int g, int b)
   {
     // get center of the matrix
     const int cx = canvas()->width()/2;
     const int cy = canvas()->height()/2; 
     
-    // for every face
-    for (int i=0; i<faceCnt*4; i+=4)
-    {
-      // extract vertex positions from the faces and apply depth to the y axis
-      double xpoints[4] = {0.0, 0.0, 0.0, 0.0};
-      double zpoints[4] = {0.0, 0.0, 0.0, 0.0};
-      for (int j=0; j<4; j++) {
-        double x = verts[faces[i+j]*3+0];
-        double y = verts[faces[i+j]*3+1]+camDist;
-        double z = verts[faces[i+j]*3+2];
-        double f = zoom/y;
-        x*=f;
-        z*=f;
-        xpoints[j] = x;
-        zpoints[j] = z;
+    // for every edge
+    for (int i=0;i<edgeCnt*2;i+=2){
+
+      double xpoints[2] = {};
+      double zpoints[2] = {};
+      for (int j=0; j<2; j++) {
+        float x = verts[edges[i+j]*3+0];
+        float y = verts[edges[i+j]*3+1]+camDist;
+        float z = verts[edges[i+j]*3+2];
+        float f = zoom/y;
+        xpoints[j] = x*f;
+        zpoints[j] = z*f;
       }
-      
-      //draw lines between the vectors
-      for (int j=0; j<4; j++)
-      {
-        DrawLine(canvas(), cx+xpoints[(i)%4], cy+zpoints[(i)%4], cx+xpoints[(i+1)%4], cy+xpoints[(i+1)%4], Color(r, g, b));
-      }
+
+      DrawLine(canvas(), cx+xpoints[0], cy+zpoints[0], cx+xpoints[1], cy+zpoints[1], Color(r, g, b));
     }
   }
 
