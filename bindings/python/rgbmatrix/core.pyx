@@ -194,20 +194,16 @@ cdef class RGBMatrixOptions:
         def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
 
 cdef class RGBMatrix(Canvas):
-    def __cinit__(self, int rows = 0, int chains = 0, int parallel = 0,
-        RGBMatrixOptions options = None):
+    def __cinit__(self, RGBMatrixOptions options, **kwargs):
+        # Show a DeprecationWarning since this behaviour is backwards incompatible.
+        if any(kwargs.pop(kwarg, None) for kwarg in ['rows', 'chains', 'parallel']):
+            raise DeprecationWarning('To specify matrix options, you must use the RGBMatrixOptions object.')
+        # Mimic python's built in TypeError for kwargs.
+        if kwargs:
+            raise TypeError('Unexpected keyword argument: {}'.format(kwargs.keys()[0]))
 
-        # If RGBMatrixOptions not provided, create defaults and set any optional
-        # parameters supplied
-        if options == None:
-            options = RGBMatrixOptions()
-
-        if rows > 0:
-            options.rows = rows
-        if chains > 0:
-            options.chain_length = chains
-        if parallel > 0:
-            options.parallel = parallel
+        if not isinstance(options, RGBMatrixOptions):
+            raise ValueError('Options should be of type `RGBMatrixOptions`.')
 
         self.__matrix = cppinc.CreateMatrixFromOptions(options.__options,
             options.__runtime_options)
