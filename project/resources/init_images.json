@@ -1,0 +1,41 @@
+{
+    "images": {
+        "cat-jam.gif": {
+            "duration": 10,
+            "visible": true
+        },
+        "dance-boy.gif": {
+            "duration": 10,
+            "visible": true
+        },
+        "dance-dog.gif": {
+            "duration": 10,
+            "visible": true
+        },
+        "dance-mario.gif": {
+            "duration": 10,
+            "visible": true
+        },
+        "spiderman.jpg": {
+            "duration": 10,
+            "visible": true
+        },
+        "surprised-pikachu.png": {
+            "duration": 10,
+            "visible": true
+        },
+        "thumbs-up-crying-cat.jpg": {
+            "duration": 10,
+            "visible": true
+        }
+    },
+    "order": [
+        "cat-jam.gif",
+        "dance-boy.gif",
+        "dance-dog.gif",
+        "dance-mario.gif",
+        "spiderman.jpg",
+        "surprised-pikachu.png",
+        "thumbs-up-crying-cat.jpg"
+    ]
+}

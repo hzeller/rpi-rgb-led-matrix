@@ -1,0 +1,10 @@
+{
+	"--led-rows": 32,
+	"--led-cols": 64,
+	"--led-chain": 1,
+	"--led-parallel": 2,
+	"--led-brightness": 35,
+	"--led-limit-refresh": 144,
+	"--led-slowdown-gpio": 4,
+	"--led-pwm-dither-bits": 0
+}
