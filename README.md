@@ -105,7 +105,7 @@ Generally, the higher scan-rate (e.g. 1:8), a.k.a. outdoor panels generally
 allow faster refresh rate, but you might need to figure out the multiplexing
 mapping if one of the three provided does not work.
 
-Some 32x16 outdoor matrixes with 1:4 scan (e.g. [Qiangli Q10(1/4) or X10(1/4)](http://qiangliled.com/products-63.html))
+Some 32x16 outdoor matrixes with 1:4 scan (e.g. [Qiangli Q10(1/4)](https://www.qiangliled.com/outdoor-p10-high-refresh-rate-led-display-module-product/))
 have 4 address line (A, B, C, D). For such matrices is necessary to
 use `--led-row-addr-type=2` parameter. Also the matrix Qiangli Q10(1/4)
 have "Z"-stripe pixel mapping and in this case, you'd use two parameters
