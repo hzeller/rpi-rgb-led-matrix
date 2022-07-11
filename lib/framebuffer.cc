@@ -17,6 +17,11 @@
 // format that is friendly to be dumped to the matrix quickly. Provides methods
 // to manipulate the content.
 
+// TODO: Add rebalancing to S-PWM implementation (Required for proper operation)
+// 	Add CPU overhead
+// 	Makes little sense without hardware
+// 	Explain how S-PWM is supposed to work
+
 #include "framebuffer-internal.h"
 
 #include <assert.h>
