@@ -209,11 +209,16 @@ public:
   // You can also create as many FrameCanvas as you like and for instance use
   // them to pre-fill scenes of an animation for fast playback later.
   //
-  // The ownership of the created Canvases remains with the RGBMatrix, so you
-  // don't have to worry about deleting them (but you also don't want to create
-  // more than needed as this will fill up your memory as they are only deleted
-  // when the RGBMatrix is deleted).
+  // The ownership of the created Canvases remains with the RGBMatrix. You
+  // you don't want to create more than needed as this will fill up your
+  // memory as they are only deleted when the RGBMatrix is deleted or by
+  // calling DeleteFrameCanvas().
   FrameCanvas *CreateFrameCanvas();
+
+  // Delete a FrameCanvas associated with the RGBMatrix
+  // Otherwise FrameCanvas objects created by CreateFrameCanvas() are never deleted
+  // until the RGBMatrix is deleted
+  void DeleteFrameCanvas(FrameCanvas* frame);
 
   // This method waits to the next VSync and swaps the active buffer with the
   // supplied buffer. The formerly active buffer is returned.

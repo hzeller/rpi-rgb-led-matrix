@@ -230,8 +230,27 @@ cdef class RGBMatrix(Canvas):
     def Clear(self):
         self.__matrix.Clear()
 
+    # Create a new buffer to be used for multi-buffering. The returned new
+    # Buffer implements a Canvas with the same size of thie RGBMatrix.
+    # You can use it to draw off-screen on it, then swap it with the active
+    # buffer using SwapOnVSync(). That would be classic double-buffering.
+
+    # You can also create as many FrameCanvas as you like and for instance use
+    # them to pre-fill scenes of an animation for fast playback later.
+
+    # The ownership of the created Canvases remains with the RGBMatrix. You
+    # you don't want to create more than needed as this will fill up your
+    # memory as they are only deleted when the RGBMatrix is deleted or by
+    # calling DeleteFrameCanvas().
     def CreateFrameCanvas(self):
         return __createFrameCanvas(self.__matrix.CreateFrameCanvas())
+
+    # Delete a FrameCanvas associated with the RGBMatrix
+    # Otherwise FrameCanvas objects created by CreateFrameCanvas() are never deleted
+    # until the RGBMatrix is deleted
+    def DeleteFrameCanvas(self, FrameCanvas frame):
+        self.__matrix.DeleteFrameCanvas(frame.__canvas)
+        del frame
 
     # The optional "framerate_fraction" parameter allows to choose which
     # multiple of the global frame-count to use. So it slows down your animation

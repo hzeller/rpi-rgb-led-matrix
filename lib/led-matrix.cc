@@ -73,6 +73,7 @@ public:
   bool StartRefresh();
 
   FrameCanvas *CreateFrameCanvas();
+  void DeleteFrameCanvas(FrameCanvas *frame);
   FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction);
   bool ApplyPixelMapper(const PixelMapper *mapper);
 
@@ -504,6 +505,21 @@ FrameCanvas *RGBMatrix::Impl::CreateFrameCanvas() {
   return result;
 }
 
+void RGBMatrix::Impl::DeleteFrameCanvas(FrameCanvas* frame) {
+  if (frame == nullptr){
+    return;
+  }
+
+  for(auto it = created_frames_.begin(); it != created_frames_.end(); ++it){
+    if (*it == frame){
+      created_frames_.erase(it);
+    }
+
+  }
+  delete frame;
+  frame = nullptr;
+}
+
 FrameCanvas *RGBMatrix::Impl::SwapOnVSync(FrameCanvas *other,
                                           unsigned frame_fraction) {
   if (frame_fraction == 0) frame_fraction = 1; // correct user error.
@@ -546,7 +562,6 @@ void RGBMatrix::Impl::SetBrightness(uint8_t brightness) {
 uint8_t RGBMatrix::Impl::brightness() {
   return params_.brightness;
 }
-
 bool RGBMatrix::Impl::ApplyPixelMapper(const PixelMapper *mapper) {
   if (mapper == NULL) return true;
   using internal::PixelDesignatorMap;
@@ -672,10 +687,16 @@ RGBMatrix *RGBMatrix::CreateFromFlags(int *argc, char ***argv,
 FrameCanvas *RGBMatrix::CreateFrameCanvas() {
   return impl_->CreateFrameCanvas();
 }
+
+void RGBMatrix::DeleteFrameCanvas(FrameCanvas *frame){
+  impl_->DeleteFrameCanvas(frame);
+}
+
 FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other,
                                     unsigned framerate_fraction) {
   return impl_->SwapOnVSync(other, framerate_fraction);
 }
+
 bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper) {
   return impl_->ApplyPixelMapper(mapper);
 }
