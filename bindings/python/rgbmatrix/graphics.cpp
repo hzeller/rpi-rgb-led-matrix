@@ -931,6 +931,7 @@ static const char *__pyx_f[] = {
 
 /*--- Type declarations ---*/
 struct __pyx_obj_9rgbmatrix_4core_Canvas;
+struct __pyx_obj_9rgbmatrix_4core_FrameData;
 struct __pyx_obj_9rgbmatrix_4core_FrameCanvas;
 struct __pyx_obj_9rgbmatrix_4core_RGBMatrix;
 struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions;
@@ -953,6 +954,21 @@ struct __pyx_obj_9rgbmatrix_4core_Canvas {
 /* "core.pxd":6
  *     cdef cppinc.Canvas *__getCanvas(self) except +
  * 
+ * cdef class FrameData:             # <<<<<<<<<<<<<<
+ *     cdef const char *__data
+ *     cdef size_t __length
+ */
+struct __pyx_obj_9rgbmatrix_4core_FrameData {
+  PyObject_HEAD
+  struct __pyx_vtabstruct_9rgbmatrix_4core_FrameData *__pyx_vtab;
+  char const *__pyx___data;
+  size_t __pyx___length;
+};
+
+
+/* "core.pxd":11
+ *     cdef const char *__getData(self) except +
+ * 
  * cdef class FrameCanvas(Canvas):             # <<<<<<<<<<<<<<
  *     cdef cppinc.FrameCanvas *__canvas
  * 
@@ -963,7 +979,7 @@ struct __pyx_obj_9rgbmatrix_4core_FrameCanvas {
 };
 
 
-/* "core.pxd":9
+/* "core.pxd":14
  *     cdef cppinc.FrameCanvas *__canvas
  * 
  * cdef class RGBMatrix(Canvas):             # <<<<<<<<<<<<<<
@@ -976,7 +992,7 @@ struct __pyx_obj_9rgbmatrix_4core_RGBMatrix {
 };
 
 
-/* "core.pxd":12
+/* "core.pxd":17
  *     cdef cppinc.RGBMatrix *__matrix
  * 
  * cdef class RGBMatrixOptions:             # <<<<<<<<<<<<<<
@@ -1038,6 +1054,20 @@ static struct __pyx_vtabstruct_9rgbmatrix_4core_Canvas *__pyx_vtabptr_9rgbmatrix
 /* "core.pxd":6
  *     cdef cppinc.Canvas *__getCanvas(self) except +
  * 
+ * cdef class FrameData:             # <<<<<<<<<<<<<<
+ *     cdef const char *__data
+ *     cdef size_t __length
+ */
+
+struct __pyx_vtabstruct_9rgbmatrix_4core_FrameData {
+  char const *(*__pyx___getData)(struct __pyx_obj_9rgbmatrix_4core_FrameData *);
+};
+static struct __pyx_vtabstruct_9rgbmatrix_4core_FrameData *__pyx_vtabptr_9rgbmatrix_4core_FrameData;
+
+
+/* "core.pxd":11
+ *     cdef const char *__getData(self) except +
+ * 
  * cdef class FrameCanvas(Canvas):             # <<<<<<<<<<<<<<
  *     cdef cppinc.FrameCanvas *__canvas
  * 
@@ -1049,7 +1079,7 @@ struct __pyx_vtabstruct_9rgbmatrix_4core_FrameCanvas {
 static struct __pyx_vtabstruct_9rgbmatrix_4core_FrameCanvas *__pyx_vtabptr_9rgbmatrix_4core_FrameCanvas;
 
 
-/* "core.pxd":9
+/* "core.pxd":14
  *     cdef cppinc.FrameCanvas *__canvas
  * 
  * cdef class RGBMatrix(Canvas):             # <<<<<<<<<<<<<<
@@ -1442,6 +1472,7 @@ static int __Pyx_InitStrings(__Pyx_StringTabEntry *t);
 
 /* Module declarations from 'rgbmatrix.core' */
 static PyTypeObject *__pyx_ptype_9rgbmatrix_4core_Canvas = 0;
+static PyTypeObject *__pyx_ptype_9rgbmatrix_4core_FrameData = 0;
 static PyTypeObject *__pyx_ptype_9rgbmatrix_4core_FrameCanvas = 0;
 static PyTypeObject *__pyx_ptype_9rgbmatrix_4core_RGBMatrix = 0;
 static PyTypeObject *__pyx_ptype_9rgbmatrix_4core_RGBMatrixOptions = 0;
@@ -3711,14 +3742,17 @@ static int __Pyx_modinit_type_import_code(void) {
   __pyx_ptype_9rgbmatrix_4core_Canvas = __Pyx_ImportType(__pyx_t_1, "rgbmatrix.core", "Canvas", sizeof(struct __pyx_obj_9rgbmatrix_4core_Canvas), __Pyx_ImportType_CheckSize_Warn);
    if (!__pyx_ptype_9rgbmatrix_4core_Canvas) __PYX_ERR(2, 3, __pyx_L1_error)
   __pyx_vtabptr_9rgbmatrix_4core_Canvas = (struct __pyx_vtabstruct_9rgbmatrix_4core_Canvas*)__Pyx_GetVtable(__pyx_ptype_9rgbmatrix_4core_Canvas->tp_dict); if (unlikely(!__pyx_vtabptr_9rgbmatrix_4core_Canvas)) __PYX_ERR(2, 3, __pyx_L1_error)
+  __pyx_ptype_9rgbmatrix_4core_FrameData = __Pyx_ImportType(__pyx_t_1, "rgbmatrix.core", "FrameData", sizeof(struct __pyx_obj_9rgbmatrix_4core_FrameData), __Pyx_ImportType_CheckSize_Warn);
+   if (!__pyx_ptype_9rgbmatrix_4core_FrameData) __PYX_ERR(2, 6, __pyx_L1_error)
+  __pyx_vtabptr_9rgbmatrix_4core_FrameData = (struct __pyx_vtabstruct_9rgbmatrix_4core_FrameData*)__Pyx_GetVtable(__pyx_ptype_9rgbmatrix_4core_FrameData->tp_dict); if (unlikely(!__pyx_vtabptr_9rgbmatrix_4core_FrameData)) __PYX_ERR(2, 6, __pyx_L1_error)
   __pyx_ptype_9rgbmatrix_4core_FrameCanvas = __Pyx_ImportType(__pyx_t_1, "rgbmatrix.core", "FrameCanvas", sizeof(struct __pyx_obj_9rgbmatrix_4core_FrameCanvas), __Pyx_ImportType_CheckSize_Warn);
-   if (!__pyx_ptype_9rgbmatrix_4core_FrameCanvas) __PYX_ERR(2, 6, __pyx_L1_error)
-  __pyx_vtabptr_9rgbmatrix_4core_FrameCanvas = (struct __pyx_vtabstruct_9rgbmatrix_4core_FrameCanvas*)__Pyx_GetVtable(__pyx_ptype_9rgbmatrix_4core_FrameCanvas->tp_dict); if (unlikely(!__pyx_vtabptr_9rgbmatrix_4core_FrameCanvas)) __PYX_ERR(2, 6, __pyx_L1_error)
+   if (!__pyx_ptype_9rgbmatrix_4core_FrameCanvas) __PYX_ERR(2, 11, __pyx_L1_error)
+  __pyx_vtabptr_9rgbmatrix_4core_FrameCanvas = (struct __pyx_vtabstruct_9rgbmatrix_4core_FrameCanvas*)__Pyx_GetVtable(__pyx_ptype_9rgbmatrix_4core_FrameCanvas->tp_dict); if (unlikely(!__pyx_vtabptr_9rgbmatrix_4core_FrameCanvas)) __PYX_ERR(2, 11, __pyx_L1_error)
   __pyx_ptype_9rgbmatrix_4core_RGBMatrix = __Pyx_ImportType(__pyx_t_1, "rgbmatrix.core", "RGBMatrix", sizeof(struct __pyx_obj_9rgbmatrix_4core_RGBMatrix), __Pyx_ImportType_CheckSize_Warn);
-   if (!__pyx_ptype_9rgbmatrix_4core_RGBMatrix) __PYX_ERR(2, 9, __pyx_L1_error)
-  __pyx_vtabptr_9rgbmatrix_4core_RGBMatrix = (struct __pyx_vtabstruct_9rgbmatrix_4core_RGBMatrix*)__Pyx_GetVtable(__pyx_ptype_9rgbmatrix_4core_RGBMatrix->tp_dict); if (unlikely(!__pyx_vtabptr_9rgbmatrix_4core_RGBMatrix)) __PYX_ERR(2, 9, __pyx_L1_error)
+   if (!__pyx_ptype_9rgbmatrix_4core_RGBMatrix) __PYX_ERR(2, 14, __pyx_L1_error)
+  __pyx_vtabptr_9rgbmatrix_4core_RGBMatrix = (struct __pyx_vtabstruct_9rgbmatrix_4core_RGBMatrix*)__Pyx_GetVtable(__pyx_ptype_9rgbmatrix_4core_RGBMatrix->tp_dict); if (unlikely(!__pyx_vtabptr_9rgbmatrix_4core_RGBMatrix)) __PYX_ERR(2, 14, __pyx_L1_error)
   __pyx_ptype_9rgbmatrix_4core_RGBMatrixOptions = __Pyx_ImportType(__pyx_t_1, "rgbmatrix.core", "RGBMatrixOptions", sizeof(struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions), __Pyx_ImportType_CheckSize_Warn);
-   if (!__pyx_ptype_9rgbmatrix_4core_RGBMatrixOptions) __PYX_ERR(2, 12, __pyx_L1_error)
+   if (!__pyx_ptype_9rgbmatrix_4core_RGBMatrixOptions) __PYX_ERR(2, 17, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_RefNannyFinishContext();
   return 0;
