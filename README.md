@@ -746,6 +746,18 @@ Ultimately, you should not expect to go past 64K pixels using 3 chains without s
 quality tradeoffs. If you need bigger displays, you should use multiple boards and synchronize the
 output.
 
+Stability
+---------
+Do not use GPIO when using this project it may create instability.
+
+Use RAM disk can improve stability but may lower system responsiveness.
+```sudo mount -t ramfs -o size=64m ramfs /mnt/ramdisk```
+
+Color depth max is 11-13 for single scan panel, 8-10 for 8 scan panel, 6-8 for 32 scan panel. Refresh rate requires short chains or low color depth. Low color depth may improve stability.
+
+Use this to verify stability.
+```sysbench --num-threads=3 --test=memory --memory-block-size=1M --memory-total-size=16G --memory-access-mode=rnd --memory-oper=write run```
+
 Limitations
 -----------
 If you are using the Adafruit HAT/Bonnet in the default configuration, then we
