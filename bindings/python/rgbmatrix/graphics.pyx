@@ -11,6 +11,12 @@ cdef class Color:
         self.__color.g = green
         self.__color.b = blue
 
+    def __call__(self):
+        return self.to_tuple()
+
+    def to_tuple(self):
+        return (self.__color.r, self.__color.g, self.__color.b)
+
     property red:
         def __get__(self): return self.__color.r
         def __set__(self, uint8_t value): self.__color.r = value
