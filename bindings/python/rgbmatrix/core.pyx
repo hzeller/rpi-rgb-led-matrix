@@ -4,6 +4,7 @@ from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t, uintptr_t
 from PIL import Image
 import cython
+from cpython cimport PyBUF_WRITABLE
 
 cdef object init_key = object()
 
@@ -74,6 +75,44 @@ cdef class Canvas:
                 g = (pixel >> 8) & 0xFF
                 b = (pixel >> 16) & 0xFF
                 canvas.SetPixel(xstart+col, ystart+row, r, g, b)
+
+# class with buffer interface, used to publish framebuffer to python
+cdef class FrameData:
+    cdef FrameCanvas __owner                      # FrameData needs to keep FrameCanvas alive
+    cdef const char* __data
+    cdef readonly size_t size                     # size is available to python
+    def __cinit__(self, key=None, FrameCanvas owner=None):
+        if key is not init_key:
+            raise TypeError("This class cannot be instantiated directly.");
+        self.__owner = owner
+
+    @staticmethod
+    cdef FrameData __create(FrameCanvas owner, const char* data, size_t size):
+        cdef FrameData fd = FrameData(init_key, owner)
+        fd.__data = data
+        fd.size = size
+        return fd
+
+    def __getbuffer__(self, Py_buffer *buffer, int flags):
+        if flags & PyBUF_WRITABLE:
+            raise BufferError("FrameData is read-only")
+        buffer.buf = <void *>self.__data
+        buffer.obj = self
+        buffer.len = self.size                # size in bytes
+        buffer.readonly = True                  # Technically, it may be possible to overwrite internal buffer, but it is dangerous
+        buffer.itemsize = 1                     # opaque buffer TODO
+        buffer.format = NULL                    # implicit B (bytes)
+        buffer.ndim = 0                         # single item
+        buffer.shape = NULL
+        buffer.strides = NULL
+        buffer.suboffsets = NULL
+        buffer.internal = NULL
+
+    def __releasebuffer__(self, Py_buffer *buffer):
+        pass
+
+    def __repr__(self):
+        return f"<FrameData owned by {self.__owner} data={<size_t>self.__data:#x}, len={self.size}"
 
 cdef class FrameCanvas(Canvas):
     def __cinit__(self, key=None, RGBMatrix owner=None):
