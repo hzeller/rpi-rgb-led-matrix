@@ -277,6 +277,169 @@ private:
   int parallel_;
 };
 
+class RemapMapper : public PixelMapper {
+public:
+  RemapMapper() {}
+
+  virtual const char *GetName() const { return "Remap"; }
+
+  virtual bool SetParameters(int chain, int parallel, const char *param) {
+    chain_ = chain;
+    parallel_ = parallel;
+    const char* pos = param;
+    if (!pos || !*pos) {
+      fprintf(stderr, "Remap mapper can't be used without parameters\n");
+      return false;
+    }
+    width_ = strtol(pos, (char**)&pos, 10);
+    if (*pos++ != ',') {
+      fprintf(stderr, "expected ',' after width parameter ('%s')\n", param);
+      return false;
+    }
+    height_ = strtol(pos, (char**)&pos, 10);
+    if (*pos++ != '|') {
+      fprintf(stderr, "expected '|' after height parameter ('%s')\n", param);
+      return false;
+    }
+    while(*pos) {
+      MapTile tile;
+      if ((pos = tile.ParseParam(pos)) == NULL)
+        return false;
+      map_.push_back(tile);
+      if (*pos == '|') {
+        ++pos;
+        continue;
+      }
+      if (*pos) {
+        fprintf(stderr, "Expected '|' tile separator after panel %d '%s'\n", (int)map_.size(), param);
+        return false;
+      }
+    }
+    if ((int)map_.size() != chain * parallel) {
+      fprintf(stderr, "Remap list must have 1 entry for each panel (got %d, expected %d)\n", (int)map_.size(), chain * parallel);
+      return false;
+    }
+    return true;
+  }
+
+  virtual bool GetSizeMapping(int matrix_width, int matrix_height,
+                              int *visible_width, int *visible_height)
+    const {
+    // need to go through mapping here to handle rectangular rotated panels
+    const int panel_width  = matrix_width  / chain_;
+    const int panel_height = matrix_height / parallel_;
+    // check if all panels are at least partially inside visible area
+    for (size_t i = 0; i < map_.size(); i++) {
+      int x0 = -1, y0 = -1, x1 = -1, y1 = -1;
+      // map opposite corners to get panel placement
+      if (!map_[i].MapToVisible(panel_width, panel_height, 0, 0, &x0, &y0)) continue;
+      if (!map_[i].MapToVisible(panel_width, panel_height, panel_width - 1, panel_height - 1, &x1, &y1)) continue;
+      if (x1 < 0 || x0 >= width_ || y1 < 0 || y0 >= height_) {
+        fprintf(stderr, "Panel %d is fully outside of visible area [%d,%d-%d,%d]", (int)i, x0, y0, x1, y1);
+        return false;
+      }
+    }
+    *visible_width = width_;
+    *visible_height = height_;
+#if 0
+     fprintf(stderr, "%s: C:%d P:%d. Turning W:%d H:%d Physical "
+	     "into W:%d H:%d Virtual\n",
+             GetName(), chain_, parallel_,
+	     *visible_width, *visible_height, matrix_width, matrix_height);
+#endif
+    return true;
+  }
+
+  virtual MappingType GetMappingType() const { return MatrixToVisible; }
+  virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
+                                  int x, int y,
+                                  int *matrix_x, int *matrix_y) const {
+    return;
+  }
+  virtual bool MapMatrixToVisible(int matrix_width, int matrix_height,
+                                  int x, int y,
+                                  int *visible_x, int *visible_y) const {
+    const int panel_width  = matrix_width  / chain_;
+    const int panel_height = matrix_height / parallel_;
+
+    const int panel_col = x / panel_width;
+    const int panel_row = y / panel_height;
+
+    const int x_within_panel = x % panel_width;
+    const int y_within_panel = y % panel_height;
+
+    const MapTile& tile = map_[panel_row * chain_ + panel_col];
+
+    int new_x = -1, new_y = -1;
+    if (tile.MapToVisible(panel_width, panel_height, x_within_panel, y_within_panel, &new_x, &new_y)) {
+      if (new_x >= 0 && new_x  < width_
+          && new_y >=0 && new_y < height_) {
+        *visible_x = new_x;
+        *visible_y = new_y;
+        return true;
+      }
+    }
+    return false;
+  }
+
+private:
+  struct MapTile {
+    const char* ParseParam(const char* param) {
+      const char *pos = param;
+      const char *end = strchrnul(param, '|');
+      x_ = strtol(pos, (char**)&pos, 10);
+      if (*pos++ != ',') {
+        fprintf(stderr, "expected ',' after x parameter '%.*s'\n", (int)(end-param), param);
+        return NULL;
+      }
+      y_ = strtol(pos, (char**)&pos, 10);
+      switch (tolower(*pos++)) {
+        case 'n': type_ = rot0; break;
+        case 's': type_ = rot180; break;
+        case 'e': type_ = rot270; break;
+        case 'w': type_ = rot90; break;
+        case 'x': type_ = discard; break;
+        default:
+          fprintf(stderr, "Expected orientation (one of [neswx]) after y parameter '%.*s'\n", (int)(end-param), param);
+          return NULL;
+      }
+      return pos;
+      return NULL;
+    }
+    bool MapToVisible(int tile_width, int tile_height, int x, int y, int* new_x, int* new_y) const {
+      switch(type_) {
+        case discard:
+          return false;
+        case rot0:
+          *new_x = x_ + x;
+          *new_y = y_ + y;
+          return true;
+        case rot90:             // mapping direction is opposite to Rotate pixel mapper
+          *new_x = x_ + y;
+          *new_y = y_ + tile_width - x - 1;
+          return true;
+        case rot180:
+          *new_x = x_ + tile_width - x - 1;
+          *new_y = y_ + tile_height - y - 1;
+          return true;
+        case rot270:
+          *new_x = x_ + tile_height - y - 1;
+          *new_y = y_ + x;
+          return true;
+      }
+      return false;
+    }
+    enum { discard, rot0, rot90, rot180, rot270 } type_;
+    int x_, y_;
+  };
+  int width_;
+  int height_;
+  std::vector<MapTile> map_;
+  int chain_;
+  int parallel_;
+};
+
+
 
 typedef std::map<std::string, PixelMapper*> MapperByName;
 static void RegisterPixelMapperInternal(MapperByName *registry,
@@ -296,6 +459,7 @@ static MapperByName *CreateMapperMap() {
   RegisterPixelMapperInternal(result, new UArrangementMapper());
   RegisterPixelMapperInternal(result, new VerticalMapper());
   RegisterPixelMapperInternal(result, new MirrorPixelMapper());
+  RegisterPixelMapperInternal(result, new RemapMapper());
   return result;
 }
 
