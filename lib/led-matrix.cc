@@ -558,6 +558,8 @@ bool RGBMatrix::Impl::ApplyPixelMapper(const PixelMapper *mapper) {
   }
   PixelDesignatorMap *new_mapper = new PixelDesignatorMap(
     new_width, new_height, shared_pixel_mapper_->GetFillColorBits());
+  switch (mapper->GetMappingType()) {
+    case PixelMapper::VisibleToMatrix:
   for (int y = 0; y < new_height; ++y) {
     for (int x = 0; x < new_width; ++x) {
       int orig_x = -1, orig_y = -1;
@@ -572,6 +574,35 @@ bool RGBMatrix::Impl::ApplyPixelMapper(const PixelMapper *mapper) {
       const internal::PixelDesignator *orig_designator;
       orig_designator = shared_pixel_mapper_->get(orig_x, orig_y);
       *new_mapper->get(x, y) = *orig_designator;
+    }
+  }
+      break;
+    case PixelMapper::MatrixToVisible: {
+      bool collision_reported = false;
+      for (int y = 0; y < old_height; ++y) {
+        for (int x = 0; x < old_width; ++x) {
+          int new_x = -1, new_y = -1;
+          if (mapper->MapMatrixToVisible(old_width, old_height,
+                                         x, y, &new_x, &new_y)) {
+            if (new_x < 0 || new_y < 0 ||
+                new_x >= new_width || new_y >= new_height) {
+              fprintf(stderr, "Error in PixelMapper MapMatrixToVisible: (%d, %d) "
+                      "-> (%d, %d) [range: %dx%d]\n",
+                      x, y, new_x, new_y, new_width, new_height);
+              continue;
+            }
+            const internal::PixelDesignator *orig_designator;
+            orig_designator = shared_pixel_mapper_->get(x, y);
+            internal::PixelDesignator *new_designator = new_mapper->get(new_x, new_y);
+            if (new_designator->gpio_word >= 0 && !collision_reported) {
+              fprintf(stderr, "Warning: MapMatrixToVisible: %s mapped twice to the same pixel (%d, %d) -> (%d, %d)\n", mapper->GetName(), x, y, new_x, new_y);
+              collision_reported = true;
+            }
+            *new_designator = *orig_designator;
+          }
+        }
+      }
+      break;
     }
   }
   delete shared_pixel_mapper_;
