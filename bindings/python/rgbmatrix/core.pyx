@@ -235,6 +235,13 @@ cdef class RGBMatrixOptions:
         def __get__(self): return self.__runtime_options.drop_privileges
         def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
 
+    @property
+    def do_gpio_init(self):
+        return self.__runtime_options.do_gpio_init
+    @do_gpio_init.setter
+    def do_gpio_init(self, uint8_t value):
+        self.__runtime_options.do_gpio_init = value
+
 cdef class RGBMatrix(Canvas):
     def __cinit__(self, rows = None, chains = None, parallel = None,
                   RGBMatrixOptions options = None):
