@@ -362,7 +362,7 @@ public:
     const int panel_width  = matrix_width  / chain_;
     const int panel_height = matrix_height / parallel_;
 
-    const int panel_col = x / panel_width;
+    const int panel_col = chain_ - x / panel_width - 1;   // count panels from Raspberry (first panel is top-right corner)
     const int panel_row = y / panel_height;
 
     const int x_within_panel = x % panel_width;
