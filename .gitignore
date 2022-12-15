@@ -2,3 +2,4 @@
 *.a
 *~
 *.so
+*.DS_Store
