@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Display a runtext with double-buffering.
+
 from base import Base
 from rgbmatrix import graphics
 from time import sleep
@@ -15,8 +15,6 @@ import schedule
 import argparse
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 
-TICKER = "NVDA"
-
 class Market:
     def __init__(self):
         self.exchange = "NYSE"
@@ -29,6 +27,7 @@ class Market:
         self.is_open = False
         self.next_update = datetime.now()
         self.td = TDClient(apikey=self.api_key)
+        self.symbols = list()
 
         self.check_market_state()
 
@@ -41,14 +40,14 @@ class Market:
 
             if response[0]['is_market_open']:
                 self.is_open = True
-                time_to_close = datetime.strptime(response[0]['time_to_close'], '%H:%M:%S')
-                self.next_update = datetime.now() + timedelta(hours=time_to_close.hour,minutes=time_to_close.minute, seconds=time_to_close.second+1)
+                time_to_close = response[0]['time_to_close'].split(":")
+                self.next_update = datetime.now() + timedelta(minutes=int(time_to_close[0])*60+int(time_to_close[1])+1)
             else:
                 self.is_open = False
-                time_to_open = datetime.strptime(response[0]['time_to_open'], '%H:%M:%S')
-                self.next_update = datetime.now() + timedelta(hours=time_to_open.hour,minutes=time_to_open.minute, seconds=time_to_open.second+1)
+                time_to_open = response[0]['time_to_open'].split(":")
+                self.next_update = datetime.now() + timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+1)
 
-            print("next trading day update:", self.next_update.strftime('%Y-%m-%d %H:%M:%S'))
+            print("[STOCKS] next trading day update:", self.next_update.strftime('%Y-%m-%d %H:%M:%S'))
 
     def at_open(self, dt):
         return dt.replace(hour=self.open_hour, minute=self.open_min, second=0, microsecond=0)
@@ -83,13 +82,13 @@ class Market:
         self.force_update = False
         self.last_update = datetime.now()
 
-        print("current trading day:", self.trading_day.strftime('%Y-%m-%d'))
-        print("previous trading day:", self.previous_day.strftime('%Y-%m-%d'))
+        print("[STOCKS] current trading day:", self.trading_day.strftime('%Y-%m-%d'))
+        print("[STOCKS] previous trading day:", self.previous_day.strftime('%Y-%m-%d'))
     
-    def get_last_close_price(self, ticker):
+    def get_last_close_price(self, symbols):
         self.check_market_state()
         ts = self.td.time_series(
-            symbol=ticker,
+            symbol=symbols,
             interval="1day",
             outputsize=1,
             start_date=self.previous_day,
@@ -98,10 +97,10 @@ class Market:
         )
         return float(ts.as_json()[0]['close'])
     
-    def get_trading_day_data(self, ticker):
+    def get_trading_day_data(self, symbols):
         self.check_market_state()
         ts = self.td.time_series(
-            symbol=ticker,
+            symbol=symbols,
             interval="1min",
             start_date=self.trading_day,
             outputsize=self.open_time,
@@ -111,51 +110,69 @@ class Market:
         return ts.as_json()
 
 class Stocks(Base):
-    def __init__(self, matrix):
+    def __init__(self, matrix, symbol):
         self.graph = self.Graph()
-        self.market = Market()
         self.canvas = matrix.CreateFrameCanvas()
         self.offscreen_canvas = matrix.CreateFrameCanvas()
+        self.next_update = None
+        self.symbol = symbol
+        market.symbols.append(self.symbol)
 
         self.refresh()
+    
+    def __del__(self):
+        market.symbols.remove(self.symbol)
 
     def save_state(self):
-        print("Saving current state ...")
-        save_file = dict()
-        save_file["last_update"] = self.last_update.strftime('%Y-%m-%d %H:%M:%S')
-        save_file["closing_price"] = self.closing_price
-        save_file["curr_price"] = self.curr_price
-        save_file["curr_diff"] = self.curr_diff
-        save_file["curr_percent"] = self.curr_percent
+        print("[STOCKS] Saving current state ...")
 
-        save_file["graph_data"] = self.graph.data
-        save_file["graph_inflection_pt"] = self.graph.inflection_pt
+        save_symbol = dict()
+        save_symbol["last_update"] = self.last_update.strftime('%Y-%m-%d %H:%M:%S')
+        save_symbol["closing_price"] = self.closing_price
+        save_symbol["curr_price"] = self.curr_price
+        save_symbol["curr_diff"] = self.curr_diff
+        save_symbol["curr_percent"] = self.curr_percent
 
-        save_file["next_update"] = self.market.next_update.strftime('%Y-%m-%d %H:%M:%S')
+        save_symbol["graph_data"] = self.graph.data
+        save_symbol["graph_inflection_pt"] = self.graph.inflection_pt
+
+        save_symbol["next_update"] = market.next_update.strftime('%Y-%m-%d %H:%M:%S')
         
-        with open('stocks.json', 'w') as json_file:
-            json.dump(save_file, json_file)
+        file = dict()
+        try:
+            with open('data/stocks.json', 'r') as json_file:
+                file = json.load(json_file)
+        except FileNotFoundError:
+            open('data/stocks.json', 'x')
+
+        file[self.symbol] = save_symbol
         
-        print(save_file)
+        with open('data/stocks.json', 'w') as json_file:
+            json.dump(file, json_file)
+        
+        print(file[self.symbol])
 
     def load_state(self):
-        print("Load current state ...")
+        print("[STOCKS] Load current state ...")
 
-        with open('stocks.json', 'r') as json_file:
-            save_file = json.load(json_file)
+        try:
+            with open('data/stocks.json', 'r') as json_file:
+                file = json.load(json_file)
 
-        print(save_file)
+            print(file[self.symbol])
 
-        self.last_update = save_file["last_update"]
-        self.closing_price = save_file["closing_price"]
-        self.curr_price = save_file["curr_price"]
-        self.curr_diff = save_file["curr_diff"]
-        self.curr_percent = save_file["curr_percent"]
+            self.last_update = file[self.symbol]["last_update"]
+            self.closing_price = file[self.symbol]["closing_price"]
+            self.curr_price = file[self.symbol]["curr_price"]
+            self.curr_diff = file[self.symbol]["curr_diff"]
+            self.curr_percent = file[self.symbol]["curr_percent"]
 
-        self.graph.data = save_file["graph_data"]
-        self.graph.inflection_pt = save_file["graph_inflection_pt"]
+            self.graph.data = file[self.symbol]["graph_data"]
+            self.graph.inflection_pt = file[self.symbol]["graph_inflection_pt"]
 
-        self.next_update = datetime.strptime(save_file["next_update"], '%Y-%m-%d %H:%M:%S')
+            self.next_update = datetime.strptime(file[self.symbol]["next_update"], '%Y-%m-%d %H:%M:%S')
+        except:
+            print("[STOCKS] No stock data found ...")
 
     def get_canvas(self):
         return self.canvas
@@ -163,8 +180,8 @@ class Stocks(Base):
     def update_from_market(self):
         self.last_update = datetime.now()
 
-        self.closing_price = self.market.get_last_close_price(TICKER)
-        self.data = self.market.get_trading_day_data(TICKER)
+        self.closing_price = market.get_last_close_price(self.symbol)
+        self.data = market.get_trading_day_data(self.symbol)
         self.graph.parse(self.data, self.closing_price)
         
         self.curr_price = round(float(self.data[0]['close']),2)
@@ -181,16 +198,16 @@ class Stocks(Base):
         red = graphics.Color(255, 0, 0)
         green = graphics.Color(0, 255, 0)
 
-        if self.market.is_open:
+        if market.is_open:
             self.update_from_market()
         else:
             self.load_state()
             
-            if self.next_update <= self.market.next_update: # load is stale?
+            if self.next_update == None or self.next_update <= market.next_update: # load is stale?
                 self.update_from_market() 
 
         self.offscreen_canvas.Clear()
-        graphics.DrawText(self.offscreen_canvas, font, 1, 6, white, TICKER)
+        graphics.DrawText(self.offscreen_canvas, font, 1, 6, white, self.symbol)
         graphics.DrawText(self.offscreen_canvas, font, 1, 13, white, str(self.curr_price))
         graphics.DrawText(self.offscreen_canvas, font, 34, 6, red, str(self.curr_diff))
         graphics.DrawText(self.offscreen_canvas, font, 34, 13, red, str(self.curr_percent) + '%')
@@ -270,12 +287,12 @@ def handle_args(*args, **kwargs):
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-r", "--led-rows", action="store", help="Display rows. 16 for 16x32, 32 for 32x32. Default: 32", default=32, type=int)
-    parser.add_argument("--led-cols", action="store", help="Panel columns. Typically 32 or 64. (Default: 32)", default=32, type=int)
+    parser.add_argument("--led-cols", action="store", help="Panel columns. Typically 32 or 64. (Default: 32)", default=64, type=int)
     parser.add_argument("-c", "--led-chain", action="store", help="Daisy-chained boards. Default: 1.", default=1, type=int)
     parser.add_argument("-P", "--led-parallel", action="store", help="For Plus-models or RPi2: parallel chains. 1..3. Default: 1", default=1, type=int)
     parser.add_argument("-p", "--led-pwm-bits", action="store", help="Bits used for PWM. Something between 1..11. Default: 11", default=11, type=int)
     parser.add_argument("-b", "--led-brightness", action="store", help="Sets brightness level. Default: 100. Range: 1..100", default=100, type=int)
-    parser.add_argument("-m", "--led-gpio-mapping", help="Hardware Mapping: regular, adafruit-hat, adafruit-hat-pwm" , choices=['regular', 'regular-pi1', 'adafruit-hat', 'adafruit-hat-pwm'], type=str)
+    parser.add_argument("-m", "--led-gpio-mapping", help="Hardware Mapping: regular, adafruit-hat, adafruit-hat-pwm", default='adafruit-hat-pwm', choices=['regular', 'regular-pi1', 'adafruit-hat', 'adafruit-hat-pwm'], type=str)
     parser.add_argument("--led-scan-mode", action="store", help="Progressive or interlaced scan. 0 Progressive, 1 Interlaced (default)", default=1, choices=range(2), type=int)
     parser.add_argument("--led-pwm-lsb-nanoseconds", action="store", help="Base time-unit for the on-time in the lowest significant bit in nanoseconds. Default: 130", default=130, type=int)
     parser.add_argument("--led-show-refresh", action="store_true", help="Shows the current refresh rate of the LED panel")
@@ -294,8 +311,7 @@ def handle_args(*args, **kwargs):
 def create_matrix(args):
     options = RGBMatrixOptions()
 
-    if args.led_gpio_mapping != None:
-        options.hardware_mapping = args.led_gpio_mapping
+    options.hardware_mapping = args.led_gpio_mapping
     options.rows = args.led_rows
     options.cols = args.led_cols
     options.chain_length = args.led_chain
@@ -321,11 +337,11 @@ def create_matrix(args):
 
     return RGBMatrix(options = options)
 
-# Main function
+market = Market()
 if __name__ == "__main__":
     matrix = create_matrix(handle_args())
 
-    stocks = Stocks(matrix)
+    stocks = Stocks(matrix, "NVDA")
 
     schedule.every(1).minutes.do(stocks.refresh)
     while True:
