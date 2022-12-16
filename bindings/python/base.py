@@ -31,13 +31,9 @@ class Base(object):
         self.parser.add_argument("--led-no-drop-privs", dest="drop_privileges", help="Don't drop privileges from 'root' after initializing the hardware.", action='store_false')
         self.parser.set_defaults(drop_privileges=True)
 
-    def usleep(self, value):
-        time.sleep(value / 1000000.0)
+        self.create()
 
-    def run(self):
-        print("Running")
-
-    def process(self):
+    def create(self):
         self.args = self.parser.parse_args()
 
         options = RGBMatrixOptions()
@@ -70,6 +66,13 @@ class Base(object):
 
         self.matrix = RGBMatrix(options = options)
 
+    def usleep(self, value):
+        time.sleep(value / 1000000.0)
+
+    def run(self):
+        print("Running")
+
+    def process(self):
         try:
             # Start loop
             print("Press CTRL-C to stop")
