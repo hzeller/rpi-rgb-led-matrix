@@ -6,7 +6,6 @@ from time import sleep
 import logging
 import sys
 
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 log = logging.getLogger()
 
 from stocks import Stocks, Market
@@ -14,6 +13,9 @@ from stocks import Stocks, Market
 def handle_args(*args, **kwargs):
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("-d", "--debug", action="store", help="Sets debug output level: info, warning, error", default='warning', choices=['info', 'warning', 'error'], type=str)
+
+    # matrix specific
     parser.add_argument("-r", "--led-rows", action="store", help="Display rows. 16 for 16x32, 32 for 32x32. Default: 32", default=32, type=int)
     parser.add_argument("--led-cols", action="store", help="Panel columns. Typically 32 or 64. (Default: 32)", default=64, type=int)
     parser.add_argument("-c", "--led-chain", action="store", help="Daisy-chained boards. Default: 1.", default=1, type=int)
@@ -34,7 +36,16 @@ def handle_args(*args, **kwargs):
     parser.add_argument("--led-no-drop-privs", dest="drop_privileges", help="Don't drop privileges from 'root' after initializing the hardware.", action='store_false')
     parser.set_defaults(drop_privileges=True)
 
-    return parser.parse_args()
+    res = parser.parse_args()
+    cmd = res.debug
+    if res.debug == 'info':
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+    elif res.debug == 'warning':
+        logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
+    elif res.debug == 'error':
+        logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
+
+    return res
 
 def create_matrix(args):
     options = RGBMatrixOptions()
