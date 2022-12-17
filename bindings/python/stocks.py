@@ -2,6 +2,7 @@
 
 from rgbmatrix import graphics
 import json
+import time
 
 import requests
 from datetime import datetime, timedelta
@@ -10,16 +11,22 @@ import numpy
 from twelvedata import TDClient
 import schedule
 
+import logging
+log = logging.getLogger(__name__)
+
 def _try_api(func):
     tries = 3
     timeout = 60
     while tries > 0:
         try:
-            result = func.as_json()
-            break
+            return func.as_json()
         except:
-            print("[STOCKS][API] error", result, "using", func.as_url(), "trying again in", timeout, "seconds")
-    return result
+            log.warning("API out of credits using %s trying again in %d seconds" % (func.as_url(), timeout))
+            tries -= 1
+            time.sleep(timeout)
+    
+    log.error("API errors continue after several attempts")
+    exit()
 
 class Market:
     def __init__(self):
@@ -52,10 +59,10 @@ class Market:
                 end_date=day+timedelta(minutes=self.open_time),
                 timezone=self.timezone
             )
-            print("[STOCKS][API] _is_trading_day:", ts.as_url(), "->", ts.as_json())
+            log.info("API _is_trading_day: %s -> %s" % (ts.as_url(), ts.as_json()))
             res = True
         except:
-            print("[STOCKS][API] _is_trading_day: not valid trading day")
+            log.info("API _is_trading_day: not valid trading day")
             res = False
         
         return res
@@ -71,13 +78,13 @@ class Market:
             day -= timedelta(days=1)
         self.previous_day = self._at_open(day)
 
-        print("[STOCKS] current trading day:", self.trading_day.strftime('%Y-%m-%d'))
-        print("[STOCKS] previous trading day:", self.previous_day.strftime('%Y-%m-%d'))
+        log.info("current trading day: %s" % self.trading_day.strftime('%Y-%m-%d'))
+        log.info("previous trading day: %s" % self.previous_day.strftime('%Y-%m-%d'))
 
         # update market status
         url = f"https://api.twelvedata.com/market_state?exchange={self.exchange}&apikey={self.api_key}"
         response = requests.get(url).json()
-        print("[STOCKS][API] _check_market_state:", url, "->", response)
+        log.info("API _check_market_state: %s -> %s" % (url, response))
 
         if response[0]['is_market_open']:
             time_to_close = response[0]['time_to_close'].split(":")
@@ -92,7 +99,7 @@ class Market:
             self._update_trading_day_data()
 
         if len(self.symbols) > 0:
-            print("[STOCKS] next trading day update:", (datetime.now() + self.next_update).strftime('%Y-%m-%d %H:%M'))
+            log.info("next trading day update: %s" % (datetime.now() + self.next_update).strftime('%Y-%m-%d %H:%M'))
             schedule.every(self.next_update.total_seconds()).seconds.do(self._check_market_state).tag('market', '_check_market_state')
 
         return schedule.CancelJob
@@ -109,7 +116,7 @@ class Market:
             timezone=self.timezone
         )
         res = _try_api(ts)
-        print("[STOCKS][API] _update_last_close_price:", ts.as_url(), "->", res)
+        log.info("API _update_last_close_price: %s -> %s" % (ts.as_url(), res))
         if self.symbols[0] in res: # many symbols
             self._last_close_price.clear()
             for symbol in self.symbols:
@@ -130,7 +137,7 @@ class Market:
             timezone=self.timezone
         )
         res = _try_api(ts)
-        print("[STOCKS][API] _update_trading_day_data:", ts.as_url(), "->", res)
+        log.info("API _update_trading_day_data: %s -> %s" % (ts.as_url(), res))
         if self.symbols[0] in res: # many symbols
             self._trading_day_data.clear()
             self._trading_day_data = res

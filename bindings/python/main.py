@@ -3,6 +3,12 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import schedule
 from time import sleep
 
+import logging
+import sys
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+log = logging.getLogger()
+
 from stocks import Stocks, Market
 
 def handle_args(*args, **kwargs):
@@ -59,17 +65,17 @@ def create_matrix(args):
 
     return RGBMatrix(options = options)
 
-def print_schedule():
-    print("[INFO] Scheduled jobs:", schedule.get_jobs())
+def log_schedule():
+    log.info("Scheduled jobs: %s" % schedule.get_jobs())
 
 if __name__ == "__main__":
     matrix = create_matrix(handle_args())
-    schedule.every(1).minutes.do(print_schedule).tag('system')
+    schedule.every(1).minutes.do(log_schedule).tag('system')
 
     nvda_stock = Stocks(matrix, "NVDA")
     aapl_stock = Stocks(matrix, "AAPL")
 
-    print_schedule()
+    log_schedule()
     while True:
         schedule.run_pending()
         matrix.SwapOnVSync(nvda_stock.get_canvas())
