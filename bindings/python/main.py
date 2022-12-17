@@ -1,8 +1,9 @@
 import argparse
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import schedule
+from time import sleep
 
-from stocks import Stocks
+from stocks import Stocks, Market
 
 def handle_args(*args, **kwargs):
     parser = argparse.ArgumentParser()
@@ -58,13 +59,20 @@ def create_matrix(args):
 
     return RGBMatrix(options = options)
 
+def print_schedule():
+    print("[INFO] Scheduled jobs:", schedule.get_jobs())
+
 if __name__ == "__main__":
     matrix = create_matrix(handle_args())
+    schedule.every(1).minutes.do(print_schedule).tag('system')
 
-    stocks = Stocks(matrix, "NVDA")
+    nvda_stock = Stocks(matrix, "NVDA")
+    aapl_stock = Stocks(matrix, "AAPL")
 
-    schedule.every(1).minutes.do(stocks.refresh)
+    print_schedule()
     while True:
         schedule.run_pending()
+        matrix.SwapOnVSync(nvda_stock.get_canvas())
         sleep(5)
-        matrix.SwapOnVSync(stocks.get_canvas())
+        matrix.SwapOnVSync(aapl_stock.get_canvas())
+        sleep(5)

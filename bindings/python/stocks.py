@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from rgbmatrix import graphics
-from time import sleep
 import json
 
 import requests
@@ -9,104 +8,170 @@ from datetime import datetime, timedelta
 import pytz
 import numpy
 from twelvedata import TDClient
+import schedule
 
-import argparse
-from rgbmatrix import RGBMatrix, RGBMatrixOptions
+def _try_api(func):
+    tries = 3
+    timeout = 60
+    while tries > 0:
+        try:
+            result = func.as_json()
+            break
+        except:
+            print("[STOCKS][API] error", result, "using", func.as_url(), "trying again in", timeout, "seconds")
+    return result
 
 class Market:
     def __init__(self):
         self.exchange = "NYSE"
+        self.timezone = "America/New_York"
         self.open_hour = 9
         self.open_min = 30
         self.open_time = 390 # minutes in stock day
+
         self.api_key = "d9142d27a31c40629d3e2347daa59c82"
-        self.timezone = "America/New_York"
-        self.update_interval = 6 # update every 6 mins when open
-        self.is_open = False
-        self.next_update = datetime.now()
         self.td = TDClient(apikey=self.api_key)
+        
+        self.update_interval = 6 # update every 6 mins when open
         self.symbols = list()
 
-        self.check_market_state()
+        self._jobs = list()
+        self._last_close_price = dict()
+        self._trading_day_data = dict()
 
-    def check_market_state(self):
-        if (self.next_update <= datetime.now()):
-            self.set_trading_day()
-
-            url = f"https://api.twelvedata.com/market_state?exchange={self.exchange}&apikey={self.api_key}"
-            response = requests.get(url).json()
-            print("[STOCKS] URL:", url, "returned", response)
-
-            if response[0]['is_market_open']:
-                self.is_open = True
-                time_to_close = response[0]['time_to_close'].split(":")
-                self.next_update = datetime.now() + timedelta(minutes=int(time_to_close[0])*60+int(time_to_close[1])+1)
-            else:
-                self.is_open = False
-                time_to_open = response[0]['time_to_open'].split(":")
-                self.next_update = datetime.now() + timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+1)
-
-            print("[STOCKS] next trading day update:", self.next_update.strftime('%Y-%m-%d %H:%M:%S'))
-
-    def at_open(self, dt):
+    def _at_open(self, dt):
         return dt.replace(hour=self.open_hour, minute=self.open_min, second=0, microsecond=0)
 
-    def is_trading_day(self, day):
+    def _is_trading_day(self, day):
         try:
             ts = self.td.time_series(
                 symbol="NVDA",
                 interval="1day",
                 outputsize=1,
-                start_date=start,
+                start_date=day,
                 end_date=day+timedelta(minutes=self.open_time),
                 timezone=self.timezone
             )
-            return True
+            print("[STOCKS][API] _is_trading_day:", ts.as_url(), "->", ts.as_json())
+            res = True
         except:
-            return False
-
-        return ts.as_json()['status']
-
-    def set_trading_day(self):
-        day = self.at_open(datetime.now(pytz.timezone(self.timezone)))
-        while self.is_trading_day(day):
-            day -= timedelta(days=1)
-        self.trading_day = self.at_open(day)
+            print("[STOCKS][API] _is_trading_day: not valid trading day")
+            res = False
         
+        return res
+    
+    def _check_market_state(self):
+        # update trading day
+        day = self._at_open(datetime.now(pytz.timezone(self.timezone)))
+        while not self._is_trading_day(day):
+            day -= timedelta(days=1)
+        self.trading_day = self._at_open(day)
         day -= timedelta(days=1)
-        while self.is_trading_day(day):
+        while not self._is_trading_day(day):
             day -= timedelta(days=1)
-        self.previous_day = self.at_open(day)
-        
-        self.force_update = False
-        self.last_update = datetime.now()
+        self.previous_day = self._at_open(day)
 
         print("[STOCKS] current trading day:", self.trading_day.strftime('%Y-%m-%d'))
         print("[STOCKS] previous trading day:", self.previous_day.strftime('%Y-%m-%d'))
-    
-    def get_last_close_price(self, symbols):
-        self.check_market_state()
+
+        # update market status
+        url = f"https://api.twelvedata.com/market_state?exchange={self.exchange}&apikey={self.api_key}"
+        response = requests.get(url).json()
+        print("[STOCKS][API] _check_market_state:", url, "->", response)
+
+        if response[0]['is_market_open']:
+            time_to_close = response[0]['time_to_close'].split(":")
+            self.next_update = timedelta(minutes=int(time_to_close[0])*60+int(time_to_close[1])+1)
+            if not schedule.get_jobs('_update_trading_day_data'):
+                schedule.every(self.update_interval).minutes.do(self._update_trading_day_data).tag('market', '_update_trading_day_data')
+            self._update_last_close_price()
+        else:
+            time_to_open = response[0]['time_to_open'].split(":")
+            self.next_update = timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+1)
+            schedule.clear('_update_trading_day_data')
+            self._update_trading_day_data()
+
+        if len(self.symbols) > 0:
+            print("[STOCKS] next trading day update:", (datetime.now() + self.next_update).strftime('%Y-%m-%d %H:%M'))
+            schedule.every(self.next_update.total_seconds()).seconds.do(self._check_market_state).tag('market', '_check_market_state')
+
+        return schedule.CancelJob
+
+    def _update_last_close_price(self):
+        assert self.previous_day
+        assert len(self.symbols) > 0
         ts = self.td.time_series(
-            symbol=symbols,
+            symbol=self.symbols,
             interval="1day",
             outputsize=1,
             start_date=self.previous_day,
             end_date=self.previous_day+timedelta(minutes=self.open_time),
             timezone=self.timezone
         )
-        return float(ts.as_json()[0]['close'])
+        res = _try_api(ts)
+        print("[STOCKS][API] _update_last_close_price:", ts.as_url(), "->", res)
+        if self.symbols[0] in res: # many symbols
+            self._last_close_price.clear()
+            for symbol in self.symbols:
+                self._last_close_price[symbol] = float(res[symbol][0]['close'])
+        else: # only one symbol
+            self._last_close_price.clear()
+            self._last_close_price[self.symbols[0]] = float(res[0]['close'])
     
-    def get_trading_day_data(self, symbols):
-        self.check_market_state()
+    def _update_trading_day_data(self):
+        assert self.trading_day
+        assert len(self.symbols) > 0
         ts = self.td.time_series(
-            symbol=symbols,
+            symbol= self.symbols,
             interval="1min",
             start_date=self.trading_day,
             outputsize=self.open_time,
             end_date=self.trading_day+timedelta(minutes=self.open_time),
             timezone=self.timezone
         )
-        return ts.as_json()
+        res = _try_api(ts)
+        print("[STOCKS][API] _update_trading_day_data:", ts.as_url(), "->", res)
+        if self.symbols[0] in res: # many symbols
+            self._trading_day_data.clear()
+            self._trading_day_data = res
+        else: # only one symbol
+            self._trading_day_data.clear()
+            self._trading_day_data[self.symbols[0]] = res
+    
+    ############## Public Functions
+
+    def add_symbol(self, symbol):
+        self.symbols.append(symbol)
+
+        if len(self.symbols) == 1:
+            self._check_market_state()
+    
+        self._update_last_close_price()
+        self._update_trading_day_data()
+
+    def remove_symbol(self, symbol):
+        self.symbols.remove(symbol)
+        if len(self.symbols) == 0:
+            schedule.clear('market')
+
+    def get_last_close_price(self, symbol):
+        assert len(self._last_close_price) > 0
+        return self._last_close_price[symbol]
+
+    def get_trading_day_data(self, symbol):
+        assert len(self._trading_day_data) > 0
+        return self._trading_day_data[symbol]
+
+    def get_current_price(self, symbol):
+        assert len(self._trading_day_data) > 0
+        return round(float(self._trading_day_data[symbol][0]['close']),2)
+
+    def get_current_difference(self, symbol):
+        assert len(self._trading_day_data) > 0
+        return round(float(self._trading_day_data[symbol][0]['close'])-self.get_last_close_price(symbol),2)
+    
+    def get_current_percent(self, symbol):
+        return round(self.get_current_difference(symbol)/self.get_last_close_price(symbol)*100,2)
 
 market = Market()
 class Stocks:
@@ -114,103 +179,43 @@ class Stocks:
         self.graph = self.Graph()
         self.canvas = matrix.CreateFrameCanvas()
         self.offscreen_canvas = matrix.CreateFrameCanvas()
-        self.next_update = None
         self.symbol = symbol
-        market.symbols.append(self.symbol)
+        
+        market.add_symbol(self.symbol)
 
-        self.refresh()
+        self.draw()
     
     def __del__(self):
-        market.symbols.remove(self.symbol)
-
-    def save_state(self):
-        print("[STOCKS] Saving current state ...")
-
-        save_symbol = dict()
-        save_symbol["last_update"] = self.last_update.strftime('%Y-%m-%d %H:%M:%S')
-        save_symbol["closing_price"] = self.closing_price
-        save_symbol["curr_price"] = self.curr_price
-        save_symbol["curr_diff"] = self.curr_diff
-        save_symbol["curr_percent"] = self.curr_percent
-
-        save_symbol["graph_data"] = self.graph.data
-        save_symbol["graph_inflection_pt"] = self.graph.inflection_pt
-
-        save_symbol["next_update"] = market.next_update.strftime('%Y-%m-%d %H:%M:%S')
-        
-        file = dict()
-        try:
-            with open('data/stocks.json', 'r') as json_file:
-                file = json.load(json_file)
-        except FileNotFoundError:
-            open('data/stocks.json', 'x')
-
-        file[self.symbol] = save_symbol
-        
-        with open('data/stocks.json', 'w') as json_file:
-            json.dump(file, json_file)
-        
-        print(file[self.symbol])
-
-    def load_state(self):
-        print("[STOCKS] Load current state ...")
-
-        try:
-            with open('data/stocks.json', 'r') as json_file:
-                file = json.load(json_file)
-
-            print(file[self.symbol])
-
-            self.last_update = file[self.symbol]["last_update"]
-            self.closing_price = file[self.symbol]["closing_price"]
-            self.curr_price = file[self.symbol]["curr_price"]
-            self.curr_diff = file[self.symbol]["curr_diff"]
-            self.curr_percent = file[self.symbol]["curr_percent"]
-
-            self.graph.data = file[self.symbol]["graph_data"]
-            self.graph.inflection_pt = file[self.symbol]["graph_inflection_pt"]
-
-            self.next_update = datetime.strptime(file[self.symbol]["next_update"], '%Y-%m-%d %H:%M:%S')
-        except:
-            print("[STOCKS] No stock data found ...")
+        market.remove_symbol(self.symbol)
 
     def get_canvas(self):
         return self.canvas
 
-    def update_from_market(self):
-        self.last_update = datetime.now()
-
-        self.closing_price = market.get_last_close_price(self.symbol)
-        self.data = market.get_trading_day_data(self.symbol)
-        self.graph.parse(self.data, self.closing_price)
-        
-        self.curr_price = round(float(self.data[0]['close']),2)
-        self.curr_diff = round(float(self.data[0]['close'])-self.closing_price,2)
-        self.curr_percent = round(self.curr_diff/self.closing_price*100,2)
-        
-        self.save_state()
-
-    def refresh(self):
+    def draw(self):
         font = graphics.Font()
         font.LoadFont("../../fonts/5x6.bdf")
         text_font = graphics.Font()
         white = graphics.Color(255, 255, 255)
+        grey = graphics.Color(155, 155, 155)
         red = graphics.Color(255, 0, 0)
         green = graphics.Color(0, 255, 0)
 
-        if market.is_open:
-            self.update_from_market()
-        else:
-            self.load_state()
-            
-            if self.next_update == None or self.next_update <= market.next_update: # load is stale?
-                self.update_from_market() 
+        self.closing_price = market.get_last_close_price(self.symbol)
+        self.data = market.get_trading_day_data(self.symbol)
+        self.graph.parse(self.data, self.closing_price)
+        self.curr_price = market.get_current_price(self.symbol)
+        self.curr_diff = market.get_current_difference(self.symbol)
+        self.curr_percent = market.get_current_percent(self.symbol)
 
         self.offscreen_canvas.Clear()
         graphics.DrawText(self.offscreen_canvas, font, 1, 6, white, self.symbol)
-        graphics.DrawText(self.offscreen_canvas, font, 1, 13, white, str(self.curr_price))
-        graphics.DrawText(self.offscreen_canvas, font, 34, 6, red, str(self.curr_diff))
-        graphics.DrawText(self.offscreen_canvas, font, 34, 13, red, str(self.curr_percent) + '%')
+        graphics.DrawText(self.offscreen_canvas, font, 1, 13, grey, str(self.curr_price))
+        if self.curr_diff >= 0:
+            graphics.DrawText(self.offscreen_canvas, font, 34, 6, green, str(self.curr_diff))
+            graphics.DrawText(self.offscreen_canvas, font, 34, 13, green, str(self.curr_percent) + '%')
+        else:
+            graphics.DrawText(self.offscreen_canvas, font, 34, 6, red, str(self.curr_diff))
+            graphics.DrawText(self.offscreen_canvas, font, 34, 13, red, str(self.curr_percent) + '%')
 
         self.graph.draw(self.offscreen_canvas, 0, 31)
 
