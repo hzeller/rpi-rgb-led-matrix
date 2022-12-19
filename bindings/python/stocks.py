@@ -68,11 +68,11 @@ class Market:
     def _check_market_state(self):
         # update trading day
         day = self._at_open(datetime.now(pytz.timezone(self.timezone)))
-        while not self._is_trading_day(day):
+        while day.weekday() > 4 or not self._is_trading_day(day):
             day -= timedelta(days=1)
         self.trading_day = self._at_open(day)
         day -= timedelta(days=1)
-        while not self._is_trading_day(day):
+        while day.weekday() > 4 or not self._is_trading_day(day):
             day -= timedelta(days=1)
         self.previous_day = self._at_open(day)
 
