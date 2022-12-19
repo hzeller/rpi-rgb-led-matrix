@@ -24,15 +24,16 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 # Configuration for the matrix
 options = RGBMatrixOptions()
 options.rows = 32
+options.cols = 64
 options.chain_length = 1
 options.parallel = 1
-options.hardware_mapping = 'regular'  # If you have an Adafruit HAT: 'adafruit-hat'
+options.hardware_mapping = 'adafruit-hat-pwm'  # If you have an Adafruit HAT: 'adafruit-hat'
 
 matrix = RGBMatrix(options = options)
 
 # RGB example w/graphics prims.
 # Note, only "RGB" mode is supported currently.
-image = Image.new("RGB", (32, 32))  # Can be larger than matrix if wanted!!
+image = Image.new("RGB", (32, 64))  # Can be larger than matrix if wanted!!
 draw = ImageDraw.Draw(image)  # Declare Draw instance before prims
 # Draw some shapes into image (no immediate effect on matrix)...
 draw.rectangle((0, 0, 31, 31), fill=(0, 0, 0), outline=(0, 0, 255))

@@ -2,13 +2,13 @@ import argparse
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import schedule
 from time import sleep
-
 import logging
 import sys
 
-log = logging.getLogger()
-
 from stocks import Stocks, Market
+from imageviewer import ImageViewer
+
+log = logging.getLogger()
 
 def handle_args(*args, **kwargs):
     parser = argparse.ArgumentParser()
@@ -83,13 +83,17 @@ if __name__ == "__main__":
     matrix = create_matrix(handle_args())
     schedule.every(1).minutes.do(log_schedule).tag('system')
 
-    nvda_stock = Stocks(matrix, "NVDA")
-    aapl_stock = Stocks(matrix, "AAPL")
+    apps = list()
+    apps.append(ImageViewer(matrix, "images/nvidia.png"))
+    apps.append(Stocks(matrix, "NVDA"))
+    apps.append(Stocks(matrix, "VTI"))
 
     log_schedule()
+    duration = 5
     while True:
         schedule.run_pending()
-        matrix.SwapOnVSync(nvda_stock.get_canvas())
-        sleep(5)
-        matrix.SwapOnVSync(aapl_stock.get_canvas())
-        sleep(5)
+        for app in apps:
+            framerate = app.get_framerate()
+            for sec in range(0,framerate*duration):
+                matrix.SwapOnVSync(app.show())
+                sleep(1/framerate)

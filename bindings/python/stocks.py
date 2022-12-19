@@ -8,7 +8,7 @@ import requests
 from datetime import datetime, timedelta
 import pytz
 import numpy
-from twelvedata import TDClient
+from twelvedata import TDClient, exceptions
 import schedule
 
 import logging
@@ -20,7 +20,10 @@ def _try_api(func):
     while tries > 0:
         try:
             return func.as_json()
-        except:
+        except exceptions.BadRequestError:
+            log.warning("API bad request")
+            return False
+        except exceptions.TwelveDataError:
             log.warning("API out of credits using %s trying again in %d seconds" % (func.as_url(), timeout))
             tries -= 1
             time.sleep(timeout)
@@ -50,21 +53,16 @@ class Market:
         return dt.replace(hour=self.open_hour, minute=self.open_min, second=0, microsecond=0)
 
     def _is_trading_day(self, day):
-        try:
-            ts = self.td.time_series(
-                symbol="NVDA",
-                interval="1day",
-                outputsize=1,
-                start_date=day,
-                end_date=day+timedelta(minutes=self.open_time),
-                timezone=self.timezone
-            )
-            log.info("API _is_trading_day: %s -> %s" % (ts.as_url(), ts.as_json()))
-            res = True
-        except:
-            log.info("API _is_trading_day: not valid trading day")
-            res = False
-        
+        ts = self.td.time_series(
+            symbol="NVDA",
+            interval="1day",
+            outputsize=1,
+            start_date=day,
+            end_date=day+timedelta(minutes=self.open_time),
+            timezone=self.timezone
+        )
+        res = _try_api(ts)
+        log.info("API _is_trading_day: %s -> %s" % (ts.as_url(), res))
         return res
     
     def _check_market_state(self):
@@ -183,6 +181,8 @@ class Market:
 market = Market()
 class Stocks:
     def __init__(self, matrix, symbol):
+        self.framerate = 1
+
         self.graph = self.Graph()
         self.canvas = matrix.CreateFrameCanvas()
         self.offscreen_canvas = matrix.CreateFrameCanvas()
@@ -192,10 +192,13 @@ class Stocks:
 
         self.draw()
     
+    def get_framerate(self):
+        return self.framerate
+    
     def __del__(self):
         market.remove_symbol(self.symbol)
 
-    def get_canvas(self):
+    def show(self):
         return self.canvas
 
     def draw(self):
@@ -258,7 +261,7 @@ class Stocks:
                 min_val = close_price
             
             scale = self.height/(max_val-min_val)
-            self.inflection_pt = int((close_price-min_val)*scale)
+            self.inflection_pt = round((close_price-min_val)*scale)
 
             x = 0
             self.data.clear()
@@ -277,20 +280,20 @@ class Stocks:
                     if x == len(self.data)-1:
                         graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-y, green[1])
                     else:
-                        next_y = y_offset-self.data[idx+1][1]
-                        if next_y <= self.inflection_pt:
-                            graphics.DrawLine(canvas, x+x_offset, self.inflection_pt, x+x_offset+1, next_y, red[1])
-                            graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, self.inflection_pt, green[1])
+                        next_y = self.data[idx+1][1]
+                        if next_y < self.inflection_pt:
+                            graphics.DrawLine(canvas, x+x_offset, y_offset-self.inflection_pt, x+x_offset+1, y_offset-next_y, red[1])
+                            graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-self.inflection_pt, green[1])
                         else:
-                            graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, next_y, green[1])
+                            graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-next_y, green[1])
                 else:
                     graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-self.inflection_pt, red[0])
                     if x == len(self.data)-1:
                         graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-y, red[1])
                     else:
-                        next_y = y_offset-self.data[idx+1][1]
-                        if next_y < self.inflection_pt:
-                            graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, self.inflection_pt, red[1])
-                            graphics.DrawLine(canvas, x+x_offset, self.inflection_pt, x+x_offset+1, next_y, green[1])
+                        next_y = self.data[idx+1][1]
+                        if next_y >= self.inflection_pt:
+                            graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-self.inflection_pt, red[1])
+                            graphics.DrawLine(canvas, x+x_offset, y_offset-self.inflection_pt, x+x_offset+1, y_offset-next_y, green[1])
                         else:
-                            graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, next_y, red[1])
+                            graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-next_y, red[1])
