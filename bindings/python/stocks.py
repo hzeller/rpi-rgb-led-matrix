@@ -199,6 +199,7 @@ class Stocks:
         market.remove_symbol(self.symbol)
 
     def show(self):
+        self.draw()
         return self.canvas
 
     def draw(self):
@@ -272,11 +273,19 @@ class Stocks:
         def draw(self, canvas, x_offset, y_offset):
             green = (graphics.Color(0, 25, 0),graphics.Color(0, 255, 0))
             red = (graphics.Color(25, 0, 0), graphics.Color(255, 0, 0))
+            # draw area
             for idx in range(0,len(self.data)):
                 x = self.data[idx][0]
                 y = self.data[idx][1]
                 if y >= self.inflection_pt:
                     graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-self.inflection_pt, green[0])
+                else:
+                    graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-self.inflection_pt, red[0])
+            # draw line
+            for idx in range(0,len(self.data)):
+                x = self.data[idx][0]
+                y = self.data[idx][1]
+                if y >= self.inflection_pt:
                     if x == len(self.data)-1:
                         graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-y, green[1])
                     else:
@@ -287,7 +296,6 @@ class Stocks:
                         else:
                             graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-next_y, green[1])
                 else:
-                    graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-self.inflection_pt, red[0])
                     if x == len(self.data)-1:
                         graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-y, red[1])
                     else:
