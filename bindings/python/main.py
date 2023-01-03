@@ -2,6 +2,7 @@ import argparse
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 import schedule
 from time import sleep
+from datetime import datetime, timedelta
 import logging
 import sys
 
@@ -39,11 +40,17 @@ def handle_args(*args, **kwargs):
     res = parser.parse_args()
     cmd = res.debug
     if res.debug == 'info':
-        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+        logging.basicConfig(level=logging.INFO, \
+                            filename='log.txt', \
+                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
     elif res.debug == 'warning':
-        logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
+        logging.basicConfig(level=logging.WARNING, \
+                            filename='log.txt', \
+                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
     elif res.debug == 'error':
-        logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
+        logging.basicConfig(level=logging.ERROR, \
+                            filename='log.txt', \
+                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
 
     return res
 
@@ -89,7 +96,7 @@ if __name__ == "__main__":
     apps.append(Stocks(matrix, "VTI"))
 
     log_schedule()
-    duration = 5
+    duration = 8
     while True:
         schedule.run_pending()
         for app in apps:

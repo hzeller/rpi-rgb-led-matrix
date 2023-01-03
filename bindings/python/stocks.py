@@ -42,7 +42,7 @@ class Market:
         self.api_key = "d9142d27a31c40629d3e2347daa59c82"
         self.td = TDClient(apikey=self.api_key)
         
-        self.update_interval = 6 # update every 6 mins when open
+        self.update_interval = 1 # update every 1 mins when open
         self.symbols = list()
 
         self._jobs = list()
