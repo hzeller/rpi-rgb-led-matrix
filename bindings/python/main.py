@@ -5,11 +5,15 @@ from time import sleep
 from datetime import datetime, timedelta
 import logging
 import sys
+import os
+import requests
 
+from weather import Weather
 from stocks import Stocks, Market
 from imageviewer import ImageViewer
 
 log = logging.getLogger()
+path = os.path.dirname(__file__) + '/'
 
 def handle_args(*args, **kwargs):
     parser = argparse.ArgumentParser()
@@ -41,15 +45,15 @@ def handle_args(*args, **kwargs):
     cmd = res.debug
     if res.debug == 'info':
         logging.basicConfig(level=logging.INFO, \
-                            filename='log.txt', \
+                            filename=path + 'log.txt', \
                             format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
     elif res.debug == 'warning':
         logging.basicConfig(level=logging.WARNING, \
-                            filename='log.txt', \
+                            filename=path + 'log.txt', \
                             format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
     elif res.debug == 'error':
         logging.basicConfig(level=logging.ERROR, \
-                            filename='log.txt', \
+                            filename=path + 'log.txt', \
                             format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
 
     return res
@@ -91,7 +95,8 @@ if __name__ == "__main__":
     schedule.every(1).minutes.do(log_schedule).tag('system')
 
     apps = list()
-    apps.append(ImageViewer(matrix, "images/nvidia.png"))
+    #apps.append(Weather(matrix, "Sunnyvale"))
+    apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
     apps.append(Stocks(matrix, "NVDA"))
     apps.append(Stocks(matrix, "VTI"))
 

@@ -14,6 +14,9 @@ import schedule
 import logging
 log = logging.getLogger(__name__)
 
+import os
+path = os.path.dirname(__file__) + '/'
+
 def _try_api(func):
     tries = 3
     timeout = 60
@@ -204,7 +207,7 @@ class Stocks:
 
     def draw(self):
         font = graphics.Font()
-        font.LoadFont("../../fonts/5x6.bdf")
+        font.LoadFont(path + "../../fonts/5x6.bdf")
         text_font = graphics.Font()
         white = graphics.Color(255, 255, 255)
         grey = graphics.Color(155, 155, 155)
