@@ -95,6 +95,8 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     RT_OPT_COPY_IF_SET(daemon);
     RT_OPT_COPY_IF_SET(drop_privileges);
     RT_OPT_COPY_IF_SET(do_gpio_init);
+    RT_OPT_COPY_IF_SET(drop_priv_user);
+    RT_OPT_COPY_IF_SET(drop_priv_group);
 #undef RT_OPT_COPY_IF_SET
   }
 
@@ -138,6 +140,8 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     ACTUAL_VALUE_BACK_TO_RT_OPT(daemon);
     ACTUAL_VALUE_BACK_TO_RT_OPT(drop_privileges);
     ACTUAL_VALUE_BACK_TO_RT_OPT(do_gpio_init);
+    ACTUAL_VALUE_BACK_TO_RT_OPT(drop_priv_user);
+    ACTUAL_VALUE_BACK_TO_RT_OPT(drop_priv_group);
 #undef ACTUAL_VALUE_BACK_TO_RT_OPT
   }
 

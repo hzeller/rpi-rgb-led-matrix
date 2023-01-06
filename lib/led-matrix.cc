@@ -588,21 +588,33 @@ static bool drop_privs(const char *priv_user, const char *priv_group) {
       return true;
   }
 
-  struct group *g = getgrnam(priv_group);
-  if (g == NULL) {
-    perror("group lookup.");
-    return false;
+  if (priv_user == nullptr || priv_user[0] == 0) priv_user = "daemon";
+  if (priv_group == nullptr || priv_group[0] == 0) priv_group = "daemon";
+
+  gid_t gid = atoi(priv_group);  // Attempt to parse as GID first
+  if (gid == 0) {
+    struct group *g = getgrnam(priv_group);
+    if (g == NULL) {
+      perror("group lookup.");
+      return false;
+    }
+    gid = g->gr_gid;
   }
-  if (setresgid(g->gr_gid, g->gr_gid, g->gr_gid) != 0) {
+  if (setresgid(gid, gid, gid) != 0) {
     perror("setresgid()");
     return false;
   }
-  struct passwd *p = getpwnam(priv_user);
-  if (p == NULL) {
-    perror("user lookup.");
-    return false;
+
+  uid_t uid = atoi(priv_user);  // Attempt to parse as UID first.
+  if (uid == 0) {
+    struct passwd *p = getpwnam(priv_user);
+    if (p == NULL) {
+      perror("user lookup.");
+      return false;
+    }
+    uid = p->pw_uid;
   }
-  if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) != 0) {
+  if (setresuid(uid, uid, uid) != 0) {
     perror("setresuid()");
     return false;
   }
@@ -647,7 +659,8 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
   // realtime thread that usually requires root to be established.
   // Double check and document.
   if (runtime_options.drop_privileges > 0) {
-    drop_privs("daemon", "daemon");
+    drop_privs(runtime_options.drop_priv_user,
+               runtime_options.drop_priv_group);
   }
 
   return new RGBMatrix(result);

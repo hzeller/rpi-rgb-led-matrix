@@ -39,7 +39,9 @@ RuntimeOptions::RuntimeOptions() :
 #endif
   daemon(0),            // Don't become a daemon by default.
   drop_privileges(1),   // Encourage good practice: drop privileges by default.
-  do_gpio_init(true)
+  do_gpio_init(true),
+  drop_priv_user("daemon"),
+  drop_priv_group("daemon")
 {
   // Nothing to see here.
 }
@@ -226,6 +228,15 @@ static bool FlagInit(int &argc, char **&argv,
         ropts->drop_privileges = bool_scratch ? 1 : 0;
         continue;
       }
+      if (ConsumeStringFlag("drop-priv-user", it, end,
+                            &ropts->drop_priv_user, &err)) {
+        continue;
+      }
+      if (ConsumeStringFlag("drop-priv-group", it, end,
+                            &ropts->drop_priv_group, &err)) {
+        continue;
+      }
+
       if (strncmp(*it, OPTION_PREFIX, OPTION_PREFIX_LEN) == 0) {
         fprintf(stderr, "Option %s starts with %s but it is unknown. Typo?\n",
                 *it, OPTION_PREFIX);
@@ -357,6 +368,12 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
             "\t--led-%sdrop-privs       : %srop privileges from 'root' "
             "after initializing the hardware.\n",
             on ? "no-" : "", on ? "Don't d" : "D");
+    fprintf(out, "\t--led-drop-priv-user      : "
+            "Drop privileges to this username or UID (Default: '%s')\n",
+            r.drop_priv_user);
+    fprintf(out, "\t--led-drop-priv-group     : "
+            "Drop privileges to this groupname or GID (Default: '%s')\n",
+            r.drop_priv_group);
   }
 }
 

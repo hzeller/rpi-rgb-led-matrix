@@ -395,7 +395,7 @@ private:
 struct RuntimeOptions {
   RuntimeOptions();
 
-  int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
+  int gpio_slowdown;    // 0 = no slowdown.    Flag: --led-slowdown-gpio
 
   // ----------
   // If the following options are set to disabled with -1, they are not
@@ -403,8 +403,8 @@ struct RuntimeOptions {
   // ----------
 
   // Thre are three possible values here
-  //   -1 : don't leave choise of becoming daemon to the command line parsing.
-  //        If set to -1, the --led-daemon option is not offered.
+  //   -1 : don't leave choise of becoming daemon to the command line
+  //        parsing. If set to -1, the --led-daemon option is not offered.
   //    0 : do not becoma a daemon, run in forgreound (default value)
   //    1 : become a daemon, run in background.
   //
@@ -412,12 +412,14 @@ struct RuntimeOptions {
   // RGBMatrix::StartRefresh() manually once the matrix is created, to leave
   // the decision to become a daemon
   // after the call (which requires that no threads have been started yet).
-  // In the other cases (off or on), the choice is already made, so the thread
-  // is conveniently already started for you.
+  // In the other cases (off or on), the choice is already made, so the
+  // thread is conveniently already started for you.
   int daemon;           // -1 disabled. 0=off, 1=on. Flag: --led-daemon
 
-  // Drop privileges from 'root' to 'daemon' once the hardware is initialized.
+  // Drop privileges from 'root' to drop_priv_user/group once the hardware is
+  // initialized.
   // This is usually a good idea unless you need to stay on elevated privs.
+  // -1, 0, 1 similar meaning to 'daemon' above.
   int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
 
   // By default, the gpio is initialized for you, but if you run on a platform
@@ -425,6 +427,11 @@ struct RuntimeOptions {
   // e.g. you want to just create a stream output (see content-streamer.h),
   // set this to false.
   bool do_gpio_init;
+
+  // If drop privileges is enabled, this is the user/group we drop privileges
+  // to. Unless chosen otherwise, the default is "daemon" for user and group.
+  const char *drop_priv_user;
+  const char *drop_priv_group;
 };
 
 // Convenience utility functions to read standard rgb-matrix flags and create

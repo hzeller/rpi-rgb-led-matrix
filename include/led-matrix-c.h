@@ -189,6 +189,11 @@ struct RGBLedRuntimeOptions {
   // e.g. you want to just create a stream output (see content-streamer.h),
   // set this to false.
   bool do_gpio_init;
+
+  // If drop privileges is enabled, this is the user/group we drop privileges
+  // to. Unless chosen otherwise, the default is "daemon" for user and group.
+  const char *drop_priv_user;
+  const char *drop_priv_group;
 };
 
 /**
