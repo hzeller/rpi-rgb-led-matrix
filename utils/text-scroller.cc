@@ -16,6 +16,9 @@
 #include "led-matrix.h"
 #include "graphics.h"
 
+#include <algorithm>
+#include <fstream>
+#include <streambuf>
 #include <string>
 
 #include <getopt.h>
@@ -25,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -36,11 +40,12 @@ static void InterruptHandler(int signo) {
 }
 
 static int usage(const char *progname) {
-  fprintf(stderr, "usage: %s [options] <text>\n", progname);
+  fprintf(stderr, "usage: %s [options] [<text>| -i <filename>]\n", progname);
   fprintf(stderr, "Takes text and scrolls it with speed -s\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr,
           "\t-f <font-file>    : Path to *.bdf-font to be used.\n"
+          "\t-i <textfile>     : Input from file.\n"
           "\t-s <speed>        : Approximate letters per second. \n"
           "\t                    Positive: scroll right to left; Negative: scroll left to right\n"
           "\t                    (Zero for no scrolling)\n"
@@ -82,6 +87,26 @@ static void add_micros(struct timespec *accumulator, long micros) {
   }
 }
 
+// Read line and return if it changed.
+static bool ReadLineOnChange(const char *filename, std::string *out,
+                             time_t *last_file_change) {
+  struct stat current_file_stat;
+  if (stat(filename, &current_file_stat) < 0) {
+    perror("Couldn't determine file change");
+    return false;
+  }
+  if (current_file_stat.st_mtime == *last_file_change) {
+    return false;  // no change.
+  }
+  *last_file_change = current_file_stat.st_mtime;
+  std::ifstream fs(filename);
+  std::string str((std::istreambuf_iterator<char>(fs)),
+                  std::istreambuf_iterator<char>());
+  *out = str;
+  std::replace(out->begin(), out->end(), '\n', ' ');
+  return true;
+}
+
 int main(int argc, char *argv[]) {
   RGBMatrix::Options matrix_options;
   rgb_matrix::RuntimeOptions runtime_opt;
@@ -96,6 +121,7 @@ int main(int argc, char *argv[]) {
   bool with_outline = false;
 
   const char *bdf_font_file = NULL;
+  const char *input_file = NULL;
   std::string line;
   bool xorigin_configured = false;
   int x_orig = 0;
@@ -107,7 +133,7 @@ int main(int argc, char *argv[]) {
   int blink_off = 0;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:t:s:l:b:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:t:s:l:b:i:")) != -1) {
     switch (opt) {
     case 's': speed = atof(optarg); break;
     case 'b':
@@ -120,6 +146,7 @@ int main(int argc, char *argv[]) {
     case 'x': x_orig = atoi(optarg); xorigin_configured = true; break;
     case 'y': y_orig = atoi(optarg); break;
     case 'f': bdf_font_file = strdup(optarg); break;
+    case 'i': input_file = strdup(optarg); break;
     case 't': letter_spacing = atoi(optarg); break;
     case 'C':
       if (!parseColor(&color, optarg)) {
@@ -145,13 +172,23 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  for (int i = optind; i < argc; ++i) {
-    line.append(argv[i]).append(" ");
-  }
+  time_t last_change = 0;
 
-  if (line.empty()) {
-    fprintf(stderr, "Add the text you want to print on the command-line.\n");
-    return usage(argv[0]);
+  if (input_file) {
+    if (!ReadLineOnChange(input_file, &line, &last_change)) {
+      fprintf(stderr, "Couldn't read file '%s'\n", input_file);
+      return usage(argv[0]);
+    }
+  }
+  else {
+    for (int i = optind; i < argc; ++i) {
+      line.append(argv[i]).append(" ");
+    }
+
+    if (line.empty()) {
+      fprintf(stderr, "Add the text you want to print on the command-line or -i for input file.\n");
+      return usage(argv[0]);
+    }
   }
 
   if (bdf_font_file == NULL) {
@@ -220,6 +257,9 @@ int main(int argc, char *argv[]) {
 
   uint64_t frame_counter = 0;
   while (!interrupt_received && loops != 0) {
+    if (input_file && ReadLineOnChange(input_file, &line, &last_change)) {
+      x = x_orig;
+    }
     ++frame_counter;
     offscreen_canvas->Fill(bg_color.r, bg_color.g, bg_color.b);
     const bool draw_on_frame = (blink_on <= 0)
