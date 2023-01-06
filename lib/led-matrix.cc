@@ -501,6 +501,20 @@ FrameCanvas *RGBMatrix::Impl::CreateFrameCanvas() {
   result->framebuffer()->SetBrightness(params_.brightness);
 
   created_frames_.push_back(result);
+
+  if (created_frames_.size() % 500 == 0) {
+    if (created_frames_.size() == 500) {
+      fprintf(stderr, "CreateFrameCanvas() called %d times; Usually you only want to call it once (or at most a few times) for double-buffering. These frames will not be freed until the end of the program.\n"
+              "Typical reasons: \n"
+              "  * Accidentally called CreateFrameCanvas() inside your inner loop (move outside the loop. Create offscreen-canvas once, then re-use. See SwapOnVSync() examples).\n"
+              "  * Used to pre-compute many frames (use led_matrix::StreamWriter instead for such use-case. See e.g. led-image-viewer)\n",
+              (int)created_frames_.size());
+    } else {
+      fprintf(stderr, "FYI: CreateFrameCanvas() now called %d times.\n",
+              (int)created_frames_.size());
+    }
+  }
+
   return result;
 }
 
