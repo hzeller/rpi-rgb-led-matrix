@@ -110,6 +110,11 @@ static bool ReadLineOnChange(const char *filename, std::string *out,
 int main(int argc, char *argv[]) {
   RGBMatrix::Options matrix_options;
   rgb_matrix::RuntimeOptions runtime_opt;
+  // If started with 'sudo': make sure to drop privileges to same user
+  // we started with, which is the most expected (and allows us to read
+  // files as that user).
+  runtime_opt.drop_priv_user = getenv("SUDO_UID");
+  runtime_opt.drop_priv_group = getenv("SUDO_GID");
   if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
                                          &matrix_options, &runtime_opt)) {
     return usage(argv[0]);
