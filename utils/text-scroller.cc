@@ -98,13 +98,28 @@ static bool ReadLineOnChange(const char *filename, std::string *out,
   if (current_file_stat.st_mtime == *last_file_change) {
     return false;  // no change.
   }
+
+  // We don't want to read the file immediately when we see a change
+  // in the timestamp to avoid reading a half-written file.
+  // So return false for now to force re-evaluation in the next call.
+  if (*last_file_change != 0) {
+    *last_file_change = 0;
+    return false;
+  }
+
   *last_file_change = current_file_stat.st_mtime;
   std::ifstream fs(filename);
   std::string str((std::istreambuf_iterator<char>(fs)),
                   std::istreambuf_iterator<char>());
-  *out = str;
-  std::replace(out->begin(), out->end(), '\n', ' ');
-  return true;
+  std::replace(str.begin(), str.end(), '\n', ' ');
+  if (*out != str) {
+    *out = str;
+    if (out->empty()) {
+      *last_file_change = 0;  // Suspicious. Force re-evaluation next time.
+    }
+    return true;
+  }
+  return false;
 }
 
 int main(int argc, char *argv[]) {
