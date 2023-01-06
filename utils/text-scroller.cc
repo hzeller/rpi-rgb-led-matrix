@@ -88,38 +88,29 @@ static void add_micros(struct timespec *accumulator, long micros) {
 }
 
 // Read line and return if it changed.
+typedef uint64_t stat_fingerprint_t;
 static bool ReadLineOnChange(const char *filename, std::string *out,
-                             time_t *last_file_change) {
-  struct stat current_file_stat;
-  if (stat(filename, &current_file_stat) < 0) {
+                             stat_fingerprint_t *last_file_status) {
+  struct stat sb;
+  if (stat(filename, &sb) < 0) {
     perror("Couldn't determine file change");
     return false;
   }
-  if (current_file_stat.st_mtime == *last_file_change) {
-    return false;  // no change.
+  const stat_fingerprint_t fp = ((uint64_t)sb.st_mtime << 32) + sb.st_size;
+  if (fp == *last_file_status) {
+    return false;  // no change according to stat()
   }
 
-  // We don't want to read the file immediately when we see a change
-  // in the timestamp to avoid reading a half-written file.
-  // So return false for now to force re-evaluation in the next call.
-  if (*last_file_change != 0) {
-    *last_file_change = 0;
-    return false;
-  }
-
-  *last_file_change = current_file_stat.st_mtime;
+  *last_file_status = fp;
   std::ifstream fs(filename);
   std::string str((std::istreambuf_iterator<char>(fs)),
                   std::istreambuf_iterator<char>());
   std::replace(str.begin(), str.end(), '\n', ' ');
-  if (*out != str) {
-    *out = str;
-    if (out->empty()) {
-      *last_file_change = 0;  // Suspicious. Force re-evaluation next time.
-    }
-    return true;
+  if (*out == str) {
+    return false;  // no content change
   }
-  return false;
+  *out = str;
+  return true;
 }
 
 int main(int argc, char *argv[]) {
@@ -192,7 +183,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  time_t last_change = 0;
+  stat_fingerprint_t last_change = 0;
 
   if (input_file) {
     if (!ReadLineOnChange(input_file, &line, &last_change)) {
