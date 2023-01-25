@@ -92,12 +92,13 @@ class Market:
             self.next_update = timedelta(minutes=int(time_to_close[0])*60+int(time_to_close[1])+1)
             if not schedule.get_jobs('_update_trading_day_data'):
                 schedule.every(self.update_interval).minutes.do(self._update_trading_day_data).tag('market', '_update_trading_day_data')
-            self._update_last_close_price()
         else:
             time_to_open = response[0]['time_to_open'].split(":")
             self.next_update = timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+1)
             schedule.clear('_update_trading_day_data')
             self._update_trading_day_data()
+        
+        self._update_last_close_price()
 
         if len(self.symbols) > 0:
             log.info("next trading day update: %s" % (datetime.now() + self.next_update).strftime('%Y-%m-%d %H:%M'))

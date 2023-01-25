@@ -92,16 +92,16 @@ def log_schedule():
 
 if __name__ == "__main__":
     matrix = create_matrix(handle_args())
-    schedule.every(1).minutes.do(log_schedule).tag('system')
+    schedule.every(5).minutes.do(log_schedule).tag('system')
 
     apps = list()
-    #apps.append(Weather(matrix, "Sunnyvale"))
+    #apps.append(Weather(matrix, 37.384, 122.027))
     apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
     apps.append(Stocks(matrix, "NVDA"))
     apps.append(Stocks(matrix, "VTI"))
 
     log_schedule()
-    duration = 8
+    duration = 6
     while True:
         schedule.run_pending()
         for app in apps:
