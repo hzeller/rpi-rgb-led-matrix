@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-
-from rgbmatrix import graphics
 import json
 import time
 
@@ -11,6 +9,9 @@ import numpy
 from twelvedata import TDClient, exceptions
 import schedule
 
+from rgbmatrix import graphics
+from secrets import STOCKS_API_KEY
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -18,13 +19,13 @@ import os
 path = os.path.dirname(__file__) + '/'
 
 def _try_api(func):
-    tries = 3
-    timeout = 60
+    tries = 4
+    timeout = 15
     while tries > 0:
         try:
             return func.as_json()
         except exceptions.BadRequestError:
-            log.warning("API bad request")
+            log.warning("API bad request using %s" % func.as_url())
             return False
         except exceptions.TwelveDataError:
             log.warning("API out of credits using %s trying again in %d seconds" % (func.as_url(), timeout))
@@ -42,7 +43,7 @@ class Market:
         self.open_min = 30
         self.open_time = 390 # minutes in stock day
 
-        self.api_key = "d9142d27a31c40629d3e2347daa59c82"
+        self.api_key = STOCKS_API_KEY
         self.td = TDClient(apikey=self.api_key)
         
         self.update_interval = 1 # update every 1 mins when open
@@ -70,7 +71,12 @@ class Market:
     
     def _check_market_state(self):
         # update trading day
-        day = self._at_open(datetime.now(pytz.timezone(self.timezone)))
+        day = datetime.now(pytz.timezone(self.timezone))
+        # is it before trading hours
+        if (day.hour*60+day.minute) < (self.open_hour*60+self.open_min):
+            day = self._at_open(day - timedelta(days=1))
+        else:
+            day = self._at_open(day)
         while day.weekday() > 4 or not self._is_trading_day(day):
             day -= timedelta(days=1)
         self.trading_day = self._at_open(day)
@@ -154,9 +160,9 @@ class Market:
 
         if len(self.symbols) == 1:
             self._check_market_state()
-    
-        self._update_last_close_price()
-        self._update_trading_day_data()
+        else:
+            self._update_last_close_price()
+            self._update_trading_day_data()
 
     def remove_symbol(self, symbol):
         self.symbols.remove(symbol)
@@ -209,7 +215,7 @@ class Stocks:
     def draw(self):
         font = graphics.Font()
         font.LoadFont(path + "../../fonts/5x6.bdf")
-        text_font = graphics.Font()
+
         white = graphics.Color(255, 255, 255)
         grey = graphics.Color(155, 155, 155)
         red = graphics.Color(255, 0, 0)

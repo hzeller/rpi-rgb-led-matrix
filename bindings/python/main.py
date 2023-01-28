@@ -8,9 +8,11 @@ import sys
 import os
 import requests
 
-from weather import Weather
+# from weather import Weather
 from stocks import Stocks, Market
 from imageviewer import ImageViewer
+from slack import SlackStatus
+from secrets import SLACK_USER_ID, SLACK_TOKEN
 
 log = logging.getLogger()
 path = os.path.dirname(__file__) + '/'
@@ -31,7 +33,7 @@ def handle_args(*args, **kwargs):
     parser.add_argument("--led-scan-mode", action="store", help="Progressive or interlaced scan. 0 Progressive, 1 Interlaced (default)", default=1, choices=range(2), type=int)
     parser.add_argument("--led-pwm-lsb-nanoseconds", action="store", help="Base time-unit for the on-time in the lowest significant bit in nanoseconds. Default: 130", default=130, type=int)
     parser.add_argument("--led-show-refresh", action="store_true", help="Shows the current refresh rate of the LED panel")
-    parser.add_argument("--led-slowdown-gpio", action="store", help="Slow down writing to GPIO. Range: 0..4. Default: 1", default=1, type=int)
+    parser.add_argument("--led-slowdown-gpio", action="store", help="Slow down writing to GPIO. Range: 0..4. Default: 1", default=4, type=int)
     parser.add_argument("--led-no-hardware-pulse", action="store", help="Don't use hardware pin-pulse generation")
     parser.add_argument("--led-rgb-sequence", action="store", help="Switch if your matrix has led colors swapped. Default: RGB", default="RGB", type=str)
     parser.add_argument("--led-pixel-mapper", action="store", help="Apply pixel mappers. e.g \"Rotate:90\"", default="", type=str)
@@ -95,17 +97,29 @@ if __name__ == "__main__":
     schedule.every(5).minutes.do(log_schedule).tag('system')
 
     apps = list()
-    #apps.append(Weather(matrix, 37.384, 122.027))
+    id = 0
     apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
     apps.append(Stocks(matrix, "NVDA"))
     apps.append(Stocks(matrix, "VTI"))
+    
+    main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
 
     log_schedule()
+    runtime = 0
     duration = 6
     while True:
         schedule.run_pending()
-        for app in apps:
-            framerate = app.get_framerate()
-            for sec in range(0,framerate*duration):
-                matrix.SwapOnVSync(app.show())
+        if main_app.check_status():
+            matrix.SwapOnVSync(main_app.show())
+            sleep(1/main_app.get_framerate())
+        else:
+            framerate = apps[id].get_framerate()
+            for sec in range(0,framerate):
+                matrix.SwapOnVSync(apps[id].show())
                 sleep(1/framerate)
+            
+            runtime += 1
+            if runtime >= duration:
+                runtime = 0
+                id = 0 if id >= len(apps)-1 else id + 1
+
