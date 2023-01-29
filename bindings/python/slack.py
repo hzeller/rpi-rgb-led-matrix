@@ -37,6 +37,8 @@ class SlackStatus:
         self.icon_url = None
         self.icon = None
 
+        self.exclude = [" • Outlook Calendar"]
+
         self.matrix = matrix
 
         schedule.add_job(self._get_user_status)
@@ -52,8 +54,11 @@ class SlackStatus:
         lock.acquire()
         
         if raw['status_text'] and raw['status_text'] != "":
-            self.active = True
             self.status = raw['status_text']
+            self.active = True
+            for substring in self.exclude:
+                if substring in raw['status_text']:
+                    self.status = self.status.replace(substring,"")
             self.expiration = raw['status_expiration']
             if self.icon_url != raw['status_emoji_display_info'][0]['display_url']:
                 self.icon_url = raw['status_emoji_display_info'][0]['display_url']

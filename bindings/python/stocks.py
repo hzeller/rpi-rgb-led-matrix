@@ -169,7 +169,7 @@ class Market:
 
     def add_symbol(self, symbol):
         self.symbols.append(symbol)
-        if len(symbol) == 1:
+        if len(self.symbols) == 1:
             schedule.add_job(self._check_market_state)
 
     def remove_symbol(self, symbol):
