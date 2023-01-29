@@ -252,8 +252,8 @@ class Stocks:
             self.graph.draw(offscreen_canvas, 0, 31)
         else:
             graphics.DrawText(offscreen_canvas, font, 1, 13, grey, "-.--")
-            graphics.DrawText(offscreen_canvas, font, 34, 6, grey, "-.--")
-            graphics.DrawText(offscreen_canvas, font, 34, 13, grey, "-.--%")
+            graphics.DrawText(offscreen_canvas, font, 50, 6, grey, "-.--")
+            graphics.DrawText(offscreen_canvas, font, 45, 13, grey, "-.--%")
 
         lock.release()
 

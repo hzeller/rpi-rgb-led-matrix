@@ -8,11 +8,12 @@ import sys
 import os
 import requests
 
-# from weather import Weather
+from clock import Clock
 from stocks import Stocks, Market
+from weather import Weather
 from imageviewer import ImageViewer
 from slack import SlackStatus
-from secrets import SLACK_USER_ID, SLACK_TOKEN
+from secrets import SLACK_USER_ID, SLACK_TOKEN, LAT, LON
 
 log = logging.getLogger()
 path = os.path.dirname(__file__) + '/'
@@ -101,6 +102,8 @@ if __name__ == "__main__":
     main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
 
     apps = list()
+    apps.append(Clock(matrix))
+    apps.append(Weather(matrix, LAT, LON))
     apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
     apps.append(Stocks(matrix, "NVDA"))
     apps.append(Stocks(matrix, "VTI"))
