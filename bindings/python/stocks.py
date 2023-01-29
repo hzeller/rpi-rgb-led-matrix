@@ -59,8 +59,6 @@ class Market:
         self._last_close_price = dict()
         self._trading_day_data = dict()
 
-        schedule.add_job(self._check_market_state)
-
     def _at_open(self, dt):
         return dt.replace(hour=self.open_hour, minute=self.open_min, second=0, microsecond=0)
 
@@ -171,6 +169,8 @@ class Market:
 
     def add_symbol(self, symbol):
         self.symbols.append(symbol)
+        if len(symbol) == 1:
+            schedule.add_job(self._check_market_state)
 
     def remove_symbol(self, symbol):
         self.symbols.remove(symbol)

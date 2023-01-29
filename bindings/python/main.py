@@ -102,11 +102,11 @@ if __name__ == "__main__":
     main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
 
     apps = list()
+    apps.append(Stocks(matrix, "NVDA"))
+    apps.append(Stocks(matrix, "VTI"))
     apps.append(Clock(matrix))
     apps.append(Weather(matrix, LAT, LON))
     apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
-    apps.append(Stocks(matrix, "NVDA"))
-    apps.append(Stocks(matrix, "VTI"))
 
     id = 0
     runtime = 0
