@@ -17,8 +17,8 @@ log = logging.getLogger(__name__)
 import os
 path = os.path.dirname(__file__) + '/'
 
-sched = BackgroundScheduler(daemon=True)
-sched.start()
+schedule = BackgroundScheduler(daemon=True)
+schedule.start()
 
 lock = Lock()
 
@@ -37,12 +37,10 @@ class SlackStatus:
         self.icon_url = None
         self.icon = None
 
-        self.canvas = matrix.CreateFrameCanvas()
         self.matrix = matrix
-        self._tmp = matrix.CreateFrameCanvas()
 
-        self._get_user_status()
-        sched.add_job(self._get_user_status, 'interval', seconds=self.refresh)
+        schedule.add_job(self._get_user_status)
+        schedule.add_job(self._get_user_status, 'interval', seconds=self.refresh)
     
     def get_framerate(self):
         return self.framerate
@@ -53,7 +51,7 @@ class SlackStatus:
 
         lock.acquire()
         
-        if raw['status_text'] != "":
+        if raw['status_text'] and raw['status_text'] != "":
             self.active = True
             self.status = raw['status_text']
             self.expiration = raw['status_expiration']
@@ -80,6 +78,7 @@ class SlackStatus:
         lock.acquire()
 
         offscreen_canvas = self.matrix.CreateFrameCanvas()
+        _tmp_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
         font.LoadFont(path + "../../fonts/5x6.bdf")
         white = graphics.Color(255, 255, 255)
@@ -93,7 +92,7 @@ class SlackStatus:
             dt = datetime.now(timezone.utc).replace(tzinfo=timezone.utc).timestamp()
             remaining = round((self.expiration - dt)/60)
             expiration = "for " + str(remaining) + " mins"
-            width = graphics.DrawText(self._tmp, font, 0, 0, grey, expiration)
+            width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, expiration)
             graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2, 30, grey, expiration)
 
         # icon
@@ -103,7 +102,7 @@ class SlackStatus:
         offscreen_canvas.SetImage(icon, (offscreen_canvas.width-12)/2, 2+y_offset)
 
         # status string
-        width = graphics.DrawText(self._tmp, font, 0, 0, white, self.status)
+        width = graphics.DrawText(_tmp_canvas, font, 0, 0, white, self.status)
         if width > offscreen_canvas.width:
             self.framerate = 10
             self.status_pos -= 1

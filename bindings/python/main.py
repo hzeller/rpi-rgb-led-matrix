@@ -93,18 +93,19 @@ def log_schedule():
     log.info("Scheduled jobs: %s" % schedule.get_jobs())
 
 if __name__ == "__main__":
-    matrix = create_matrix(handle_args())
     schedule.every(5).minutes.do(log_schedule).tag('system')
+    log_schedule()
+
+    matrix = create_matrix(handle_args())
+
+    main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
 
     apps = list()
-    id = 0
     apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
     apps.append(Stocks(matrix, "NVDA"))
     apps.append(Stocks(matrix, "VTI"))
-    
-    main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
 
-    log_schedule()
+    id = 0
     runtime = 0
     duration = 6
     while True:
@@ -122,4 +123,3 @@ if __name__ == "__main__":
             if runtime >= duration:
                 runtime = 0
                 id = 0 if id >= len(apps)-1 else id + 1
-

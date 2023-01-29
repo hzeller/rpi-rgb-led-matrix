@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 import json
 import time
-
 import requests
+import zoneinfo
 from datetime import datetime, timedelta
 import pytz
 import numpy
 from twelvedata import TDClient, exceptions
-import schedule
+from apscheduler.schedulers.background import BackgroundScheduler
+from multiprocessing import Lock
 
 from rgbmatrix import graphics
-from secrets import STOCKS_API_KEY
+from secrets import STOCKS_API_KEY, LOCAL_TZ
 
 import logging
 log = logging.getLogger(__name__)
@@ -18,8 +19,13 @@ log = logging.getLogger(__name__)
 import os
 path = os.path.dirname(__file__) + '/'
 
+schedule = BackgroundScheduler(daemon=True)
+schedule.start()
+
+lock = Lock()
+
 def _try_api(func):
-    tries = 4
+    tries = 5
     timeout = 15
     while tries > 0:
         try:
@@ -53,6 +59,8 @@ class Market:
         self._last_close_price = dict()
         self._trading_day_data = dict()
 
+        schedule.add_job(self._check_market_state)
+
     def _at_open(self, dt):
         return dt.replace(hour=self.open_hour, minute=self.open_min, second=0, microsecond=0)
 
@@ -71,22 +79,25 @@ class Market:
     
     def _check_market_state(self):
         # update trading day
-        day = datetime.now(pytz.timezone(self.timezone))
+        trade_day = datetime.now(pytz.timezone(self.timezone))
         # is it before trading hours
-        if (day.hour*60+day.minute) < (self.open_hour*60+self.open_min):
-            day = self._at_open(day - timedelta(days=1))
+        if (trade_day.hour*60+trade_day.minute) < (self.open_hour*60+self.open_min):
+            trade_day = self._at_open(trade_day - timedelta(days=1))
         else:
-            day = self._at_open(day)
-        while day.weekday() > 4 or not self._is_trading_day(day):
-            day -= timedelta(days=1)
-        self.trading_day = self._at_open(day)
-        day -= timedelta(days=1)
-        while day.weekday() > 4 or not self._is_trading_day(day):
-            day -= timedelta(days=1)
-        self.previous_day = self._at_open(day)
+            trade_day = self._at_open(trade_day)
+        while trade_day.weekday() > 4 or not self._is_trading_day(trade_day):
+            trade_day -= timedelta(days=1)
+        prev_day = trade_day - timedelta(days=1)
+        while prev_day.weekday() > 4 or not self._is_trading_day(prev_day):
+            prev_day -= timedelta(days=1)
 
+        lock.acquire()
+        self.trading_day = self._at_open(trade_day)
+        self.previous_day = self._at_open(prev_day)
+    
         log.info("current trading day: %s" % self.trading_day.strftime('%Y-%m-%d'))
         log.info("previous trading day: %s" % self.previous_day.strftime('%Y-%m-%d'))
+        lock.release()
 
         # update market status
         url = f"https://api.twelvedata.com/market_state?exchange={self.exchange}&apikey={self.api_key}"
@@ -95,22 +106,21 @@ class Market:
 
         if response[0]['is_market_open']:
             time_to_close = response[0]['time_to_close'].split(":")
-            self.next_update = timedelta(minutes=int(time_to_close[0])*60+int(time_to_close[1])+1)
+            self.next_update = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)) + timedelta(minutes=int(time_to_close[0])*60+int(time_to_close[1])+1)
+            schedule.add_job(self._update_trading_day_data)
             if not schedule.get_jobs('_update_trading_day_data'):
-                schedule.every(self.update_interval).minutes.do(self._update_trading_day_data).tag('market', '_update_trading_day_data')
+                schedule.add_job(self._update_trading_day_data, 'interval', minutes=self.update_interval, id='_update_trading_day_data')
         else:
             time_to_open = response[0]['time_to_open'].split(":")
-            self.next_update = timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+1)
-            schedule.clear('_update_trading_day_data')
+            self.next_update = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)) + timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+1)
+            if schedule.get_jobs('_update_trading_day_data'):
+                schedule.remove_job('_update_trading_day_data')
             self._update_trading_day_data()
         
         self._update_last_close_price()
 
-        if len(self.symbols) > 0:
-            log.info("next trading day update: %s" % (datetime.now() + self.next_update).strftime('%Y-%m-%d %H:%M'))
-            schedule.every(self.next_update.total_seconds()).seconds.do(self._check_market_state).tag('market', '_check_market_state')
-
-        return schedule.CancelJob
+        log.info("next trading day update: %s" % (self.next_update).strftime('%Y-%m-%d %H:%M'))
+        schedule.add_job(self._check_market_state, 'date', run_date=self.next_update, id='_check_market_state')
 
     def _update_last_close_price(self):
         assert self.previous_day
@@ -125,6 +135,7 @@ class Market:
         )
         res = _try_api(ts)
         log.info("API _update_last_close_price: %s -> %s" % (ts.as_url(), res))
+        lock.acquire()
         if self.symbols[0] in res: # many symbols
             self._last_close_price.clear()
             for symbol in self.symbols:
@@ -132,6 +143,7 @@ class Market:
         else: # only one symbol
             self._last_close_price.clear()
             self._last_close_price[self.symbols[0]] = float(res[0]['close'])
+        lock.release()
     
     def _update_trading_day_data(self):
         assert self.trading_day
@@ -146,28 +158,25 @@ class Market:
         )
         res = _try_api(ts)
         log.info("API _update_trading_day_data: %s -> %s" % (ts.as_url(), res))
+        lock.acquire()
         if self.symbols[0] in res: # many symbols
             self._trading_day_data.clear()
             self._trading_day_data = res
         else: # only one symbol
             self._trading_day_data.clear()
             self._trading_day_data[self.symbols[0]] = res
-    
+        lock.release()
+
     ############## Public Functions
 
     def add_symbol(self, symbol):
         self.symbols.append(symbol)
 
-        if len(self.symbols) == 1:
-            self._check_market_state()
-        else:
-            self._update_last_close_price()
-            self._update_trading_day_data()
-
     def remove_symbol(self, symbol):
         self.symbols.remove(symbol)
-        if len(self.symbols) == 0:
-            schedule.clear('market')
+
+    def has_data(self, symbol):
+        return symbol in self._trading_day_data and symbol in self._last_close_price
 
     def get_last_close_price(self, symbol):
         assert len(self._last_close_price) > 0
@@ -194,13 +203,10 @@ class Stocks:
         self.framerate = 1
 
         self.graph = self.Graph()
-        self.canvas = matrix.CreateFrameCanvas()
-        self.offscreen_canvas = matrix.CreateFrameCanvas()
+        self.matrix = matrix
         self.symbol = symbol
         
         market.add_symbol(self.symbol)
-
-        self.draw()
     
     def get_framerate(self):
         return self.framerate
@@ -209,38 +215,49 @@ class Stocks:
         market.remove_symbol(self.symbol)
 
     def show(self):
-        self.draw()
-        return self.canvas
+        return self.draw()
 
     def draw(self):
+        lock.acquire()
+        
+        offscreen_canvas = self.matrix.CreateFrameCanvas()
+        _tmp_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
         font.LoadFont(path + "../../fonts/5x6.bdf")
-
         white = graphics.Color(255, 255, 255)
         grey = graphics.Color(155, 155, 155)
         red = graphics.Color(255, 0, 0)
         green = graphics.Color(0, 255, 0)
 
-        self.closing_price = market.get_last_close_price(self.symbol)
-        self.data = market.get_trading_day_data(self.symbol)
-        self.graph.parse(self.data, self.closing_price)
-        self.curr_price = market.get_current_price(self.symbol)
-        self.curr_diff = market.get_current_difference(self.symbol)
-        self.curr_percent = market.get_current_percent(self.symbol)
+        graphics.DrawText(offscreen_canvas, font, 1, 6, white, self.symbol)
+        if market.has_data(self.symbol):
+            self.closing_price = market.get_last_close_price(self.symbol)
+            self.data = market.get_trading_day_data(self.symbol)
+            self.graph.parse(self.data, self.closing_price)
+            self.curr_price = market.get_current_price(self.symbol)
+            self.curr_diff = market.get_current_difference(self.symbol)
+            self.curr_percent = market.get_current_percent(self.symbol)
+        
+            graphics.DrawText(offscreen_canvas, font, 1, 13, grey, str(self.curr_price))
+            line1_width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, str(self.curr_diff))
+            line2_width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, str(self.curr_percent) + '%') 
+            width = offscreen_canvas.width
+            if self.curr_diff >= 0:
+                graphics.DrawText(offscreen_canvas, font, width-line1_width, 6, green, str(self.curr_diff))
+                graphics.DrawText(offscreen_canvas, font, width-line2_width, 13, green, str(self.curr_percent) + '%')
+            else:
+                graphics.DrawText(offscreen_canvas, font, width-line1_width, 6, red, str(self.curr_diff))
+                graphics.DrawText(offscreen_canvas, font, width-line2_width, 13, red, str(self.curr_percent) + '%')
 
-        self.offscreen_canvas.Clear()
-        graphics.DrawText(self.offscreen_canvas, font, 1, 6, white, self.symbol)
-        graphics.DrawText(self.offscreen_canvas, font, 1, 13, grey, str(self.curr_price))
-        if self.curr_diff >= 0:
-            graphics.DrawText(self.offscreen_canvas, font, 34, 6, green, str(self.curr_diff))
-            graphics.DrawText(self.offscreen_canvas, font, 34, 13, green, str(self.curr_percent) + '%')
+            self.graph.draw(offscreen_canvas, 0, 31)
         else:
-            graphics.DrawText(self.offscreen_canvas, font, 34, 6, red, str(self.curr_diff))
-            graphics.DrawText(self.offscreen_canvas, font, 34, 13, red, str(self.curr_percent) + '%')
+            graphics.DrawText(offscreen_canvas, font, 1, 13, grey, "-.--")
+            graphics.DrawText(offscreen_canvas, font, 34, 6, grey, "-.--")
+            graphics.DrawText(offscreen_canvas, font, 34, 13, grey, "-.--%")
 
-        self.graph.draw(self.offscreen_canvas, 0, 31)
+        lock.release()
 
-        self.canvas = self.offscreen_canvas
+        return offscreen_canvas
 
     class Graph:
         def __init__(self):
