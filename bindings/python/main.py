@@ -7,7 +7,9 @@ import logging
 import sys
 import os
 import requests
+import threading
 
+from welcome import Welcome
 from clock import Clock
 from stocks import Stocks, Market
 from weather import Weather
@@ -93,20 +95,27 @@ def create_matrix(args):
 def log_schedule():
     log.info("Scheduled jobs: %s" % schedule.get_jobs())
 
+def splash(matrix):
+    Welcome(matrix) # display welcome message & ip
+
 if __name__ == "__main__":
     schedule.every(5).minutes.do(log_schedule).tag('system')
     log_schedule()
-
+    
     matrix = create_matrix(handle_args())
 
+    t1 = threading.Thread(target=splash, args=(matrix,))
+    t1.start()
+    
     main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
-
     apps = list()
+    apps.append(Clock(matrix))
     apps.append(Stocks(matrix, "NVDA"))
     apps.append(Stocks(matrix, "VTI"))
-    apps.append(Clock(matrix))
     apps.append(Weather(matrix, LAT, LON))
     apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
+
+    t1.join()
 
     id = 0
     runtime = 0

@@ -52,6 +52,7 @@ class Weather:
         self.icon_url = "http://openweathermap.org/img/wn/" + raw['weather'][0]['icon'] + "@2x.png"
         self.icon = requests.get(self.icon_url)
         lock.release()
+        log.info("API _get_weather_data: Temp: %s, Icon URL: %s" % (self.temp, self.icon_url))
 
     def get_framerate(self):
         return self.framerate

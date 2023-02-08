@@ -29,7 +29,7 @@ class SlackStatus:
         self.user_id = user_id
         self.token = token
         self.status_pos = 0
-        self.refresh = 5
+        self.refresh = 10
 
         self.active = False
         self.status = None
@@ -48,7 +48,7 @@ class SlackStatus:
         return self.framerate
 
     def _get_user_status(self):
-        r = requests.get('https://slack.com/api/users.profile.get?user=' + self.user_id + '&pretty=1', headers={'Authorization': 'Bearer ' + self.token})
+        r = requests.get('https://slack.com/api/users.profile.get?user=' + self.user_id + '&pretty=1', headers={'Authorization': 'Bearer ' + self.token}, timeout=3)
         raw = r.json()['profile']
 
         lock.acquire()
@@ -63,7 +63,6 @@ class SlackStatus:
             if self.icon_url != raw['status_emoji_display_info'][0]['display_url']:
                 self.icon_url = raw['status_emoji_display_info'][0]['display_url']
                 self.icon = requests.get(self.icon_url)
-                
         else:
             self.active = False
             self.status = "Available"
@@ -90,15 +89,15 @@ class SlackStatus:
         grey = graphics.Color(155, 155, 155)
     
         # expiration string
-        if self.expiration == 0:
-            y_offset = 4
-        else:
-            y_offset = 0
-            dt = datetime.now(timezone.utc).replace(tzinfo=timezone.utc).timestamp()
-            remaining = round((self.expiration - dt)/60)
+        y_offset = 0
+        dt = datetime.now(timezone.utc).replace(tzinfo=timezone.utc).timestamp()
+        remaining = round((self.expiration - dt)/60)
+        if remaining >= 0:
             expiration = "for " + str(remaining) + " mins"
             width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, expiration)
             graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2, 30, grey, expiration)
+        else:
+            y_offset = 4
 
         # icon
         image = Image.open(io.BytesIO(self.icon.content))

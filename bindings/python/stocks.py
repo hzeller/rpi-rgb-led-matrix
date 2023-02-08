@@ -41,6 +41,20 @@ def _try_api(func):
     log.error("API errors continue after several attempts")
     exit()
 
+def _try_request(url):
+    tries = 5
+    timeout = 15
+    while tries > 0:
+        try:
+            return requests.get(url).json()
+        except exceptions.TwelveDataError:
+            log.warning("URL bad request using %s trying again in %d seconds" % (url, timeout))
+            tries -= 1
+            time.sleep(timeout)
+    
+    log.error("URL errors continue after several attempts")
+    exit()
+
 class Market:
     def __init__(self):
         self.exchange = "NYSE"
@@ -99,7 +113,7 @@ class Market:
 
         # update market status
         url = f"https://api.twelvedata.com/market_state?exchange={self.exchange}&apikey={self.api_key}"
-        response = requests.get(url).json()
+        response = _try_request(url)
         log.info("API _check_market_state: %s -> %s" % (url, response))
 
         if response[0]['is_market_open']:
