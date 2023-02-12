@@ -46,11 +46,8 @@ public class RGBLedMatrix : IDisposable
 
     public RGBLedCanvas GetCanvas() => new(led_matrix_get_canvas(matrix));
 
-    public RGBLedCanvas SwapOnVsync(RGBLedCanvas canvas)
-    {
+    public void SwapOnVsync(RGBLedCanvas canvas) =>
         canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
-        return canvas;
-    }
 
     public byte Brightness
     {
