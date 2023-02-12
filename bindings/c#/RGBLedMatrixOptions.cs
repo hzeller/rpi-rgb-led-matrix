@@ -1,9 +1,13 @@
 namespace RPiRgbLEDMatrix;
 
+/// <summary>
+/// Represents the matrix settings.
+/// </summary>
 public struct RGBLedMatrixOptions
 {
     /// <summary>
-    /// Name of the hardware mapping used. If passed NULL here, the default is used.
+    /// Name of the hardware mapping used. If passed
+    /// <see langword="null"/> here, the default is used.
     /// </summary>
     public string? HardwareMapping = null;
 
@@ -16,7 +20,7 @@ public struct RGBLedMatrixOptions
     /// <summary>
     /// The "cols" are the number of columns per panel. Typically something
     /// like 32, but also 64 is possible. Sometimes even 40.
-    /// cols * chain_length is the total length of the display, so you can
+    /// <c>cols * chain_length</c> is the total length of the display, so you can
     /// represent a 64 wide display as cols=32, chain=2 or cols=64, chain=1;
     /// same thing, but more convenient to think of.
     /// </summary>
@@ -32,7 +36,7 @@ public struct RGBLedMatrixOptions
     /// The number of parallel chains connected to the Pi; in old Pis with 26
     /// GPIO pins, that is 1, in newer Pis with 40 interfaces pins, that can also
     /// be 2 or 3. The effective number of pixels in vertical direction is then
-    /// thus rows * parallel. Default: 1
+    /// thus <c>rows * parallel</c>. Default: 1
     /// </summary>
     public int Parallel = 1;
 
@@ -60,9 +64,9 @@ public struct RGBLedMatrixOptions
     public int Brightness = 100;
 
     /// <summary>
-    /// Scan mode: 0=progressive, 1=interlaced
+    /// Scan mode.
     /// </summary>
-    public int ScanMode = 0;
+    public ScanModes ScanMode = ScanModes.Progressive;
 
     /// <summary>
     /// Default row address type is 0, corresponding to direct setting of the
@@ -72,12 +76,13 @@ public struct RGBLedMatrixOptions
     public int RowAddressType = 0;
 
     /// <summary>
-    /// Type of multiplexing. 0 = direct, 1 = stripe, 2 = checker (typical 1:8)
+    /// Type of multiplexing.
     /// </summary>
-    public int Multiplexing = 0;
+    public Multiplexing Multiplexing = Multiplexing.Direct;
 
     /// <summary>
-    /// In case the internal sequence of mapping is not "RGB", this contains the real mapping. Some panels mix up these colors.
+    /// In case the internal sequence of mapping is not <c>"RGB"</c>, this
+    /// contains the real mapping. Some panels mix up these colors.
     /// </summary>
     public string? LedRgbSequence = null;
 
@@ -94,7 +99,8 @@ public struct RGBLedMatrixOptions
     public string? PanelType = null;
 
     /// <summary>
-    /// Allow to use the hardware subsystem to create pulses. This won't do anything if output enable is not connected to GPIO 18.
+    /// Allow to use the hardware subsystem to create pulses. This won't do
+    /// anything if output enable is not connected to GPIO 18.
     /// </summary>
     public bool DisableHardwarePulsing = false;
     public bool ShowRefreshRate = false;
@@ -102,7 +108,7 @@ public struct RGBLedMatrixOptions
 
     /// <summary>
     /// Limit refresh rate of LED panel. This will help on a loaded system
-    // to keep a constant refresh rate. <= 0 for no limit.
+    /// to keep a constant refresh rate. &lt;= 0 for no limit.
     /// </summary>
     public int LimitRefreshRateHz = 0;
 
@@ -111,5 +117,8 @@ public struct RGBLedMatrixOptions
     /// </summary>
     public int GpioSlowdown = 1;
 
+    /// <summary>
+    /// Creates default matrix settings.
+    /// </summary>
     public RGBLedMatrixOptions() { }
 }

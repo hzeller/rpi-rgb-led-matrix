@@ -3,14 +3,31 @@ using System.Runtime.InteropServices;
 
 namespace RPiRgbLEDMatrix;
 
+/// <summary>
+/// Represents a RGB matrix.
+/// </summary>
 public class RGBLedMatrix : IDisposable
 {
     private IntPtr matrix;
     private bool disposedValue = false;
 
-    public RGBLedMatrix(int rows, int chained, int parallel) =>
+    /// <summary>
+    /// Initializes a new matrix.
+    /// </summary>
+    /// <param name="rows">Size of a single module. Can be 32, 16 or 8.</param>
+    /// <param name="chained">How many modules are connected in a chain.</param>
+    /// <param name="parallel">How many modules are connected in a parallel.</param>
+    public RGBLedMatrix(int rows, int chained, int parallel)
+    {
         matrix = led_matrix_create(rows, chained, parallel);
+        if (matrix == (IntPtr)0)
+            throw new ArgumentException("Could not initialize a new matrix");
+    }
 
+    /// <summary>
+    /// Initializes a new matrix.
+    /// </summary>
+    /// <param name="options">A configuration of a matrix.</param>
     public RGBLedMatrix(RGBLedMatrixOptions options)
     {
         InternalRGBLedMatrixOptions opt = default;
@@ -32,6 +49,8 @@ public class RGBLedMatrix : IDisposable
             Array.Copy(args, 1, argv, 2, args.Length - 1);
 
             matrix = led_matrix_create_from_options_const_argv(ref opt, argv.Length, argv);
+            if (matrix == (IntPtr)0)
+                throw new ArgumentException("Could not initialize a new matrix");
         }
         finally
         {
@@ -42,13 +61,32 @@ public class RGBLedMatrix : IDisposable
         }
     }
 
+    /// <summary>
+    /// Creates a new backbuffer canvas for drawing on.
+    /// </summary>
+    /// <returns>An instance of <see cref="RGBLedCanvas"/> representing the canvas.</returns>
     public RGBLedCanvas CreateOffscreenCanvas() => new(led_matrix_create_offscreen_canvas(matrix));
 
+    /// <summary>
+    /// Returns a canvas representing the current frame buffer.
+    /// </summary>
+    /// <returns>An instance of <see cref="RGBLedCanvas"/> representing the canvas.</returns>
+    /// <remarks>Consider using <see cref="CreateOffscreenCanvas"/> instead.</remarks>
     public RGBLedCanvas GetCanvas() => new(led_matrix_get_canvas(matrix));
 
+    /// <summary>
+    /// Swaps this canvas with the currently active canvas. The active canvas
+    /// becomes a backbuffer and is mapped to <paramref name="canvas"/> instance.
+    /// <br/>
+    /// This operation guarantees vertical synchronization.
+    /// </summary>
+    /// <param name="canvas">Backbuffer canvas to swap.</param>
     public void SwapOnVsync(RGBLedCanvas canvas) =>
         canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
 
+    /// <summary>
+    /// The general brightness of the matrix.
+    /// </summary>
     public byte Brightness
     {
         get => led_matrix_get_brightness(matrix);
@@ -65,6 +103,7 @@ public class RGBLedMatrix : IDisposable
 
     ~RGBLedMatrix() => Dispose(false);
 
+    /// <inheritdoc/>
     public void Dispose()
     {
         Dispose(true);
