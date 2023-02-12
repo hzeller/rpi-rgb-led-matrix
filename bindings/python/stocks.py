@@ -45,12 +45,13 @@ def _try_request(url):
     tries = 5
     timeout = 15
     while tries > 0:
-        try:
-            return requests.get(url).json()
-        except exceptions.TwelveDataError:
+        json = requests.get(url).json()
+        if isinstance(json,dict) and json['status'] == "error":
             log.warning("URL bad request using %s trying again in %d seconds" % (url, timeout))
             tries -= 1
             time.sleep(timeout)
+            continue
+        return json
     
     log.error("URL errors continue after several attempts")
     exit()
@@ -69,9 +70,8 @@ class Market:
         self.update_interval = 1 # update every 1 mins when open
         self.symbols = list()
 
-        self._jobs = list()
-        self._last_close_price = dict()
         self._trading_day_data = dict()
+        self._last_close_price = dict()
 
     def _at_open(self, dt):
         return dt.replace(hour=self.open_hour, minute=self.open_min, second=0, microsecond=0)
@@ -148,12 +148,11 @@ class Market:
         res = _try_api(ts)
         log.info("API _update_last_close_price: %s -> %s" % (ts.as_url(), res))
         lock.acquire()
+        self._last_close_price = dict()
         if self.symbols[0] in res: # many symbols
-            self._last_close_price.clear()
             for symbol in self.symbols:
                 self._last_close_price[symbol] = float(res[symbol][0]['close'])
         else: # only one symbol
-            self._last_close_price.clear()
             self._last_close_price[self.symbols[0]] = float(res[0]['close'])
         lock.release()
     
@@ -171,11 +170,10 @@ class Market:
         res = _try_api(ts)
         log.info("API _update_trading_day_data: %s -> %s" % (ts.as_url(), res))
         lock.acquire()
+        self._trading_day_data = dict()
         if self.symbols[0] in res: # many symbols
-            self._trading_day_data.clear()
             self._trading_day_data = res
         else: # only one symbol
-            self._trading_day_data.clear()
             self._trading_day_data[self.symbols[0]] = res
         lock.release()
 
@@ -190,7 +188,7 @@ class Market:
         self.symbols.remove(symbol)
 
     def has_data(self, symbol):
-        return symbol in self._trading_day_data and symbol in self._last_close_price
+        return self._trading_day_data and self._last_close_price and symbol in self._trading_day_data and symbol in self._last_close_price
 
     def get_last_close_price(self, symbol):
         assert len(self._last_close_price) > 0

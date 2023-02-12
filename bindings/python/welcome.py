@@ -16,8 +16,9 @@ class Welcome:
 
         self.matrix = matrix
 
-        self.hostname = socket.gethostname()
-        self.ip = socket.gethostbyname(self.hostname)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        self.ip = s.getsockname()[0]
 
         self.show()
     
@@ -25,6 +26,7 @@ class Welcome:
         return self.framerate
 
     def show(self):
+        brightness = self.matrix.brightness
         _tmp_canvas = self.matrix.CreateFrameCanvas()
 
         font = graphics.Font()
@@ -79,4 +81,4 @@ class Welcome:
             time.sleep(0.01)
         self.matrix.Clear()
 
-        self.matrix.brightness = 100
+        self.matrix.brightness = brightness

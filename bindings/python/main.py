@@ -51,15 +51,15 @@ def handle_args(*args, **kwargs):
     if res.debug == 'info':
         logging.basicConfig(level=logging.INFO, \
                             filename=path + 'log.txt', \
-                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
+                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%Y-%m-%d %H:%M:%S') # stream=sys.stdout)
     elif res.debug == 'warning':
         logging.basicConfig(level=logging.WARNING, \
                             filename=path + 'log.txt', \
-                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
+                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%Y-%m-%d %H:%M:%S') # stream=sys.stdout)
     elif res.debug == 'error':
         logging.basicConfig(level=logging.ERROR, \
                             filename=path + 'log.txt', \
-                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%H:%M:%S') # stream=sys.stdout)
+                            format='[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s', datefmt='%Y-%m-%d %H:%M:%S') # stream=sys.stdout)
 
     return res
 
