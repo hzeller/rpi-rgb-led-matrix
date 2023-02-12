@@ -35,10 +35,10 @@ public class RGBLedMatrix : IDisposable
         }
         finally
         {
-            Marshal.FreeHGlobal(opt.hardware_mapping);
-            Marshal.FreeHGlobal(opt.led_rgb_sequence);
-            Marshal.FreeHGlobal(opt.pixel_mapper_config);
-            Marshal.FreeHGlobal(opt.panel_type);
+            if(options.HardwareMapping is not null) Marshal.FreeHGlobal(opt.hardware_mapping);
+            if(options.LedRgbSequence is not null) Marshal.FreeHGlobal(opt.led_rgb_sequence);
+            if(options.PixelMapperConfig is not null) Marshal.FreeHGlobal(opt.pixel_mapper_config);
+            if(options.PanelType is not null) Marshal.FreeHGlobal(opt.panel_type);
         }
     }
 

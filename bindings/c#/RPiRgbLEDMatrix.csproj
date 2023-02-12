@@ -4,18 +4,20 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
-    <ItemGroup>
-        <Compile Remove="examples\**" />
-        <None Remove="examples\**" />
-        <Content Include="..\..\lib\librgbmatrix.so.1">
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
 
     <!-- Skip builing native libraries by default on Windows -->
     <PropertyGroup Condition="$(SkipNative) == '' and $(OS) != 'Unix'">
         <SkipNative>true</SkipNative>
     </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Remove="examples\**" />
+        <None Remove="examples\**" />
+        <Content Condition="$(SkipNative) != 'true'" Include="..\..\lib\librgbmatrix.so.1">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
     <Target Name="CompileNative" BeforeTargets="Compile" Condition="$(SkipNative) != 'true'">
         <Message Text="Building native libraries" />
         <Exec Command="make library" />
