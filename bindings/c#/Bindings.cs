@@ -1,13 +1,12 @@
 global using static RPiRgbLEDMatrix.Bindings;
 
-using static RPiRgbLEDMatrix.RGBLedMatrix;
 using System.Runtime.InteropServices;
 
 namespace RPiRgbLEDMatrix;
 
 internal static class Bindings
 {
-    private const string Lib = "librgbmatrix.so";
+    private const string Lib = "librgbmatrix.so.1";
 
     [DllImport(Lib)]
     public static extern IntPtr led_matrix_create(int rows, int chained, int parallel);
