@@ -36,11 +36,11 @@ internal struct InternalRGBLedMatrixOptions
         pixel_mapper_config = Marshal.StringToHGlobalAnsi(opt.PixelMapperConfig);
         panel_type = Marshal.StringToHGlobalAnsi(opt.PanelType);
         parallel = opt.Parallel;
-        multiplexing = opt.Multiplexing;
+        multiplexing = (int)opt.Multiplexing;
         pwm_bits = opt.PwmBits;
         pwm_lsb_nanoseconds = opt.PwmLsbNanoseconds;
         pwm_dither_bits = opt.PwmDitherBits;
-        scan_mode = opt.ScanMode;
+        scan_mode = (int)opt.ScanMode;
         show_refresh_rate = (byte)(opt.ShowRefreshRate ? 1 : 0);
         limit_refresh_rate_hz = opt.LimitRefreshRateHz;
         brightness = opt.Brightness;
