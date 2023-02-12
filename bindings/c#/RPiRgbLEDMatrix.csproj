@@ -13,9 +13,11 @@
     <ItemGroup>
         <Compile Remove="examples\**" />
         <None Remove="examples\**" />
-        <Content Condition="$(SkipNative) != 'true'" Include="..\..\lib\librgbmatrix.so.1">
+        <None Condition="$(SkipNative) != 'true'" Pack="true" 
+              Include="..\..\lib\librgbmatrix.so.1"
+              PackagePath="\runtimes\linux-arm64\native" >
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
+        </None>
     </ItemGroup>
 
     <Target Name="CompileNative" BeforeTargets="Compile" Condition="$(SkipNative) != 'true'">
