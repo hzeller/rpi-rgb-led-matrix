@@ -1,21 +1,7 @@
-using System.Runtime.InteropServices;
-
 namespace RPiRgbLEDMatrix;
 
 public class RGBLedFont : IDisposable
 {
-    [DllImport("librgbmatrix.so", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    internal static extern IntPtr load_font(string bdf_font_file);
-
-    [DllImport("librgbmatrix.so", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    internal static extern int draw_text(IntPtr canvas, IntPtr font, int x, int y, byte r, byte g, byte b, string utf8_text, int extra_spacing);
-
-    [DllImport("librgbmatrix.so", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    internal static extern int vertical_draw_text(IntPtr canvas, IntPtr font, int x, int y, byte r, byte g, byte b, string utf8_text, int kerning_offset);
-
-    [DllImport("librgbmatrix.so", CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-    internal static extern void delete_font(IntPtr font);
-
     public RGBLedFont(string bdf_font_file_path)
     {
         _font = load_font(bdf_font_file_path);

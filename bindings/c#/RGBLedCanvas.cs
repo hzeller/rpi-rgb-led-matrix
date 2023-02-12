@@ -1,29 +1,7 @@
-using System.Runtime.InteropServices;
-
 namespace RPiRgbLEDMatrix;
 
 public class RGBLedCanvas
 {
-    #region DLLImports
-    [DllImport("librgbmatrix.so")]
-    internal static extern void led_canvas_get_size(IntPtr canvas, out int width, out int height);
-
-    [DllImport("librgbmatrix.so")]
-    internal static extern void led_canvas_set_pixel(IntPtr canvas, int x, int y, byte r, byte g, byte b);
-
-    [DllImport("librgbmatrix.so")]
-    internal static extern void led_canvas_clear(IntPtr canvas);
-
-    [DllImport("librgbmatrix.so")]
-    internal static extern void led_canvas_fill(IntPtr canvas, byte r, byte g, byte b);
-
-    [DllImport("librgbmatrix.so")]
-    internal static extern void draw_circle(IntPtr canvas, int xx, int y, int radius, byte r, byte g, byte b);
-
-    [DllImport("librgbmatrix.so")]
-    internal static extern void draw_line(IntPtr canvas, int x0, int y0, int x1, int y1, byte r, byte g, byte b);
-    #endregion
-
     // This is a wrapper for canvas no need to implement IDisposable here 
     // because RGBLedMatrix has ownership and takes care of disposing canvases
     internal IntPtr _canvas;
