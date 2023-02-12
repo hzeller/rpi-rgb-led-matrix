@@ -21,6 +21,7 @@ build: $(RGB_LIBRARY)
 	dotnet build examples/MatrixRain/MatrixRain.csproj -p:SkipNative=false
 	dotnet build examples/MinimalExample/MinimalExample.csproj -p:SkipNative=false
 	dotnet build examples/PulsingBrightness/PulsingBrightness.csproj -p:SkipNative=false
+	dotnet build examples/Rotating3DCube/Rotating3DCube.csproj -p:SkipNative=false
 
 $(RGB_LIBRARY):
 	$(MAKE) -C $(RGB_LIBDIR)
