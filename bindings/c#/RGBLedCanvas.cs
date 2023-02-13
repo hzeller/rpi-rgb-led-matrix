@@ -38,6 +38,21 @@ public class RGBLedCanvas
     public void SetPixel(int x, int y, Color color) => led_canvas_set_pixel(_canvas, x, y, color.R, color.G, color.B);
 
     /// <summary>
+    /// Copies the colors from the specified buffer to a rectangle on the canvas.
+    /// </summary>
+    /// <param name="x">The X coordinate of the top-left pixel of the rectangle.</param>
+    /// <param name="y">The Y coordinate of the top-left pixel of the rectangle.</param>
+    /// <param name="width">Width of the rectangle.</param>
+    /// <param name="height">Height of the rectangle.</param>
+    /// <param name="colors">Buffer containing the colors to copy.</param>
+    public void SetPixels(int x, int y, int width, int height, Span<Color> colors)
+    {
+        if (colors.Length < width * height)
+            throw new ArgumentOutOfRangeException(nameof(colors));
+        led_canvas_set_pixels(_canvas, x, y, width, height, ref colors[0]);
+    }
+
+    /// <summary>
     /// Sets the color of the entire canvas.
     /// </summary>
     /// <param name="color">New canvas color.</param>

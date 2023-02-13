@@ -39,10 +39,12 @@ internal static class Bindings
     public static extern IntPtr load_font(string bdf_font_file);
 
     [DllImport(Lib, CharSet = CharSet.Ansi)]
-    public static extern int draw_text(IntPtr canvas, IntPtr font, int x, int y, byte r, byte g, byte b, string utf8_text, int extra_spacing);
+    public static extern int draw_text(IntPtr canvas, IntPtr font, int x, int y, byte r, byte g, byte b,
+                                       string utf8_text, int extra_spacing);
 
     [DllImport(Lib, CharSet = CharSet.Ansi)]
-    public static extern int vertical_draw_text(IntPtr canvas, IntPtr font, int x, int y, byte r, byte g, byte b, string utf8_text, int kerning_offset);
+    public static extern int vertical_draw_text(IntPtr canvas, IntPtr font, int x, int y, byte r, byte g, byte b,
+                                                string utf8_text, int kerning_offset);
 
     [DllImport(Lib, CharSet = CharSet.Ansi)]
     public static extern void delete_font(IntPtr font);
@@ -52,6 +54,10 @@ internal static class Bindings
 
     [DllImport(Lib)]
     public static extern void led_canvas_set_pixel(IntPtr canvas, int x, int y, byte r, byte g, byte b);
+
+    [DllImport(Lib)]
+    public static extern void led_canvas_set_pixels(IntPtr canvas, int x, int y, int width, int height,
+                                                    ref Color colors);
 
     [DllImport(Lib)]
     public static extern void led_canvas_clear(IntPtr canvas);
