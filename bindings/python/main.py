@@ -11,7 +11,7 @@ import threading
 
 from welcome import Welcome
 from clock import Clock
-from stocks import Stocks, Market
+from stocks import Stocks
 from weather import Weather
 from imageviewer import ImageViewer
 from slack import SlackStatus

@@ -10,5 +10,3 @@ data/
 pyvenv.cfg
 examples-api-use/input-example
 examples-api-use/pixel-mover
-log.txt
-secrets.py

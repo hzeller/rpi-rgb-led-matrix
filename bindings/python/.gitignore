@@ -1,1 +1,4 @@
 build/*
+log.txt
+stocks.json
+secrets.py
