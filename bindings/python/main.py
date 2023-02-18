@@ -10,6 +10,7 @@ import requests
 import threading
 
 from welcome import Welcome
+from dvd import DVD
 from clock import Clock
 from stocks import Stocks
 from weather import Weather
@@ -109,6 +110,7 @@ if __name__ == "__main__":
     
     main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
     apps = list()
+    apps.append(DVD(matrix))
     apps.append(Clock(matrix))
     apps.append(Stocks(matrix, "NVDA"))
     apps.append(Stocks(matrix, "VTI"))
@@ -119,7 +121,7 @@ if __name__ == "__main__":
 
     id = 0
     runtime = 0
-    duration = 6
+    duration = 30
     while True:
         schedule.run_pending()
         if main_app.check_status():
