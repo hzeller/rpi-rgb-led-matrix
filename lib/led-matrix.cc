@@ -293,6 +293,10 @@ RGBMatrix::Options::Options() :
   row_address_type(0),
   multiplexing(0),
 
+  led_rgb_sequence("RGB"),
+  pixel_mapper_config(NULL),
+  panel_type(NULL),
+
 #ifdef DISABLE_HARDWARE_PULSES
     disable_hardware_pulsing(true),
 #else
@@ -310,9 +314,6 @@ RGBMatrix::Options::Options() :
 #else
     inverse_colors(false),
 #endif
-  led_rgb_sequence("RGB"),
-  pixel_mapper_config(NULL),
-  panel_type(NULL),
 #ifdef FIXED_FRAME_MICROSECONDS
   limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS)
 #else
