@@ -144,9 +144,9 @@ struct RGBLedMatrixOptions {
    * anything if output enable is not connected to GPIO 18.
    * Corresponding flag: --led-hardware-pulse
    */
-  char disable_hardware_pulsing;
-  char show_refresh_rate;     /* Corresponding flag: --led-show-refresh    */
-  char inverse_colors;        /* Corresponding flag: --led-inverse         */
+  bool disable_hardware_pulsing;
+  bool show_refresh_rate;     /* Corresponding flag: --led-show-refresh    */
+  bool inverse_colors;        /* Corresponding flag: --led-inverse         */
 
   /* Limit refresh rate of LED panel. This will help on a loaded system
    * to keep a constant refresh rate. <= 0 for no limit.
