@@ -122,6 +122,20 @@ public:
     // Flag: --led-multiplexing
     int multiplexing;
 
+    // Disable the PWM hardware subsystem to create pulses.
+    // Typically, you don't want to disable hardware pulsing, this is mostly
+    // for debugging and figuring out if there is interference with the
+    // sound system.
+    // This won't do anything if output enable is not connected to GPIO 18 in
+    // non-standard wirings.
+    bool disable_hardware_pulsing;     // Flag: --led-hardware-pulse
+
+    // Show refresh rate on the terminal for debugging and tweaking purposes.
+    bool show_refresh_rate;            // Flag: --led-show-refresh
+
+    // Some panels have inversed colors.
+    bool inverse_colors;                // Flag: --led-inverse
+
     // In case the internal sequence of mapping is not "RGB", this contains the
     // real mapping. Some panels mix up these colors. String of length three
     // which has to contain all characters R, G and B.
@@ -136,20 +150,6 @@ public:
     // a particular initialization sequence, so this is used for that.
     // This can be e.g. "FM6126A" for that particular panel type.
     const char *panel_type;  // Flag: --led-panel-type
-
-    // Disable the PWM hardware subsystem to create pulses.
-    // Typically, you don't want to disable hardware pulsing, this is mostly
-    // for debugging and figuring out if there is interference with the
-    // sound system.
-    // This won't do anything if output enable is not connected to GPIO 18 in
-    // non-standard wirings.
-    bool disable_hardware_pulsing;     // Flag: --led-hardware-pulse
-
-    // Show refresh rate on the terminal for debugging and tweaking purposes.
-    bool show_refresh_rate;            // Flag: --led-show-refresh
-
-    // Some panels have inversed colors.
-    bool inverse_colors;                // Flag: --led-inverse
 
     // Limit refresh rate of LED panel. This will help on a loaded system
     // to keep a constant refresh rate. <= 0 for no limit.
