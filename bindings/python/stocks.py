@@ -50,6 +50,8 @@ class API:
                 log.warning("API out of credits using %s trying again in %d seconds" % (func.as_url(), timeout))
                 tries -= 1
                 time.sleep(timeout)
+            except:
+                log.warning("API exception occured")
         
         log.error("API errors continue after several attempts")
         return None
@@ -58,13 +60,16 @@ class API:
         tries = 5
         timeout = 15
         while tries > 0:
-            json = requests.get(url).json()
-            if isinstance(json,dict) and json['status'] == "error":
-                log.warning("URL bad request using %s trying again in %d seconds" % (url, timeout))
-                tries -= 1
-                time.sleep(timeout)
-                continue
-            return json
+            try:
+                json = requests.get(url).json()
+                if isinstance(json,dict) and json['status'] == "error":
+                    log.warning("URL bad request using %s trying again in %d seconds" % (url, timeout))
+                    tries -= 1
+                    time.sleep(timeout)
+                    continue
+                return json
+            except:
+                log.warning("URL exception occured")
         
         log.error("URL errors continue after several attempts")
         return None

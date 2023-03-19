@@ -29,7 +29,7 @@ class SlackStatus:
         self.user_id = user_id
         self.token = token
         self.status_pos = 0
-        self.refresh = 10
+        self.refresh = 5
 
         self.active = False
         self.status = None
@@ -48,28 +48,30 @@ class SlackStatus:
         return self.framerate
 
     def _get_user_status(self):
-        r = requests.get('https://slack.com/api/users.profile.get?user=' + self.user_id + '&pretty=1', headers={'Authorization': 'Bearer ' + self.token}, timeout=3)
-        raw = r.json()['profile']
+        try:
+            r = requests.get('https://slack.com/api/users.profile.get?user=' + self.user_id + '&pretty=1', headers={'Authorization': 'Bearer ' + self.token}, timeout=2)
+            raw = r.json()['profile']
 
-        lock.acquire()
-        
-        if raw['status_text'] and raw['status_text'] != "":
-            self.status = raw['status_text']
-            self.active = True
-            for substring in self.exclude:
-                if substring in raw['status_text']:
-                    self.status = self.status.replace(substring,"")
-            self.expiration = raw['status_expiration']
-            if self.icon_url != raw['status_emoji_display_info'][0]['display_url']:
-                self.icon_url = raw['status_emoji_display_info'][0]['display_url']
-                self.icon = requests.get(self.icon_url)
-        else:
-            self.active = False
-            self.status = "Available"
-            self.expiration = 0
-            self.icon_url = "https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-large/2714-fe0f.png"
-            self.icon = requests.get(self.icon_url)
-        
+            lock.acquire()
+
+            if raw['status_text'] and raw['status_text'] != "":
+                self.status = raw['status_text']
+                self.active = True
+                for substring in self.exclude:
+                    if substring in raw['status_text']:
+                        self.status = self.status.replace(substring,"")
+                self.expiration = raw['status_expiration']
+                if self.icon_url != raw['status_emoji_display_info'][0]['display_url']:
+                    self.icon_url = raw['status_emoji_display_info'][0]['display_url']
+                    self.icon = requests.get(self.icon_url, timeout=2)
+            else:
+                self.active = False
+                self.status = "Available"
+                self.expiration = 0
+                self.icon_url = "https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-large/2714-fe0f.png"
+                self.icon = requests.get(self.icon_url, timeout=2)
+        except:
+            log.warning("_get_user_status: exception occurred")
         lock.release()
 
     def check_status(self):

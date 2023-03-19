@@ -44,15 +44,20 @@ class Weather:
         schedule.add_job(self._get_weather_data, 'interval', minutes=self.refresh)
 
     def _get_weather_data(self):
-        r = requests.get(f"https://api.openweathermap.org/data/3.0/onecall?lat={self.lat}&lon={self.lon}&exclude=hourly,daily&units=imperial&appid={self.api_key}")
-        raw = r.json()['current']
-        
-        lock.acquire()
-        self.temp = str(round(raw['temp'])) + "°F"
-        self.icon_url = "http://openweathermap.org/img/wn/" + raw['weather'][0]['icon'] + "@2x.png"
-        self.icon = requests.get(self.icon_url)
+        try:
+            r = requests.get(f"https://api.openweathermap.org/data/3.0/onecall?lat={self.lat}&lon={self.lon}&exclude=hourly,daily&units=imperial&appid={self.api_key}", timeout=2)
+            raw = r.json()['current']
+
+            lock.acquire()
+            self.temp = str(round(raw['temp'])) + "°F"
+            self.icon_url = "http://openweathermap.org/img/wn/" + raw['weather'][0]['icon'] + "@2x.png"
+            self.icon = requests.get(self.icon_url, timeout=2)
+
+            log.info("_get_weather_data: Temp: %s, Icon URL: %s" % (self.temp, self.icon_url))
+        except:
+            log.warning("_get_weather_data: exception occurred")
+
         lock.release()
-        log.info("API _get_weather_data: Temp: %s, Icon URL: %s" % (self.temp, self.icon_url))
 
     def get_framerate(self):
         return self.framerate
