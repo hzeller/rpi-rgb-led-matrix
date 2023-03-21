@@ -25,6 +25,9 @@ schedule.start()
 file_lock = Lock()
 data_lock = Lock()
 
+API_lock = Lock()
+URL_lock = Lock()
+
 class API:
     def __init__(self):
         self.exchange = "NYSE"
@@ -38,27 +41,33 @@ class API:
         self.td = TDClient(apikey=self.api_key)
 
     def _try_api(self, func):
+        API_lock.acquire()
         tries = 5
         timeout = 15
+        res = None
         while tries > 0:
             try:
-                return func.as_json()
+                res = func.as_json()
+                break
             except exceptions.BadRequestError:
                 log.warning("API bad request using %s" % func.as_url())
-                return False
+                break
             except exceptions.TwelveDataError:
                 log.warning("API out of credits using %s trying again in %d seconds" % (func.as_url(), timeout))
                 tries -= 1
                 time.sleep(timeout)
             except:
                 log.warning("API exception occured")
-        
-        log.error("API errors continue after several attempts")
-        return None
+        if not res:
+            log.error("API errors continue after several attempts")
+        API_lock.release()
+        return res
 
     def _try_request(self, url):
+        URL_lock.acquire()
         tries = 5
         timeout = 15
+        res = None
         while tries > 0:
             try:
                 json = requests.get(url).json()
@@ -67,12 +76,13 @@ class API:
                     tries -= 1
                     time.sleep(timeout)
                     continue
-                return json
+                res = json
             except:
                 log.warning("URL exception occured")
-        
-        log.error("URL errors continue after several attempts")
-        return None
+        if not res:
+            log.error("URL errors continue after several attempts")
+        URL_lock.release()
+        return res
 
     def is_trading_day(self, day):
         ts = self.td.time_series(
@@ -202,7 +212,7 @@ class Data:
         market_state = self.api.get_market_state()[0]
         if market_state['is_market_open']:
             time_to_close = market_state['time_to_close'].split(":")
-            next_update = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)) + timedelta(minutes=int(time_to_close[0])*60+int(time_to_close[1])+1)
+            next_update = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)) + timedelta(minutes=int(time_to_close[0])*60+int(time_to_close[1])+2)
 
             exists = False
             for job in schedule.get_jobs():
@@ -212,7 +222,7 @@ class Data:
                 schedule.add_job(self._update_data, 'interval', args=[previous_day,trading_day,self.symbols], minutes=2, id='update_data')
         else:
             time_to_open = market_state['time_to_open'].split(":")
-            next_update = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)) + timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+1)
+            next_update = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)) + min(timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+2),60)
 
             exists = False
             for job in schedule.get_jobs():
