@@ -219,10 +219,10 @@ class Data:
                 if job.id == "update_data":
                     exists = True
             if not exists:
-                schedule.add_job(self._update_data, 'interval', args=[previous_day,trading_day,self.symbols], minutes=2, id='update_data')
+                schedule.add_job(self._update_data, 'interval', args=[previous_day,trading_day,self.symbols], minutes=3, id='update_data')
         else:
             time_to_open = market_state['time_to_open'].split(":")
-            next_update = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)) + min(timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+2),60)
+            next_update = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)) + timedelta(minutes=int(time_to_open[0])*60+int(time_to_open[1])+2)
 
             exists = False
             for job in schedule.get_jobs():
