@@ -77,6 +77,7 @@ class API:
                     time.sleep(timeout)
                     continue
                 res = json
+                break
             except:
                 log.warning("URL exception occured")
         if not res:
