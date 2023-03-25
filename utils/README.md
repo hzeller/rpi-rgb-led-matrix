@@ -39,6 +39,8 @@ the [toplevel readme](../README.md#changing-parameters-via-command-line-flags)
  --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
  --led-daemon              : Make the process run in the background as daemon.
  --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+ --led-drop-priv-user      : Drop privileges to this username or UID (Default: 'daemon')
+ --led-drop-priv-group     : Drop privileges to this groupname or GID (Default: 'daemon')
 ```
 </details>
 
@@ -156,6 +158,7 @@ usage: ./text-scroller [options] <text>
 Takes text and scrolls it with speed -s
 Options:
         -f <font-file>    : Path to *.bdf-font to be used.
+        -i <textfile>     : Input from file.
         -s <speed>        : Approximate letters per second.
                             Positive: scroll right to left; Negative: scroll left to right
                             (Zero for no scrolling)
@@ -173,15 +176,29 @@ General LED matrix options:
         <... all the --led- options>
 ```
 
-You need to specify a font for the tool to use. We are using BDF-fonts, which are bitmap fonts
-nicely suited for low-resolution displays such as ours. A few fonts you find in the
+You need to specify a font for the tool to use. We are using BDF-fonts,
+which are bitmap fonts nicely suited for low-resolution displays such as ours.
+A few fonts you find in the
 [../fonts](../fonts) directory. The [README.md](../fonts/README.md) there also describes
 how to make your own.
+
+The program directly takes the text found on the command line and scrolls
+it over the screen.
+Alternatively, with the `-i` option, a file is read with the text to be
+scrolled. The file is watched, and if the content changes, the `text-scroller`
+automatically updates the scroll text.
 
 ##### Examples
 
 ```bash
 # (use your --led-rows, --led-chain and --led-parallel suited for your setup)
+
+# Print simple 'Hello world'
+sudo ./text-scroller -f ../fonts/9x18.bdf "Hello World ♥"
+
+# Read input from text file (will pick up changes when file changes)
+echo "Hello world" > input.txt
+sudo ./text-scroller -f ../fonts/9x18.bdf -i input.txt
 
 # Red (-C) text on a display with 4 chained displays. Notice you can use UTF-8 characters
 # if they are supported by the font.
