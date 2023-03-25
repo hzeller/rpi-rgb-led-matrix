@@ -29,7 +29,7 @@ class SlackStatus:
         self.user_id = user_id
         self.token = token
         self.status_pos = 0
-        self.refresh = 5
+        self.refresh = 60*60
 
         self.active = False
         self.status = None
@@ -52,8 +52,6 @@ class SlackStatus:
             r = requests.get('https://slack.com/api/users.profile.get?user=' + self.user_id + '&pretty=1', headers={'Authorization': 'Bearer ' + self.token}, timeout=2)
             raw = r.json()['profile']
 
-            lock.acquire()
-
             if raw['status_text'] and raw['status_text'] != "":
                 self.status = raw['status_text']
                 self.active = True
@@ -72,7 +70,7 @@ class SlackStatus:
                 self.icon = requests.get(self.icon_url, timeout=2)
         except:
             log.warning("_get_user_status: exception occurred")
-        lock.release()
+        # lock.release()
 
     def check_status(self):
         return self.active
@@ -81,7 +79,7 @@ class SlackStatus:
         return self.draw()
 
     def draw(self):        
-        lock.acquire()
+        # lock.acquire()
 
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         _tmp_canvas = self.matrix.CreateFrameCanvas()
@@ -119,7 +117,5 @@ class SlackStatus:
             self.framerate = 1
             self.status_pos = 0
             graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2, 22+y_offset, white, self.status)
-        
-        lock.release()
 
         return offscreen_canvas

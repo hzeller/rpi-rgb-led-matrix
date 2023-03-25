@@ -360,23 +360,23 @@ class Graph:
         for idx in range(0,len(data["values"])):
             x = data["values"][idx][0]
             y = data["values"][idx][1]
-            if y >= data["inflection_pt"]:
-                if x == len(data["values"])-1:
+            if y > data["inflection_pt"]: # in the green
+                if x == len(data["values"])-1: # last data point
                     graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-y, green[1])
                 else:
-                    next_y = data["values"][idx+1][1]
-                    if next_y < data["inflection_pt"]:
+                    next_y = data["values"][idx+1][1] 
+                    if next_y < data["inflection_pt"]: # transition below the line
+                        graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-data["inflection_pt"], green[1])
                         graphics.DrawLine(canvas, x+x_offset, y_offset-data["inflection_pt"], x+x_offset+1, y_offset-next_y, red[1])
-                        graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-data["inflection_pt"], green[1])
                     else:
                         graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-next_y, green[1])
-            else:
-                if x == len(data["values"])-1:
+            else: # in the red
+                if x == len(data["values"])-1: # last data point
                     graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-y, red[1])
                 else:
                     next_y = data["values"][idx+1][1]
-                    if next_y >= data["inflection_pt"]:
-                        graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-data["inflection_pt"], red[1])
+                    if next_y > data["inflection_pt"]: 
+                        graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-data["inflection_pt"], red[1])
                         graphics.DrawLine(canvas, x+x_offset, y_offset-data["inflection_pt"], x+x_offset+1, y_offset-next_y, green[1])
                     else:
                         graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset+1, y_offset-next_y, red[1])
