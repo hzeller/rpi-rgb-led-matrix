@@ -13,25 +13,23 @@ import os
 path = os.path.dirname(__file__)
 
 class Clock:
-    def __init__(self, matrix):
+    def __init__(self, offscreen_canvas):
         self.framerate = 1
-
-        self.matrix = matrix
+        self.offscreen_canvas = offscreen_canvas
     
     def get_framerate(self):
         return self.framerate
 
-    def show(self):
-        return self.draw()
+    def show(self, matrix):
+        self.offscreen_canvas = matrix.SwapOnVSync(self.draw())
 
     def draw(self):
-        offscreen_canvas = self.matrix.CreateFrameCanvas()
-        _tmp_canvas = self.matrix.CreateFrameCanvas()
-
+        self.offscreen_canvas.Clear()
         font = graphics.Font()
         font.LoadFont(path + "/../../fonts/5x6.bdf")
         text_font = graphics.Font()
         white = graphics.Color(255, 255, 255)
+        black = graphics.Color(0, 0, 0)
     
         now = datetime.now().replace(tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ))
         hour = now.strftime('%-I')
@@ -40,13 +38,13 @@ class Clock:
         self.time = hour + ':' + min + ' ' + day
         
         seconds = int(now.strftime('%-S'))
-        offset = graphics.DrawText(_tmp_canvas, font, 0, 0, white, hour + ':')
-        width = graphics.DrawText(_tmp_canvas, font, 0, 0, white, self.time)
+        offset = graphics.DrawText(self.offscreen_canvas, font, 0, 0, black, hour + ':')
+        width = graphics.DrawText(self.offscreen_canvas, font, 0, 0, black, self.time)
         if seconds%2:
-            graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2, 18, white, self.time)
+            graphics.DrawText(self.offscreen_canvas, font, (self.offscreen_canvas.width-width)/2, 18, white, self.time)
         else:
-            graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2, 18, white, hour)
-            graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2+offset, 18, white, min + ' ' + day)
+            graphics.DrawText(self.offscreen_canvas, font, (self.offscreen_canvas.width-width)/2, 18, white, hour)
+            graphics.DrawText(self.offscreen_canvas, font, (self.offscreen_canvas.width-width)/2+offset, 18, white, min + ' ' + day)
 
-        return offscreen_canvas
+        return self.offscreen_canvas
         

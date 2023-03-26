@@ -21,8 +21,9 @@ schedule.start()
 
 
 class SlackStatus:
-    def __init__(self, matrix, user_id, token):
+    def __init__(self, offscreen_canvas, user_id, token):
         self.framerate = 1
+        self.offscreen_canvas = offscreen_canvas
 
         self.user_id = user_id
         self.token = token
@@ -37,8 +38,6 @@ class SlackStatus:
         self.icon = None
 
         self.exclude = [" • Outlook Calendar"]
-
-        self.matrix = matrix
 
         schedule.add_job(self._get_user_status)
         schedule.add_job(self._get_user_status, 'interval', seconds=self.refresh)
@@ -73,16 +72,16 @@ class SlackStatus:
     def check_status(self):
         return self.active
 
-    def show(self):
-        return self.draw()
+    def show(self, matrix):
+        self.offscreen_canvas = matrix.SwapOnVSync(self.draw())
 
     def draw(self):
-        offscreen_canvas = self.matrix.CreateFrameCanvas()
-        _tmp_canvas = self.matrix.CreateFrameCanvas()
+        self.offscreen_canvas.Clear()
         font = graphics.Font()
         font.LoadFont(path + "../../fonts/5x6.bdf")
         white = graphics.Color(255, 255, 255)
         grey = graphics.Color(155, 155, 155)
+        black = graphics.Color(0, 0, 0)
     
         # expiration string
         y_offset = 0
@@ -90,8 +89,8 @@ class SlackStatus:
         remaining = round((self.expiration - dt)/60)
         if remaining >= 0:
             expiration = "for " + str(remaining) + " mins"
-            width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, expiration)
-            graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2, 30, grey, expiration)
+            width = graphics.DrawText(self.offscreen_canvas, font, 0, 0, black, expiration)
+            graphics.DrawText(self.offscreen_canvas, font, (self.offscreen_canvas.width-width)/2, 30, grey, expiration)
         else:
             y_offset = 4
 
@@ -99,19 +98,19 @@ class SlackStatus:
         image = Image.open(io.BytesIO(self.icon.content))
         image.thumbnail((12, 12))
         icon = image.convert('RGB')
-        offscreen_canvas.SetImage(icon, (offscreen_canvas.width-12)/2, 2+y_offset)
+        self.offscreen_canvas.SetImage(icon, (self.offscreen_canvas.width-12)/2, 2+y_offset)
 
         # status string
-        width = graphics.DrawText(_tmp_canvas, font, 0, 0, white, self.status)
-        if width > offscreen_canvas.width:
+        width = graphics.DrawText(self.offscreen_canvas, font, 0, 0, black, self.status)
+        if width > self.offscreen_canvas.width:
             self.framerate = 10
             self.status_pos -= 1
             if self.status_pos <= 0-width:
-                self.status_pos = offscreen_canvas.width
-            graphics.DrawText(offscreen_canvas, font, self.status_pos, 22+y_offset, white, self.status)
+                self.status_pos = self.offscreen_canvas.width
+            graphics.DrawText(self.offscreen_canvas, font, self.status_pos, 22+y_offset, white, self.status)
         else:
             self.framerate = 1
             self.status_pos = 0
-            graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2, 22+y_offset, white, self.status)
+            graphics.DrawText(self.offscreen_canvas, font, (self.offscreen_canvas.width-width)/2, 22+y_offset, white, self.status)
 
-        return offscreen_canvas
+        return self.offscreen_canvas

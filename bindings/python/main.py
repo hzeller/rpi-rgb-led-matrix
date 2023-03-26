@@ -100,33 +100,32 @@ if __name__ == "__main__":
     log.info("Server started.")
 
     matrix = create_matrix(handle_args())
-
     t1 = threading.Thread(target=splash, args=(matrix,))
     t1.start()
     
-    main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
+    main_app = SlackStatus(matrix.CreateFrameCanvas(), SLACK_USER_ID, SLACK_TOKEN)
     apps = list()
-    apps.append(DVD(matrix))
-    apps.append(Clock(matrix))
-    apps.append(Stocks(matrix, "NVDA"))
-    apps.append(Stocks(matrix, "VTI"))
-    apps.append(Weather(matrix, LAT, LON))
-    apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
+    apps.append(DVD(matrix.CreateFrameCanvas()))
+    apps.append(Clock(matrix.CreateFrameCanvas()))
+    apps.append(Stocks(matrix.CreateFrameCanvas(), "NVDA"))
+    apps.append(Stocks(matrix.CreateFrameCanvas(), "VTI"))
+    apps.append(Weather(matrix.CreateFrameCanvas(), LAT, LON))
+    apps.append(ImageViewer(matrix.CreateFrameCanvas(), path + "images/nvidia.png"))
 
     t1.join()
 
     id = 0
     runtime = 0
-    duration = 30
+    duration = 15
     while True:
         schedule.run_pending()
         if main_app.check_status():
-            matrix.SwapOnVSync(main_app.show())
+            main_app.show(matrix)
             sleep(1/main_app.get_framerate())
         else:
             framerate = apps[id].get_framerate()
             for sec in range(0,framerate):
-                matrix.SwapOnVSync(apps[id].show())
+                apps[id].show(matrix)
                 sleep(1/framerate)
             
             runtime += 1

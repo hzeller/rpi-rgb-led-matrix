@@ -350,10 +350,10 @@ class Graph:
 
 
 class Stocks:
-    def __init__(self, matrix, symbol):
+    def __init__(self, offscreen_canvas, symbol):
         self.framerate = 1
+        self.offscreen_canvas = offscreen_canvas
 
-        self.matrix = matrix
         self.symbol = symbol
         
         data_store.add_symbol(self.symbol)
@@ -364,20 +364,20 @@ class Stocks:
     def get_framerate(self):
         return self.framerate
 
-    def show(self):
-        return self.draw()
+    def show(self, matrix):
+        self.offscreen_canvas = matrix.SwapOnVSync(self.draw())
 
     def draw(self):
-        offscreen_canvas = self.matrix.CreateFrameCanvas()
-        _tmp_canvas = self.matrix.CreateFrameCanvas()
+        self.offscreen_canvas.Clear()
         font = graphics.Font()
         font.LoadFont(path + "../../fonts/5x6.bdf")
         white = graphics.Color(255, 255, 255)
         grey = graphics.Color(155, 155, 155)
         red = graphics.Color(255, 0, 0)
         green = graphics.Color(0, 255, 0)
+        black = graphics.Color(0, 0, 0)
 
-        graphics.DrawText(offscreen_canvas, font, 1, 6, white, self.symbol)
+        graphics.DrawText(self.offscreen_canvas, font, 1, 6, white, self.symbol)
         try:
             self.closing_price = data_store.get_close_price(self.symbol)
             self.curr_price = data_store.get_current_price(self.symbol)
@@ -385,24 +385,24 @@ class Stocks:
             self.curr_diff = data_store.get_current_difference(self.symbol)
             self.curr_percent = data_store.get_current_percent(self.symbol)
         
-            graphics.DrawText(offscreen_canvas, font, 1, 13, grey, str("%0.2f" % self.curr_price))
-            line1_width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, str("%0.2f" % self.curr_diff))
-            line2_width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, str("%0.2f" % self.curr_percent) + '%') 
-            width = offscreen_canvas.width
+            graphics.DrawText(self.offscreen_canvas, font, 1, 13, grey, str("%0.2f" % self.curr_price))
+            line1_width = graphics.DrawText(self.offscreen_canvas, font, 0, 0, black, str("%0.2f" % self.curr_diff))
+            line2_width = graphics.DrawText(self.offscreen_canvas, font, 0, 0, black, str("%0.2f" % self.curr_percent) + '%') 
+            width = self.offscreen_canvas.width
             if self.curr_diff >= 0:
-                graphics.DrawText(offscreen_canvas, font, width-line1_width, 6, green, str("%0.2f" % self.curr_diff))
-                graphics.DrawText(offscreen_canvas, font, width-line2_width, 13, green, str("%0.2f" % self.curr_percent) + '%')
+                graphics.DrawText(self.offscreen_canvas, font, width-line1_width, 6, green, str("%0.2f" % self.curr_diff))
+                graphics.DrawText(self.offscreen_canvas, font, width-line2_width, 13, green, str("%0.2f" % self.curr_percent) + '%')
             else:
-                graphics.DrawText(offscreen_canvas, font, width-line1_width, 6, red, str("%0.2f" % self.curr_diff))
-                graphics.DrawText(offscreen_canvas, font, width-line2_width, 13, red, str("%0.2f" % self.curr_percent) + '%')
+                graphics.DrawText(self.offscreen_canvas, font, width-line1_width, 6, red, str("%0.2f" % self.curr_diff))
+                graphics.DrawText(self.offscreen_canvas, font, width-line2_width, 13, red, str("%0.2f" % self.curr_percent) + '%')
 
-            data_store.graph.draw(self.graph_data, offscreen_canvas, 0, 31)
+            data_store.graph.draw(self.graph_data, self.offscreen_canvas, 0, 31)
         except KeyError:
-            graphics.DrawText(offscreen_canvas, font, 1, 13, grey, "-.--")
-            graphics.DrawText(offscreen_canvas, font, 50, 6, grey, "-.--")
-            graphics.DrawText(offscreen_canvas, font, 45, 13, grey, "-.--%")
-            graphics.DrawText(offscreen_canvas, font, 13, 25, grey, "No data")
+            graphics.DrawText(self.offscreen_canvas, font, 1, 13, grey, "-.--")
+            graphics.DrawText(self.offscreen_canvas, font, 50, 6, grey, "-.--")
+            graphics.DrawText(self.offscreen_canvas, font, 45, 13, grey, "-.--%")
+            graphics.DrawText(self.offscreen_canvas, font, 13, 25, grey, "No data")
 
-        return offscreen_canvas
+        return self.offscreen_canvas
 
 data_store = Data()
