@@ -28,8 +28,7 @@ class SlackStatus:
         self.user_id = user_id
         self.token = token
         self.status_pos = 0
-        # self.refresh = 10
-        self.refresh = 3600
+        self.refresh = 10
 
         self.active = False
         self.status = None
