@@ -8,7 +8,6 @@ import pytz
 import numpy
 from twelvedata import TDClient, exceptions
 from apscheduler.schedulers.background import BackgroundScheduler
-from multiprocessing import Lock
 
 from rgbmatrix import graphics
 from secrets import STOCKS_API_KEY, LOCAL_TZ
@@ -22,11 +21,6 @@ path = os.path.dirname(__file__) + '/'
 schedule = BackgroundScheduler(daemon=True)
 schedule.start()
 
-file_lock = Lock()
-data_lock = Lock()
-
-API_lock = Lock()
-URL_lock = Lock()
 
 class API:
     def __init__(self):
@@ -41,9 +35,7 @@ class API:
         self.td = TDClient(apikey=self.api_key)
 
     def _try_api(self, func):
-        API_lock.acquire()
         tries = 5
-        timeout = 15
         res = None
         while tries > 0:
             try:
@@ -53,6 +45,7 @@ class API:
                 log.warning("API bad request using %s" % func.as_url())
                 break
             except exceptions.TwelveDataError:
+                timeout = 61-datetime.now().second
                 log.warning("API out of credits using %s trying again in %d seconds" % (func.as_url(), timeout))
                 tries -= 1
                 time.sleep(timeout)
@@ -60,18 +53,16 @@ class API:
                 log.warning("API exception occured")
         if not res:
             log.error("API errors continue after several attempts")
-        API_lock.release()
         return res
 
     def _try_request(self, url):
-        URL_lock.acquire()
         tries = 5
-        timeout = 15
         res = None
         while tries > 0:
             try:
                 json = requests.get(url).json()
                 if isinstance(json,dict) and json['status'] == "error":
+                    timeout = 61-datetime.now().second
                     log.warning("URL bad request using %s trying again in %d seconds" % (url, timeout))
                     tries -= 1
                     time.sleep(timeout)
@@ -82,7 +73,6 @@ class API:
                 log.warning("URL exception occured")
         if not res:
             log.error("URL errors continue after several attempts")
-        URL_lock.release()
         return res
 
     def is_trading_day(self, day):
@@ -207,7 +197,7 @@ class Data:
         log.info("current trading day: %s" % trading_day.strftime('%Y-%m-%d'))
         log.info("previous trading day: %s" % previous_day.strftime('%Y-%m-%d'))
 
-        self._update_data(previous_day,trading_day,self.symbols)
+        self._update_data(previous_day, trading_day, self.symbols)
 
         # update market status
         market_state = self.api.get_market_state()[0]
@@ -244,67 +234,43 @@ class Data:
     def _save(self, data):
         # add timestamp to data
         data["updated"] = datetime.now().timestamp()
-        file_lock.acquire()
+
         with open("stocks.json", "r") as file:
             load_data = json.load(file)
         load_data.update(data)
         with open("stocks.json", "w") as file:
             file.write(json.dumps(load_data))
-        file_lock.release()
-        data_lock.acquire()
+
         # read in only necessary symbols
         for symbol in self.symbols:
             if symbol in load_data:
                 self.data[symbol] = load_data[symbol]
-        data_lock.release()
 
     def add_symbol(self, symbol):
-        data_lock.acquire()
         self.symbols.append(symbol)
         if len(self.symbols) == 1:
             schedule.add_job(self._update_market_state)
-        data_lock.release()
 
     def remove_symbol(self, symbol):
-        data_lock.acquire()
         self.symbols.remove(symbol)
-        data_lock.release()
 
     def get_close_price(self, symbol):
-        data_lock.acquire()
-        data = self.data[symbol]["close"]
-        data_lock.release()
-        return data
+        return self.data[symbol]["close"]
     
     def get_current_price(self, symbol):
-        data_lock.acquire()
-        data = self.data[symbol]["current"]
-        data_lock.release()
-        return data
+        return self.data[symbol]["current"]
 
     def get_current_difference(self, symbol):
-        data_lock.acquire()
-        data = self.data[symbol]["difference"]
-        data_lock.release()
-        return data
+        return self.data[symbol]["difference"]
 
     def get_current_percent(self, symbol):
-        data_lock.acquire()
-        data = self.data[symbol]["percent"]
-        data_lock.release()
-        return data
+        return self.data[symbol]["percent"]
 
     def get_graph_data(self, symbol):
-        data_lock.acquire()
-        data = self.data[symbol]["graph"]
-        data_lock.release()
-        return data
+        return self.data[symbol]["graph"]
 
     def has_data(self, symbol):
-        data_lock.acquire()
-        data = True if symbol in self.data else False
-        data_lock.release()
-        return data
+        return True if symbol in self.data else False
 
 
 class Graph:
@@ -376,7 +342,7 @@ class Graph:
                     graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-y, red[1])
                 else:
                     next_y = data["values"][idx+1][1]
-                    if next_y > data["inflection_pt"]: 
+                    if next_y > data["inflection_pt"]: # transition above the line
                         graphics.DrawLine(canvas, x+x_offset, y_offset-y, x+x_offset, y_offset-data["inflection_pt"], red[1])
                         graphics.DrawLine(canvas, x+x_offset, y_offset-data["inflection_pt"], x+x_offset+1, y_offset-next_y, green[1])
                     else:
@@ -419,22 +385,23 @@ class Stocks:
             self.curr_diff = data_store.get_current_difference(self.symbol)
             self.curr_percent = data_store.get_current_percent(self.symbol)
         
-            graphics.DrawText(offscreen_canvas, font, 1, 13, grey, str(self.curr_price))
-            line1_width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, str(self.curr_diff))
-            line2_width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, str(self.curr_percent) + '%') 
+            graphics.DrawText(offscreen_canvas, font, 1, 13, grey, str("%0.2f" % self.curr_price))
+            line1_width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, str("%0.2f" % self.curr_diff))
+            line2_width = graphics.DrawText(_tmp_canvas, font, 0, 0, grey, str("%0.2f" % self.curr_percent) + '%') 
             width = offscreen_canvas.width
             if self.curr_diff >= 0:
-                graphics.DrawText(offscreen_canvas, font, width-line1_width, 6, green, str(self.curr_diff))
-                graphics.DrawText(offscreen_canvas, font, width-line2_width, 13, green, str(self.curr_percent) + '%')
+                graphics.DrawText(offscreen_canvas, font, width-line1_width, 6, green, str("%0.2f" % self.curr_diff))
+                graphics.DrawText(offscreen_canvas, font, width-line2_width, 13, green, str("%0.2f" % self.curr_percent) + '%')
             else:
-                graphics.DrawText(offscreen_canvas, font, width-line1_width, 6, red, str(self.curr_diff))
-                graphics.DrawText(offscreen_canvas, font, width-line2_width, 13, red, str(self.curr_percent) + '%')
+                graphics.DrawText(offscreen_canvas, font, width-line1_width, 6, red, str("%0.2f" % self.curr_diff))
+                graphics.DrawText(offscreen_canvas, font, width-line2_width, 13, red, str("%0.2f" % self.curr_percent) + '%')
 
             data_store.graph.draw(self.graph_data, offscreen_canvas, 0, 31)
         except KeyError:
             graphics.DrawText(offscreen_canvas, font, 1, 13, grey, "-.--")
             graphics.DrawText(offscreen_canvas, font, 50, 6, grey, "-.--")
             graphics.DrawText(offscreen_canvas, font, 45, 13, grey, "-.--%")
+            graphics.DrawText(offscreen_canvas, font, 13, 25, grey, "No data")
 
         return offscreen_canvas
 

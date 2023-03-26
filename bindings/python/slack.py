@@ -7,7 +7,6 @@ import io
 import requests
 from datetime import timezone, datetime
 from apscheduler.schedulers.background import BackgroundScheduler
-from multiprocessing import Lock
 
 from rgbmatrix import graphics
 
@@ -20,7 +19,6 @@ path = os.path.dirname(__file__) + '/'
 schedule = BackgroundScheduler(daemon=True)
 schedule.start()
 
-lock = Lock()
 
 class SlackStatus:
     def __init__(self, matrix, user_id, token):
@@ -29,7 +27,8 @@ class SlackStatus:
         self.user_id = user_id
         self.token = token
         self.status_pos = 0
-        self.refresh = 60*60
+        # self.refresh = 10
+        self.refresh = 3600
 
         self.active = False
         self.status = None
@@ -70,7 +69,6 @@ class SlackStatus:
                 self.icon = requests.get(self.icon_url, timeout=2)
         except:
             log.warning("_get_user_status: exception occurred")
-        # lock.release()
 
     def check_status(self):
         return self.active
@@ -78,9 +76,7 @@ class SlackStatus:
     def show(self):
         return self.draw()
 
-    def draw(self):        
-        # lock.acquire()
-
+    def draw(self):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         _tmp_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()

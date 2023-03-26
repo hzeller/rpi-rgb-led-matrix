@@ -10,7 +10,6 @@ import schedule
 from datetime import datetime
 import zoneinfo
 from apscheduler.schedulers.background import BackgroundScheduler
-from multiprocessing import Lock
 
 from secrets import LOCAL_TZ
 
@@ -23,7 +22,6 @@ path = os.path.dirname(__file__)
 schedule = BackgroundScheduler(daemon=True)
 schedule.start()
 
-lock = Lock()
 
 class Weather:
     def __init__(self, matrix, lat, lon):
@@ -48,7 +46,6 @@ class Weather:
             r = requests.get(f"https://api.openweathermap.org/data/3.0/onecall?lat={self.lat}&lon={self.lon}&exclude=hourly,daily&units=imperial&appid={self.api_key}", timeout=2)
             raw = r.json()['current']
 
-            lock.acquire()
             self.temp = str(round(raw['temp'])) + "°F"
             self.icon_url = "http://openweathermap.org/img/wn/" + raw['weather'][0]['icon'] + "@2x.png"
             self.icon = requests.get(self.icon_url, timeout=2)
@@ -56,8 +53,6 @@ class Weather:
             log.info("_get_weather_data: Temp: %s, Icon URL: %s" % (self.temp, self.icon_url))
         except:
             log.warning("_get_weather_data: exception occurred")
-
-        lock.release()
 
     def get_framerate(self):
         return self.framerate
@@ -74,8 +69,6 @@ class Weather:
         text_font = graphics.Font()
         white = graphics.Color(255, 255, 255)
 
-        lock.acquire()
-
         image = Image.open(io.BytesIO(self.icon.content))
         image.thumbnail((18, 18))
         icon = image.convert('RGB')
@@ -83,8 +76,6 @@ class Weather:
 
         width = graphics.DrawText(_tmp_canvas, font, 0, 0, white, self.temp)
         graphics.DrawText(offscreen_canvas, font, (offscreen_canvas.width-width)/2, 24, white, self.temp)
-
-        lock.release()
 
         return offscreen_canvas
         

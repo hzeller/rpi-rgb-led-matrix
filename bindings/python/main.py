@@ -93,16 +93,12 @@ def create_matrix(args):
 
     return RGBMatrix(options = options)
 
-def log_schedule():
-    log.info("Scheduled jobs: %s" % schedule.get_jobs())
-
 def splash(matrix):
     Welcome(matrix) # display welcome message & ip
 
 if __name__ == "__main__":
-    schedule.every(5).minutes.do(log_schedule).tag('system')
-    log_schedule()
-    
+    log.info("Server started.")
+
     matrix = create_matrix(handle_args())
 
     t1 = threading.Thread(target=splash, args=(matrix,))
@@ -110,12 +106,12 @@ if __name__ == "__main__":
     
     main_app = SlackStatus(matrix, SLACK_USER_ID, SLACK_TOKEN)
     apps = list()
-    # apps.append(DVD(matrix))
-    # apps.append(Clock(matrix))
-    # apps.append(Stocks(matrix, "NVDA"))
+    apps.append(DVD(matrix))
+    apps.append(Clock(matrix))
+    apps.append(Stocks(matrix, "NVDA"))
     apps.append(Stocks(matrix, "VTI"))
-    # apps.append(Weather(matrix, LAT, LON))
-    # apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
+    apps.append(Weather(matrix, LAT, LON))
+    apps.append(ImageViewer(matrix, path + "images/nvidia.png"))
 
     t1.join()
 
