@@ -187,6 +187,12 @@ int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
   if (g == NULL) g = FindGlyph(kUnicodeReplacementCodepoint);
   if (g == NULL) return 0;
   y_pos = y_pos - g->height - g->y_offset;
+
+  if (x_pos + g->device_width < 0 || x_pos > c->width() ||
+      y_pos + g->height < 0 || y_pos > c->height()) {
+    return g->device_width;  // Outside canvas border. Bail out early.
+  }
+
   for (int y = 0; y < g->height; ++y) {
     const rowbitmap_t& row = g->bitmap[y];
     for (int x = 0; x < g->device_width; ++x) {

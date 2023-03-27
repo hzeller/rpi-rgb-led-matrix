@@ -639,11 +639,26 @@ switches on the hardware pulses feature for the Adafruit HAT/Bonnet.
 
 ### 64x64 with E-line on Adafruit HAT/Bonnet
 There are LED panels that have 64x64 LEDs packed, but they need 5 address lines,
-which is 1:32 multiplexing (they have an `E` address-line). The hardware of
-the Adafruit HAT/Bonnet is not prepared for this, but it can be done with another
-hardware mod.
+which is 1:32 multiplexing (they have an `E` address-line). The first generation
+of the Adafruit HAT/Bonnet was not prepared for this, but it can be done with another
+hardware mod. Beginning October 2018, Adafruit began selling an updated version of
+the HAT that supports 64x64 panels simply by bridging two pads on the PCB with solder.
 
-It is a little more advanced hack, so  is only really for people who are
+You can identify which HAT you have by looking for the **Address E** pads, circled here:
+
+<a href="https://cdn-learn.adafruit.com/assets/assets/000/063/005/original/led_matrices_addr-e-pad.jpg" target="_blank"><img src="https://cdn-learn.adafruit.com/assets/assets/000/063/005/original/led_matrices_addr-e-pad.jpg" height=80></a>
+
+### New Adafruit RGB Matrix Hat (with Address E pads)
+
+Look for the Address E pads located between the HUB75 connector and Pi camera cutout.
+
+Melt a blob of solder between the center “E” pad the the “8” pad just above it
+(for 64x64 matrices in the Adafruit shop)…*_or_* the “16” pad below (rare, for some
+third-party 64x64 matrices…check datasheet).
+
+### Old Adafruit HAT/Bonnet (without)
+
+It is a little more advanced hack, so it is only really for people who are
 comfortable with this kind of thing.
 First, you have to figure out which is the input of the E-Line on your matrix
 (they seem to be either on Pin 4 or Pin 8 of the IDC connector).

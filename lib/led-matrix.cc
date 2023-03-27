@@ -501,6 +501,20 @@ FrameCanvas *RGBMatrix::Impl::CreateFrameCanvas() {
   result->framebuffer()->SetBrightness(params_.brightness);
 
   created_frames_.push_back(result);
+
+  if (created_frames_.size() % 500 == 0) {
+    if (created_frames_.size() == 500) {
+      fprintf(stderr, "CreateFrameCanvas() called %d times; Usually you only want to call it once (or at most a few times) for double-buffering. These frames will not be freed until the end of the program.\n"
+              "Typical reasons: \n"
+              "  * Accidentally called CreateFrameCanvas() inside your inner loop (move outside the loop. Create offscreen-canvas once, then re-use. See SwapOnVSync() examples).\n"
+              "  * Used to pre-compute many frames (use led_matrix::StreamWriter instead for such use-case. See e.g. led-image-viewer)\n",
+              (int)created_frames_.size());
+    } else {
+      fprintf(stderr, "FYI: CreateFrameCanvas() now called %d times.\n",
+              (int)created_frames_.size());
+    }
+  }
+
   return result;
 }
 
@@ -619,21 +633,33 @@ static bool drop_privs(const char *priv_user, const char *priv_group) {
       return true;
   }
 
-  struct group *g = getgrnam(priv_group);
-  if (g == NULL) {
-    perror("group lookup.");
-    return false;
+  if (priv_user == nullptr || priv_user[0] == 0) priv_user = "daemon";
+  if (priv_group == nullptr || priv_group[0] == 0) priv_group = "daemon";
+
+  gid_t gid = atoi(priv_group);  // Attempt to parse as GID first
+  if (gid == 0) {
+    struct group *g = getgrnam(priv_group);
+    if (g == NULL) {
+      perror("group lookup.");
+      return false;
+    }
+    gid = g->gr_gid;
   }
-  if (setresgid(g->gr_gid, g->gr_gid, g->gr_gid) != 0) {
+  if (setresgid(gid, gid, gid) != 0) {
     perror("setresgid()");
     return false;
   }
-  struct passwd *p = getpwnam(priv_user);
-  if (p == NULL) {
-    perror("user lookup.");
-    return false;
+
+  uid_t uid = atoi(priv_user);  // Attempt to parse as UID first.
+  if (uid == 0) {
+    struct passwd *p = getpwnam(priv_user);
+    if (p == NULL) {
+      perror("user lookup.");
+      return false;
+    }
+    uid = p->pw_uid;
   }
-  if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) != 0) {
+  if (setresuid(uid, uid, uid) != 0) {
     perror("setresuid()");
     return false;
   }
@@ -678,7 +704,8 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
   // realtime thread that usually requires root to be established.
   // Double check and document.
   if (runtime_options.drop_privileges > 0) {
-    drop_privs("daemon", "daemon");
+    drop_privs(runtime_options.drop_priv_user,
+               runtime_options.drop_priv_group);
   }
 
   return new RGBMatrix(result);
