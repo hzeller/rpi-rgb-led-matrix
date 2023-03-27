@@ -1,12 +1,8 @@
-#!/usr/bin/env python
-
-import time
-import sys
-from PIL import Image
-from datetime import datetime
-
 import logging
+from PIL import Image
+
 log = logging.getLogger(__name__)
+
 
 class ImageViewer:
     def __init__(self, offscreen_canvas, path):
@@ -14,9 +10,11 @@ class ImageViewer:
         self.offscreen_canvas = offscreen_canvas
 
         image = Image.open(path)
-        image.thumbnail((offscreen_canvas.width, offscreen_canvas.height), Image.ANTIALIAS)
-        self.image = image.convert('RGB')
-    
+        image.thumbnail(
+            (offscreen_canvas.width, offscreen_canvas.height), Image.ANTIALIAS
+        )
+        self.image = image.convert("RGB")
+
     def get_framerate(self):
         return self.framerate
 

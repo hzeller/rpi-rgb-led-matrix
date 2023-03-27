@@ -1,84 +1,89 @@
-#!/usr/bin/env python
+import os
+import logging
 import time
 import socket
-
 from rgbmatrix import graphics
 
-import logging
+path = os.path.dirname(__file__)
 log = logging.getLogger(__name__)
 
-import os
-path = os.path.dirname(__file__)
 
 class Welcome:
-    def __init__(self, matrix):
+    def __init__(self):
         self.framerate = 1
-
-        self.matrix = matrix
 
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
         self.ip = s.getsockname()[0]
 
-        self.show()
-    
     def get_framerate(self):
         return self.framerate
 
-    def show(self):
-        brightness = self.matrix.brightness
-        _tmp_canvas = self.matrix.CreateFrameCanvas()
+    def show(self, matrix):
+        brightness = matrix.brightness
 
         font = graphics.Font()
         font.LoadFont(path + "/../../fonts/5x6.bdf")
-        text_font = graphics.Font()
         white = graphics.Color(255, 255, 255)
+        black = graphics.Color(0, 0, 0)
 
         phrase = "hello world"
-        self.matrix.brightness = 0
-        width = graphics.DrawText(_tmp_canvas, font, 0, 0, white, phrase)
-        graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, phrase)
-        while self.matrix.brightness < 100:
-            self.matrix.brightness += 1
-            graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, phrase)
+        matrix.brightness = 0
+        width = graphics.DrawText(matrix, font, 0, 0, black, phrase)
+        graphics.DrawText(matrix, font, (matrix.width - width) / 2, 18, white, phrase)
+        while matrix.brightness < 100:
+            matrix.brightness += 1
+            graphics.DrawText(
+                matrix, font, (matrix.width - width) / 2, 18, white, phrase
+            )
             time.sleep(0.01)
         time.sleep(1)
-        self.matrix.brightness = 100
-        while self.matrix.brightness > 0:
-            self.matrix.brightness -= 1
-            graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, phrase)
+        matrix.brightness = 100
+        while matrix.brightness > 0:
+            matrix.brightness -= 1
+            graphics.DrawText(
+                matrix, font, (matrix.width - width) / 2, 18, white, phrase
+            )
             time.sleep(0.01)
-        self.matrix.Clear()
+        matrix.Clear()
 
         phrase = "i am"
-        self.matrix.brightness = 0
-        width = graphics.DrawText(_tmp_canvas, font, 0, 0, white, phrase)
-        graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, phrase)
-        while self.matrix.brightness < 100:
-            self.matrix.brightness += 1
-            graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, phrase)
+        matrix.brightness = 0
+        width = graphics.DrawText(matrix, font, 0, 0, black, phrase)
+        graphics.DrawText(matrix, font, (matrix.width - width) / 2, 18, white, phrase)
+        while matrix.brightness < 100:
+            matrix.brightness += 1
+            graphics.DrawText(
+                matrix, font, (matrix.width - width) / 2, 18, white, phrase
+            )
             time.sleep(0.01)
         time.sleep(1)
-        self.matrix.brightness = 100
-        while self.matrix.brightness > 0:
-            self.matrix.brightness -= 1
-            graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, phrase)
+        matrix.brightness = 100
+        while matrix.brightness > 0:
+            matrix.brightness -= 1
+            graphics.DrawText(
+                matrix, font, (matrix.width - width) / 2, 18, white, phrase
+            )
             time.sleep(0.01)
-        self.matrix.Clear()
-        
-        self.matrix.brightness = 0
-        width = graphics.DrawText(_tmp_canvas, font, 0, 0, white, self.ip)
-        graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, self.ip)
-        while self.matrix.brightness < 100:
-            self.matrix.brightness += 1
-            graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, self.ip)
-            time.sleep(0.01)
-        time.sleep(1)
-        self.matrix.brightness = 100
-        while self.matrix.brightness > 0:
-            self.matrix.brightness -= 1
-            graphics.DrawText(self.matrix, font, (self.matrix.width-width)/2, 18, white, self.ip)
-            time.sleep(0.01)
-        self.matrix.Clear()
+        matrix.Clear()
 
-        self.matrix.brightness = brightness
+        matrix.brightness = 0
+        width = graphics.DrawText(matrix, font, 0, 0, black, self.ip)
+        graphics.DrawText(matrix, font, (matrix.width - width) / 2, 18, white, self.ip)
+        while matrix.brightness < 100:
+            matrix.brightness += 1
+            graphics.DrawText(
+                matrix, font, (matrix.width - width) / 2, 18, white, self.ip
+            )
+            time.sleep(0.01)
+        time.sleep(1)
+        matrix.brightness = 100
+        while matrix.brightness > 0:
+            matrix.brightness -= 1
+            graphics.DrawText(
+                matrix, font, (matrix.width - width) / 2, 18, white, self.ip
+            )
+            time.sleep(0.01)
+        matrix.Clear()
+
+        matrix.brightness = brightness
