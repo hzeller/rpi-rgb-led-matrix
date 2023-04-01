@@ -327,7 +327,9 @@ class Graph:
     def parse(self, raw, close_price):
         data = dict()
         samples = list()
-        prev = datetime.strptime(raw[-1]["datetime"], "%Y-%m-%d %H:%M:%S") - timedelta(minutes=1)
+        prev = datetime.strptime(
+            raw[-1]["datetime"], "%Y-%m-%d %H:%M:%S"
+        ) - timedelta(minutes=1)
         for delta in self.timestamps:
             time = datetime.strptime(
                 raw[-1]["datetime"], "%Y-%m-%d %H:%M:%S"

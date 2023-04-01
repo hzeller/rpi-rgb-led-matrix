@@ -16,7 +16,7 @@ from secrets import SLACK_USER_ID, SLACK_TOKEN, LAT, LON
 path = os.path.dirname(__file__) + "/"
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,
     filename=path + "log.txt",
     format="[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
