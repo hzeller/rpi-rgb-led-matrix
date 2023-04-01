@@ -327,18 +327,25 @@ class Graph:
     def parse(self, raw, close_price):
         data = dict()
         samples = list()
+        prev = datetime.strptime(raw[-1]["datetime"], "%Y-%m-%d %H:%M:%S") - timedelta(minutes=1)
         for delta in self.timestamps:
             time = datetime.strptime(
                 raw[-1]["datetime"], "%Y-%m-%d %H:%M:%S"
             ) + timedelta(minutes=delta)
-            sample = list(
-                filter(
-                    lambda values: values["datetime"]
-                    == time.strftime("%Y-%m-%d %H:%M:%S"),
-                    raw,
+            sample = None
+            tries = 5
+            while not sample and tries > 0 and time > prev:
+                sample = list(
+                    filter(
+                        lambda values: values["datetime"]
+                        == time.strftime("%Y-%m-%d %H:%M:%S"),
+                        raw,
+                    )
                 )
-            )
+                if not sample: time -= timedelta(minutes=1)
+                tries -= 1
             if sample:
+                prev = time
                 if delta == 0:  # first data point is at open
                     samples.append(float(sample[0]["open"]))
                 else:
