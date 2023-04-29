@@ -2,3 +2,5 @@
 *.a
 *~
 *.so
+.envrc
+.direnv
