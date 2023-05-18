@@ -495,6 +495,31 @@ public:
 
 
 /*
+ * P4 Outdoor panel 80x40 pixels
+ * https://nl.aliexpress.com/item/1005003999341251.html?spm=a2g0o.order_list.order_list_main.11.408679d2q5LwTb&gatewayAdapt=glo2nld
+ */
+class P4Outdoor80x40Mapper : public MultiplexMapperBase {
+public:
+  P4Outdoor80x40Mapper() : MultiplexMapperBase("P4Outdoor80x40Mapper", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+
+    const int tile_width_ = 8;
+    const int tile_height_ = 10;
+    const int vblock_is_odd = (y / tile_height_) % 2;
+    const int hblock = x / tile_width_;
+
+    if (vblock_is_odd) {
+      *matrix_x = (x % tile_width_) + (2 * tile_width_ * hblock) + tile_width_;
+    } else {
+      // even tiles have reverse x-order
+      *matrix_x = -((x % tile_width_) - tile_width_ + 1) + (2 * tile_width_ * hblock);
+    }
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
+
+/*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
  * made available in the --led-multiplexing commandline option.
@@ -523,6 +548,8 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P10Outdoor32x16HalfScanMapper());
   result->push_back(new P10Outdoor32x16QuarterScanMapper());
   result->push_back(new P3Outdoor64x64MultiplexMapper());
+  result->push_back(new P4Outdoor80x40Mapper());
+  //result->push_back(new P4Outdoor80x40Mapper1());
   return result;
 }
 
