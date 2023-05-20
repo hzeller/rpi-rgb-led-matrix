@@ -81,7 +81,7 @@ class API:
     def is_trading_day(self, day):
         ts = self.td.time_series(
             symbol=self.symbol,
-            interval="1day",
+            interval="1min",
             outputsize=1,
             start_date=day,
             end_date=day + timedelta(minutes=self.open_time),
@@ -190,37 +190,34 @@ class Data:
 
     def _update_market_state(self):
         # update trading day
-        _day = datetime.now(pytz.timezone(self.api.timezone))
+        trading_day = datetime.now(pytz.timezone(self.api.timezone))
         # is it before trading hours
-        if (_day.hour * 60 + _day.minute) < (
+        log.info("now: %i, open: %i" % (trading_day.hour * 60 + trading_day.minute, self.api.open_hour * 60 + self.api.open_min))
+        if (trading_day.hour * 60 + trading_day.minute) < (
             self.api.open_hour * 60 + self.api.open_min
         ):
-            _day = (_day - timedelta(days=1)).replace(
+            log.info("before open!")
+            trading_day = (trading_day - timedelta(days=1)).replace(
                 hour=self.api.open_hour,
                 minute=self.api.open_min,
                 second=0,
                 microsecond=0,
             )
         else:
-            _day = _day.replace(
+            trading_day = trading_day.replace(
                 hour=self.api.open_hour,
                 minute=self.api.open_min,
                 second=0,
                 microsecond=0,
             )
-        while _day.weekday() > 4 or not self.api.is_trading_day(_day):
-            _day -= timedelta(days=1)
-        prev_day = _day - timedelta(days=1)
-        while prev_day.weekday() > 4 or not self.api.is_trading_day(prev_day):
-            prev_day -= timedelta(days=1)
-
-        trading_day = _day.replace(
-            hour=self.api.open_hour, minute=self.api.open_min, second=0, microsecond=0
-        )
-        previous_day = prev_day.replace(
-            hour=self.api.open_hour, minute=self.api.open_min, second=0, microsecond=0
-        )
+        while trading_day.weekday() > 4 or not self.api.is_trading_day(trading_day):
+            trading_day -= timedelta(days=1)
         log.info("current trading day: %s" % trading_day.strftime("%Y-%m-%d"))
+
+        # update previous trading day
+        previous_day = trading_day - timedelta(days=1)
+        while previous_day.weekday() > 4 or not self.api.is_trading_day(previous_day):
+            previous_day -= timedelta(days=1)
         log.info("previous trading day: %s" % previous_day.strftime("%Y-%m-%d"))
 
         self._update_data(previous_day, trading_day, self.symbols)
@@ -232,7 +229,7 @@ class Data:
             next_update = datetime.now().replace(
                 tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)
             ) + timedelta(
-                minutes=int(time_to_close[0]) * 60 + int(time_to_close[1]) + 2
+                minutes=int(time_to_close[0]) * 60 + int(time_to_close[1]) + 5
             )
 
             exists = False
@@ -251,7 +248,7 @@ class Data:
             time_to_open = market_state["time_to_open"].split(":")
             next_update = datetime.now().replace(
                 tzinfo=zoneinfo.ZoneInfo(LOCAL_TZ)
-            ) + timedelta(minutes=int(time_to_open[0]) * 60 + int(time_to_open[1]) + 2)
+            ) + timedelta(minutes=int(time_to_open[0]) * 60 + int(time_to_open[1]) + 5)
 
             exists = False
             for job in schedule.get_jobs():

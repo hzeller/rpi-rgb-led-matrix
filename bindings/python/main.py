@@ -6,9 +6,10 @@ import schedule
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from welcome import Welcome
 from dvd import DVD
-from clock import Clock
+from clock import BasicClock, BinaryClock
 from stocks import Stocks
 from weather import Weather
+from earth import Earth
 from imageviewer import ImageViewer
 from slack import SlackStatus
 from secrets import SLACK_USER_ID, SLACK_TOKEN, LAT, LON
@@ -62,10 +63,11 @@ if __name__ == "__main__":
     main_app = SlackStatus(matrix.CreateFrameCanvas(), SLACK_USER_ID, SLACK_TOKEN)
     apps = list()
     apps.append(DVD(matrix.CreateFrameCanvas()))
-    apps.append(Clock(matrix.CreateFrameCanvas()))
+    apps.append(BinaryClock(matrix.CreateFrameCanvas()))
     apps.append(Stocks(matrix.CreateFrameCanvas(), "NVDA"))
     apps.append(Stocks(matrix.CreateFrameCanvas(), "VTI"))
     apps.append(Weather(matrix.CreateFrameCanvas(), LAT, LON))
+    apps.append(Earth(matrix.CreateFrameCanvas()))
     apps.append(ImageViewer(matrix.CreateFrameCanvas(), path + "images/nvidia.png"))
     t1.join()
 
