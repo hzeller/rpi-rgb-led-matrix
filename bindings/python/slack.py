@@ -45,7 +45,7 @@ class SlackStatus:
                 + self.user_id
                 + "&pretty=1",
                 headers={"Authorization": "Bearer " + self.token},
-                timeout=2,
+                timeout=7,
             )
             raw = r.json()["profile"]
 
@@ -58,13 +58,13 @@ class SlackStatus:
                 self.expiration = raw["status_expiration"]
                 if self.icon_url != raw["status_emoji_display_info"][0]["display_url"]:
                     self.icon_url = raw["status_emoji_display_info"][0]["display_url"]
-                    self.icon = requests.get(self.icon_url, timeout=2)
+                    self.icon = requests.get(self.icon_url, timeout=7)
             else:
                 self.active = False
                 self.status = "Available"
                 self.expiration = 0
                 self.icon_url = "https://a.slack-edge.com/production-standard-emoji-assets/14.0/apple-large/2714-fe0f.png"
-                self.icon = requests.get(self.icon_url, timeout=2)
+                self.icon = requests.get(self.icon_url, timeout=7)
         except:
             log.warning("_get_user_status: exception occurred")
 

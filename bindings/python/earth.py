@@ -155,7 +155,7 @@ class Earth:
     def __init__(self, offscreen_canvas):
         self.framerate = 1
         self.offscreen_canvas = offscreen_canvas
-        self.image = calculate_image()
+        self.offscreen_canvas.SetImage(calculate_image())
 
     def get_framerate(self):
         return self.framerate
@@ -164,7 +164,5 @@ class Earth:
         self.offscreen_canvas = matrix.SwapOnVSync(self.draw())
 
     def draw(self):
-        self.offscreen_canvas.Clear()
-        self.image = calculate_image()
-        self.offscreen_canvas.SetImage(self.image)
+        self.offscreen_canvas.SetImage(calculate_image())
         return self.offscreen_canvas

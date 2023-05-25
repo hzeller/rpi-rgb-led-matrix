@@ -3,7 +3,6 @@ import logging
 import io
 from PIL import Image
 import requests
-import schedule
 from apscheduler.schedulers.background import BackgroundScheduler
 from rgbmatrix import graphics
 
@@ -36,7 +35,7 @@ class Weather:
         try:
             r = requests.get(
                 f"https://api.openweathermap.org/data/3.0/onecall?lat={self.lat}&lon={self.lon}&exclude=hourly,daily&units=imperial&appid={self.api_key}",
-                timeout=2,
+                timeout=7,
             )
             raw = r.json()["current"]
 
@@ -46,7 +45,7 @@ class Weather:
                 + raw["weather"][0]["icon"]
                 + "@2x.png"
             )
-            self.icon = requests.get(self.icon_url, timeout=2)
+            self.icon = requests.get(self.icon_url, timeout=7)
 
             log.info(
                 "_get_weather_data: Temp: %s, Icon URL: %s" % (self.temp, self.icon_url)
