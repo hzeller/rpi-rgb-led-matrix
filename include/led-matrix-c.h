@@ -197,6 +197,15 @@ struct RGBLedRuntimeOptions {
 };
 
 /**
+ * 24-bit RGB color.
+ */
+struct Color {
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+};
+
+/**
  * Universal way to create and initialize a matrix.
  * The "options" struct (if not NULL) contains all default configuration values
  * chosen by the programmer to create the matrix.
@@ -307,6 +316,10 @@ void led_canvas_get_size(const struct LedCanvas *canvas,
 /** Set pixel at (x, y) with color (r,g,b). */
 void led_canvas_set_pixel(struct LedCanvas *canvas, int x, int y,
                           uint8_t r, uint8_t g, uint8_t b);
+
+/** Copies pixels to rectangle at (x, y) with size (width, height). */
+void led_canvas_set_pixels(struct LedCanvas *canvas, int x, int y,
+                           int width, int height, struct Color *colors);
 
 /** Clear screen (black). */
 void led_canvas_clear(struct LedCanvas *canvas);

@@ -30,6 +30,7 @@
 #include <algorithm>
 
 #include "gpio.h"
+#include "../include/graphics.h"
 
 namespace rgb_matrix {
 namespace internal {
@@ -693,6 +694,14 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   }
 }
 
+void Framebuffer::SetPixels(int x, int y, int width, int height, Color *colors) {
+  for (int iy = 0; iy < height; ++iy) {
+    for (int ix = 0; ix < width; ++ix) {
+      SetPixel(x + ix, y + iy, colors->r, colors->g, colors->b);
+      ++colors;
+    }
+  }
+}
 // Strange LED-mappings such as RBG or so are handled here.
 gpio_bits_t Framebuffer::GetGpioFromLedSequence(char col,
                                                 const char *led_sequence,
