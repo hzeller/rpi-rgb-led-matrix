@@ -4,10 +4,33 @@ from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t, uintptr_t
 from PIL import Image
 import cython
+from cpython cimport PyBUF_WRITABLE
+
+cdef object init_key = object()
 
 cdef class Canvas:
-    cdef cppinc.Canvas* __getCanvas(self) except +:
-        raise Exception("Not implemented")
+    def __init__(self):
+        raise TypeError("This class cannot be instantiated directly.")
+
+    cdef cppinc.Canvas* __getCanvas(self) except NULL:
+        raise NotImplementedError()
+
+    @property
+    def height(self):
+        return self.__getCanvas().height()
+
+    @property
+    def width(self):
+        return self.__getCanvas().width()
+
+    def SetPixel(self, int x, int y, uint8_t red, uint8_t green, uint8_t blue):
+        self.__getCanvas().SetPixel(x, y, red, green, blue)
+
+    def Clear(self):
+        self.__getCanvas().Clear()
+
+    def Fill(self, uint8_t red, uint8_t green, uint8_t blue):
+        self.__getCanvas().Fill(red, green, blue)
 
     def SetImage(self, image, int offset_x = 0, int offset_y = 0, unsafe=True):
         if (image.mode != "RGB"):
@@ -34,9 +57,9 @@ cdef class Canvas:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def SetPixelsPillow(self, int xstart, int ystart, int width, int height, image):
-        cdef cppinc.FrameCanvas* my_canvas = <cppinc.FrameCanvas*>self.__getCanvas()
-        cdef int frame_width = my_canvas.width()
-        cdef int frame_height = my_canvas.height()
+        cdef cppinc.Canvas* canvas = self.__getCanvas()
+        cdef int frame_width = canvas.width()
+        cdef int frame_height = canvas.height()
         cdef int row, col
         cdef uint8_t r, g, b
         cdef uint32_t **image_ptr
@@ -51,54 +74,112 @@ cdef class Canvas:
                 r = (pixel ) & 0xFF
                 g = (pixel >> 8) & 0xFF
                 b = (pixel >> 16) & 0xFF
-                my_canvas.SetPixel(xstart+col, ystart+row, r, g, b)
+                canvas.SetPixel(xstart+col, ystart+row, r, g, b)
+
+# class with buffer interface, used to publish framebuffer to python
+cdef class FrameData:
+    cdef FrameCanvas __owner                      # FrameData needs to keep FrameCanvas alive
+    cdef const char* __data
+    cdef readonly size_t size                     # size is available to python
+    def __cinit__(self, key=None, FrameCanvas owner=None):
+        if key is not init_key:
+            raise TypeError("This class cannot be instantiated directly.");
+        self.__owner = owner
+
+    @staticmethod
+    cdef FrameData __create(FrameCanvas owner, const char* data, size_t size):
+        cdef FrameData fd = FrameData(init_key, owner)
+        fd.__data = data
+        fd.size = size
+        return fd
+
+    def __getbuffer__(self, Py_buffer *buffer, int flags):
+        if flags & PyBUF_WRITABLE:
+            raise BufferError("FrameData is read-only")
+        buffer.buf = <void *>self.__data
+        buffer.obj = self
+        buffer.len = self.size                # size in bytes
+        buffer.readonly = True                  # Technically, it may be possible to overwrite internal buffer, but it is dangerous
+        buffer.itemsize = 1                     # opaque buffer TODO
+        buffer.format = NULL                    # implicit B (bytes)
+        buffer.ndim = 0                         # single item
+        buffer.shape = NULL
+        buffer.strides = NULL
+        buffer.suboffsets = NULL
+        buffer.internal = NULL
+
+    def __releasebuffer__(self, Py_buffer *buffer):
+        pass
+
+    def __repr__(self):
+        return f"<FrameData owned by {self.__owner} data={<size_t>self.__data:#x}, len={self.size}"
 
 cdef class FrameCanvas(Canvas):
+    def __cinit__(self, key=None, RGBMatrix owner=None):
+        if key is not init_key:                                 # prevent even construction using __new__
+            raise TypeError("Use RGBMatrix.CreateFrameCanvas() to create FrameCanvas");
+        self.__owner = owner
+
+    def __del__(self):                          # use del if available - guarantees that owner is not deleted first (may not work before Python 3.4)
+        self.__dealloc__()
+
     def __dealloc__(self):
-        if <void*>self.__canvas != NULL:
+        if self.__owner is not None and self.__canvas != NULL:    # C++ FrameCanvas is owned by RGBMatrix, recycle it
+            self.__owner.__recycle_put(self.__canvas)
             self.__canvas = NULL
 
-    cdef cppinc.Canvas* __getCanvas(self) except *:
-        if <void*>self.__canvas != NULL:
-            return self.__canvas
-        raise Exception("Canvas was destroyed or not initialized, you cannot use this object anymore")
+    @staticmethod
+    cdef FrameCanvas __create(RGBMatrix owner, cppinc.FrameCanvas *canvas):
+        if canvas == NULL:
+            raise Exception("Can't create canvas from NULL")
+        cdef FrameCanvas fc = FrameCanvas.__new__(FrameCanvas, init_key, owner)  # skip __init__ here
+        fc.__canvas = canvas
+        return fc
 
-    def Fill(self, uint8_t red, uint8_t green, uint8_t blue):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).Fill(red, green, blue)
+    cdef cppinc.Canvas* __getCanvas(self) except NULL:
+        assert self.__canvas != NULL
+        return self.__canvas
 
-    def Clear(self):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).Clear()
+    @property
+    def framebuffer(self):
+        cdef char *data
+        cdef size_t len
+        # get pointer and length
+        self.__canvas.Serialize(<const char**>&data, &len)
+        return FrameData.__create(self, data, len)
 
-    def SetPixel(self, int x, int y, uint8_t red, uint8_t green, uint8_t blue):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixel(x, y, red, green, blue)
+    @property
+    def pwmBits(self): return self.__canvas.pwmbits()
+    @pwmBits.setter
+    def pwmBits(self, pwmBits): self.__canvas.SetPWMBits(pwmBits)
 
+    @property
+    def brightness(self): return self.__canvas.brightness()
+    @brightness.setter
+    def brightness(self, val): self.__canvas.SetBrightness(val)
 
-    property width:
-        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).width()
+cdef charp_to_python(const char *s):
+    return <bytes>(s) if s != NULL else None
 
-    property height:
-        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).height()
+cdef python_to_bytes(s, where):
+    if isinstance(s, str):
+        return s.encode('utf-8')
+    if isinstance(s, bytes) or s is None:
+        return s
+    if isinstance(s, bytearray):
+       return bytes(s)
+    raise TypeError(f"TypeError: {where} must be [str, bytes, bytearray, None], not {type(s).__name__}")
 
-    property pwmBits:
-        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).pwmbits()
-        def __set__(self, pwmBits): (<cppinc.FrameCanvas*>self.__getCanvas()).SetPWMBits(pwmBits)
-
-    property brightness:
-        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).brightness()
-        def __set__(self, val): (<cppinc.FrameCanvas*>self.__getCanvas()).SetBrightness(val)
-
+cdef const char* bytes_to_charp(bytes s):
+    return <const char*>s if s is not None else NULL
 
 cdef class RGBMatrixOptions:
-    def __cinit__(self):
-        self.__options = cppinc.Options()
-        self.__runtime_options = cppinc.RuntimeOptions()
-
     # RGBMatrix::Options properties
     property hardware_mapping:
-        def __get__(self): return self.__options.hardware_mapping
+        def __get__(self): return charp_to_python(self.__options.hardware_mapping)
         def __set__(self, value):
-            self.__py_encoded_hardware_mapping = value.encode('utf-8')
-            self.__options.hardware_mapping = self.__py_encoded_hardware_mapping
+            self.__py_encoded_hardware_mapping = python_to_bytes(value, "hardware_mapping")
+            self.__options.hardware_mapping = bytes_to_charp(self.__py_encoded_hardware_mapping)
 
     property rows:
         def __get__(self): return self.__options.rows
@@ -153,22 +234,22 @@ cdef class RGBMatrixOptions:
         def __set__(self, value): self.__options.inverse_colors = value
 
     property led_rgb_sequence:
-        def __get__(self): return self.__options.led_rgb_sequence
+        def __get__(self): return charp_to_python(self.__options.led_rgb_sequence)
         def __set__(self, value):
-            self.__py_encoded_led_rgb_sequence = value.encode('utf-8')
-            self.__options.led_rgb_sequence = self.__py_encoded_led_rgb_sequence
+            self.__py_encoded_led_rgb_sequence = python_to_bytes(value, "led_rgb_sequence")
+            self.__options.led_rgb_sequence = bytes_to_charp(self.__py_encoded_led_rgb_sequence)
 
     property pixel_mapper_config:
-        def __get__(self): return self.__options.pixel_mapper_config
+        def __get__(self): return charp_to_python(self.__options.pixel_mapper_config)
         def __set__(self, value):
-            self.__py_encoded_pixel_mapper_config = value.encode('utf-8')
-            self.__options.pixel_mapper_config = self.__py_encoded_pixel_mapper_config
+            self.__py_encoded_pixel_mapper_config = python_to_bytes(value, "pixel_mapper_config")
+            self.__options.pixel_mapper_config = bytes_to_charp(self.__py_encoded_pixel_mapper_config)
 
     property panel_type:
-        def __get__(self): return self.__options.panel_type
+        def __get__(self): return charp_to_python(self.__options.panel_type)
         def __set__(self, value):
-            self.__py_encoded_panel_type = value.encode('utf-8')
-            self.__options.panel_type = self.__py_encoded_panel_type
+            self.__py_encoded_panel_type = python_to_bytes(value, "panel_type")
+            self.__options.panel_type = bytes_to_charp(self.__py_encoded_panel_type)
 
     property pwm_dither_bits:
         def __get__(self): return self.__options.pwm_dither_bits
@@ -193,45 +274,64 @@ cdef class RGBMatrixOptions:
         def __get__(self): return self.__runtime_options.drop_privileges
         def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
 
+    @property
+    def do_gpio_init(self):
+        return self.__runtime_options.do_gpio_init
+    @do_gpio_init.setter
+    def do_gpio_init(self, uint8_t value):
+        self.__runtime_options.do_gpio_init = value
+
 cdef class RGBMatrix(Canvas):
-    def __cinit__(self, int rows = 0, int chains = 0, int parallel = 0,
-        RGBMatrixOptions options = None):
+    def __cinit__(self, rows = None, chains = None, parallel = None,
+                  RGBMatrixOptions options = None):
 
         # If RGBMatrixOptions not provided, create defaults and set any optional
         # parameters supplied
-        if options == None:
+        if options is None:
             options = RGBMatrixOptions()
 
-        if rows > 0:
+        if rows is not None:
             options.rows = rows
-        if chains > 0:
+        if chains is not None:
             options.chain_length = chains
-        if parallel > 0:
+        if parallel is not None:
             options.parallel = parallel
 
         self.__matrix = cppinc.CreateMatrixFromOptions(options.__options,
-            options.__runtime_options)
+                                                       options.__runtime_options)
+
+        if self.__matrix == NULL:
+            raise Exception("RGBMatrix creation failed")
+
+    def __init__(self, *args, **kwargs):          # no call to Canvas.__init__
+        pass
 
     def __dealloc__(self):
-        self.__matrix.Clear()
-        del self.__matrix
+        if self.__matrix != NULL:
+            self.__matrix.Clear()
+            del self.__matrix
 
-    cdef cppinc.Canvas* __getCanvas(self) except *:
-        if <void*>self.__matrix != NULL:
-            return self.__matrix
-        raise Exception("Canvas was destroyed or not initialized, you cannot use this object anymore")
+    cdef cppinc.Canvas* __getCanvas(self) except NULL:
+        assert self.__matrix != NULL
+        return self.__matrix
 
-    def Fill(self, uint8_t red, uint8_t green, uint8_t blue):
-        self.__matrix.Fill(red, green, blue)
+    cdef void __recycle_put(self, cppinc.FrameCanvas *canvas):
+        self.__recycled_fc.push(canvas)
 
-    def SetPixel(self, int x, int y, uint8_t red, uint8_t green, uint8_t blue):
-        self.__matrix.SetPixel(x, y, red, green, blue)
-
-    def Clear(self):
-        self.__matrix.Clear()
+    cdef cppinc.FrameCanvas* __recycle_get(self):
+        if self.__recycled_fc.empty():
+            return NULL
+        cdef cppinc.FrameCanvas* fc = self.__recycled_fc.top()
+        self.__recycled_fc.pop()
+        return fc
 
     def CreateFrameCanvas(self):
-        return __createFrameCanvas(self.__matrix.CreateFrameCanvas())
+        cdef cppinc.FrameCanvas* newCanvas = self.__recycle_get()
+        if newCanvas == NULL:
+            newCanvas = self.__matrix.CreateFrameCanvas()
+        if newCanvas == NULL:
+            raise Exception("C++ CreateFrameCanvas failed")
+        return FrameCanvas.__create(self, newCanvas)
 
     # The optional "framerate_fraction" parameter allows to choose which
     # multiple of the global frame-count to use. So it slows down your animation
@@ -241,31 +341,43 @@ cdef class RGBMatrix(Canvas):
     # 28Hz animation, nicely locked to the refresh-rate).
     # If you combine this with RGBMatrixOptions.limit_refresh_rate_hz you can create
     # time-correct animations.
-    def SwapOnVSync(self, FrameCanvas newFrame, uint8_t framerate_fraction = 1):
-        return __createFrameCanvas(self.__matrix.SwapOnVSync(newFrame.__canvas, framerate_fraction))
+    # You can pass None as newFrame to get synchronization without swapping frame
+    def SwapOnVSync(self, FrameCanvas nextFrame, uint8_t framerate_fraction = 1):
+        cdef cppinc.FrameCanvas* next = nextFrame.__canvas if nextFrame is not None else NULL
+        cdef cppinc.FrameCanvas* prev = self.__matrix.SwapOnVSync(next, framerate_fraction)
+        if prev == NULL:
+            raise Exception("C++ SwapOnVSync failed")
+        if self.frame_displayed is None:           ## first call, create from internal frame
+            self.frame_displayed = FrameCanvas.__create(self, prev)
 
-    property luminanceCorrect:
-        def __get__(self): return self.__matrix.luminance_correct()
-        def __set__(self, luminanceCorrect): self.__matrix.set_luminance_correct(luminanceCorrect)
+        assert self.frame_displayed.__canvas == prev
+        cdef FrameCanvas prevFrame = self.frame_displayed
+        if nextFrame is not None:
+            self.frame_displayed = nextFrame
+        return prevFrame
 
-    property pwmBits:
-        def __get__(self): return self.__matrix.pwmbits()
-        def __set__(self, pwmBits): self.__matrix.SetPWMBits(pwmBits)
+    @property
+    def luminanceCorrect(self):
+        return self.__matrix.luminance_correct()
+    @luminanceCorrect.setter
+    def luminanceCorrect(self, luminanceCorrect):
+        self.__matrix.set_luminance_correct(luminanceCorrect)
 
-    property brightness:
-        def __get__(self): return self.__matrix.brightness()
-        def __set__(self, brightness): self.__matrix.SetBrightness(brightness)
+    @property
+    def pwmBits(self):
+        return self.__matrix.pwmbits()
+    @pwmBits.setter
+    def pwmBits(self, pwmBits):
+        self.__matrix.SetPWMBits(pwmBits)
 
-    property height:
-        def __get__(self): return self.__matrix.height()
+    @property
+    def brightness(self):
+        return self.__matrix.brightness()
+    @brightness.setter
+    def brightness(self, brightness):
+        self.__matrix.SetBrightness(brightness)
 
-    property width:
-        def __get__(self): return self.__matrix.width()
 
-cdef __createFrameCanvas(cppinc.FrameCanvas* newCanvas):
-    canvas = FrameCanvas()
-    canvas.__canvas = newCanvas
-    return canvas
 
 # Local Variables:
 # mode: python

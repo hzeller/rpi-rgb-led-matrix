@@ -21,7 +21,7 @@ cdef extern from "led-matrix.h" namespace "rgb_matrix":
         bool luminance_correct()
         void SetBrightness(uint8_t)
         uint8_t brightness()
-        FrameCanvas *CreateFrameCanvas()
+        FrameCanvas *CreateFrameCanvas() except +
         FrameCanvas *SwapOnVSync(FrameCanvas*, uint8_t)
 
     cdef cppclass FrameCanvas(Canvas):
@@ -29,20 +29,22 @@ cdef extern from "led-matrix.h" namespace "rgb_matrix":
         uint8_t pwmbits()
         void SetBrightness(uint8_t)
         uint8_t brightness()
+        void Serialize(const char **data, size_t *len)
+        bool Deserialize(const char *data, size_t len)
 
-    struct RuntimeOptions:
+    cdef cppclass RuntimeOptions:
       RuntimeOptions() except +
       int gpio_slowdown
       int daemon
       int drop_privileges
+      bool do_gpio_init
 
-
-    RGBMatrix *CreateMatrixFromOptions(Options &options, RuntimeOptions runtime_options)
+    RGBMatrix *CreateMatrixFromOptions(Options &options, RuntimeOptions runtime_options) except +
 
 
 
 cdef extern from "led-matrix.h" namespace "rgb_matrix::RGBMatrix":
-    cdef struct Options:
+    cdef cppclass Options:
         Options() except +
 
         const char *hardware_mapping

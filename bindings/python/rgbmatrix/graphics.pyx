@@ -3,13 +3,19 @@
 from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t
 
-cimport core
+from . cimport core
 
 cdef class Color:
     def __init__(self, uint8_t red = 0, uint8_t green = 0, uint8_t blue = 0):
         self.__color.r = red
         self.__color.g = green
         self.__color.b = blue
+
+    def __call__(self):
+        return self.to_tuple()
+
+    def to_tuple(self):
+        return (self.__color.r, self.__color.g, self.__color.b)
 
     property red:
         def __get__(self): return self.__color.r
