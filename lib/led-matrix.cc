@@ -314,10 +314,12 @@ RGBMatrix::Options::Options() :
   pixel_mapper_config(NULL),
   panel_type(NULL),
 #ifdef FIXED_FRAME_MICROSECONDS
-  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS)
+  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS),
 #else
-  limit_refresh_rate_hz(0)
+  limit_refresh_rate_hz(0),
 #endif
+
+  seg_bits(8)
 {
   // Nothing to see here.
 }
@@ -335,6 +337,7 @@ static void PrintOptions(const RGBMatrix::Options &o) {
   P_INT(chain_length);
   P_INT(parallel);
   P_INT(pwm_bits);
+  P_INT(seg_bits);
   P_INT(pwm_lsb_nanoseconds);
   P_INT(pwm_dither_bits);
   P_INT(brightness);
@@ -496,7 +499,7 @@ FrameCanvas *RGBMatrix::Impl::CreateFrameCanvas() {
     do_luminance_correct_ = result->framebuffer()->luminance_correct();
   }
 
-  result->framebuffer()->SetPWMBits(params_.pwm_bits);
+  result->framebuffer()->SetPWMBits(params_.pwm_bits, params_.seg_bits);
   result->framebuffer()->set_luminance_correct(do_luminance_correct_);
   result->framebuffer()->SetBrightness(params_.brightness);
 
