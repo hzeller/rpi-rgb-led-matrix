@@ -51,6 +51,7 @@ Demos, choosen with -D
         9  - Volume bars (-m <time-step-ms>)
         10 - Evolution of color (-m <time-step-ms>)
         11 - Brightness pulse generator
+        12 - Colorful rotating 3d cube
 Example:
         ./demo -D 1 runtext.ppm
 Scrolls the runtext until Ctrl-C is pressed
