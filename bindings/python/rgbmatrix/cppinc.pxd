@@ -23,12 +23,15 @@ cdef extern from "led-matrix.h" namespace "rgb_matrix":
         uint8_t brightness()
         FrameCanvas *CreateFrameCanvas()
         FrameCanvas *SwapOnVSync(FrameCanvas*, uint8_t)
+        void DeleteFrameCanvas(FrameCanvas*)
 
     cdef cppclass FrameCanvas(Canvas):
         bool SetPWMBits(uint8_t)
         uint8_t pwmbits()
         void SetBrightness(uint8_t)
         uint8_t brightness()
+        void Serialize(const char **data, size_t *len)
+        bool Deserialize(const char *data, size_t len)
 
     struct RuntimeOptions:
       RuntimeOptions() except +

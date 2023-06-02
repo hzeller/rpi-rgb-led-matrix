@@ -53,6 +53,12 @@ cdef class Canvas:
                 b = (pixel >> 16) & 0xFF
                 my_canvas.SetPixel(xstart+col, ystart+row, r, g, b)
 
+cdef class FrameData:
+    cdef const char *__getData(self) except +:
+        if <void*>self.__data != NULL:
+            return self.__data
+        raise Exception("FrameData ptr was destroyed or not initialized, you cannot use this object anymore")
+
 cdef class FrameCanvas(Canvas):
     def __dealloc__(self):
         if <void*>self.__canvas != NULL:
@@ -72,6 +78,17 @@ cdef class FrameCanvas(Canvas):
     def SetPixel(self, int x, int y, uint8_t red, uint8_t green, uint8_t blue):
         (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixel(x, y, red, green, blue)
 
+    def Serialize(self):
+        cdef const char* data
+        cdef size_t length
+        (<cppinc.FrameCanvas*>self.__getCanvas()).Serialize(&data, &length)
+        framedata = FrameData()
+        framedata.__length = length
+        framedata.__data = data
+        return framedata
+
+    def Deserialize(self, FrameData framedata):
+        return (<cppinc.FrameCanvas*>self.__getCanvas()).Deserialize(framedata.__getData(), framedata.__length)
 
     property width:
         def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).width()
@@ -230,8 +247,27 @@ cdef class RGBMatrix(Canvas):
     def Clear(self):
         self.__matrix.Clear()
 
+    # Create a new buffer to be used for multi-buffering. The returned new
+    # Buffer implements a Canvas with the same size of thie RGBMatrix.
+    # You can use it to draw off-screen on it, then swap it with the active
+    # buffer using SwapOnVSync(). That would be classic double-buffering.
+
+    # You can also create as many FrameCanvas as you like and for instance use
+    # them to pre-fill scenes of an animation for fast playback later.
+
+    # The ownership of the created Canvases remains with the RGBMatrix. You
+    # you don't want to create more than needed as this will fill up your
+    # memory as they are only deleted when the RGBMatrix is deleted or by
+    # calling DeleteFrameCanvas().
     def CreateFrameCanvas(self):
         return __createFrameCanvas(self.__matrix.CreateFrameCanvas())
+
+    # Delete a FrameCanvas associated with the RGBMatrix
+    # Otherwise FrameCanvas objects created by CreateFrameCanvas() are never deleted
+    # until the RGBMatrix is deleted
+    def DeleteFrameCanvas(self, FrameCanvas frame):
+        self.__matrix.DeleteFrameCanvas(frame.__canvas)
+        del frame
 
     # The optional "framerate_fraction" parameter allows to choose which
     # multiple of the global frame-count to use. So it slows down your animation
