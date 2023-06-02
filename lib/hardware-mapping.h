@@ -27,6 +27,7 @@ struct HardwareMapping {
   int max_parallel_chains;
 
   gpio_bits_t output_enable;
+  gpio_active_t output_polarity;
   gpio_bits_t clock;
   gpio_bits_t strobe;
 
