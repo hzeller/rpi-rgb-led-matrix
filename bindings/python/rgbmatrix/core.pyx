@@ -53,6 +53,12 @@ cdef class Canvas:
                 b = (pixel >> 16) & 0xFF
                 my_canvas.SetPixel(xstart+col, ystart+row, r, g, b)
 
+cdef class FrameData:
+    cdef const char *__getData(self) except +:
+        if <void*>self.__data != NULL:
+            return self.__data
+        raise Exception("FrameData ptr was destroyed or not initialized, you cannot use this object anymore")
+
 cdef class FrameCanvas(Canvas):
     def __dealloc__(self):
         if <void*>self.__canvas != NULL:
@@ -72,6 +78,17 @@ cdef class FrameCanvas(Canvas):
     def SetPixel(self, int x, int y, uint8_t red, uint8_t green, uint8_t blue):
         (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixel(x, y, red, green, blue)
 
+    def Serialize(self):
+        cdef const char* data
+        cdef size_t length
+        (<cppinc.FrameCanvas*>self.__getCanvas()).Serialize(&data, &length)
+        framedata = FrameData()
+        framedata.__length = length
+        framedata.__data = data
+        return framedata
+
+    def Deserialize(self, FrameData framedata):
+        return (<cppinc.FrameCanvas*>self.__getCanvas()).Deserialize(framedata.__getData(), framedata.__length)
 
     property width:
         def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).width()

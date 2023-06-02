@@ -3,6 +3,11 @@ cimport cppinc
 cdef class Canvas:
     cdef cppinc.Canvas *__getCanvas(self) except +
 
+cdef class FrameData:
+    cdef const char *__data
+    cdef size_t __length
+    cdef const char *__getData(self) except +
+
 cdef class FrameCanvas(Canvas):
     cdef cppinc.FrameCanvas *__canvas
 
