@@ -327,6 +327,9 @@ void led_canvas_clear(struct LedCanvas *canvas);
 /** Fill matrix with given color. */
 void led_canvas_fill(struct LedCanvas *canvas, uint8_t r, uint8_t g, uint8_t b);
 
+/** Fill subsection of matrix with given color. */
+void led_canvas_subfill(struct LedCanvas *canvas, int x, int y,
+                           int width, int height, uint8_t r, uint8_t g, uint8_t b);
 /*** API to provide double-buffering. ***/
 
 /**
