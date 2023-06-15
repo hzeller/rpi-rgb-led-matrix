@@ -130,6 +130,7 @@ public:
   void SetPixels(int x, int y, int width, int height, Color *colors);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  void SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue);
 
 private:
   static const struct HardwareMapping *hardware_mapping_;

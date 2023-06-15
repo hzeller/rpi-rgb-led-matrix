@@ -382,7 +382,8 @@ public:
                          Color *colors);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-
+  virtual void SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue);
+  
 private:
   friend class RGBMatrix;
 
