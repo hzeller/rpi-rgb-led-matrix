@@ -262,7 +262,7 @@ static RaspberryPiModel DetermineRaspberryModel() {
     return PI_MODEL_3;
   }
 
-  // https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
+  // https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#raspberry-pi-revision-codes
   const unsigned pi_type = (pi_revision >> 4) & 0xff;
   switch (pi_type) {
   case 0x00: /* A */
