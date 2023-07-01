@@ -155,6 +155,10 @@ public:
     // Limit refresh rate of LED panel. This will help on a loaded system
     // to keep a constant refresh rate. <= 0 for no limit.
     int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
+
+    // Sleep instead of busy wait to free CPU cycles but get slightly less
+    // accurate frame timing.
+    bool disable_busy_waiting;   // Flag: --led-busy-waiting
   };
 
   // Factory to create a matrix. Additional functionality includes dropping

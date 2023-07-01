@@ -122,9 +122,10 @@ class RGBMatrix::Impl::UpdateThread : public Thread {
 public:
   UpdateThread(GPIO *io, FrameCanvas *initial_frame,
                int pwm_dither_bits, bool show_refresh,
-               int limit_refresh_hz)
+               int limit_refresh_hz, bool allow_busy_waiting)
     : io_(io), show_refresh_(show_refresh),
       target_frame_usec_(limit_refresh_hz < 1 ? 0 : 1e6/limit_refresh_hz),
+      allow_busy_waiting_(allow_busy_waiting),
       running_(true),
       current_frame_(initial_frame), next_frame_(NULL),
       requested_frame_multiple_(1) {
@@ -199,8 +200,13 @@ public:
       ++low_bit_sequence;
 
       if (target_frame_usec_) {
-        while ((GetMicrosecondCounter() - start_time_us) < target_frame_usec_) {
-          // busy wait. We have our dedicated core, so ok to burn cycles.
+        if (allow_busy_waiting_) {
+          while ((GetMicrosecondCounter() - start_time_us) < target_frame_usec_) {
+            // busy wait. We have our dedicated core, so ok to burn cycles.
+          }
+        } else {
+          long spent_us = GetMicrosecondCounter() - start_time_us;
+          SleepMicroseconds(target_frame_usec_ - spent_us);
         }
       }
 
@@ -245,6 +251,7 @@ private:
   GPIO *const io_;
   const bool show_refresh_;
   const uint32_t target_frame_usec_;
+  const bool allow_busy_waiting_;
   uint32_t start_bit_[4];
 
   Mutex running_mutex_;
@@ -314,9 +321,14 @@ RGBMatrix::Options::Options() :
   pixel_mapper_config(NULL),
   panel_type(NULL),
 #ifdef FIXED_FRAME_MICROSECONDS
-  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS)
+  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS),
 #else
-  limit_refresh_rate_hz(0)
+  limit_refresh_rate_hz(0),
+#endif
+#ifdef DISABLE_BUSY_WAITING
+    disable_busy_waiting(true)
+#else
+    disable_busy_waiting(false)
 #endif
 {
   // Nothing to see here.
@@ -348,6 +360,7 @@ static void PrintOptions(const RGBMatrix::Options &o) {
   P_STR(pixel_mapper_config);
   P_STR(panel_type);
   P_INT(limit_refresh_rate_hz);
+  P_BOOL(disable_busy_waiting);
 #undef P_INT
 #undef P_STR
 #undef P_BOOL
@@ -469,7 +482,8 @@ bool RGBMatrix::Impl::StartRefresh() {
   if (updater_ == NULL && io_ != NULL) {
     updater_ = new UpdateThread(io_, active_, params_.pwm_dither_bits,
                                 params_.show_refresh_rate,
-                                params_.limit_refresh_rate_hz);
+                                params_.limit_refresh_rate_hz,
+                                !params_.disable_busy_waiting);
     // If we have multiple processors, the kernel
     // jumps around between these, creating some global flicker.
     // So let's tie it to the last CPU available.
