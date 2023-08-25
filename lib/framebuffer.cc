@@ -649,15 +649,15 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   MapColors(r, g, b, &red, &green, &blue);
   const PixelDesignator &fill = (*shared_mapper_)->GetFillColorBits();
 
-  for (int b = kBitPlanes - pwm_bits_; b < kBitPlanes; ++b) {
-    uint16_t mask = 1 << b;
+  for (int bits = kBitPlanes - pwm_bits_; bits < kBitPlanes; ++bits) {
+    uint16_t mask = 1 << bits;
     gpio_bits_t plane_bits = 0;
     plane_bits |= ((red & mask) == mask)   ? fill.r_bit : 0;
     plane_bits |= ((green & mask) == mask) ? fill.g_bit : 0;
     plane_bits |= ((blue & mask) == mask)  ? fill.b_bit : 0;
 
     for (int row = 0; row < double_rows_; ++row) {
-      gpio_bits_t *row_data = ValueAt(row, 0, b);
+      gpio_bits_t *row_data = ValueAt(row, 0, bits);
       for (int col = 0; col < columns_; ++col) {
         *row_data++ = plane_bits;
       }
