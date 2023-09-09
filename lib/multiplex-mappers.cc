@@ -153,14 +153,16 @@ public:
 
 class ZStripeMultiplexMapper : public MultiplexMapperBase {
 public:
-  ZStripeMultiplexMapper(const char *name, int even_vblock_offset, int odd_vblock_offset)
+  ZStripeMultiplexMapper(const char *name, int even_vblock_offset, int odd_vblock_offset, int width, int height)
   : MultiplexMapperBase(name, 2),
     even_vblock_offset_(even_vblock_offset),
-    odd_vblock_offset_(odd_vblock_offset) {}
+    odd_vblock_offset_(odd_vblock_offset),
+    width_(width),
+    height_(height) {}
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
-    static const int tile_width = 8;
-    static const int tile_height = 4;
+    static const int tile_width = width_;
+    static const int tile_height = height_;
 
     const int vert_block_is_odd = ((y / tile_height) % 2);
 
@@ -174,6 +176,8 @@ public:
 private:
   const int even_vblock_offset_;
   const int odd_vblock_offset_;
+  const int width_;
+  const int height_;
 };
 
 class CoremanMapper : public MultiplexMapperBase {
@@ -454,6 +458,17 @@ public:
   }
 };
 
+class P4Outdoor80x40 : public MultiplexMapperBase {
+public:
+  P4Outdoor80x40() : MultiplexMapperBase("P4Outdoor80x40", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    int shift = (y  / (panel_rows_ / 4)) % 2;
+    *matrix_y = ((y / (panel_rows_/2)) * (panel_rows_/4)  + y % (panel_rows_/4));
+    *matrix_x = ((x * 2) + (shift ? 0 : 1));
+  }
+};
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -466,11 +481,11 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new StripeMultiplexMapper());
   result->push_back(new CheckeredMultiplexMapper());
   result->push_back(new SpiralMultiplexMapper());
-  result->push_back(new ZStripeMultiplexMapper("ZStripe", 0, 8));
-  result->push_back(new ZStripeMultiplexMapper("ZnMirrorZStripe", 4, 4));
+  result->push_back(new ZStripeMultiplexMapper("ZStripe", 0, 8, 8, 4));
+  result->push_back(new ZStripeMultiplexMapper("ZnMirrorZStripe", 4, 4, 8, 4));
   result->push_back(new CoremanMapper());
   result->push_back(new Kaler2ScanMapper());
-  result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0));
+  result->push_back(new ZStripeMultiplexMapper("ZStripeUneven", 8, 0, 8, 4));
   result->push_back(new P10MapperZ());
   result->push_back(new QiangLiQ8());
   result->push_back(new InversedZStripe());
@@ -481,6 +496,8 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P8Outdoor1R1G1BMultiplexMapper());
   result->push_back(new FlippedStripeMultiplexMapper());
   result->push_back(new P10Outdoor32x16HalfScanMapper());
+  result->push_back(new ZStripeMultiplexMapper("P3Outdoor104x52", 4, 4, 8, 13)); //note: 13 tile height needed for this
+  result->push_back(new P4Outdoor80x40()); //this mapping also worked with a version of the 104*52 panels!
   return result;
 }
 
