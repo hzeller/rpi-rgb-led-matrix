@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <!-- Skip builing native libraries by default on Windows -->
+    <PropertyGroup Condition="$(SkipNative) == '' and $(OS) != 'Unix'">
+        <SkipNative>true</SkipNative>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Remove="examples\**" />
+        <None Remove="examples\**" />
+        <None Condition="$(SkipNative) != 'true'" Pack="true" 
+              Include="..\..\lib\librgbmatrix.so.1"
+              PackagePath="\runtimes\linux-arm64\native" >
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <Target Name="CompileNative" BeforeTargets="Compile" Condition="$(SkipNative) != 'true'">
+        <Message Text="Building native libraries" />
+        <Exec Command="make library" />
+    </Target>
+</Project>
