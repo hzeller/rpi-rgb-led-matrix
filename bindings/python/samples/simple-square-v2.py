@@ -13,7 +13,7 @@ class SimpleSquare(SampleBase):
         #while True:
         #print ("matrix.width: " + str(self.matrix.width))
         for x in range(0, self.matrix.width):
-            offset_canvas.SetPixel(1, x, 255, 255, 255)
+            offset_canvas.SetPixel(x, 1, 255, 255, 255)
         offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
 
         # while True:
