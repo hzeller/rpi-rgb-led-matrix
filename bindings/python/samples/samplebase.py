@@ -18,7 +18,7 @@ class SampleBase(object):
         self.parser.add_argument("-p", "--led-pwm-bits", action="store", help="Bits used for PWM. Something between 1..11. Default: 11", default=11, type=int)
         self.parser.add_argument("-b", "--led-brightness", action="store", help="Sets brightness level. Default: 100. Range: 1..100", default=100, type=int)
         #self.parser.add_argument("-m", "--led-gpio-mapping", help="Hardware Mapping: regular, adafruit-hat, adafruit-hat-pwm" , choices=['regular', 'regular-pi1', 'adafruit-hat', 'adafruit-hat-pwm'], type=str)
-        self.parser.add_argument("-m", "--led-gpio-mapping", help="Hardware Mapping: regular, adafruit-hat, adafruit-hat-pwm" , choices=['regular', 'regular-pi1', 'adafruit-hat', 'adafruit-hat-pwm'], default='adafruit-hat', type=str)
+        #self.parser.add_argument("-m", "--led-gpio-mapping", help="Hardware Mapping: regular, adafruit-hat, adafruit-hat-pwm" , choices=['regular', 'regular-pi1', 'adafruit-hat', 'adafruit-hat-pwm'], default='adafruit-hat', type=str)
         self.parser.add_argument("--led-scan-mode", action="store", help="Progressive or interlaced scan. 0 Progressive, 1 Interlaced (default)", default=1, choices=range(2), type=int)
         self.parser.add_argument("--led-pwm-lsb-nanoseconds", action="store", help="Base time-unit for the on-time in the lowest significant bit in nanoseconds. Default: 130", default=130, type=int)
         self.parser.add_argument("--led-show-refresh", action="store_true", help="Shows the current refresh rate of the LED panel")
@@ -43,8 +43,10 @@ class SampleBase(object):
 
         options = RGBMatrixOptions()
 
-        if self.args.led_gpio_mapping != None:
-          options.hardware_mapping = self.args.led_gpio_mapping
+        # if self.args.led_gpio_mapping != None:
+        #   options.hardware_mapping = self.args.led_gpio_mapping
+
+        options.hardware_mapping = 'adafruit-hat'
         options.rows = self.args.led_rows
         options.cols = self.args.led_cols
         options.chain_length = self.args.led_chain
