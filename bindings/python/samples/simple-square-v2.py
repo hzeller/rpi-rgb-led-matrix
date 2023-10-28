@@ -9,6 +9,7 @@ class SimpleSquare(SampleBase):
     def run(self):
         offset_canvas = self.matrix.CreateFrameCanvas()
         while True:
+            print ("matrix.width: " + str(self.matrix.width))
             for x in range(0, self.matrix.width):
                 offset_canvas.SetPixel(x, x, 255, 255, 255)
             offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
