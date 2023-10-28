@@ -16,8 +16,8 @@ class ImageViewer(object):
     def process(self):
         self.args = self.parser.parse_args()
         print("Trying to draw the image from " + self.args.image_path)
-        print("Rows: " + self.args.led_rows)
-        print("Cols " + self.args.led_cols)
+        print("Rows: " + str(self.args.led_rows))
+        print("Cols " + str(self.args.led_cols))
 
         image = Image.open(self.args.image_path)
 
