@@ -10,6 +10,7 @@ class GraphicsTest(SampleBase):
 
     def run(self):
         canvas = self.matrix
+        canvas.hardware_mapping = 'adafruit-hat'
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
 
