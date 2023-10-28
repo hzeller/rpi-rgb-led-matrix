@@ -11,3 +11,7 @@ sudo make install-python
 ls
 cd rpi-rgb-led-matrix/bindings/python/samples
 sudo python3 runtext.py --led-cols=64 --led-gpio-mapping=adafruit-hat --led-slowdown-gpio=4 --text="Hola Emma de mi vida"
+
+
+
+sudo python3 image-viewer.py ~/ledtrix/bindings/python/img/guille.jpg
