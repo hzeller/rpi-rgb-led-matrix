@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import time
+import sys
 from samplebase import SampleBase
 
 
@@ -8,11 +10,11 @@ class SimpleSquare(SampleBase):
 
     def run(self):
         offset_canvas = self.matrix.CreateFrameCanvas()
-        while True:
-            print ("matrix.width: " + str(self.matrix.width))
-            for x in range(0, self.matrix.width):
-                offset_canvas.SetPixel(x, x, 255, 255, 255)
-            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
+        #while True:
+        #print ("matrix.width: " + str(self.matrix.width))
+        for x in range(0, self.matrix.width):
+            offset_canvas.SetPixel(1, x, 255, 255, 255)
+        offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
 
         # while True:
         #     for x in range(0, self.matrix.width):
@@ -26,8 +28,14 @@ class SimpleSquare(SampleBase):
         #     for y in range(0, offset_canvas.height):
         #         offset_canvas.SetPixel(0, y, 0, 0, 255)
         #         offset_canvas.SetPixel(offset_canvas.width - 1, y, 0, 255, 0)
-            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
+        #     offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
 
+        try:
+            print("Press CTRL-C to stop.")
+            while True:
+                time.sleep(100)
+        except KeyboardInterrupt:
+            sys.exit(0)
 
 # Main function
 if __name__ == "__main__":
