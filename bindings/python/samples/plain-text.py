@@ -33,31 +33,35 @@ class GraphicsTest(SampleBase):
             y = -21
             while(y <= 21):
                 graphics.DrawText(canvas, font, 0, y, white, word)
-                time.sleep(0.2)
+                time.sleep(0.200)
+                canvas.Clear()
                 y = y+1
         elif self.args.padding == 'bottom':
             y = 41
             while(y >= 21):
+                print("y:" + str(y))
                 graphics.DrawText(canvas, font, 0, y, white, word)
-                time.sleep(0.2)
+                time.sleep(0.200)
+                canvas.Clear()
                 y = y-1
         elif self.args.padding == 'left':
             x = -10
             while(x <= 0):
+                print("x:" + str(x))
                 graphics.DrawText(canvas, font, x, 21, white, word)
-                time.sleep(0.2)
+                time.sleep(0.200)
+                canvas.Clear()
                 x = x + 1
         elif self.args.padding == 'right':
             x = 20
             while(x >= 0):
+                print("x:" + str(x))
                 graphics.DrawText(canvas, font, x, 21, white, word)
-                time.sleep(0.2)
+                time.sleep(0.200)
+                canvas.Clear()
                 x = x - 1
         else:
             graphics.DrawText(canvas, font, 0, 21, white, word)
-
-
-
 
         time.sleep(20)   # show display for 10 seconds before exit
 
