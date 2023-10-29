@@ -11,6 +11,7 @@ class GraphicsTest(SampleBase):
         self.parser.add_argument("--text", action="store", help="Text to show", default="AMOR", type=str)
         self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=10, type=int)
         self.parser.add_argument("--font", action="store", help="Font of the word. Default: 7x13.bdf", default="7x13.bdf", type=str)
+        self.parser.add_argument("--centered", action="store", help="Center the word. Default: true", default="True", type=bool)
 
     def run(self):
         self.args = self.parser.parse_args()
@@ -25,9 +26,11 @@ class GraphicsTest(SampleBase):
         # graphics.DrawCircle(canvas, 15, 15, 10, green)
 
         #blue = graphics.Color(0, 0, 255)
-        white = graphics.Color(255, 0, 0)
+        white = graphics.Color(255, 255, 255)
         word = self.args.text
-        word = word.center(self.args.padding)
+        if self.args.centered = True
+            word = word.center(self.args.centered)
+
         print("|" + word + "|")
         graphics.DrawText(canvas, font, 0, 20, white, word)
 
