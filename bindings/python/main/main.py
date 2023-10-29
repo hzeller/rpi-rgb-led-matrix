@@ -16,53 +16,45 @@ class PlainText(CommonBase):
             word = word.center(self.args.padding)
         return word
 
-    def get_random(self):
-        return random.randint(1,2)
-
     def show_text(self, word):
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/" + self.args.font)
-        white = graphics.Color(255, 255, 255)
-        mainModule.log("Fade:" + str(self.args.fade))
+        random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
         x = 0
         y = 0
-
-        #word = mainModule.getTextToShow();
-
-        mainModule.log("word:|" + word + "|")
 
         if self.args.fade == 'top':
             y = -21
             while(y <= 21):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, white, word)
+                graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
                 y = y + 2
         elif self.args.fade == 'bottom':
             y = 41
             while(y >= 21):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, white, word)
+                graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
                 y = y - 2
         elif self.args.fade == 'left':
             x = -60
             while(x <= 0):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, x, 21, white, word)
+                graphics.DrawText(canvas, font, x, 21, random_color, word)
                 time.sleep(0.200)
                 x = x + 2
         elif self.args.fade == 'right':
             x = 60
             while(x >= 0):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, x, 21, white, word)
+                graphics.DrawText(canvas, font, x, 21, random_color, word)
                 time.sleep(0.200)
                 x = x - 2
         else:
-            graphics.DrawText(canvas, font, 0, 21, white, word)
+            graphics.DrawText(canvas, font, 0, 21, random_color, word)
 
     def run(self):
         self.args = self.parser.parse_args()
@@ -74,7 +66,7 @@ class PlainText(CommonBase):
             while(True):
 
                 action = 0
-                action = self.get_random()
+                action = random.randint(1,2)
                 mainModule.log(str(action))
 
                 if action == 1: #Positive Word
