@@ -130,11 +130,8 @@ class PlainText(CommonBase):
 
         # let's scroll
         xpos = 0
-        while True:
+        while xpos < 500:
             xpos += 1
-
-            if xpos == 501:
-                return
 
             if (xpos > img_width):
                 xpos = 0
@@ -169,6 +166,7 @@ class PlainText(CommonBase):
                     mainModule.log("despues:" + word_selected)
                     mainModule.show_text(word_selected)
                 elif action == 3: #rotate
+                    self.matrix.Clear()
                     mainModule.rotate_square()
                 elif action == 4: #ppm
                     mainModule.show_ppm()
