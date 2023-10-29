@@ -33,38 +33,39 @@ class PlainText(SampleBase):
         if self.args.fade == 'top':
             y = -21
             while(y <= 21):
+                canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, white, word)
                 time.sleep(0.200)
-                canvas.Clear()
-                y = y+1
+                y = y + 2
         elif self.args.fade == 'bottom':
             y = 41
             while(y >= 21):
                 print("y:" + str(y))
+                canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, white, word)
                 time.sleep(0.200)
-                canvas.Clear()
-                y = y-1
+
+                y = y - 2
         elif self.args.fade == 'left':
             x = -10
             while(x <= 0):
+                canvas.Clear()
                 print("x:" + str(x))
                 graphics.DrawText(canvas, font, x, 21, white, word)
                 time.sleep(0.200)
-                canvas.Clear()
-                x = x + 1
+                x = x + 2
         elif self.args.fade == 'right':
             x = 20
             while(x >= 0):
+                canvas.Clear()
                 print("x:" + str(x))
                 graphics.DrawText(canvas, font, x, 21, white, word)
                 time.sleep(0.200)
-                canvas.Clear()
                 x = x - 1
         else:
             graphics.DrawText(canvas, font, 0, 21, white, word)
 
-        time.sleep(20)   # show display for 10 seconds before exit
+        time.sleep(10)   # show display for 10 seconds before exit
 
 
 # Main function
