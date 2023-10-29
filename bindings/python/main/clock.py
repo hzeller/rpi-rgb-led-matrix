@@ -33,9 +33,9 @@ class Clock(CommonBase):
             # must copy the frame out of the gif, since thumbnail() modifies the image in-place
             frame = gif.copy()
             #frame.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
-            frame.thumbnail((10, 10), Image.ANTIALIAS)
+            frame.thumbnail((8, 8), Image.ANTIALIAS)
             canvasImg = canvas.CreateFrameCanvas()
-            canvasImg.SetImage(frame.convert("RGB"), 2, 10)
+            canvasImg.SetImage(frame.convert("RGB"), 1, 11)
             canvases.append(canvasImg)
         # Close the gif file to save memory now that we have copied out all of the frames
         gif.close()
