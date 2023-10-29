@@ -123,7 +123,7 @@ class PlainText(CommonBase):
 
     def show_ppm(self):
         self.image = Image.open("../../../examples-api-use/runtext.ppm").convert('RGB')
-        self.image.resize((self.matrix.width-2, self.matrix.height-2), Image.ANTIALIAS)
+        self.image.resize((self.matrix.width-5, self.matrix.height-5), Image.ANTIALIAS)
 
         double_buffer = self.matrix.CreateFrameCanvas()
         img_width, img_height = self.image.size
