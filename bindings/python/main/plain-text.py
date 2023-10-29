@@ -13,15 +13,15 @@ class PlainText(CommonBase):
         self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=10, type=int)
         self.parser.add_argument("--font", action="store", help="Font of the word. Default: 7x13.bdf", default="7x13.bdf", type=str)
         self.parser.add_argument("--text", action="store", help="Text to show", default="", type=str)
-        self.parser.add_argument("--clock", action="store", help="Show a clock", default=False, type=bool)
+        self.parser.add_argument("--show-clock", action="store", help="Show a clock", default=False, type=bool)
 
     def getTextToShow(self):
 
-        mainModule.log("self.args.clock:|" + str(self.args.clock) + "|")
-        mainModule.log("self.args.text:|" + str(self.args.clock) + "|")
+        mainModule.log("self.args.show_clock:|" + str(self.args.show_clock) + "|")
+        mainModule.log("self.args.text:|" + str(self.args.text) + "|")
 
         text = ""
-        if self.args.clock == True:
+        if self.args.show_clock == True:
             text = time.strftime('%H:%M')
             if self.args.centered :
                 text = text.center(self.args.padding)
