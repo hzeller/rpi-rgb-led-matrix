@@ -25,36 +25,34 @@ class Clock(CommonBase):
         except Exception:
             sys.exit("provided image is not a gif")
 
-
+        # Preprocess the gifs frames into canvases to improve playback performance
+        canvases = []
+        mainModule.log("Preprocessing gif, this may take a moment depending on the size of the gif...")
+        for frame_index in range(0, num_frames):
+            gif.seek(frame_index)
+            # must copy the frame out of the gif, since thumbnail() modifies the image in-place
+            frame = gif.copy()
+            #frame.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
+            frame.thumbnail((10, 10), Image.ANTIALIAS)
+            canvasImg = canvas.CreateFrameCanvas()
+            canvasImg.SetImage(frame.convert("RGB"), 2, 10)
+            canvases.append(canvasImg)
+        # Close the gif file to save memory now that we have copied out all of the frames
+        gif.close()
 
         white = graphics.Color(255, 255, 255)
 
         counter = 0
-        while(True):
-            # Preprocess the gifs frames into canvases to improve playback performance
-            canvases = []
-            mainModule.log("Preprocessing gif, this may take a moment depending on the size of the gif...")
-            for frame_index in range(0, num_frames):
-                gif.seek(frame_index)
-                # must copy the frame out of the gif, since thumbnail() modifies the image in-place
-                frame = gif.copy()
-                #frame.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
-                frame.thumbnail((10, 10), Image.ANTIALIAS)
-                canvasImg = canvas.CreateFrameCanvas()
-                canvasImg.SetImage(frame.convert("RGB"), 2, 10)
-                canvases.append(canvasImg)
-            # Close the gif file to save memory now that we have copied out all of the frames
-            gif.close()
-
-            counter = counter + 1
-            timestamp = time.strftime('%H:%M:%S')
-            timestamp = timestamp.center(self.args.padding)
-            mainModule.log("|" + timestamp + "|")
-            graphics.DrawText(canvas, font, 5, 21, white, timestamp)
-            time.sleep(1)
+        # while(True):
+        #     counter = counter + 1
+        timestamp = time.strftime('%H:%M:%S')
+        timestamp = timestamp.center(self.args.padding)
+        mainModule.log("|" + timestamp + "|")
+        graphics.DrawText(canvas, font, 5, 21, white, timestamp)
+        time.sleep(10)
             canvas.Clear()
-            if counter == 10:
-                sys.exit(0)
+            # if counter == 10:
+            #     sys.exit(0)
 
 
 # Main function
