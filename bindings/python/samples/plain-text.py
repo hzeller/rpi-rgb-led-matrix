@@ -9,6 +9,7 @@ class GraphicsTest(SampleBase):
     def __init__(self, *args, **kwargs):
         super(GraphicsTest, self).__init__(*args, **kwargs)
         self.parser.add_argument("--text", action="store", help="Text to show", default="AMOR", type=str)
+        self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=10, type=int)
 
     def run(self):
         self.args = self.parser.parse_args()
@@ -25,7 +26,7 @@ class GraphicsTest(SampleBase):
         #blue = graphics.Color(0, 0, 255)
         white = graphics.Color(255, 0, 0)
         word = self.args.text
-        word = word.center(9)
+        word = word.center(self.args.padding)
         print("|" + word + "|")
         graphics.DrawText(canvas, font, 2, 20, white, word)
 
