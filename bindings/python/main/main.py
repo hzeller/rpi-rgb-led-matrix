@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import argparse
 import random
 import sys
 from word import get_positive_word
@@ -18,7 +17,7 @@ class PlainText(CommonBase):
         return word
 
     def get_random(self):
-        return random.randint(0,2)
+        return random.randint(1,2)
 
     def show_text(self, word):
         canvas = self.matrix
@@ -74,6 +73,7 @@ class PlainText(CommonBase):
 
             while(True):
 
+                action = 0
                 action = self.get_random()
                 mainModule.log(str(action))
 
@@ -81,7 +81,6 @@ class PlainText(CommonBase):
                     word_selected = get_positive_word()
                     word_selected = mainModule.prepare_word(word_selected)
                     mainModule.show_text(word_selected);
-
                 elif action == 2: #Show Clock
                     word_selected = time.strftime('%H:%M')
                     mainModule.log("antes:" + word_selected);
