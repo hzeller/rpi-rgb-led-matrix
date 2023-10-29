@@ -8,8 +8,6 @@ import sys
 class Clock(CommonBase):
     def __init__(self, *args, **kwargs):
         super(Clock, self).__init__(*args, **kwargs)
-        self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=8, type=int)
-        self.parser.add_argument("--font", action="store", help="Font of the word. Default: 7x13.bdf", default="7x13.bdf", type=str)
 
     def run(self):
         self.args = self.parser.parse_args()

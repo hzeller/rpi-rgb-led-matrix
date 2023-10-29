@@ -8,11 +8,6 @@ import time
 class PlainText(CommonBase):
     def __init__(self, *args, **kwargs):
         super(PlainText, self).__init__(*args, **kwargs)
-        self.parser.add_argument("--text", action="store", help="Text to show", default="AMOR", type=str)
-        self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=10, type=int)
-        self.parser.add_argument("--font", action="store", help="Font of the word. Default: 7x13.bdf", default="7x13.bdf", type=str)
-        self.parser.add_argument("--centered", action="store", help="Center the word. Default: true", default="True", type=bool)
-        self.parser.add_argument("--fade", action="store", help="Animation Fade. Default: top", default="top", type=str)
 
     def run(self):
         self.args = self.parser.parse_args()
@@ -24,8 +19,8 @@ class PlainText(CommonBase):
         if self.args.centered :
             word = word.center(self.args.padding)
 
-        print("|" + word + "|")
-        print("Fade:" + str(self.args.fade))
+        mainModule.log("|" + word + "|")
+        mainModule.log("Fade:" + str(self.args.fade))
 
         x = 0
         y = 0
