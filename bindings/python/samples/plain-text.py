@@ -25,7 +25,7 @@ class GraphicsTest(SampleBase):
             word = word.center(self.args.padding)
 
         print("|" + word + "|")
-        print("Fade:" + str(y))
+        print("Fade:" + str(fade))
 
         x = 0
         y = 0
