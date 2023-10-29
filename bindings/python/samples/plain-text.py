@@ -22,7 +22,7 @@ class GraphicsTest(SampleBase):
         #blue = graphics.Color(0, 0, 255)
         white = graphics.Color(255, 0, 0)
         word = "AMOR"
-        word = word.center(12)
+        word = word.center(8)
         graphics.DrawText(canvas, font, 2, 20, white, word)
 
         time.sleep(20)   # show display for 10 seconds before exit
