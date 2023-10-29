@@ -9,7 +9,7 @@ from PIL import Image
 class Clock(CommonBase):
     def __init__(self, *args, **kwargs):
         super(Clock, self).__init__(*args, **kwargs)
-        self.parser.add_argument("--image-path", action="store", help="Image path to show", default="/", type=str)
+        self.parser.add_argument("--image-path", action="store", help="Image path to show", default="/home/matias/ledtrix/bindings/python/img/domestic/WALWATCH.GIF", type=str)
 
     def run(self):
         self.args = self.parser.parse_args()
