@@ -91,20 +91,28 @@ class PlainText(CommonBase):
 
         try:
             mainModule.log("Press CTRL-C to stop.")
-            action = self.get_random()
-            mainModule.log(str(action))
 
-            action = 1
 
-            if action == 1: #Positive Word
-                word_selected = get_positive_word()
-                mainModule.log("antes:" + word_selected);
-                word_selected = mainModule.prepare_word(word_selected)
-                mainModule.log("despues:" + word_selected);
-                mainModule.show_text(word_selected);
+            while(True):
 
-            time.sleep(10)   # show display for 10 seconds before exit
-            sys.exit(0)
+                action = self.get_random()
+                mainModule.log(str(action))
+
+                action = 2
+
+                if action == 1: #Positive Word
+                    word_selected = get_positive_word()
+                    word_selected = mainModule.prepare_word(word_selected)
+                    mainModule.show_text(word_selected);
+
+                elif action == 2: #Show Clock
+                    word_selected = time.strftime('%H:%M')
+                    mainModule.log("antes:" + word_selected);
+                    word_selected = mainModule.prepare_word(word_selected)
+                    mainModule.log("despues:" + word_selected);
+                    mainModule.show_text(word_selected);
+
+                time.sleep(6)   # show display for 10 seconds before exit
 
         except IOError as e:
             print(e.strerror)
