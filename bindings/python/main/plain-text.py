@@ -15,11 +15,11 @@ class PlainText(CommonBase):
         mainModule.log("self.args.text:|" + str(self.args.clock) + "|")
 
         text = ""
-        if self.args.clock == True:
+        if self.args.clock:
             text = time.strftime('%H:%M')
             if self.args.centered :
                 text = text.center(self.args.padding)
-        elif self.args.text != "":
+        elif not self.args.text:
             text = self.args.text
             if self.args.centered :
                 text = self.args.text.center(self.args.padding)
