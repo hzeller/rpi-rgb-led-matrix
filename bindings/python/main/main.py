@@ -132,6 +132,7 @@ class PlainText(CommonBase):
         xpos = 0
         while True:
             xpos += 1
+            mainModule.log(str(xpos))
             if (xpos > img_width):
                 xpos = 0
 
