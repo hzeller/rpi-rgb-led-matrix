@@ -47,7 +47,7 @@ class PlainText(SampleBase):
 
                 y = y - 2
         elif self.args.fade == 'left':
-            x = -40
+            x = -60
             while(x <= 0):
                 canvas.Clear()
                 print("x:" + str(x))
@@ -55,7 +55,7 @@ class PlainText(SampleBase):
                 time.sleep(0.200)
                 x = x + 2
         elif self.args.fade == 'right':
-            x = 40
+            x = 60
             while(x >= 0):
                 canvas.Clear()
                 print("x:" + str(x))
