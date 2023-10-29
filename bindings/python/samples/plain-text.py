@@ -29,7 +29,7 @@ class GraphicsTest(SampleBase):
         white = graphics.Color(255, 255, 255)
         word = self.args.text
         if self.args.centered :
-            word = word.center(self.args.centered)
+            word = word.center(self.args.padding)
 
         print("|" + word + "|")
         graphics.DrawText(canvas, font, 0, 20, white, word)
