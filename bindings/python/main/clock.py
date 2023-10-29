@@ -23,7 +23,7 @@ class Clock(CommonBase):
             timestamp = time.strftime('%H:%M:%S')
             timestamp = timestamp.center(self.args.padding)
             mainModule.log("|" + timestamp + "|")
-            graphics.DrawText(canvas, font, 0, 21, white, timestamp)
+            graphics.DrawText(canvas, font, 5, 21, white, timestamp)
             time.sleep(1)
             canvas.Clear()
             if counter == 10:
