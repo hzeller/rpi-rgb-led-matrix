@@ -7,6 +7,7 @@ import time
 from word import get_positive_word
 from common import CommonBase
 from rgbmatrix import graphics
+from PIL import Image
 
 class PlainText(CommonBase):
     def __init__(self, *args, **kwargs):
@@ -18,7 +19,6 @@ class PlainText(CommonBase):
         if val > hi:
             return 255
         return 255 * (val - lo) / (hi - lo)
-
 
     def rotate(self, x, y, sin, cos):
         return x * cos - y * sin, x * sin + y * cos
@@ -121,6 +121,26 @@ class PlainText(CommonBase):
         else:
             graphics.DrawText(canvas, font, 0, 21, random_color, word)
 
+    def show_ppm(self):
+        self.image = Image.open("../../../examples-api-use/runtext.ppm").convert('RGB')
+        self.image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+
+        double_buffer = self.matrix.CreateFrameCanvas()
+        img_width, img_height = self.image.size
+
+        # let's scroll
+        xpos = 0
+        while True:
+            xpos += 1
+            if (xpos > img_width):
+                xpos = 0
+
+            double_buffer.SetImage(self.image, -xpos)
+            double_buffer.SetImage(self.image, -xpos + img_width)
+
+            double_buffer = self.matrix.SwapOnVSync(double_buffer)
+            time.sleep(0.01)
+
     def run(self):
         self.args = self.parser.parse_args()
 
@@ -132,8 +152,9 @@ class PlainText(CommonBase):
 
                 action = 0
                 action = random.randint(1,3)
-                action = 3
+                action = 4
                 mainModule.log(str(action))
+
 
                 if action == 1: #Positive Word
                     word_selected = get_positive_word()
@@ -147,6 +168,8 @@ class PlainText(CommonBase):
                     mainModule.show_text(word_selected)
                 elif action == 3: #rotate
                     mainModule.rotate_square()
+                elif action == 4: #ppm
+                    mainModule.show_ppm()
 
                 time.sleep(6)   # show display for 10 seconds before exit
 
