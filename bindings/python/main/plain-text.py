@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import argparse
-from samplebase import SampleBase
+from common import CommonBase
 from rgbmatrix import graphics
 import time
 
 
-class PlainText(SampleBase):
+class PlainText(CommonBase):
     def __init__(self, *args, **kwargs):
         super(PlainText, self).__init__(*args, **kwargs)
         self.parser.add_argument("--text", action="store", help="Text to show", default="AMOR", type=str)
@@ -40,17 +40,14 @@ class PlainText(SampleBase):
         elif self.args.fade == 'bottom':
             y = 41
             while(y >= 21):
-                print("y:" + str(y))
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, white, word)
                 time.sleep(0.200)
-
                 y = y - 2
         elif self.args.fade == 'left':
             x = -60
             while(x <= 0):
                 canvas.Clear()
-                print("x:" + str(x))
                 graphics.DrawText(canvas, font, x, 21, white, word)
                 time.sleep(0.200)
                 x = x + 2
@@ -58,7 +55,6 @@ class PlainText(SampleBase):
             x = 60
             while(x >= 0):
                 canvas.Clear()
-                print("x:" + str(x))
                 graphics.DrawText(canvas, font, x, 21, white, word)
                 time.sleep(0.200)
                 x = x - 2

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from samplebase import SampleBase
+from common import CommonBase
 
 
-class PulsingColors(SampleBase):
+class PulsingColors(CommonBase):
     def __init__(self, *args, **kwargs):
         super(PulsingColors, self).__init__(*args, **kwargs)
 

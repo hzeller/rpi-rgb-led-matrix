@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # Display a runtext with double-buffering.
-from samplebase import SampleBase
+from common import CommonBase
 from rgbmatrix import graphics
 import time
 
 
-class RunText(SampleBase):
+class RunText(CommonBase):
     def __init__(self, *args, **kwargs):
         super(RunText, self).__init__(*args, **kwargs)
         self.parser.add_argument("-t", "--text", help="The text to scroll on the RGB LED panel", default="Hello world!")

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-from samplebase import SampleBase
+from common import CommonBase
 
 
-class SimpleSquare(SampleBase):
+class SimpleSquare(Base):
     def __init__(self, *args, **kwargs):
         super(SimpleSquare, self).__init__(*args, **kwargs)
 

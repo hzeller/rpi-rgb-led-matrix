@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import time
-from samplebase import SampleBase
+from common import CommonBase
 from PIL import Image
 
 
-class ImageScroller(SampleBase):
+class ImageScroller(CommonBase):
     def __init__(self, *args, **kwargs):
         super(ImageScroller, self).__init__(*args, **kwargs)
         self.parser.add_argument("-i", "--image", help="The image to display", default="../../../examples-api-use/runtext.ppm")

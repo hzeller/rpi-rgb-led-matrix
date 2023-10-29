@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from samplebase import SampleBase
+from common import CommonBase
 import math
 
 
@@ -15,7 +15,7 @@ def rotate(x, y, sin, cos):
     return x * cos - y * sin, x * sin + y * cos
 
 
-class RotatingBlockGenerator(SampleBase):
+class RotatingBlockGenerator(CommonBase):
     def __init__(self, *args, **kwargs):
         super(RotatingBlockGenerator, self).__init__(*args, **kwargs)
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import argparse
-from samplebase import SampleBase
+from common import CommonBase
 from rgbmatrix import graphics
 import time
 import sys
 
-class GraphicsTest(SampleBase):
+class Clock(CommonBase):
     def __init__(self, *args, **kwargs):
-        super(GraphicsTest, self).__init__(*args, **kwargs)
+        super(Clock, self).__init__(*args, **kwargs)
         self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=8, type=int)
         self.parser.add_argument("--font", action="store", help="Font of the word. Default: 7x13.bdf", default="7x13.bdf", type=str)
 
@@ -34,6 +34,6 @@ class GraphicsTest(SampleBase):
 
 # Main function
 if __name__ == "__main__":
-    graphics_test = GraphicsTest()
-    if (not graphics_test.process()):
-        graphics_test.print_help()
+    clock = Clock()
+    if (not clock.process()):
+        clock.print_help()

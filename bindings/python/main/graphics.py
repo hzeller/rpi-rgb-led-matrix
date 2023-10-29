@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-from samplebase import SampleBase
+from common import CommonBase
 from rgbmatrix import graphics
 import time
 
 
-class GraphicsTest(SampleBase):
+class GraphicsTest(CommonBase):
     def __init__(self, *args, **kwargs):
         super(GraphicsTest, self).__init__(*args, **kwargs)
 

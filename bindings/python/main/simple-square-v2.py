@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import time
 import sys
-from samplebase import SampleBase
+from common import CommonBase
 
 
-class SimpleSquare(SampleBase):
+class SimpleSquare(CommonBase):
     def __init__(self, *args, **kwargs):
         super(SimpleSquare, self).__init__(*args, **kwargs)
 
