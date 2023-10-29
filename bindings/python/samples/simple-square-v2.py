@@ -14,6 +14,7 @@ class SimpleSquare(SampleBase):
         print ("matrix.width: " + str(self.matrix.width))
         print ("matrix.height: " + str(self.matrix.height))
 
+        #Doble cuadrado
         for x in range(0, self.matrix.width):
             offset_canvas.SetPixel(x, 0, 255, 255, 255)
             offset_canvas.SetPixel(x, 1, 255, 255, 255)
