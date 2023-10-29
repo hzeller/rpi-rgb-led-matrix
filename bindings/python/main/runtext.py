@@ -4,11 +4,9 @@ from common import CommonBase
 from rgbmatrix import graphics
 import time
 
-
 class RunText(CommonBase):
     def __init__(self, *args, **kwargs):
         super(RunText, self).__init__(*args, **kwargs)
-        self.parser.add_argument("-t", "--text", help="The text to scroll on the RGB LED panel", default="Hello world!")
 
     def run(self):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
@@ -27,7 +25,6 @@ class RunText(CommonBase):
 
             time.sleep(0.05)
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
-
 
 # Main function
 if __name__ == "__main__":

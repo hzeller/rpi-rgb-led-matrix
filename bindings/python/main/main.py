@@ -77,7 +77,7 @@ class PlainText(CommonBase):
 
         # let's scroll
         xpos = 0
-        while xpos < 480:
+        while xpos < 470:
             xpos += 1
 
             if (xpos > img_width):
@@ -88,6 +88,27 @@ class PlainText(CommonBase):
 
             double_buffer = self.matrix.SwapOnVSync(double_buffer)
             time.sleep(0.01)
+
+        self.matrix.Clear()
+
+    def show_marquesine(self, phrase):
+
+        offscreen_canvas = self.matrix.CreateFrameCanvas()
+        font = graphics.Font()
+        font.LoadFont("../../../fonts/" + self.args.font)
+        random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
+        pos = offscreen_canvas.width
+        my_text = self.args.text
+
+        while True:
+            offscreen_canvas.Clear()
+            len = graphics.DrawText(offscreen_canvas, font, pos, 10, random_color, my_text)
+            pos -= 1
+            if (pos + len < 0):
+                pos = offscreen_canvas.width
+
+            time.sleep(0.05)
+            offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
 
     def run(self):
         self.args = self.parser.parse_args()
@@ -108,9 +129,7 @@ class PlainText(CommonBase):
                     mainModule.show_text(word_selected);
                 elif action == 2: #Show Clock
                     word_selected = time.strftime('%H:%M')
-                    mainModule.log("antes:" + word_selected)
                     word_selected = mainModule.prepare_word(word_selected)
-                    mainModule.log("despues:" + word_selected)
                     mainModule.show_text(word_selected)
                 elif action == 1: #ppm
                     mainModule.show_ppm()
