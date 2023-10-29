@@ -55,7 +55,7 @@ class PlainText(CommonBase):
             rotation += 1
 
             if rotation == 360:
-                return
+                break
 
             rotation %= 360
 
