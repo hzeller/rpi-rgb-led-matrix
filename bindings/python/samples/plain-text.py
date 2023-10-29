@@ -14,7 +14,7 @@ class PlainText(SampleBase):
         self.parser.add_argument("--centered", action="store", help="Center the word. Default: true", default="True", type=bool)
         self.parser.add_argument("--fade", action="store", help="Animation Fade. Default: top", default="top", type=str)
 
-    def process(self):
+    def run(self):
         self.args = self.parser.parse_args()
         canvas = self.matrix
         font = graphics.Font()
