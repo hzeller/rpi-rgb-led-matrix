@@ -25,7 +25,7 @@ class PlainText(CommonBase):
             text = time.strftime('%H:%M')
             if self.args.centered :
                 text = text.center(self.args.padding)
-        elif not self.args.text:
+        elif self.args.text:
             text = self.args.text
             if self.args.centered :
                 text = self.args.text.center(self.args.padding)
