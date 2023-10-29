@@ -131,7 +131,7 @@ class PlainText(CommonBase):
             while(True):
 
                 action = 0
-                action = random.randint(1,2)
+                action = random.randint(1,3)
                 mainModule.log(str(action))
 
                 if action == 1: #Positive Word
