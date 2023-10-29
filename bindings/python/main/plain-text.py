@@ -10,6 +10,10 @@ class PlainText(CommonBase):
         super(PlainText, self).__init__(*args, **kwargs)
 
     def getTextToShow(self):
+
+        mainModule.log("self.args.clock:|" + str(self.args.clock) + "|")
+        mainModule.log("self.args.text:|" + str(self.args.clock) + "|")
+
         text = ""
         if self.args.clock == True:
             text = time.strftime('%H:%M')
