@@ -12,30 +12,9 @@ class PlainText(CommonBase):
     def __init__(self, *args, **kwargs):
         super(PlainText, self).__init__(*args, **kwargs)
 
-    # def getTextToShow(self):
-
-    #     mainModule.log("self.args.show_clock:|" + str(self.args.show_clock) + "|")
-    #     mainModule.log("self.args.text:|" + str(self.args.text) + "|")
-
-    #     text = ""
-    #     if self.args.show_clock == True:
-    #         text = time.strftime('%H:%M')
-    #         if self.args.centered :
-    #             text = text.center(self.args.padding)
-    #     elif self.args.text:
-    #         text = self.args.text
-    #         if self.args.centered :
-    #             text = self.args.text.center(self.args.padding)
-
-    #     return text
-
     def prepare_word(self, word):
-
-        # mainModule.log("self.args.show_clock:|" + str(self.args.show_clock) + "|")
-        # mainModule.log("self.args.text:|" + str(self.args.text) + "|")
         if self.args.centered :
             word = word.center(self.args.padding)
-
         return word
 
     def get_random(self):
@@ -97,8 +76,6 @@ class PlainText(CommonBase):
 
                 action = self.get_random()
                 mainModule.log(str(action))
-
-                action = 2
 
                 if action == 1: #Positive Word
                     word_selected = get_positive_word()
