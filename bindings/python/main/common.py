@@ -30,15 +30,7 @@ class CommonBase(object):
         self.parser.add_argument("--led-multiplexing", action="store", help="Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven... (Default: 0)", default=0, type=int)
         self.parser.add_argument("--led-panel-type", action="store", help="Needed to initialize special panels. Supported: 'FM6126A'", default="", type=str)
         self.parser.add_argument("--led-no-drop-privs", dest="drop_privileges", help="Don't drop privileges from 'root' after initializing the hardware.", action='store_false')
-
-        self.parser.add_argument("--fade", action="store", help="Animation Fade. Default: top", default="top", type=str)
-        self.parser.add_argument("--centered", action="store", help="Center the word. Default: true", default="True", type=bool)
-        self.parser.add_argument("--text", action="store", help="Text to show", default="", type=str)
-        self.parser.add_argument("--clock", action="store", help="Show a clock", default="False", type=bool)
-        self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=10, type=int)
-        self.parser.add_argument("--font", action="store", help="Font of the word. Default: 7x13.bdf", default="7x13.bdf", type=str)
         self.parser.add_argument("--verbose", action="store", help="Log verbnosity. Default: False", default="False", type=bool)
-
         self.parser.set_defaults(drop_privileges=True)
 
     def usleep(self, value):
