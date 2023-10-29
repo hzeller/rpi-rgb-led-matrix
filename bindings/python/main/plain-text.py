@@ -50,7 +50,7 @@ class PlainText(CommonBase):
             y = -21
             while(y <= 21):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, white, )
+                graphics.DrawText(canvas, font, 0, y, white, word)
                 time.sleep(0.200)
                 y = y + 2
         elif self.args.fade == 'bottom':
@@ -71,7 +71,7 @@ class PlainText(CommonBase):
             x = 60
             while(x >= 0):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, x, 21, word)
+                graphics.DrawText(canvas, font, x, 21, white, word)
                 time.sleep(0.200)
                 x = x - 2
         else:
