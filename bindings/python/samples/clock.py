@@ -8,7 +8,7 @@ import sys
 class GraphicsTest(SampleBase):
     def __init__(self, *args, **kwargs):
         super(GraphicsTest, self).__init__(*args, **kwargs)
-        self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=10, type=int)
+        self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=8, type=int)
         self.parser.add_argument("--font", action="store", help="Font of the word. Default: 7x13.bdf", default="7x13.bdf", type=str)
 
     def run(self):
@@ -27,6 +27,7 @@ class GraphicsTest(SampleBase):
             print("|" + timestamp + "|")
             graphics.DrawText(canvas, font, 0, 21, white, timestamp)
             time.sleep(1)
+            canvas.Clear()
             if counter == 10:
                 sys.exit(0)
 
