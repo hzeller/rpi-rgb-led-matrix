@@ -132,7 +132,10 @@ class PlainText(CommonBase):
         xpos = 0
         while True:
             xpos += 1
-            mainModule.log(str(xpos))
+
+            if xpos == 501:
+                return
+
             if (xpos > img_width):
                 xpos = 0
 
@@ -152,10 +155,8 @@ class PlainText(CommonBase):
             while(True):
 
                 action = 0
-                action = random.randint(1,3)
-                action = 4
+                action = random.randint(1,4)
                 mainModule.log(str(action))
-
 
                 if action == 1: #Positive Word
                     word_selected = get_positive_word()
