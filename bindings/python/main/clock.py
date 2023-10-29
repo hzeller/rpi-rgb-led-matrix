@@ -22,7 +22,7 @@ class Clock(CommonBase):
             counter = counter + 1
             timestamp = time.strftime('%H:%M:%S')
             timestamp = timestamp.center(self.args.padding)
-            print("|" + timestamp + "|")
+            mainModule.log("|" + timestamp + "|")
             graphics.DrawText(canvas, font, 0, 21, white, timestamp)
             time.sleep(1)
             canvas.Clear()
@@ -32,6 +32,6 @@ class Clock(CommonBase):
 
 # Main function
 if __name__ == "__main__":
-    clock = Clock()
-    if (not clock.process()):
-        clock.print_help()
+    mainModule = Clock()
+    if (not mainModule.process()):
+        mainModule.print_help()

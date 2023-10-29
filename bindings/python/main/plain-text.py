@@ -14,6 +14,7 @@ class PlainText(CommonBase):
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/" + self.args.font)
+
         white = graphics.Color(255, 255, 255)
         word = self.args.text
         if self.args.centered :
