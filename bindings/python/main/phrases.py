@@ -1,6 +1,6 @@
 import random
 
-def get_phrases():
+def get_positive_phrase():
 
     phrases = [
         "LA VIDA ES AQUÍ Y AHORA. ¡VÍVELA PLENAMENTE!",
@@ -101,7 +101,7 @@ def get_phrases():
         "SÉ LA MEJOR VERSIÓN DE TI MISMO CADA DÍA."
     ]
 
-
     pickup_position = random.randint(0,len(phrases)-1)
+
     return phrases[pickup_position]
 
