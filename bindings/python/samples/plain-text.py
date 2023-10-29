@@ -25,18 +25,19 @@ class GraphicsTest(SampleBase):
             word = word.center(self.args.padding)
 
         print("|" + word + "|")
+        print("Fade:" + str(y))
 
         x = 0
         y = 0
 
-        if self.args.padding == 'top':
+        if self.args.fade == 'top':
             y = -21
             while(y <= 21):
                 graphics.DrawText(canvas, font, 0, y, white, word)
                 time.sleep(0.200)
                 canvas.Clear()
                 y = y+1
-        elif self.args.padding == 'bottom':
+        elif self.args.fade == 'bottom':
             y = 41
             while(y >= 21):
                 print("y:" + str(y))
@@ -44,7 +45,7 @@ class GraphicsTest(SampleBase):
                 time.sleep(0.200)
                 canvas.Clear()
                 y = y-1
-        elif self.args.padding == 'left':
+        elif self.args.fade == 'left':
             x = -10
             while(x <= 0):
                 print("x:" + str(x))
@@ -52,7 +53,7 @@ class GraphicsTest(SampleBase):
                 time.sleep(0.200)
                 canvas.Clear()
                 x = x + 1
-        elif self.args.padding == 'right':
+        elif self.args.fade == 'right':
             x = 20
             while(x >= 0):
                 print("x:" + str(x))
