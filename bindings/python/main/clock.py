@@ -43,6 +43,7 @@ class Clock(CommonBase):
         white = graphics.Color(255, 255, 255)
 
         counter = 0
+        cur_frame = 0
         while(True):
             counter = counter + 1
             canvas.SwapOnVSync(canvases[cur_frame], framerate_fraction=10)
