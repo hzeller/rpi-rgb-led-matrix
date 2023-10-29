@@ -28,7 +28,7 @@ class GraphicsTest(SampleBase):
         #blue = graphics.Color(0, 0, 255)
         white = graphics.Color(255, 255, 255)
         word = self.args.text
-        if self.args.centered = True
+        if self.args.centered :
             word = word.center(self.args.centered)
 
         print("|" + word + "|")
