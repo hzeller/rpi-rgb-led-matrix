@@ -10,12 +10,13 @@ class GraphicsTest(SampleBase):
         super(GraphicsTest, self).__init__(*args, **kwargs)
         self.parser.add_argument("--text", action="store", help="Text to show", default="AMOR", type=str)
         self.parser.add_argument("--padding", action="store", help="Padding of the word. Default: 32", default=10, type=int)
+        self.parser.add_argument("--font", action="store", help="Font of the word. Default: 7x13.bdf", default="7x13.bdf", type=str)
 
     def run(self):
         self.args = self.parser.parse_args()
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/7x13.bdf")
+        font.LoadFont("../../../fonts/" + self.args.font)
 
         # red = graphics.Color(255, 0, 0)
         # graphics.DrawLine(canvas, 5, 5, 22, 13, red)
