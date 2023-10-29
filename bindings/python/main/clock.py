@@ -43,16 +43,21 @@ class Clock(CommonBase):
         white = graphics.Color(255, 255, 255)
 
         counter = 0
-        # while(True):
-        #     counter = counter + 1
-        timestamp = time.strftime('%H:%M:%S')
-        timestamp = timestamp.center(self.args.padding)
-        mainModule.log("|" + timestamp + "|")
-        graphics.DrawText(canvas, font, 5, 21, white, timestamp)
-        time.sleep(10)
-        canvas.Clear()
-            # if counter == 10:
-            #     sys.exit(0)
+        while(True):
+            counter = counter + 1
+            canvas.SwapOnVSync(canvases[cur_frame], framerate_fraction=10)
+            if cur_frame == num_frames - 1:
+                cur_frame = 0
+            else:
+                cur_frame += 1
+            timestamp = time.strftime('%H:%M:%S')
+            timestamp = timestamp.center(self.args.padding)
+            mainModule.log("|" + timestamp + "|")
+            graphics.DrawText(canvas, font, 5, 21, white, timestamp)
+            time.sleep(1)
+            canvas.Clear()
+            if counter == 10:
+                 sys.exit(0)
 
 
 # Main function
