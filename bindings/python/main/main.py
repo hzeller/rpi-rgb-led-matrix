@@ -4,7 +4,9 @@ import math
 import sys
 import time
 
-from word import get_positive_word
+from words import get_positive_word
+from phrases import get_positive_phrase
+
 from common import CommonBase
 from rgbmatrix import graphics
 from PIL import Image
@@ -98,14 +100,13 @@ class PlainText(CommonBase):
         font.LoadFont("../../../fonts/" + self.args.font)
         random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
         pos = offscreen_canvas.width
-        my_text = self.args.text
 
         while True:
             offscreen_canvas.Clear()
-            len = graphics.DrawText(offscreen_canvas, font, pos, 10, random_color, my_text)
+            len_word = graphics.DrawText(offscreen_canvas, font, pos, 21, random_color, phrase)
             pos -= 1
-            if (pos + len < 0):
-                pos = offscreen_canvas.width
+            if (pos + len_word < 0):
+                break
 
             time.sleep(0.05)
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
@@ -123,15 +124,18 @@ class PlainText(CommonBase):
                 action = random.randint(1,4)
                 mainModule.log(str(action))
 
-                if action == 3: #Positive Word
+                if action == 1: #Positive Word
                     word_selected = get_positive_word()
                     word_selected = mainModule.prepare_word(word_selected)
-                    mainModule.show_text(word_selected);
-                elif action == 2: #Show Clock
+                    mainModule.show_text(word_selected)
+                if action == 2: #Positive Phrase
+                    phrase_selected = get_positive_phrase()
+                    mainModule.show_marquesine(phrase_selected)
+                elif action == 3: #Show Clock
                     word_selected = time.strftime('%H:%M')
                     word_selected = mainModule.prepare_word(word_selected)
                     mainModule.show_text(word_selected)
-                elif action == 1: #ppm
+                elif action == 4: #ppm
                     mainModule.show_ppm()
 
                 time.sleep(6)   # show display for 10 seconds before exit
