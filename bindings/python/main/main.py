@@ -28,59 +28,6 @@ class PlainText(CommonBase):
             word = word.center(self.args.padding)
         return word
 
-    def rotate_square(self):
-        cent_x = self.matrix.width / 2
-        cent_y = self.matrix.height / 2
-
-        rotate_square = min(self.matrix.width, self.matrix.height) * 1.41
-        min_rotate = cent_x - rotate_square / 2
-        max_rotate = cent_x + rotate_square / 2
-
-        display_square = min(self.matrix.width, self.matrix.height) * 0.7
-        min_display = cent_x - display_square / 2
-        max_display = cent_x + display_square / 2
-
-        deg_to_rad = 2 * 3.14159265 / 360
-        rotation = 0
-
-        # Pre calculate colors
-        col_table = []
-        for x in range(int(min_rotate), int(max_rotate)):
-            col_table.insert(x, mainModule.scale_col(x, min_display, max_display))
-
-        offset_canvas = self.matrix.CreateFrameCanvas()
-
-
-        while True:
-            rotation += 1
-
-            if rotation == 360:
-                break
-
-            rotation %= 360
-
-
-
-
-            # calculate sin and cos once for each frame
-            angle = rotation * deg_to_rad
-            sin = math.sin(angle)
-            cos = math.cos(angle)
-
-            for x in range(int(min_rotate), int(max_rotate)):
-                for y in range(int(min_rotate), int(max_rotate)):
-                    # Our rotate center is always offset by cent_x
-                    rot_x, rot_y = mainModule.rotate(x - cent_x, y - cent_x, sin, cos)
-
-                    if x >= min_display and x < max_display and y >= min_display and y < max_display:
-                        x_col = col_table[x]
-                        y_col = col_table[y]
-                        offset_canvas.SetPixel(rot_x + cent_x, rot_y + cent_y, x_col, 255 - y_col, y_col)
-                    else:
-                        offset_canvas.SetPixel(rot_x + cent_x, rot_y + cent_y, 0, 0, 0)
-
-            offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
-
     def show_text(self, word):
         canvas = self.matrix
         font = graphics.Font()
@@ -123,14 +70,14 @@ class PlainText(CommonBase):
 
     def show_ppm(self):
         self.image = Image.open("../../../examples-api-use/runtext.ppm").convert('RGB')
-        self.image.resize((self.matrix.width-5, self.matrix.height-5), Image.ANTIALIAS)
+        self.image.resize((self.matrix.width-10, self.matrix.height-10), Image.ANTIALIAS)
 
         double_buffer = self.matrix.CreateFrameCanvas()
         img_width, img_height = self.image.size
 
         # let's scroll
         xpos = 0
-        while xpos < 500:
+        while xpos < 480:
             xpos += 1
 
             if (xpos > img_width):
@@ -155,7 +102,7 @@ class PlainText(CommonBase):
                 action = random.randint(1,4)
                 mainModule.log(str(action))
 
-                if action == 1: #Positive Word
+                if action == 3: #Positive Word
                     word_selected = get_positive_word()
                     word_selected = mainModule.prepare_word(word_selected)
                     mainModule.show_text(word_selected);
@@ -165,10 +112,7 @@ class PlainText(CommonBase):
                     word_selected = mainModule.prepare_word(word_selected)
                     mainModule.log("despues:" + word_selected)
                     mainModule.show_text(word_selected)
-                elif action == 3: #rotate
-                    self.matrix.Clear()
-                    mainModule.rotate_square()
-                elif action == 4: #ppm
+                elif action == 1: #ppm
                     mainModule.show_ppm()
 
                 time.sleep(6)   # show display for 10 seconds before exit
