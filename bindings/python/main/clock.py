@@ -50,7 +50,7 @@ class Clock(CommonBase):
         mainModule.log("|" + timestamp + "|")
         graphics.DrawText(canvas, font, 5, 21, white, timestamp)
         time.sleep(10)
-            canvas.Clear()
+        canvas.Clear()
             # if counter == 10:
             #     sys.exit(0)
 
