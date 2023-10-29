@@ -32,7 +32,7 @@ class GraphicsTest(SampleBase):
             word = word.center(self.args.padding)
 
         print("|" + word + "|")
-        graphics.DrawText(canvas, font, 0, 22, white, word)
+        graphics.DrawText(canvas, font, 0, 21, white, word)
 
         time.sleep(20)   # show display for 10 seconds before exit
 
