@@ -12,7 +12,7 @@ class PlainText(CommonBase):
     def __init__(self, *args, **kwargs):
         super(PlainText, self).__init__(*args, **kwargs)
 
-    def scale_col(val, lo, hi):
+    def scale_col(self, val, lo, hi):
         if val < lo:
             return 0
         if val > hi:
@@ -20,7 +20,7 @@ class PlainText(CommonBase):
         return 255 * (val - lo) / (hi - lo)
 
 
-    def rotate(x, y, sin, cos):
+    def rotate(self, x, y, sin, cos):
         return x * cos - y * sin, x * sin + y * cos
 
     def prepare_word(self, word):
@@ -132,6 +132,7 @@ class PlainText(CommonBase):
 
                 action = 0
                 action = random.randint(1,3)
+                action = 3
                 mainModule.log(str(action))
 
                 if action == 1: #Positive Word
