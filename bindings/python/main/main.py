@@ -99,9 +99,9 @@ class PlainText(CommonBase):
             if action == 1: #Positive Word
                 word_selected = get_positive_word()
                 mainModule.log("antes:" + word_selected);
-                word_selected = mainModule.prepare_word(self, word_selected)
+                word_selected = mainModule.prepare_word(word_selected)
                 mainModule.log("despues:" + word_selected);
-                mainModule.show_text(self, word_selected);
+                mainModule.show_text(word_selected);
 
             time.sleep(10)   # show display for 10 seconds before exit
             sys.exit(0)
