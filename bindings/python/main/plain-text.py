@@ -42,36 +42,40 @@ class PlainText(CommonBase):
         x = 0
         y = 0
 
+        word = mainModule.getTextToShow();
+
+        mainModule.log("word:|" + word + "|")
+
         if self.args.fade == 'top':
             y = -21
             while(y <= 21):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, white, mainModule.getTextToShow())
+                graphics.DrawText(canvas, font, 0, y, white, )
                 time.sleep(0.200)
                 y = y + 2
         elif self.args.fade == 'bottom':
             y = 41
             while(y >= 21):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, white, mainModule.getTextToShow())
+                graphics.DrawText(canvas, font, 0, y, white, word)
                 time.sleep(0.200)
                 y = y - 2
         elif self.args.fade == 'left':
             x = -60
             while(x <= 0):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, x, 21, white, mainModule.getTextToShow())
+                graphics.DrawText(canvas, font, x, 21, white, word)
                 time.sleep(0.200)
                 x = x + 2
         elif self.args.fade == 'right':
             x = 60
             while(x >= 0):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, x, 21, white, mainModule.getTextToShow())
+                graphics.DrawText(canvas, font, x, 21, word)
                 time.sleep(0.200)
                 x = x - 2
         else:
-            graphics.DrawText(canvas, font, 0, 21, white, mainModule.getTextToShow())
+            graphics.DrawText(canvas, font, 0, 21, white, word)
 
         time.sleep(10)   # show display for 10 seconds before exit
 
