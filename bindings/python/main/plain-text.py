@@ -11,14 +11,14 @@ class PlainText(CommonBase):
 
     def getTextToShow(self):
         text = ""
-        if self.args.text == True:
+        if self.args.clock == True:
+            text = time.strftime('%H:%M')
+            if self.args.centered :
+                text = text.center(self.args.padding)
+        elif self.args.text != "":
             text = self.args.text
             if self.args.centered :
                 text = self.args.text.center(self.args.padding)
-        elif self.args.clock == True:
-            text = time.strftime('%H:%M:%S')
-            if self.args.centered :
-                text = text.center(self.args.padding)
 
         return text
     def run(self):
