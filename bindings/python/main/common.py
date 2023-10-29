@@ -30,7 +30,7 @@ class CommonBase(object):
         self.parser.add_argument("--led-multiplexing", action="store", help="Multiplexing type: 0=direct; 1=strip; 2=checker; 3=spiral; 4=ZStripe; 5=ZnMirrorZStripe; 6=coreman; 7=Kaler2Scan; 8=ZStripeUneven... (Default: 0)", default=0, type=int)
         self.parser.add_argument("--led-panel-type", action="store", help="Needed to initialize special panels. Supported: 'FM6126A'", default="", type=str)
         self.parser.add_argument("--led-no-drop-privs", dest="drop_privileges", help="Don't drop privileges from 'root' after initializing the hardware.", action='store_false')
-        self.parser.add_argument("--verbose", action="store", help="Log verbnosity. Default: False", default="False", type=bool)
+        self.parser.add_argument("--verbose", action="store", help="Log verbnosity. Default: False", default=False, type=bool)
         self.parser.set_defaults(drop_privileges=True)
 
     def usleep(self, value):
