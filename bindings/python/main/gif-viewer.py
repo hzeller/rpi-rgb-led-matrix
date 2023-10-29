@@ -38,9 +38,9 @@ for frame_index in range(0, num_frames):
     # must copy the frame out of the gif, since thumbnail() modifies the image in-place
     frame = gif.copy()
     #frame.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
-    frame.thumbnail((15, 15), Image.ANTIALIAS)
+    frame.thumbnail((10, 10), Image.ANTIALIAS)
     canvas = matrix.CreateFrameCanvas()
-    canvas.SetImage(frame.convert("RGB"), 15, 10)
+    canvas.SetImage(frame.convert("RGB"), 1, 9)
     canvases.append(canvas)
 # Close the gif file to save memory now that we have copied out all of the frames
 gif.close()
