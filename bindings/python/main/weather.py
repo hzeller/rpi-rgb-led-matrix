@@ -1,8 +1,8 @@
-# import the module
-import python_weather
-
 import asyncio
 import os
+
+# import the module
+import python_weather
 
 async def getweather():
   # declare the client. the measuring unit used defaults to the metric system (celcius, km/h, etc.)
