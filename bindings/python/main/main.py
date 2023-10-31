@@ -136,8 +136,6 @@ class PlainText(CommonBase):
                 action = random.randint(1,5)
                 mainModule.log(str(action))
 
-                action = 5
-
                 if action == 1: #Positive Word
                     word_selected = get_positive_word()
                     word_selected = mainModule.prepare_word(word_selected)
