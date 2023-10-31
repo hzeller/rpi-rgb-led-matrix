@@ -131,11 +131,18 @@ class PlainText(CommonBase):
         try:
             mainModule.log("Press CTRL-C to stop.")
 
-
+            randomList=[]
             while(True):
 
                 action = 0
                 action = random.randint(1,5)
+
+                if action in randomList:
+                    if len(randomList) == 5:
+                        randomList=[]
+                    break
+
+                randomList.append(action)
                 mainModule.log(str(action))
 
                 if action == 1: #Positive Word
