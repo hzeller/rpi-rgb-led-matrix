@@ -151,7 +151,8 @@ class PlainText(CommonBase):
                     mainModule.show_ppm()
                 elif action == 5: #Weather
                     word_selected = await mainModule.show_weather()
-                    word_selected = mainModule.prepare_word(word_selected) + "º C"
+                    word_selected = word_selected + "º C"
+                    word_selected = mainModule.prepare_word(word_selected)
                     mainModule.show_text(word_selected)
                 time.sleep(6)   # show display for 10 seconds before exit
 
