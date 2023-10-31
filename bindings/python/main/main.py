@@ -136,31 +136,33 @@ class PlainText(CommonBase):
 
                 action = 0
                 action = random.randint(1,5)
+                mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
+                    mainModule.log("Already exist: " + str(action))
                     if len(randomList) == 5:
                         randomList=[]
-                    break
+                else:
+                    randomList.append(action)
+                    mainModule.log("Clearn selection: " + str(action))
+                    mainModule.log(str(action))
 
-                randomList.append(action)
-                mainModule.log(str(action))
-
-                if action == 1: #Positive Word
-                    word_selected = get_positive_word()
-                    word_selected = mainModule.prepare_word(word_selected)
-                    mainModule.show_text(word_selected)
-                if action == 2: #Positive Phrase
-                    phrase_selected = get_positive_phrase()
-                    mainModule.show_marquesine(phrase_selected)
-                elif action == 3: #Show Clock
-                    word_selected = time.strftime('%H:%M')
-                    word_selected = mainModule.prepare_word(word_selected)
-                    mainModule.show_text(word_selected)
-                elif action == 4: #ppm
-                    mainModule.show_ppm()
-                elif action == 5: #Weather
-                    await mainModule.show_weather()
-                time.sleep(6)   # show display for 10 seconds before exit
+                    if action == 1: #Positive Word
+                        word_selected = get_positive_word()
+                        word_selected = mainModule.prepare_word(word_selected)
+                        mainModule.show_text(word_selected)
+                    if action == 2: #Positive Phrase
+                        phrase_selected = get_positive_phrase()
+                        mainModule.show_marquesine(phrase_selected)
+                    elif action == 3: #Show Clock
+                        word_selected = time.strftime('%H:%M')
+                        word_selected = mainModule.prepare_word(word_selected)
+                        mainModule.show_text(word_selected)
+                    elif action == 4: #ppm
+                        mainModule.show_ppm()
+                    elif action == 5: #Weather
+                        await mainModule.show_weather()
+                    time.sleep(6)   # show display for 10 seconds before exit
 
         except IOError as e:
             print(e.strerror)
