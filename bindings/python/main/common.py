@@ -2,6 +2,7 @@ import argparse
 import time
 import sys
 import os
+import asyncio
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
@@ -52,7 +53,7 @@ class CommonBase(object):
         if self.args.verbose == True:
             print("Running")
 
-    def process(self):
+    async def process(self):
         self.args = self.parser.parse_args()
 
         options = RGBMatrixOptions()
@@ -90,7 +91,7 @@ class CommonBase(object):
         try:
             # Start loop
             print("Press CTRL-C to stop sample")
-            self.run()
+            await self.run()
         except KeyboardInterrupt:
             print("Exiting\n")
             sys.exit(0)
