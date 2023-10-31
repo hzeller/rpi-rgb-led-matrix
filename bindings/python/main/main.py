@@ -121,7 +121,7 @@ class PlainText(CommonBase):
             # returns the current day's forecast temperature (int)
             print(weather.current.temperature)
 
-    def run(self):
+    async def run(self):
         self.args = self.parser.parse_args()
 
         try:
@@ -150,7 +150,7 @@ class PlainText(CommonBase):
                 elif action == 4: #ppm
                     mainModule.show_ppm()
                 elif action == 5: #Weather
-                    mainModule.show_weather()
+                    await mainModule.show_weather()
 
                 time.sleep(6)   # show display for 10 seconds before exit
 
