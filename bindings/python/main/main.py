@@ -41,28 +41,30 @@ class PlainText(CommonBase):
         x = 0
         y = 0
 
-        if self.args.fade == 'top':
+        action = random.randint(1,4)
+
+        if action == 1: #top
             y = -21
             while(y <= 21):
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
                 y = y + 2
-        elif self.args.fade == 'bottom':
+        elif action == 2:  #'bottom'
             y = 41
             while(y >= 21):
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
                 y = y - 2
-        elif self.args.fade == 'left':
+        elif action == 3: # 'left'
             x = -60
             while(x <= 0):
                 canvas.Clear()
                 graphics.DrawText(canvas, font, x, 21, random_color, word)
                 time.sleep(0.200)
                 x = x + 2
-        elif self.args.fade == 'right':
+        elif action == 4: #'right':
             x = 60
             while(x >= 0):
                 canvas.Clear()
