@@ -119,7 +119,9 @@ class PlainText(CommonBase):
             weather = await client.get('Barcelona')
 
             # returns the current day's forecast temperature (int)
-            return weather.current.temperature
+            word_selected = str(weather.current.temperature) + "º C"
+            word_selected = mainModule.prepare_word(word_selected)
+            mainModule.show_text(word_selected)
 
     async def run(self):
         self.args = self.parser.parse_args()
@@ -150,10 +152,7 @@ class PlainText(CommonBase):
                 elif action == 4: #ppm
                     mainModule.show_ppm()
                 elif action == 5: #Weather
-                    word_selected = await mainModule.show_weather()
-                    word_selected = word_selected + "º C"
-                    word_selected = mainModule.prepare_word(word_selected)
-                    mainModule.show_text(word_selected)
+                    await mainModule.show_weather()
                 time.sleep(6)   # show display for 10 seconds before exit
 
         except IOError as e:
