@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import random
-import math
 import sys
 import time
+import asyncio
+import os
+import python_weather
 
 from words import get_positive_word
 from phrases import get_positive_phrase
@@ -111,6 +113,14 @@ class PlainText(CommonBase):
             time.sleep(0.05)
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
 
+    async def show_weather(self):
+        # declare the client. the measuring unit used defaults to the metric system (celcius, km/h, etc.)
+        async with python_weather.Client(unit=python_weather.METRIC) as client:
+            weather = await client.get('Barcelona')
+
+            # returns the current day's forecast temperature (int)
+            print(weather.current.temperature)
+
     def run(self):
         self.args = self.parser.parse_args()
 
@@ -137,6 +147,8 @@ class PlainText(CommonBase):
                     mainModule.show_text(word_selected)
                 elif action == 4: #ppm
                     mainModule.show_ppm()
+                elif action == 5: #Weather
+                    mainModule.show_weather()
 
                 time.sleep(6)   # show display for 10 seconds before exit
 
@@ -147,6 +159,9 @@ class PlainText(CommonBase):
 
 # Main function
 if __name__ == "__main__":
+    if os.name == 'nt':
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
     mainModule = PlainText()
     if (not mainModule.process()):
         mainModule.print_help()
