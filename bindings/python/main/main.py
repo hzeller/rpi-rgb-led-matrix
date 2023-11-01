@@ -78,7 +78,7 @@ class PlainText(CommonBase):
 
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/7x14B.bdf")
+        font.LoadFont("../../../fonts/6x13B.bdf")
         random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
         x = 0
