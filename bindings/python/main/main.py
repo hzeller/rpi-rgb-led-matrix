@@ -80,13 +80,13 @@ class PlainText(CommonBase):
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
 
-        image_weather_path = "~/ledtrix/bindings/python/img/weather/Kind.PARTLY_CLOUDY.png"
+        image_weather_path = "../img/weather/Kind.PARTLY_CLOUDY.png"
         if os.path.exists(image_weather_path):
             print('The file ' + image_weather_path + ' exists!')
             image_weather = Image.open()
             image_weather.thumbnail((10, 10), Image.ANTIALIAS)
         else:
-            print('The file ' + image_weather_path + 'does not exist.')
+            print('The file ' + image_weather_path + ' does not exist.')
 
         random_color_first_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
         random_color_second_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))

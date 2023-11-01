@@ -10,7 +10,26 @@ async def getweather():
     # fetch a weather forecast from a city
     weather = await client.get('Barcelona')
 
-    print(weather.current)
+    print(weather.current.description)
+    print(weather.current.kind)
+    # SUNNY = 113
+    # PARTLY_CLOUDY = 116
+    # CLOUDY = 119
+    # VERY_CLOUDY = 122
+    # FOG = 143
+    # LIGHT_SHOWERS = 176
+    # LIGHT_SLEET_SHOWERS = 179
+    # LIGHT_SLEET = 182
+    # THUNDERY_SHOWERS = 200
+    # LIGHT_SNOW = 227
+    # HEAVY_SNOW = 230
+    # LIGHT_RAIN = 266
+    # HEAVY_SHOWERS = 299
+    # HEAVY_RAIN = 302
+    # LIGHT_SNOW_SHOWERS = 323
+    # HEAVY_SNOW_SHOWERS = 335
+    # THUNDERY_HEAVY_RAIN = 389
+    # THUNDERY_SNOW_SHOWERS = 392
     # returns the current day's forecast temperature (int)
     print(weather.current.temperature)
 
@@ -30,3 +49,4 @@ if __name__ == '__main__':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
   asyncio.run(getweather())
+
