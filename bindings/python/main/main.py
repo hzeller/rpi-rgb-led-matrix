@@ -108,7 +108,7 @@ class PlainText(CommonBase):
                 canvas.Clear()
                 y_first_line = y - max_top_first_line
                 graphics.DrawText(canvas, font, 1, y_first_line, random_color_first_line, first_line)
-                graphics.DrawText(canvas, font, 0, y, random_color_second_line, second_line)
+                graphics.DrawText(canvas, font, 10, y, random_color_second_line, second_line)
                 if os.path.exists(image_weather_path):
                     canvas.SetImage(image_weather.convert('RGB'), 1, y_first_line + 5)
                 time.sleep(0.150)
