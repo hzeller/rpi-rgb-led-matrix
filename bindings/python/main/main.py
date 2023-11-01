@@ -90,29 +90,29 @@ class PlainText(CommonBase):
             y = -max_top_second_line
             while(y <= max_top_second_line):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, random_color, second_line)
-                time.sleep(0.100)
+                graphics.DrawText(canvas, font, 10, y, random_color, second_line)
+                time.sleep(0.150)
                 y = y + 2
         elif action == 2:  #'bottom'
             y = 41
             while(y >= max_top_second_line):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, random_color, second_line)
-                time.sleep(0.100)
+                graphics.DrawText(canvas, font, 10, y, random_color, second_line)
+                time.sleep(0.150)
                 y = y - 2
         elif action == 3: # 'left'
             x = -60
             while(x <= 0):
                 canvas.Clear()
                 graphics.DrawText(canvas, font, x, max_top_second_line, random_color, second_line)
-                time.sleep(0.100)
+                time.sleep(0.150)
                 x = x + 2
         elif action == 4: #'right':
             x = 60
             while(x >= 0):
                 canvas.Clear()
                 graphics.DrawText(canvas, font, x, max_top_second_line, random_color, second_line)
-                time.sleep(0.100)
+                time.sleep(0.150)
                 x = x - 2
         else:
             graphics.DrawText(canvas, font, 0, max_top_second_line, random_color, second_line)
