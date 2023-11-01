@@ -51,9 +51,12 @@ class PlainText(CommonBase):
                 if is_clock:
                     hour = word.split(":")[0]
                     minute = word.split(":")[1]
-                    if y % 2 == 0:
+                    n = y % 2
+                    if n == 0:
+                        print(n, "es par." + str(n))
                         graphics.DrawText(canvas, font, 0, y, random_color, word)
                     else:
+                        print(n, "es impar." + str(n))
                         graphics.DrawText(canvas, font, 0, y, random_color, hour + " " + minute)
                 else:
                     graphics.DrawText(canvas, font, 0, y, random_color, word)
