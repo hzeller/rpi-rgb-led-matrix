@@ -219,8 +219,8 @@ class PlainText(CommonBase):
             randomList=[]
             while(True):
 
-                action = 5
-                #action = random.randint(1,5)
+                action = 0
+                action = random.randint(1,5)
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
