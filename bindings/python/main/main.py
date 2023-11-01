@@ -102,29 +102,27 @@ class PlainText(CommonBase):
         action = random.randint(1,4)
 
         action = 1
-
+        first_line_gap = 15
         #temperature = mainModule.center_word(temperature)
 
         if action == 1: #top
-            max_top_first_line = 15
             max_top_second_line = 26
-            y = max_top_second_line
+            y = max_top_second_line * -1
             while(y <= max_top_second_line):
                 canvas.Clear()
-                y_first_line = y - max_top_first_line
+                y_first_line = y - first_line_gap
                 graphics.DrawText(canvas, font, 1, y_first_line, random_color_first_line, first_line)
                 graphics.DrawText(canvas, font, 25, y, random_color_second_line, second_line)
                 if os.path.exists(image_weather_path):
                     canvas.SetImage(image_weather.convert('RGB'), 5, y_first_line + 3)
-                time.sleep(0.150)
+                time.sleep(0.200)
                 y = y + 2
         elif action == 2:  #'bottom'
-            max_top_first_line = 15
-            max_top_second_line = 26
-            y = 41
+            max_top_second_line = 41
+            y = max_top_second_line
             while(y >= max_top_second_line):
                 canvas.Clear()
-                y_first_line = y - max_top_first_line
+                y_first_line = y - max_top_first_first_line_gap
                 graphics.DrawText(canvas, font, 1, y_first_line, random_color_first_line, first_line)
                 graphics.DrawText(canvas, font, 25, y, random_color_second_line, second_line)
                 time.sleep(0.150)
