@@ -78,7 +78,7 @@ class PlainText(CommonBase):
 
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/7x13.bdf")
+        font.LoadFont("../../../fonts/7x14B.bdf")
 
         kind = str(kind)
         kind = kind.upper().replace(" ", "_")
