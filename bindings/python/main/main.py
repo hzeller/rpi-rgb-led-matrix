@@ -60,8 +60,8 @@ class PlainText(CommonBase):
                         graphics.DrawText(canvas, font, 0, y, random_color, hour + " " + minute)
                 else:
                     graphics.DrawText(canvas, font, 0, y, random_color, word)
-                time.sleep(0.200)
-                y = y + 2
+                time.sleep(0.100)
+                y = y + 1
         elif action == 2:  #'bottom'
             y = 41
             while(y >= 21):
