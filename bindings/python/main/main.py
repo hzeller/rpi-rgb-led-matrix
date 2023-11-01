@@ -32,7 +32,11 @@ class PlainText(CommonBase):
             word = word.center(self.args.padding)
         return word
 
-    def show_text(self, word):
+    def show_text(self, word: str, with_square: bool = False):
+
+        if with_square == True:
+            self.put_square()
+
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/" + self.args.font)
@@ -97,6 +101,31 @@ class PlainText(CommonBase):
 
         self.matrix.Clear()
 
+    def put_square(self):
+        offset_canvas = self.matrix.CreateFrameCanvas()
+        #while True:
+        print ("matrix.width: " + str(self.matrix.width))
+        print ("matrix.height: " + str(self.matrix.height))
+
+        #Doble cuadrado
+        for x in range(0, self.matrix.width):
+            offset_canvas.SetPixel(x, 0, 255, 255, 255)
+            offset_canvas.SetPixel(x, 1, 255, 255, 255)
+
+        for x in range(0, self.matrix.width):
+            offset_canvas.SetPixel(x, self.matrix.height-1, 255, 255, 255)
+            offset_canvas.SetPixel(x, self.matrix.height-2, 255, 255, 255)
+
+        for y in range(0, self.matrix.height):
+            offset_canvas.SetPixel(0, y, 255, 255, 255)
+            offset_canvas.SetPixel(1, y, 255, 255, 255)
+
+        for y in range(0, self.matrix.height):
+            offset_canvas.SetPixel(self.matrix.width-1, y, 255, 255, 255)
+            offset_canvas.SetPixel(self.matrix.width-2, y, 255, 255, 255)
+
+        offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
+
     def show_marquesine(self, phrase):
 
         offscreen_canvas = self.matrix.CreateFrameCanvas()
@@ -123,7 +152,7 @@ class PlainText(CommonBase):
             # returns the current day's forecast temperature (int)
             word_selected = str(weather.current.temperature) + "º C"
             word_selected = mainModule.prepare_word(word_selected)
-            mainModule.show_text(word_selected)
+            mainModule.show_text(word_selected, True)
 
     async def run(self):
         self.args = self.parser.parse_args()
@@ -150,14 +179,14 @@ class PlainText(CommonBase):
                     if action == 1: #Positive Word
                         word_selected = get_positive_word()
                         word_selected = mainModule.prepare_word(word_selected)
-                        mainModule.show_text(word_selected)
+                        mainModule.show_text(word_selected, True)
                     if action == 2: #Positive Phrase
                         phrase_selected = get_positive_phrase()
                         mainModule.show_marquesine(phrase_selected)
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
                         word_selected = mainModule.prepare_word(word_selected)
-                        mainModule.show_text(word_selected)
+                        mainModule.show_text(word_selected, True)
                     elif action == 4: #ppm
                         mainModule.show_ppm()
                     elif action == 5: #Weather

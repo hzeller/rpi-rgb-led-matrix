@@ -10,6 +10,7 @@ async def getweather():
     # fetch a weather forecast from a city
     weather = await client.get('Barcelona')
 
+    print(weather.current)
     # returns the current day's forecast temperature (int)
     print(weather.current.temperature)
 
