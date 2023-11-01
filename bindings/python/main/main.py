@@ -84,8 +84,8 @@ class PlainText(CommonBase):
 
         x = 0
         y = 0
-        max_top_first_line = 30
-        max_top_second_line = 15
+        max_top_first_line = 15
+        max_top_second_line = 30
 
         action = random.randint(1,4)
 
