@@ -79,9 +79,6 @@ class PlainText(CommonBase):
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
-
-        kind = "none"
-
         image_weather_path = "../img/weather/" + kind + ".png"
 
         if os.path.exists(image_weather_path):
@@ -102,7 +99,7 @@ class PlainText(CommonBase):
 
         action = random.randint(1,4)
 
-        action = 1
+        action = 2
 
         #temperature = mainModule.center_word(temperature)
 
@@ -121,7 +118,9 @@ class PlainText(CommonBase):
             y = 41
             while(y >= max_top_second_line):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 9, y, random_color_second_line, second_line)
+                y_first_line = y - max_top_first_line
+                graphics.DrawText(canvas, font, 1, y_first_line, random_color_first_line, first_line)
+                graphics.DrawText(canvas, font, 25, y, random_color_second_line, second_line)
                 time.sleep(0.150)
                 y = y - 2
         elif action == 3: # 'left'
