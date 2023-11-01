@@ -100,10 +100,7 @@ class PlainText(CommonBase):
         y = 0
 
         action = random.randint(1,4)
-
-        action = 4
         first_line_gap = 15
-        #temperature = mainModule.center_word(temperature)
         max_top_second_line = 26
 
         if action == 1: #top
@@ -235,8 +232,8 @@ class PlainText(CommonBase):
             randomList=[]
             while(True):
 
-                action = 5
-                #action = random.randint(1,5)
+                #action = 5
+                action = random.randint(1,5)
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
