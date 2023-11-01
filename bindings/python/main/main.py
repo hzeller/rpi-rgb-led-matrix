@@ -78,19 +78,19 @@ class PlainText(CommonBase):
 
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/6x13B.bdf")
+        font.LoadFont("../../../fonts/6x13O.bdf")
         random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
         x = 0
         y = 0
-        max_top_second_line = 31
+        max_top_second_line = 30
         action = random.randint(1,4)
 
         if action == 1: #top
             y = -max_top_second_line
             while(y <= max_top_second_line):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 10, y, random_color, second_line)
+                graphics.DrawText(canvas, font, 8, y, random_color, second_line)
                 time.sleep(0.150)
                 y = y + 2
         elif action == 2:  #'bottom'
