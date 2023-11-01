@@ -84,7 +84,7 @@ class PlainText(CommonBase):
         if os.path.exists(image_weather_path):
             print('The file ' + image_weather_path + ' exists!')
             image_weather = Image.open(image_weather_path)
-            image_weather.thumbnail((10, 10), Image.ANTIALIAS)
+            image_weather.thumbnail((15, 15), Image.ANTIALIAS)
         else:
             print('The file ' + image_weather_path + ' does not exist.')
 
@@ -110,7 +110,7 @@ class PlainText(CommonBase):
                 graphics.DrawText(canvas, font, 1, y_first_line, random_color_first_line, first_line)
                 graphics.DrawText(canvas, font, 0, y, random_color_second_line, second_line)
                 if os.path.exists(image_weather_path):
-                    canvas.SetImage(image_weather.convert('RGB'))
+                    canvas.SetImage(image_weather.convert('RGB'), 1, random_color_second_line)
                 time.sleep(0.150)
                 y = y + 2
         elif action == 2:  #'bottom'
