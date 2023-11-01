@@ -79,6 +79,9 @@ class PlainText(CommonBase):
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
+        kind = str(kind)
+        print(kind)
+        kind = kind.upper()
         print(kind)
         image_weather_path = "../img/weather/" + kind + ".png"
 
