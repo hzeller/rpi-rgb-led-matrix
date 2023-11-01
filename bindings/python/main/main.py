@@ -141,6 +141,7 @@ class PlainText(CommonBase):
                 x = x + 2
         elif action == 4: #'right':
             x = 60
+            y_first_line = max_top_second_line - first_line_gap
             while(x >= 0):
                 canvas.Clear()
                 graphics.DrawText(canvas, font, x, y_first_line, random_color_first_line, first_line)
