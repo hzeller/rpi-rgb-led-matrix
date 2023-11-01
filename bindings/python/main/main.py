@@ -80,7 +80,7 @@ class PlainText(CommonBase):
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
 
-        kind = "Heavy rain at times"
+        kind = "Partly cloudy"
 
         image_weather_path = "../img/weather/" + kind + ".png"
 
