@@ -27,12 +27,12 @@ class PlainText(CommonBase):
     def rotate(self, x, y, sin, cos):
         return x * cos - y * sin, x * sin + y * cos
 
-    def prepare_word(self, word):
+    def center_word(self, word: str):
         if self.args.centered :
             word = word.center(self.args.padding)
         return word
 
-    def show_text(self, word: str, with_square: bool = False):
+    def show_text(self, word: str):
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/" + self.args.font)
@@ -46,8 +46,6 @@ class PlainText(CommonBase):
         if action == 1: #top
             y = -21
             while(y <= 21):
-                if with_square == True:
-                    self.put_square()
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
@@ -55,8 +53,6 @@ class PlainText(CommonBase):
         elif action == 2:  #'bottom'
             y = 41
             while(y >= 21):
-                if with_square == True:
-                    self.put_square()
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
@@ -65,8 +61,6 @@ class PlainText(CommonBase):
             x = -60
             while(x <= 0):
                 canvas.Clear()
-                if with_square == True:
-                    self.put_square()
                 graphics.DrawText(canvas, font, x, 21, random_color, word)
                 time.sleep(0.200)
                 x = x + 2
@@ -74,13 +68,54 @@ class PlainText(CommonBase):
             x = 60
             while(x >= 0):
                 canvas.Clear()
-                if with_square == True:
-                    self.put_square()
                 graphics.DrawText(canvas, font, x, 21, random_color, word)
                 time.sleep(0.200)
                 x = x - 2
         else:
             graphics.DrawText(canvas, font, 0, 21, random_color, word)
+
+    def show_double_text(self, first_line: str, second_line: str):
+
+        canvas = self.matrix
+        font = graphics.Font()
+        font.LoadFont("../../../fonts/5x8.bdf")
+        random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
+
+        x = 0
+        y = 0
+        max_top_second_line = 31
+        action = random.randint(1,4)
+
+        if action == 1: #top
+            y = -max_top_second_line
+            while(y <= max_top_second_line):
+                canvas.Clear()
+                graphics.DrawText(canvas, font, 0, y, random_color, second_line)
+                time.sleep(0.100)
+                y = y + 2
+        elif action == 2:  #'bottom'
+            y = 41
+            while(y >= max_top_second_line):
+                canvas.Clear()
+                graphics.DrawText(canvas, font, 0, y, random_color, second_line)
+                time.sleep(0.100)
+                y = y - 2
+        elif action == 3: # 'left'
+            x = -60
+            while(x <= 0):
+                canvas.Clear()
+                graphics.DrawText(canvas, font, x, max_top_second_line, random_color, second_line)
+                time.sleep(0.100)
+                x = x + 2
+        elif action == 4: #'right':
+            x = 60
+            while(x >= 0):
+                canvas.Clear()
+                graphics.DrawText(canvas, font, x, max_top_second_line, random_color, second_line)
+                time.sleep(0.100)
+                x = x - 2
+        else:
+            graphics.DrawText(canvas, font, 0, max_top_second_line, random_color, second_line)
 
     def show_ppm(self):
         self.image = Image.open("../../../examples-api-use/runtext.ppm").convert('RGB')
@@ -127,7 +162,7 @@ class PlainText(CommonBase):
 
         offset_canvas = self.matrix.SwapOnVSync(offset_canvas)
 
-    def show_marquesine(self, phrase):
+    def show_marquesine(self, phrase: str):
 
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
@@ -145,15 +180,15 @@ class PlainText(CommonBase):
             time.sleep(0.03)
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
 
-    async def show_weather(self):
+    async def show_weather_async(self):
         # declare the client. the measuring unit used defaults to the metric system (celcius, km/h, etc.)
         async with python_weather.Client(unit=python_weather.METRIC) as client:
             weather = await client.get('Barcelona')
 
             # returns the current day's forecast temperature (int)
-            word_selected = str(weather.current.temperature) + "º C"
-            word_selected = mainModule.prepare_word(word_selected)
-            mainModule.show_text(word_selected, True)
+            temperature = str(weather.current.temperature) + "º C"
+            temperature = mainModule.center_word(temperature)
+            mainModule.show_double_text("Barcelona", temperature)
 
     async def run(self):
         self.args = self.parser.parse_args()
@@ -164,8 +199,8 @@ class PlainText(CommonBase):
             randomList=[]
             while(True):
 
-                action = 0
-                action = random.randint(1,5)
+                action = 5
+                #action = random.randint(1,5)
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
@@ -179,19 +214,19 @@ class PlainText(CommonBase):
 
                     if action == 1: #Positive Word
                         word_selected = get_positive_word()
-                        word_selected = mainModule.prepare_word(word_selected)
-                        mainModule.show_text(word_selected, True)
+                        word_selected = mainModule.center_word(word_selected)
+                        mainModule.show_text(word_selected)
                     if action == 2: #Positive Phrase
                         phrase_selected = get_positive_phrase()
                         mainModule.show_marquesine(phrase_selected)
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
-                        word_selected = mainModule.prepare_word(word_selected)
-                        mainModule.show_text(word_selected, True)
+                        word_selected = mainModule.center_word(word_selected)
+                        mainModule.show_text(word_selected)
                     elif action == 4: #ppm
                         mainModule.show_ppm()
                     elif action == 5: #Weather
-                        await mainModule.show_weather()
+                        await mainModule.show_weather_async()
                     time.sleep(6)   # show display for 10 seconds before exit
 
         except IOError as e:
