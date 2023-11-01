@@ -32,7 +32,7 @@ class PlainText(CommonBase):
             word = word.center(self.args.padding)
         return word
 
-    def show_text(self, word: str):
+    def show_text(self, word: str, is_clock: bool = False):
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/" + self.args.font)
@@ -41,13 +41,22 @@ class PlainText(CommonBase):
         x = 0
         y = 0
 
-        action = random.randint(1,4)
+        #action = random.randint(1,4)
+        action = 1
 
         if action == 1: #top
             y = -21
             while(y <= 21):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, random_color, word)
+                if is_clock:
+                    hour = word.split(":")[0]
+                    minute = word.split(":")[1]
+                    if y % 2 == 0:
+                        graphics.DrawText(canvas, font, 0, y, random_color, word)
+                    else:
+                        graphics.DrawText(canvas, font, 0, y, random_color, hour + " " + minute)
+                else:
+                    graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
                 y = y + 2
         elif action == 2:  #'bottom'
@@ -232,8 +241,8 @@ class PlainText(CommonBase):
             randomList=[]
             while(True):
 
-                #action = 5
-                action = random.randint(1,5)
+                action = 3
+                #ction = random.randint(1,5)
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
@@ -248,14 +257,14 @@ class PlainText(CommonBase):
                     if action == 1: #Positive Word
                         word_selected = get_positive_word()
                         word_selected = mainModule.center_word(word_selected)
-                        mainModule.show_text(word_selected)
+                        mainModule.show_text(word_selected, False)
                     if action == 2: #Positive Phrase
                         phrase_selected = get_positive_phrase()
                         mainModule.show_marquesine(phrase_selected)
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
                         word_selected = mainModule.center_word(word_selected)
-                        mainModule.show_text(word_selected)
+                        mainModule.show_text(word_selected, True)
                     elif action == 4: #ppm
                         mainModule.show_ppm()
                     elif action == 5: #Weather
