@@ -83,7 +83,7 @@ class PlainText(CommonBase):
         image_weather_path = "../img/weather/Kind.PARTLY_CLOUDY.png"
         if os.path.exists(image_weather_path):
             print('The file ' + image_weather_path + ' exists!')
-            image_weather = Image.open()
+            image_weather = Image.open(image_weather_path)
             image_weather.thumbnail((10, 10), Image.ANTIALIAS)
         else:
             print('The file ' + image_weather_path + ' does not exist.')
