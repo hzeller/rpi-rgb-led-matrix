@@ -79,43 +79,49 @@ class PlainText(CommonBase):
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
-        random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
+        random_color_first_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
+        random_color_second_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
         x = 0
         y = 0
-        max_top_second_line = 30
+        max_top_first_line = 30
+        max_top_second_line = 15
+
         action = random.randint(1,4)
+
+        action = 1
 
         if action == 1: #top
             y = -max_top_second_line
             while(y <= max_top_second_line):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 8, y, random_color, second_line)
+                graphics.DrawText(canvas, font, 9, y - 10, random_color_first_line, first_line)
+                graphics.DrawText(canvas, font, 9, y, random_color_second_line, second_line)
                 time.sleep(0.150)
                 y = y + 2
         elif action == 2:  #'bottom'
             y = 41
             while(y >= max_top_second_line):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, random_color, second_line)
+                graphics.DrawText(canvas, font, 9, y, random_color_second_line, second_line)
                 time.sleep(0.150)
                 y = y - 2
         elif action == 3: # 'left'
             x = -60
             while(x <= 0):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, x, max_top_second_line, random_color, second_line)
+                graphics.DrawText(canvas, font, x, max_top_second_line, random_color_second_line, second_line)
                 time.sleep(0.150)
                 x = x + 2
         elif action == 4: #'right':
             x = 60
             while(x >= 0):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, x, max_top_second_line, random_color, second_line)
+                graphics.DrawText(canvas, font, x, max_top_second_line, random_color_second_line, second_line)
                 time.sleep(0.150)
                 x = x - 2
         else:
-            graphics.DrawText(canvas, font, 0, max_top_second_line, random_color, second_line)
+            graphics.DrawText(canvas, font, 0, max_top_second_line, random_color_second_line, second_line)
 
     def show_ppm(self):
         self.image = Image.open("../../../examples-api-use/runtext.ppm").convert('RGB')
