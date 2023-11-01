@@ -80,7 +80,7 @@ class PlainText(CommonBase):
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
 
-        image_weather_path = "home/matias/ledtrix/bindings/python/img/weather/Kind.PARTLY_CLOUDY.png"
+        image_weather_path = "~/ledtrix/bindings/python/img/weather/Kind.PARTLY_CLOUDY.png"
         if os.path.exists(image_weather_path):
             print('The file ' + image_weather_path + ' exists!')
             image_weather = Image.open()
