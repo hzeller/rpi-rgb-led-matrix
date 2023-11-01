@@ -101,7 +101,7 @@ class PlainText(CommonBase):
 
         action = random.randint(1,4)
 
-        action = 1
+        action = 2
         first_line_gap = 15
         #temperature = mainModule.center_word(temperature)
 
