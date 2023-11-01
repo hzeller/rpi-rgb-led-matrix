@@ -81,7 +81,6 @@ class PlainText(CommonBase):
         font.LoadFont("../../../fonts/7x13.bdf")
 
         kind = str(kind)
-        print(kind)
         kind = kind.upper().replace(" ", "_")
         print(kind)
         image_weather_path = "../img/weather/" + kind + ".PNG"
@@ -99,17 +98,17 @@ class PlainText(CommonBase):
 
         x = 0
         y = 0
-        max_top_first_line = 15
-        max_top_second_line = 26
 
         action = random.randint(1,4)
 
-        action = 2
+        action = 1
 
         #temperature = mainModule.center_word(temperature)
 
         if action == 1: #top
-            y = -max_top_second_line
+            max_top_first_line = 15
+            max_top_second_line = 26
+            y = max_top_second_line
             while(y <= max_top_second_line):
                 canvas.Clear()
                 y_first_line = y - max_top_first_line
@@ -120,6 +119,8 @@ class PlainText(CommonBase):
                 time.sleep(0.150)
                 y = y + 2
         elif action == 2:  #'bottom'
+            max_top_first_line = 15
+            max_top_second_line = 26
             y = 41
             while(y >= max_top_second_line):
                 canvas.Clear()
