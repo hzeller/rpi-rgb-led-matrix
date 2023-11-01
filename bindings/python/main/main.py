@@ -104,9 +104,9 @@ class PlainText(CommonBase):
         action = 2
         first_line_gap = 15
         #temperature = mainModule.center_word(temperature)
+        max_top_second_line = 26
 
         if action == 1: #top
-            max_top_second_line = 26
             y = max_top_second_line * -1
             while(y <= max_top_second_line):
                 canvas.Clear()
@@ -118,11 +118,10 @@ class PlainText(CommonBase):
                 time.sleep(0.200)
                 y = y + 2
         elif action == 2:  #'bottom'
-            max_top_second_line = 41
-            y = max_top_second_line
+            y = 41
             while(y >= max_top_second_line):
                 canvas.Clear()
-                y_first_line = y - 24
+                y_first_line = y + first_line_gap
                 graphics.DrawText(canvas, font, 1, y_first_line, random_color_first_line, first_line)
                 graphics.DrawText(canvas, font, 25, y, random_color_second_line, second_line)
                 time.sleep(0.150)
