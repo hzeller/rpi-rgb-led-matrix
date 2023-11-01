@@ -74,11 +74,15 @@ class PlainText(CommonBase):
         else:
             graphics.DrawText(canvas, font, 0, 21, random_color, word)
 
-    def show_double_text(self, first_line: str, second_line: str):
+    def show_text_weather(self, first_line: str, second_line: str):
 
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
+
+        image_weather = Image.open("../img/weather/Kind.PARTLY_CLOUDY.png")
+        image_weather.thumbnail((10, 10), Image.ANTIALIAS)
+
         random_color_first_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
         random_color_second_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
@@ -91,13 +95,16 @@ class PlainText(CommonBase):
 
         action = 1
 
+        #temperature = mainModule.center_word(temperature)
+
         if action == 1: #top
             y = -max_top_second_line
             while(y <= max_top_second_line):
                 canvas.Clear()
                 y_first_line = y - max_top_first_line
-                graphics.DrawText(canvas, font, 0, y_first_line, random_color_first_line, first_line)
-                graphics.DrawText(canvas, font, 0, y, random_color_second_line, second_line)
+                graphics.DrawText(canvas, font, 1, y_first_line, random_color_first_line, first_line)
+                graphics.DrawText(canvas, font, 0, y, random_color_second_line, trim(second_line))
+                canvas.SetImage(image_weather.convert('RGB'), 0, y)
                 time.sleep(0.150)
                 y = y + 2
         elif action == 2:  #'bottom'
@@ -194,9 +201,8 @@ class PlainText(CommonBase):
             weather = await client.get(city)
 
             temperature = str(weather.current.temperature) + "ºC"
-            temperature = mainModule.center_word(temperature)
             city = mainModule.center_word(city)
-            mainModule.show_double_text(city, temperature)
+            mainModule.show_text_weather(city, temperature)
 
     async def run(self):
         self.args = self.parser.parse_args()
