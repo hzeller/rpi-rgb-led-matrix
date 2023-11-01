@@ -101,7 +101,7 @@ class PlainText(CommonBase):
 
         action = random.randint(1,4)
 
-        action = 3
+        action = 4
         first_line_gap = 15
         #temperature = mainModule.center_word(temperature)
         max_top_second_line = 26
@@ -133,8 +133,7 @@ class PlainText(CommonBase):
             y_first_line = max_top_second_line - first_line_gap
             while(x <= 0):
                 canvas.Clear()
-                x_first_line = x
-                graphics.DrawText(canvas, font, x_first_line, y_first_line, random_color_first_line, first_line)
+                graphics.DrawText(canvas, font, x, y_first_line, random_color_first_line, first_line)
                 graphics.DrawText(canvas, font, x + 25, max_top_second_line, random_color_second_line, second_line)
                 if os.path.exists(image_weather_path):
                     canvas.SetImage(image_weather.convert('RGB'), x + 5, max_top_second_line - 13)
@@ -144,7 +143,10 @@ class PlainText(CommonBase):
             x = 60
             while(x >= 0):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, x, max_top_second_line, random_color_second_line, second_line)
+                graphics.DrawText(canvas, font, x, y_first_line, random_color_first_line, first_line)
+                graphics.DrawText(canvas, font, x - 25, max_top_second_line, random_color_second_line, second_line)
+                if os.path.exists(image_weather_path):
+                    canvas.SetImage(image_weather.convert('RGB'), x + 5, max_top_second_line - 13)
                 time.sleep(0.150)
                 x = x - 2
         else:
