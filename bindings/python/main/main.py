@@ -80,7 +80,7 @@ class PlainText(CommonBase):
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
 
-        image_weather = Image.open("../img/weather/Kind.PARTLY_CLOUDY.png")
+        image_weather = Image.open("home/matias/ledtrix/bindings/python/img/weather/Kind.PARTLY_CLOUDY.png")
         image_weather.thumbnail((10, 10), Image.ANTIALIAS)
 
         random_color_first_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
