@@ -133,7 +133,7 @@ class PlainText(CommonBase):
             y_first_line = max_top_second_line - first_line_gap
             while(x <= 0):
                 canvas.Clear()
-                x_first_line = x - 24
+                x_first_line = x + 24
                 graphics.DrawText(canvas, font, x_first_line, y_first_line, random_color_first_line, first_line)
                 graphics.DrawText(canvas, font, x, max_top_second_line, random_color_second_line, second_line)
                 # if os.path.exists(image_weather_path):
