@@ -80,15 +80,17 @@ class PlainText(CommonBase):
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
 
-        kind = "Sunny2"
+        kind = "Clear"
 
         image_weather_path = "../img/weather/" + kind + ".png"
+
         if os.path.exists(image_weather_path):
             print('The file ' + image_weather_path + ' exists!')
             image_weather = Image.open(image_weather_path)
             image_weather.thumbnail((15, 15), Image.ANTIALIAS)
         else:
             print('The file ' + image_weather_path + ' does not exist.')
+            image_weather_path = "../img/weather/none.png"
 
         random_color_first_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
         random_color_second_line = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
