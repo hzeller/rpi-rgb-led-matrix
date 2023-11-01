@@ -84,7 +84,7 @@ class PlainText(CommonBase):
         print(kind)
         kind = kind.upper().replace(" ", "_")
         print(kind)
-        image_weather_path = "../img/weather/" + kind + ".png"
+        image_weather_path = "../img/weather/" + kind + ".PNG"
 
         if os.path.exists(image_weather_path):
             print('The file ' + image_weather_path + ' exists!')
