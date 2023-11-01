@@ -122,7 +122,7 @@ class PlainText(CommonBase):
             y = max_top_second_line
             while(y >= max_top_second_line):
                 canvas.Clear()
-                y_first_line = y - max_top_first_first_line_gap
+                y_first_line = y - 24
                 graphics.DrawText(canvas, font, 1, y_first_line, random_color_first_line, first_line)
                 graphics.DrawText(canvas, font, 25, y, random_color_second_line, second_line)
                 time.sleep(0.150)
