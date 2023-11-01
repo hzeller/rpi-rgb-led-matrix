@@ -193,7 +193,7 @@ class PlainText(CommonBase):
             city = "Barcelona"
             weather = await client.get(city)
 
-            temperature = str(weather.current.temperature) + "º C"
+            temperature = str(weather.current.temperature) + "ºC"
             temperature = mainModule.center_word(temperature)
             city = mainModule.center_word(city)
             mainModule.show_double_text(city, temperature)
