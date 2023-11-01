@@ -33,10 +33,6 @@ class PlainText(CommonBase):
         return word
 
     def show_text(self, word: str, with_square: bool = False):
-
-        if with_square == True:
-            self.put_square()
-
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/" + self.args.font)
@@ -50,6 +46,8 @@ class PlainText(CommonBase):
         if action == 1: #top
             y = -21
             while(y <= 21):
+                if with_square == True:
+                    self.put_square()
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
@@ -57,6 +55,8 @@ class PlainText(CommonBase):
         elif action == 2:  #'bottom'
             y = 41
             while(y >= 21):
+                if with_square == True:
+                    self.put_square()
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.200)
@@ -65,6 +65,8 @@ class PlainText(CommonBase):
             x = -60
             while(x <= 0):
                 canvas.Clear()
+                if with_square == True:
+                    self.put_square()
                 graphics.DrawText(canvas, font, x, 21, random_color, word)
                 time.sleep(0.200)
                 x = x + 2
@@ -72,6 +74,8 @@ class PlainText(CommonBase):
             x = 60
             while(x >= 0):
                 canvas.Clear()
+                if with_square == True:
+                    self.put_square()
                 graphics.DrawText(canvas, font, x, 21, random_color, word)
                 time.sleep(0.200)
                 x = x - 2
@@ -103,9 +107,6 @@ class PlainText(CommonBase):
 
     def put_square(self):
         offset_canvas = self.matrix.CreateFrameCanvas()
-        #while True:
-        print ("matrix.width: " + str(self.matrix.width))
-        print ("matrix.height: " + str(self.matrix.height))
 
         #Doble cuadrado
         for x in range(0, self.matrix.width):
@@ -141,7 +142,7 @@ class PlainText(CommonBase):
             if (pos + len_word < 0):
                 break
 
-            time.sleep(0.05)
+            time.sleep(0.03)
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
 
     async def show_weather(self):
