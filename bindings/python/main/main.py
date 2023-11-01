@@ -95,8 +95,9 @@ class PlainText(CommonBase):
             y = -max_top_second_line
             while(y <= max_top_second_line):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 9, y - 10, random_color_first_line, first_line)
-                graphics.DrawText(canvas, font, 9, y, random_color_second_line, second_line)
+                y_first_line = y - 10
+                graphics.DrawText(canvas, font, 0, y_first_line, random_color_first_line, first_line)
+                graphics.DrawText(canvas, font, 0, y, random_color_second_line, second_line)
                 time.sleep(0.150)
                 y = y + 2
         elif action == 2:  #'bottom'
@@ -189,12 +190,13 @@ class PlainText(CommonBase):
     async def show_weather_async(self):
         # declare the client. the measuring unit used defaults to the metric system (celcius, km/h, etc.)
         async with python_weather.Client(unit=python_weather.METRIC) as client:
-            weather = await client.get('Barcelona')
+            city = "Barcelona"
+            weather = await client.get(city)
 
-            # returns the current day's forecast temperature (int)
             temperature = str(weather.current.temperature) + "º C"
             temperature = mainModule.center_word(temperature)
-            mainModule.show_double_text("Barcelona", temperature)
+            city = mainModule.center_word(city)
+            mainModule.show_double_text(city, temperature)
 
     async def run(self):
         self.args = self.parser.parse_args()
