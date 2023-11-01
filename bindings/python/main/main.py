@@ -78,7 +78,7 @@ class PlainText(CommonBase):
 
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/5x8.bdf")
+        font.LoadFont("../../../fonts/6x13B.bdf")
         random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
         x = 0
@@ -97,7 +97,7 @@ class PlainText(CommonBase):
             y = 41
             while(y >= max_top_second_line):
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 10, y, random_color, second_line)
+                graphics.DrawText(canvas, font, 0, y, random_color, second_line)
                 time.sleep(0.150)
                 y = y - 2
         elif action == 3: # 'left'
