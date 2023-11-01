@@ -10,8 +10,11 @@ async def getweather():
     # fetch a weather forecast from a city
     weather = await client.get('Barcelona')
 
-    print(weather.current.description)
+    # print(weather.current.description)
+    # print(weather.current.temperature)
     print(weather.current.kind)
+    #print(str(weather.current))
+
     # SUNNY = 113
     # PARTLY_CLOUDY = 116
     # CLOUDY = 119
@@ -31,15 +34,15 @@ async def getweather():
     # THUNDERY_HEAVY_RAIN = 389
     # THUNDERY_SNOW_SHOWERS = 392
     # returns the current day's forecast temperature (int)
-    print(weather.current.temperature)
+
 
     # get the weather forecast for a few days
-    for forecast in weather.forecasts:
-      print(forecast)
+    # for forecast in weather.forecasts:
+    #   print(forecast)
 
-      # hourly forecasts
-      for hourly in forecast.hourly:
-        print(f' --> {hourly!r}')
+    #   # hourly forecasts
+    #   for hourly in forecast.hourly:
+    #     print(f' --> {hourly!r}')
 
 if __name__ == '__main__':
   # see https://stackoverflow.com/questions/45600579/asyncio-event-loop-is-closed-when-getting-loop

@@ -74,13 +74,15 @@ class PlainText(CommonBase):
         else:
             graphics.DrawText(canvas, font, 0, 21, random_color, word)
 
-    def show_text_weather(self, first_line: str, second_line: str):
+    def show_text_weather(self, first_line: str, second_line: str, kind: str):
 
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/7x13.bdf")
 
-        image_weather_path = "../img/weather/Kind.PARTLY_CLOUDY.png"
+        kind = "Sunny2"
+
+        image_weather_path = "../img/weather/" + kind + ".png"
         if os.path.exists(image_weather_path):
             print('The file ' + image_weather_path + ' exists!')
             image_weather = Image.open(image_weather_path)
@@ -208,7 +210,7 @@ class PlainText(CommonBase):
 
             temperature = str(weather.current.temperature) + "ºC"
             city = mainModule.center_word(city)
-            mainModule.show_text_weather(city, temperature)
+            mainModule.show_text_weather(city, temperature, weather.current.kind)
 
     async def run(self):
         self.args = self.parser.parse_args()
@@ -219,8 +221,8 @@ class PlainText(CommonBase):
             randomList=[]
             while(True):
 
-                action = 0
-                action = random.randint(1,5)
+                action = 5
+                #action = random.randint(1,5)
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
