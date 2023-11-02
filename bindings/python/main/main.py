@@ -234,17 +234,16 @@ class PlainText(CommonBase):
             randomList=[]
             while(True):
 
-                #action = 3
                 action = random.randint(1,moods_count)
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
                     mainModule.log("Already exist: " + str(action))
-                    if len(randomList) == len(moods_count):
+                    if len(randomList) == moods_count:
                         randomList=[]
                 else:
                     randomList.append(action)
-                    mainModule.log("Clearn selection: " + str(action))
+                    mainModule.log("Clear selection: " + str(action))
                     mainModule.log(str(action))
 
                     if action == 1: #Positive Word
