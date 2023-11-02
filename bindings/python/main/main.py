@@ -8,6 +8,7 @@ import python_weather
 
 from words import get_positive_word
 from phrases import get_positive_phrase
+from locations import get_location
 
 from common import CommonBase
 from rgbmatrix import graphics
@@ -32,7 +33,7 @@ class PlainText(CommonBase):
             word = word.center(self.args.padding)
         return word
 
-    def show_text(self, word: str, is_clock: bool = False):
+    def show_text(self, word: str):
         canvas = self.matrix
         font = graphics.Font()
         font.LoadFont("../../../fonts/" + self.args.font)
@@ -41,25 +42,14 @@ class PlainText(CommonBase):
         x = 0
         y = 0
 
-        #action = random.randint(1,4)
-        action = 1
+        action = random.randint(1,4)
+        #action = 1
 
         if action == 1: #top
             y = -21
             while(y <= 21):
                 canvas.Clear()
-                if is_clock:
-                    hour = word.split(":")[0]
-                    minute = word.split(":")[1]
-                    n = y % 2
-                    if n == 0:
-                        print(n, "es par." + str(n))
-                        graphics.DrawText(canvas, font, 0, y, random_color, word)
-                    else:
-                        print(n, "es impar." + str(n))
-                        graphics.DrawText(canvas, font, 0, y, random_color, hour + " " + minute)
-                else:
-                    graphics.DrawText(canvas, font, 0, y, random_color, word)
+                graphics.DrawText(canvas, font, 0, y, random_color, word)
                 time.sleep(0.100)
                 y = y + 1
         elif action == 2:  #'bottom'
@@ -228,7 +218,7 @@ class PlainText(CommonBase):
     async def show_weather_async(self):
         # declare the client. the measuring unit used defaults to the metric system (celcius, km/h, etc.)
         async with python_weather.Client(unit=python_weather.METRIC) as client:
-            city = "Barcelona"
+            city = get_location()
             weather = await client.get(city)
 
             temperature = str(weather.current.temperature) + "ºC"
