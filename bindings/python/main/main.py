@@ -230,17 +230,17 @@ class PlainText(CommonBase):
 
         try:
             mainModule.log("Press CTRL-C to stop.")
-
+            moods_count = 4
             randomList=[]
             while(True):
 
                 #action = 3
-                action = random.randint(1,4)
+                action = random.randint(1,moods_count)
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
                     mainModule.log("Already exist: " + str(action))
-                    if len(randomList) == 5:
+                    if len(randomList) == len(moods_count):
                         randomList=[]
                 else:
                     randomList.append(action)
