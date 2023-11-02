@@ -2,7 +2,7 @@ import random
 
 def get_location():
     locations = [
-        "Barcelona", "Rosario", "Australia"
+        "Barcelona", "Rosario"
     ]
 
     pickup_position = random.randint(0,len(locations)-1)

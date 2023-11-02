@@ -235,7 +235,7 @@ class PlainText(CommonBase):
             while(True):
 
                 #action = 3
-                action = random.randint(1,5)
+                action = random.randint(1,4)
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
@@ -258,9 +258,7 @@ class PlainText(CommonBase):
                         word_selected = time.strftime('%H:%M')
                         word_selected = mainModule.center_word(word_selected)
                         mainModule.show_text(word_selected)
-                    elif action == 4: #ppm
-                        mainModule.show_ppm()
-                    elif action == 5: #Weather
+                    elif action == 4: #Weather
                         await mainModule.show_weather_async()
                     time.sleep(6)   # show display for 10 seconds before exit
 
