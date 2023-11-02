@@ -250,14 +250,14 @@ class PlainText(CommonBase):
                     if action == 1: #Positive Word
                         word_selected = get_positive_word()
                         word_selected = mainModule.center_word(word_selected)
-                        mainModule.show_text(word_selected, False)
+                        mainModule.show_text(word_selected)
                     if action == 2: #Positive Phrase
                         phrase_selected = get_positive_phrase()
                         mainModule.show_marquesine(phrase_selected)
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
                         word_selected = mainModule.center_word(word_selected)
-                        mainModule.show_text(word_selected, True)
+                        mainModule.show_text(word_selected)
                     elif action == 4: #ppm
                         mainModule.show_ppm()
                     elif action == 5: #Weather
