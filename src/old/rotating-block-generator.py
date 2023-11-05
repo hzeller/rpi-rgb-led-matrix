@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from common import CommonBase
+from main.base import CommonBase
 import math
 
 

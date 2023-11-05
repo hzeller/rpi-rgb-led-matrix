@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import time
-from common import CommonBase
+from main.base import CommonBase
 from PIL import Image
 
 

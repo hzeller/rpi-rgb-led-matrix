@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import argparse
-from common import CommonBase
+from base import Base
 from rgbmatrix import graphics
 import time
 
 
-class IconText(CommonBase):
+class IconText(Base):
     def __init__(self, *args, **kwargs):
         super(IconText, self).__init__(*args, **kwargs)
 

@@ -10,13 +10,13 @@ from words import get_positive_word
 from phrases import get_positive_phrase
 from locations import get_location
 
-from common import CommonBase
+from base import Base
 from rgbmatrix import graphics
 from PIL import Image
 
-class PlainText(CommonBase):
+class Index(Base):
     def __init__(self, *args, **kwargs):
-        super(PlainText, self).__init__(*args, **kwargs)
+        super(Index, self).__init__(*args, **kwargs)
 
     def scale_col(self, val, lo, hi):
         if val < lo:
@@ -271,6 +271,6 @@ if __name__ == "__main__":
     if os.name == 'nt':
         asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-    mainModule = PlainText()
+    mainModule = Index()
     if (not asyncio.run(mainModule.process())):
         mainModule.print_help()

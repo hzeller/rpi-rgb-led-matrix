@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Display a runtext with double-buffering.
-from common import CommonBase
+from main.base import CommonBase
 from rgbmatrix import graphics
 import time
 

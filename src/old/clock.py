@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import argparse
-from common import CommonBase
+from base import Base
 from rgbmatrix import graphics
 import time
 import sys
 from PIL import Image
 
-class Clock(CommonBase):
+class Clock(Base):
     def __init__(self, *args, **kwargs):
         super(Clock, self).__init__(*args, **kwargs)
 
@@ -14,7 +14,7 @@ class Clock(CommonBase):
         self.args = self.parser.parse_args()
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/" + self.args.font)
+        font.LoadFont("../../fonts/" + self.args.font)
 
         white = graphics.Color(255, 255, 255)
 

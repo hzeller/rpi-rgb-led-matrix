@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-from common import CommonBase
+from base import Base
 import time
 
 
-class GrayscaleBlock(CommonBase):
+class GrayscaleBlock(Base):
     def __init__(self, *args, **kwargs):
         super(GrayscaleBlock, self).__init__(*args, **kwargs)
 

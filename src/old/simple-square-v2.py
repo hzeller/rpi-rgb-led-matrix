@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import time
 import sys
-from common import CommonBase
+from main.base import CommonBase
 
 
 class SimpleSquare(CommonBase):

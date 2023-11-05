@@ -1,17 +1,15 @@
 #!/usr/bin/env python
-from common import CommonBase
+from base import Base
 from rgbmatrix import graphics
-import time
 
-
-class GraphicsTest(CommonBase):
+class GraphicsTest(Base:
     def __init__(self, *args, **kwargs):
         super(GraphicsTest, self).__init__(*args, **kwargs)
 
     def run(self):
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/7x13.bdf")
+        font.LoadFont("../../fonts/7x13.bdf")
 
         red = graphics.Color(255, 0, 0)
         graphics.DrawLine(canvas, 5, 5, 22, 13, red)
@@ -23,7 +21,6 @@ class GraphicsTest(CommonBase):
         graphics.DrawText(canvas, font, 2, 10, blue, "Text")
 
         time.sleep(10)   # show display for 10 seconds before exit
-
 
 # Main function
 if __name__ == "__main__":
