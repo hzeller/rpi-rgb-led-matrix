@@ -36,7 +36,7 @@ class PlainText(CommonBase):
     def show_text(self, word: str):
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/" + self.args.font)
+        font.LoadFont("../../fonts/" + self.args.font)
         random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
         x = 0
@@ -80,7 +80,7 @@ class PlainText(CommonBase):
 
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../../fonts/7x14B.bdf")
+        font.LoadFont("../../fonts/7x14B.bdf")
 
         kind = str(kind)
         kind = kind.upper().replace(" ", "_")
@@ -201,7 +201,7 @@ class PlainText(CommonBase):
 
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
-        font.LoadFont("../../../fonts/" + self.args.font)
+        font.LoadFont("../../fonts/" + self.args.font)
         random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
         pos = offscreen_canvas.width
 
