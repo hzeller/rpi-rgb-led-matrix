@@ -9,7 +9,7 @@ from common import Common
 from positiveword import PositiveWords
 from weather import Weather
 from models.phrases import get_positive_phrase
-from models.locations import get_location
+#from main.models.cities import get_location
 from base import Base
 from rgbmatrix import graphics
 from PIL import Image
