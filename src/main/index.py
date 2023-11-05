@@ -7,7 +7,8 @@ import os
 import python_weather
 
 from common import Common
-from models.words import get_positive_word
+from positiveword import PositiveWord
+#from models.words import get_positive_word
 from models.phrases import get_positive_phrase
 from models.locations import get_location
 
@@ -28,11 +29,6 @@ class Index(Base):
 
     def rotate(self, x, y, sin, cos):
         return x * cos - y * sin, x * sin + y * cos
-
-    # def center_word(self, word: str):
-    #     if self.args.centered :
-    #         word = word.center(self.args.padding)
-    #     return word
 
     def show_text(self, word: str):
         canvas = self.matrix
@@ -235,7 +231,8 @@ class Index(Base):
             randomList=[]
             while(True):
 
-                action = random.randint(1,moods_count)
+                #action = random.randint(1,moods_count)
+                action = 1
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
@@ -248,7 +245,8 @@ class Index(Base):
                     mainModule.log(str(action))
 
                     if action == 1: #Positive Word
-                        word_selected = get_positive_word()
+                        #word_selected = get_positive_word()
+                        word_selected = PositiveWord.get(self)
                         word_selected = Common.center_word(self, word_selected)
                         mainModule.show_text(word_selected)
                     if action == 2: #Positive Phrase
