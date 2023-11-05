@@ -1,7 +1,7 @@
 import random
 
 class Cities():
-    def get():
+    def get_random_one(self):
         cities = [
             "Barcelona", "Rosario"
         ]

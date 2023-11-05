@@ -15,6 +15,7 @@ class Weather():
         #def show(self, first_line: str, second_line: str, kind: str):
 
         async with python_weather.Client(unit=python_weather.METRIC) as client:
+
             city = Cities.get_random_one()
             weather = await client.get(city)
 
