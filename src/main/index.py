@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import random
 import time
+import sys
+import os
 
 from common import Common
 from positiveword import PositiveWords

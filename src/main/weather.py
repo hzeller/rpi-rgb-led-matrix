@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import random
 import python_weather
