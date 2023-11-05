@@ -55,9 +55,6 @@ class Base(object):
 
         options = RGBMatrixOptions()
 
-        # if self.args.led_gpio_mapping != None:
-        #   options.hardware_mapping = self.args.led_gpio_mapping
-
         options.hardware_mapping = 'adafruit-hat'
         options.rows = self.args.led_rows
         options.cols = self.args.led_cols
@@ -87,10 +84,14 @@ class Base(object):
 
         try:
             # Start loop
-            print("Press CTRL-C to stop sample")
+            print("+***********************************************************************************+")
+            print("▒           Welcome to LedMatrix - Todos los derechos son revervados para mi         ▒")
+            print("+***********************************************************************************+")
             await self.run()
         except KeyboardInterrupt:
+            print("+***********************************************************************************+")
+            print("▒           Gracias por usar la mejor app escrita en este lenguaje de mierda        ▒")
+            print("+***********************************************************************************+")
             print("Exiting\n")
             sys.exit(0)
-
         return True
