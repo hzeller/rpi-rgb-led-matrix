@@ -6,6 +6,7 @@ import asyncio
 import os
 import python_weather
 
+from common import Common
 from models.words import get_positive_word
 from models.phrases import get_positive_phrase
 from models.locations import get_location
@@ -28,10 +29,10 @@ class Index(Base):
     def rotate(self, x, y, sin, cos):
         return x * cos - y * sin, x * sin + y * cos
 
-    def center_word(self, word: str):
-        if self.args.centered :
-            word = word.center(self.args.padding)
-        return word
+    # def center_word(self, word: str):
+    #     if self.args.centered :
+    #         word = word.center(self.args.padding)
+    #     return word
 
     def show_text(self, word: str):
         canvas = self.matrix
@@ -222,7 +223,7 @@ class Index(Base):
             weather = await client.get(city)
 
             temperature = str(weather.current.temperature) + "ºC"
-            city = mainModule.center_word(city)
+            city = Common.center_word(city)
             mainModule.show_text_weather(city, temperature, weather.current.kind)
 
     async def run(self):
@@ -248,14 +249,14 @@ class Index(Base):
 
                     if action == 1: #Positive Word
                         word_selected = get_positive_word()
-                        word_selected = mainModule.center_word(word_selected)
+                        word_selected = Common.center_word(word_selected)
                         mainModule.show_text(word_selected)
                     if action == 2: #Positive Phrase
                         phrase_selected = get_positive_phrase()
                         mainModule.show_marquesine(phrase_selected)
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
-                        word_selected = mainModule.center_word(word_selected)
+                        word_selected = Common.center_word(word_selected)
                         mainModule.show_text(word_selected)
                     elif action == 4: #Weather
                         await mainModule.show_weather_async()
