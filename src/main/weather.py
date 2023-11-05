@@ -26,7 +26,7 @@ class Weather():
             font = graphics.Font()
             font.LoadFont("../../fonts/7x14B.bdf")
 
-            kind = str(kind)
+            kind = str(weather.current.kind)
             kind = kind.upper().replace(" ", "_")
             print(kind)
 
