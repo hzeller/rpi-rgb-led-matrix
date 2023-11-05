@@ -6,6 +6,7 @@ import python_weather
 import time
 
 from common import Common
+from models.cities import Cities
 from PIL import Image
 from rgbmatrix import graphics
 
@@ -14,7 +15,7 @@ class Weather():
         #def show(self, first_line: str, second_line: str, kind: str):
 
         async with python_weather.Client(unit=python_weather.METRIC) as client:
-            city = Common.get_location()
+            city = Cities.get_random_one()
             weather = await client.get(city)
 
             temperature = str(weather.current.temperature) + "ºC"
