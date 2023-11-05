@@ -6,9 +6,9 @@ import asyncio
 import os
 import python_weather
 
-from models.words import get_positive_word
-from models.phrases import get_positive_phrase
-from models.locations import get_location
+from ..models.words import get_positive_word
+from ..models.phrases import get_positive_phrase
+from ..models.locations import get_location
 
 from base import Base
 from rgbmatrix import graphics
@@ -274,3 +274,4 @@ if __name__ == "__main__":
     mainModule = Index()
     if (not asyncio.run(mainModule.process())):
         mainModule.print_help()
+
