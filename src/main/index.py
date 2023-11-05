@@ -223,7 +223,7 @@ class Index(Base):
             weather = await client.get(city)
 
             temperature = str(weather.current.temperature) + "ºC"
-            city = Common.center_word(city)
+            city = Common.center_word(self, city)
             mainModule.show_text_weather(city, temperature, weather.current.kind)
 
     async def run(self):
@@ -249,14 +249,14 @@ class Index(Base):
 
                     if action == 1: #Positive Word
                         word_selected = get_positive_word()
-                        word_selected = Common.center_word(word_selected)
+                        word_selected = Common.center_word(self, word_selected)
                         mainModule.show_text(word_selected)
                     if action == 2: #Positive Phrase
                         phrase_selected = get_positive_phrase()
                         mainModule.show_marquesine(phrase_selected)
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
-                        word_selected = Common.center_word(word_selected)
+                        word_selected = Common.center_word(self, word_selected)
                         mainModule.show_text(word_selected)
                     elif action == 4: #Weather
                         await mainModule.show_weather_async()
