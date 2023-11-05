@@ -211,7 +211,7 @@ class Index(Base):
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
                         word_selected = Common.center_word(self, word_selected)
-                        Common.show_text.show_text(self, word_selected)
+                        Common.show_text(self, word_selected)
                     elif action == 4: #Weather
                         await mainModule.show_weather_async()
                     time.sleep(6)   # show display for 10 seconds before exit
