@@ -12,7 +12,6 @@ from rgbmatrix import graphics
 
 class Weather():
     async def show_async(self):
-        #def show(self, first_line: str, second_line: str, kind: str):
 
         async with python_weather.Client(unit=python_weather.METRIC) as client:
 
