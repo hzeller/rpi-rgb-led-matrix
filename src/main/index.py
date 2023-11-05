@@ -7,7 +7,7 @@ import os
 import python_weather
 
 from common import Common
-from positiveword import PositiveWord
+from positiveword import PositiveWords
 #from models.words import get_positive_word
 from models.phrases import get_positive_phrase
 from models.locations import get_location
@@ -246,7 +246,7 @@ class Index(Base):
 
                     if action == 1: #Positive Word
                         #word_selected = get_positive_word()
-                        word_selected = PositiveWord.get(self)
+                        word_selected = PositiveWords.get(self)
                         word_selected = Common.center_word(self, word_selected)
                         mainModule.show_text(word_selected)
                     if action == 2: #Positive Phrase
