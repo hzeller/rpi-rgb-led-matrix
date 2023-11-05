@@ -6,9 +6,9 @@ import asyncio
 import os
 import python_weather
 
-from words import get_positive_word
-from phrases import get_positive_phrase
-from locations import get_location
+from models.words import get_positive_word
+from models.phrases import get_positive_phrase
+from models.locations import get_location
 
 from base import Base
 from rgbmatrix import graphics
