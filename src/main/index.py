@@ -8,7 +8,7 @@ import python_weather
 
 from common import Common
 from positiveword import PositiveWords
-#from models.words import get_positive_word
+
 from models.phrases import get_positive_phrase
 from models.locations import get_location
 
@@ -30,48 +30,48 @@ class Index(Base):
     def rotate(self, x, y, sin, cos):
         return x * cos - y * sin, x * sin + y * cos
 
-    def show_text(self, word: str):
-        canvas = self.matrix
-        font = graphics.Font()
-        font.LoadFont("../../fonts/" + self.args.font)
-        random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
+    # def show_text(self, word: str):
+    #     canvas = self.matrix
+    #     font = graphics.Font()
+    #     font.LoadFont("../../fonts/" + self.args.font)
+    #     random_color = graphics.Color(random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
-        x = 0
-        y = 0
+    #     x = 0
+    #     y = 0
 
-        action = random.randint(1,4)
-        #action = 1
+    #     action = random.randint(1,4)
+    #     #action = 1
 
-        if action == 1: #top
-            y = -21
-            while(y <= 21):
-                canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, random_color, word)
-                time.sleep(0.100)
-                y = y + 1
-        elif action == 2:  #'bottom'
-            y = 41
-            while(y >= 21):
-                canvas.Clear()
-                graphics.DrawText(canvas, font, 0, y, random_color, word)
-                time.sleep(0.200)
-                y = y - 2
-        elif action == 3: # 'left'
-            x = -60
-            while(x <= 0):
-                canvas.Clear()
-                graphics.DrawText(canvas, font, x, 21, random_color, word)
-                time.sleep(0.200)
-                x = x + 2
-        elif action == 4: #'right':
-            x = 60
-            while(x >= 0):
-                canvas.Clear()
-                graphics.DrawText(canvas, font, x, 21, random_color, word)
-                time.sleep(0.200)
-                x = x - 2
-        else:
-            graphics.DrawText(canvas, font, 0, 21, random_color, word)
+    #     if action == 1: #top
+    #         y = -21
+    #         while(y <= 21):
+    #             canvas.Clear()
+    #             graphics.DrawText(canvas, font, 0, y, random_color, word)
+    #             time.sleep(0.100)
+    #             y = y + 1
+    #     elif action == 2:  #'bottom'
+    #         y = 41
+    #         while(y >= 21):
+    #             canvas.Clear()
+    #             graphics.DrawText(canvas, font, 0, y, random_color, word)
+    #             time.sleep(0.200)
+    #             y = y - 2
+    #     elif action == 3: # 'left'
+    #         x = -60
+    #         while(x <= 0):
+    #             canvas.Clear()
+    #             graphics.DrawText(canvas, font, x, 21, random_color, word)
+    #             time.sleep(0.200)
+    #             x = x + 2
+    #     elif action == 4: #'right':
+    #         x = 60
+    #         while(x >= 0):
+    #             canvas.Clear()
+    #             graphics.DrawText(canvas, font, x, 21, random_color, word)
+    #             time.sleep(0.200)
+    #             x = x - 2
+    #     else:
+    #         graphics.DrawText(canvas, font, 0, 21, random_color, word)
 
     def show_text_weather(self, first_line: str, second_line: str, kind: str):
 
@@ -245,17 +245,16 @@ class Index(Base):
                     mainModule.log(str(action))
 
                     if action == 1: #Positive Word
-                        #word_selected = get_positive_word()
                         word_selected = PositiveWords.get(self)
                         word_selected = Common.center_word(self, word_selected)
-                        mainModule.show_text(word_selected)
+                        Common.show_text(self, word_selected)
                     if action == 2: #Positive Phrase
                         phrase_selected = get_positive_phrase()
                         mainModule.show_marquesine(phrase_selected)
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
                         word_selected = Common.center_word(self, word_selected)
-                        mainModule.show_text(word_selected)
+                        Common.show_text(self, word_selected)
                     elif action == 4: #Weather
                         await mainModule.show_weather_async()
                     time.sleep(6)   # show display for 10 seconds before exit
