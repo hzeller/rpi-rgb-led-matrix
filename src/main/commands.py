@@ -16,7 +16,7 @@ class Command:
         canvas = self.matrix
 
         font_prompt = graphics.Font()
-        font_prompt.LoadFont("../../fonts/6x10.bdf") #+ self.args.font)
+        font_prompt.LoadFont("../../fonts/6x13.bdf") #+ self.args.font)
 
         font_command = graphics.Font()
         font_command.LoadFont("../../fonts/6x13.bdf") # + self.args.font)
@@ -42,6 +42,7 @@ class Command:
                 graphics.DrawText(canvas, font_command, 14, 20, green_color, cmd)
                 time.sleep(0.5)
                 canvas.Clear()
+                graphics.DrawText(canvas, font_prompt, 2, 19, green_color, "> ")
                 graphics.DrawText(canvas, font_command, 14, 20, green_color, cmd)
                 time.sleep(0.5)
                 graphics.DrawText(canvas, font_prompt, 2, 19, green_color, ">_")
