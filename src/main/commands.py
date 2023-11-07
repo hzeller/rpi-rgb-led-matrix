@@ -40,7 +40,8 @@ class Command:
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
                 time.sleep(0.5)
+                graphics.DrawText(canvas, font, 2, 19, white_color, "_")
 
-            time.sleep(10)
+            time.sleep(5)
 
 
