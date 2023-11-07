@@ -26,13 +26,15 @@ class Command:
         while(times < 3):
             times = times + 1
             blink = 0
+            cmd = ""
             while(blink < 10):
                 blink = blink + 1
+                cmd = cmd + command_arr[blink]
                 graphics.DrawText(canvas, font, 2, 19, white_color, "_")
-                graphics.DrawText(canvas, font, 12, 21, white_color, "dir")
+                graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
                 time.sleep(1)
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 12, 21, white_color, "dir")
+                graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
                 time.sleep(1)
 
             time.sleep(5)
