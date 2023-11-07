@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
 
     // Make sure render-time delays are not influencing scroll-time
     if (speed > 0) {
-      if (next_frame.tv_sec == 0) {
+      if (next_frame.tv_sec == 0 && next_frame.tv_nsec == 0) {
         // First time. Start timer, but don't wait.
         clock_gettime(CLOCK_MONOTONIC, &next_frame);
       } else {
