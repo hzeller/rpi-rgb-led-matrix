@@ -24,7 +24,7 @@ class Command:
         command_char_ar = []
         command_char_ar.extend( command_selected )
 
-        while(times < 3):
+        while(times < 5):
             times = times + 1
             blink = 0
             cmd = ""
@@ -41,7 +41,5 @@ class Command:
                 graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
                 time.sleep(0.5)
                 graphics.DrawText(canvas, font, 2, 19, white_color, "_")
-
-            time.sleep(5)
 
 
