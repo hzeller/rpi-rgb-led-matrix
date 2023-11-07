@@ -30,7 +30,10 @@ class Command:
             cmd = ""
             while(blink < 10):
                 blink = blink + 1
-                cmd = cmd + command_char_ar[blink]
+
+                if(blink < len(command_char_ar)):
+                    cmd = cmd + command_char_ar[blink-1]
+
                 graphics.DrawText(canvas, font, 2, 19, white_color, "_")
                 graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
                 time.sleep(1)
