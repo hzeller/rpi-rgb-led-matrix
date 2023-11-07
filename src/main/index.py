@@ -29,8 +29,6 @@ class Index(Base):
 
                 action = random.randint(1,moods_count)
 
-                action = 5
-
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
