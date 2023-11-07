@@ -26,11 +26,10 @@ class Command:
             blink = 0
             while(blink < 10):
                 blink = blink + 1
+                graphics.DrawText(canvas, font, 2, 21, white_color, "_")
+                time.sleep(1)
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 1, 21, white_color, "_")
-                time.sleep(0.500)
-                canvas.Clear()
-                graphics.DrawText(canvas, font, 1, 21, white_color, " ")
+                time.sleep(1)
 
             time.sleep(5)
 
