@@ -87,11 +87,11 @@ class Weather():
                 y_first_line = max_top_second_line - first_line_gap
                 while(x >= 0):
                     canvas.Clear()
-                    graphics.DrawText(canvas, font, x, y_first_line, random_color_first_line, first_line)
-                    graphics.DrawText(canvas, font, x + 25, max_top_second_line, random_color_second_line, second_line)
+                    graphics.DrawText(canvas, font, x, y_first_line, random_color_first_line, city)
+                    graphics.DrawText(canvas, font, x + 25, max_top_second_line, random_color_second_line, temperature)
                     if os.path.exists(image_weather_path):
                         canvas.SetImage(image_weather.convert('RGB'), x + 5, max_top_second_line - 13)
                     time.sleep(0.150)
                     x = x - 2
             else:
-                graphics.DrawText(canvas, font, 0, max_top_second_line, random_color_second_line, second_line)
+                graphics.DrawText(canvas, font, 0, max_top_second_line, random_color_second_line, temperature)

@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python
 from models.words import get_positive_word
 
 class PositiveWords:

@@ -7,8 +7,9 @@ import os
 
 from common import Common
 from positiveword import PositiveWords
+from positivephrase import PositivePhrases
 from weather import Weather
-from models.phrases import get_positive_phrase
+
 from base import Base
 from rgbmatrix import graphics
 from PIL import Image
@@ -116,7 +117,7 @@ class Index(Base):
                         word_selected = Common.center_word(self, word_selected)
                         Common.show_text(self, word_selected)
                     if action == 2: #Positive Phrase
-                        phrase_selected = get_positive_phrase()
+                        phrase_selected = PositivePhrases.get(self)
                         mainModule.show_marquesine(phrase_selected)
                     elif action == 3: #Show Clock
                         word_selected = time.strftime('%H:%M')
