@@ -36,11 +36,11 @@ class Command:
 
                 graphics.DrawText(canvas, font, 2, 19, white_color, "_")
                 graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
-                time.sleep(1)
+                time.sleep(0.5)
                 canvas.Clear()
                 graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
-                time.sleep(1)
+                time.sleep(0.5)
 
-            time.sleep(5)
+            time.sleep(10)
 
 
