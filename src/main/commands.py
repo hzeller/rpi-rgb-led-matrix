@@ -15,7 +15,7 @@ class Command:
 
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../fonts/" + self.args.font)
+        font.LoadFont("../../fonts/6x13B.bdf" # + self.args.font)
         white_color = graphics.Color(255,255,255)
 
         times = 0
@@ -35,10 +35,10 @@ class Command:
                     cmd = cmd + command_char_ar[blink-1]
 
                 graphics.DrawText(canvas, font, 2, 19, white_color, "_")
-                graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
+                graphics.DrawText(canvas, font, 10, 21, white_color, cmd)
                 time.sleep(0.5)
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
+                graphics.DrawText(canvas, font, 10, 21, white_color, cmd)
                 time.sleep(0.5)
                 graphics.DrawText(canvas, font, 2, 19, white_color, "_")
 
