@@ -15,7 +15,7 @@ class Command:
 
         canvas = self.matrix
         font = graphics.Font()
-        font.LoadFont("../../fonts/6x13B.bdf" # + self.args.font)
+        font.LoadFont("../../fonts/6x13B.bdf") # + self.args.font)
         white_color = graphics.Color(255,255,255)
 
         times = 0
