@@ -28,11 +28,11 @@ class Command:
         command_char_ar = []
         command_char_ar.extend( command_selected )
 
-        while(times < 3):
+        while(times < 2):
             times = times + 1
             blink = 0
             cmd = ""
-            while(blink < 10):
+            while(blink < 5):
                 blink = blink + 1
 
                 if(blink <= len(command_char_ar)):
