@@ -21,7 +21,8 @@ class Command:
         times = 0
         blink = 0
 
-        command_arr = bytes(command_selected, 'utf-8')
+        command_char_ar = []
+        command_char_ar.extend( command_selected )
 
         while(times < 3):
             times = times + 1
@@ -29,7 +30,7 @@ class Command:
             cmd = ""
             while(blink < 10):
                 blink = blink + 1
-                cmd = cmd + str(command_arr[blink].decode('utf-8'))
+                cmd = cmd + command_char_ar[blink]
                 graphics.DrawText(canvas, font, 2, 19, white_color, "_")
                 graphics.DrawText(canvas, font, 12, 21, white_color, cmd)
                 time.sleep(1)
