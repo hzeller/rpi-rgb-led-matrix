@@ -39,10 +39,10 @@ class Command:
                     cmd = cmd + command_char_ar[blink-1]
 
                 graphics.DrawText(canvas, font_prompt, 2, 19, green_color, ">_")
-                graphics.DrawText(canvas, font_command, 13, 20, green_color, cmd)
+                graphics.DrawText(canvas, font_command, 14, 20, green_color, cmd)
                 time.sleep(0.5)
                 canvas.Clear()
-                graphics.DrawText(canvas, font_command, 13, 20, green_color, cmd)
+                graphics.DrawText(canvas, font_command, 14, 20, green_color, cmd)
                 time.sleep(0.5)
                 graphics.DrawText(canvas, font_prompt, 2, 19, green_color, ">_")
 
