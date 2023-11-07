@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import random
+import time
 
 from rgbmatrix import graphics
 
 class Marquesine():
-    async def show(self, phrase: str):
+    def show(self, phrase: str):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
         font.LoadFont("../../fonts/" + self.args.font)

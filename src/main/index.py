@@ -8,6 +8,8 @@ import os
 from common import Common
 from positiveword import PositiveWords
 from positivephrase import PositivePhrases
+from positivephrase import PositivePhrases
+from commands import Command
 from marquesine import Marquesine
 from weather import Weather
 from base import Base
@@ -21,11 +23,14 @@ class Index(Base):
 
         try:
             mainModule.log("Press CTRL-C to stop.")
-            moods_count = 4
+            moods_count = 5
             randomList=[]
             while(True):
 
                 action = random.randint(1,moods_count)
+
+                action = 5
+
                 mainModule.log("Selected by random: " + str(action))
 
                 if action in randomList:
@@ -50,6 +55,8 @@ class Index(Base):
                         Common.show_text(self, word_selected)
                     elif action == 4: #Weather
                         await Weather.show_async(self)
+                    elif action == 5: #Command
+                        Command.show(self)
                     time.sleep(6)   # show display for 10 seconds before exit
 
         except IOError as e:
