@@ -14,8 +14,12 @@ class Command:
         print("command selected: " + command_selected)
 
         canvas = self.matrix
-        font = graphics.Font()
-        font.LoadFont("../../fonts/6x13B.bdf") # + self.args.font)
+
+        font_prompt = graphics.Font()
+        font_prompt.LoadFont("../../fonts/"+ self.args.font)
+
+        font_command = graphics.Font()
+        font_command.LoadFont("../../fonts/6x13B.bdf") # + self.args.font)
         white_color = graphics.Color(255,255,255)
 
         times = 0
@@ -31,15 +35,15 @@ class Command:
             while(blink < 10):
                 blink = blink + 1
 
-                if(blink < len(command_char_ar)):
+                if(blink <= len(command_char_ar)):
                     cmd = cmd + command_char_ar[blink-1]
 
-                graphics.DrawText(canvas, font, 2, 19, white_color, "_")
-                graphics.DrawText(canvas, font, 10, 21, white_color, cmd)
+                graphics.DrawText(canvas, font_prompt, 2, 19, white_color, "_")
+                graphics.DrawText(canvas, font_command, 10, 21, white_color, cmd)
                 time.sleep(0.5)
                 canvas.Clear()
-                graphics.DrawText(canvas, font, 10, 21, white_color, cmd)
+                graphics.DrawText(canvas, font_command, 10, 21, white_color, cmd)
                 time.sleep(0.5)
-                graphics.DrawText(canvas, font, 2, 19, white_color, "_")
+                graphics.DrawText(canvas, font_prompt, 2, 19, white_color, "_")
 
 
