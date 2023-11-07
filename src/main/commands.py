@@ -20,7 +20,7 @@ class Command:
 
         font_command = graphics.Font()
         font_command.LoadFont("../../fonts/6x13.bdf") # + self.args.font)
-        white_color = graphics.Color(255,255,255)
+        green_color = graphics.Color(144, 238, 144)
 
         times = 0
         blink = 0
@@ -28,7 +28,7 @@ class Command:
         command_char_ar = []
         command_char_ar.extend( command_selected )
 
-        while(times < 5):
+        while(times < 3):
             times = times + 1
             blink = 0
             cmd = ""
@@ -38,12 +38,12 @@ class Command:
                 if(blink <= len(command_char_ar)):
                     cmd = cmd + command_char_ar[blink-1]
 
-                graphics.DrawText(canvas, font_prompt, 2, 19, white_color, "_")
-                graphics.DrawText(canvas, font_command, 10, 21, white_color, cmd)
+                graphics.DrawText(canvas, font_prompt, 2, 19, green_color, ">_")
+                graphics.DrawText(canvas, font_command, 12, 21, green_color, cmd)
                 time.sleep(0.5)
                 canvas.Clear()
-                graphics.DrawText(canvas, font_command, 10, 21, white_color, cmd)
+                graphics.DrawText(canvas, font_command, 12, 21, green_color, cmd)
                 time.sleep(0.5)
-                graphics.DrawText(canvas, font_prompt, 2, 19, white_color, "_")
+                graphics.DrawText(canvas, font_prompt, 2, 19, green_color, ">_")
 
 
