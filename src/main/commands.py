@@ -16,11 +16,11 @@ class Command:
         canvas = self.matrix
 
         font_prompt = graphics.Font()
-        font_prompt.LoadFont("../../fonts/"+ self.args.font)
+        font_prompt.LoadFont("../../fonts/5x8.bdf") #+ self.args.font)
 
         font_command = graphics.Font()
         font_command.LoadFont("../../fonts/6x13.bdf") # + self.args.font)
-        green_color = graphics.Color(144, 238, 144)
+        green_color = graphics.Color(0, 128, 144)
 
         times = 0
         blink = 0
