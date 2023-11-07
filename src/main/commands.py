@@ -19,7 +19,7 @@ class Command:
         font_prompt.LoadFont("../../fonts/"+ self.args.font)
 
         font_command = graphics.Font()
-        font_command.LoadFont("../../fonts/6x13B.bdf") # + self.args.font)
+        font_command.LoadFont("../../fonts/6x13.bdf") # + self.args.font)
         white_color = graphics.Color(255,255,255)
 
         times = 0
