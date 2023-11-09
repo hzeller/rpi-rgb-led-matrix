@@ -13,6 +13,7 @@ from commands import Command
 from marquesine import Marquesine
 from weather import Weather
 from base import Base
+from images import Images
 
 class Index(Base):
     def __init__(self, *args, **kwargs):
@@ -23,11 +24,12 @@ class Index(Base):
 
         try:
             mainModule.log("Press CTRL-C to stop.")
-            moods_count = 5
+            moods_count = 6
             randomList=[]
             while(True):
 
                 action = random.randint(1,moods_count)
+                action = 6
 
                 mainModule.log("Selected by random: " + str(action))
 
@@ -55,6 +57,8 @@ class Index(Base):
                         await Weather.show_async(self)
                     elif action == 5: #Command
                         Command.show(self)
+                    elif action == 6: #Command
+                        Images.show_random(self)
                     time.sleep(6)   # show display for 10 seconds before exit
 
         except IOError as e:
