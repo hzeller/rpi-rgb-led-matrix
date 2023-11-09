@@ -21,7 +21,7 @@ class Images:
         image = Image.open(random_file)
 
         # Configuration for the matrix
-        image.thumbnail((64, 32), Image.ANTIALIAS)
+        image.thumbnail((128, 64), Image.ANTIALIAS)
         self.matrix.SetImage(image.convert('RGB'))
 
         time.sleep(5)
