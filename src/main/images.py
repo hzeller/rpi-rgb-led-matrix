@@ -21,17 +21,7 @@ class Images:
         image = Image.open(random_file)
 
         # Configuration for the matrix
-        options = RGBMatrixOptions()
-
-        options.rows = 32
-        options.cols = 64
-        options.chain_length = 1
-        options.parallel = 1
-        options.hardware_mapping = 'adafruit-hat'
-
-        matrix = RGBMatrix(options = options)
-
-        image.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
-        matrix.SetImage(image.convert('RGB'))
+        image.thumbnail((64, 32), Image.ANTIALIAS)
+        self.matrix.SetImage(image.convert('RGB'))
 
         time.sleep(5)
