@@ -15,7 +15,7 @@ class Images:
         main_directory = "../img/fun"
         #random_file = choice(glob(f'{main_directory}/**/*.gif'))
 
-        files = [i for i in glob.glob(f'{main_directory}/*/*') if os.path.isfile(i)]
-        random_file = random.choice(files)
+        files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+        random_file = choice(files)
         print(random_file)
         time.sleep(3)
