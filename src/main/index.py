@@ -29,7 +29,7 @@ class Index(Base):
             while(True):
 
                 action = random.randint(1,moods_count)
-                action = 6
+                #action = 6
 
                 mainModule.log("Selected by random: " + str(action))
 

@@ -22,6 +22,6 @@ class Images:
 
         # Configuration for the matrix
         image.thumbnail((128, 64), Image.ANTIALIAS)
-        self.matrix.SetImage(image.convert('RGB'))
+        self.matrix.SetImage(image.convert('RGB'), 10)
 
         time.sleep(5)
