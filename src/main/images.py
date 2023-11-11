@@ -40,9 +40,11 @@ class Images:
         print("img_width original: " + str(img_width))
         print("img_height original: " + str(img_height))
 
-        #image = image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
-        #image = image.resize((img_width, self.matrix.height), Image.ANTIALIAS)
-        image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+        if img_height <= self.matrix.height:
+            image = image.resize((img_width, self.matrix.height), Image.ANTIALIAS)
+        else:
+            image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+
         double_buffer = self.matrix.CreateFrameCanvas()
 
         img_width, img_height = image.size
