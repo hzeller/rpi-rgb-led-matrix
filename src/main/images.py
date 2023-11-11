@@ -27,6 +27,7 @@ class Images:
         time.sleep(5)
 
     def show_random(self):
+        self.matrix.Clear()
         main_directory = "../img/fun"
         files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
         random_file = choice(files)
@@ -40,10 +41,10 @@ class Images:
         print("img_width original: " + str(img_width))
         print("img_height original: " + str(img_height))
 
-        if img_height <= self.matrix.height:
-            image = image.resize((img_width, self.matrix.height), Image.ANTIALIAS)
-        else:
-            image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+        #if img_height <= self.matrix.height:
+        image = image.resize((img_width, self.matrix.height), Image.ANTIALIAS)
+        # else:
+        #     image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
 
         double_buffer = self.matrix.CreateFrameCanvas()
 
