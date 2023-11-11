@@ -34,7 +34,8 @@ class Images:
 
         image = Image.open(random_file).convert('RGB')
 
-        image.resize((self.matrix.width, self.matrix.height/2), Image.ANTIALIAS)
+        # image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+        image.resize((self.matrix.width, 25), Image.ANTIALIAS)
 
         double_buffer = self.matrix.CreateFrameCanvas()
         img_width, img_height = image.size
