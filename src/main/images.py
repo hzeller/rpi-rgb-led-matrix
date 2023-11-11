@@ -39,12 +39,14 @@ class Images:
         double_buffer = self.matrix.CreateFrameCanvas()
         img_width, img_height = image.size
 
-        # let's scroll
+
         xpos = 0
-        while True:
+        times = 0
+        while times <= 3:
             xpos += 1
             if (xpos > img_width):
                 xpos = 0
+                times = times + 1
 
             double_buffer.SetImage(image, -xpos)
             double_buffer.SetImage(image, -xpos + img_width)
