@@ -29,18 +29,18 @@ class Index(Base):
             while(True):
 
                 action = random.randint(1,moods_count)
-                action = 6
+                #action = 6
 
                 mainModule.log("Selected by random: " + str(action))
 
-                # if action in randomList:
-                #     mainModule.log("Already exist: " + str(action))
-                #     if len(randomList) == moods_count:
-                #         randomList=[]
-                # else:
-                #     randomList.append(action)
-                #     mainModule.log("Clear selection: " + str(action))
-                #     mainModule.log(str(action))
+                if action in randomList:
+                    mainModule.log("Already exist: " + str(action))
+                    if len(randomList) == moods_count:
+                        randomList=[]
+                else:
+                    randomList.append(action)
+                    mainModule.log("Clear selection: " + str(action))
+                    mainModule.log(str(action))
 
                 if action == 1: #Positive Word
                     word_selected = PositiveWords.get(self)
@@ -63,6 +63,10 @@ class Index(Base):
 
         except IOError as e:
             print(e.strerror)
+        except Exception as X:
+            print("Error in Images: " + str(X))
+            if (not asyncio.run(mainModule.process())):
+                mainModule.print_help()
         except KeyboardInterrupt:
             sys.exit(0)
 
