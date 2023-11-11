@@ -32,7 +32,7 @@ class Images:
         random_file = choice(files)
         print(random_file)
 
-        image = Image.open(random_file)
+        image = Image.open(random_file).convert('RGB')
 
         image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
 
