@@ -29,35 +29,35 @@ class Index(Base):
             while(True):
 
                 action = random.randint(1,moods_count)
-                #action = 6
+                action = 6
 
                 mainModule.log("Selected by random: " + str(action))
 
-                if action in randomList:
-                    mainModule.log("Already exist: " + str(action))
-                    if len(randomList) == moods_count:
-                        randomList=[]
-                else:
-                    randomList.append(action)
-                    mainModule.log("Clear selection: " + str(action))
-                    mainModule.log(str(action))
-                    if action == 1: #Positive Word
-                        word_selected = PositiveWords.get(self)
-                        word_selected = Common.center_word(self, word_selected)
-                        Common.show_text(self, word_selected)
-                    if action == 2: #Positive Phrase
-                        phrase_selected = PositivePhrases.get(self)
-                        Marquesine.show(self, phrase_selected)
-                    elif action == 3: #Show Clock
-                        word_selected = time.strftime('%H:%M')
-                        word_selected = Common.center_word(self, word_selected)
-                        Common.show_text(self, word_selected)
-                    elif action == 4: #Weather
-                        await Weather.show_async(self)
-                    elif action == 5: #Command
-                        Command.show(self)
-                    elif action == 6: #Image Gif
-                        Images.show_random(self)
+                # if action in randomList:
+                #     mainModule.log("Already exist: " + str(action))
+                #     if len(randomList) == moods_count:
+                #         randomList=[]
+                # else:
+                #     randomList.append(action)
+                #     mainModule.log("Clear selection: " + str(action))
+                #     mainModule.log(str(action))
+                if action == 1: #Positive Word
+                    word_selected = PositiveWords.get(self)
+                    word_selected = Common.center_word(self, word_selected)
+                    Common.show_text(self, word_selected)
+                if action == 2: #Positive Phrase
+                    phrase_selected = PositivePhrases.get(self)
+                    Marquesine.show(self, phrase_selected)
+                elif action == 3: #Show Clock
+                    word_selected = time.strftime('%H:%M')
+                    word_selected = Common.center_word(self, word_selected)
+                    Common.show_text(self, word_selected)
+                elif action == 4: #Weather
+                    await Weather.show_async(self)
+                elif action == 5: #Command
+                    Command.show(self)
+                elif action == 6: #Image Gif
+                    Images.show_random(self)
 
                 time.sleep(6)   # show display for 10 seconds before exit
 
