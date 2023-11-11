@@ -12,7 +12,7 @@ class Images:
     def get(self):
         return get_command()
 
-    def show_random(self):
+    def show_random2(self):
         main_directory = "../img/fun"
         files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
         random_file = choice(files)
@@ -25,3 +25,29 @@ class Images:
         self.matrix.SetImage(image.convert('RGB'), 10)
 
         time.sleep(5)
+
+    def show_random(self):
+        main_directory = "../img/fun"
+        files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+        random_file = choice(files)
+        print(random_file)
+
+        image = Image.open(random_file)
+
+        image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+
+        double_buffer = self.matrix.CreateFrameCanvas()
+        img_width, img_height = image.size
+
+        # let's scroll
+        xpos = 0
+        while True:
+            xpos += 1
+            if (xpos > img_width):
+                xpos = 0
+
+            double_buffer.SetImage(image, -xpos)
+            double_buffer.SetImage(image, -xpos + img_width)
+
+            double_buffer = self.matrix.SwapOnVSync(double_buffer)
+            time.sleep(0.01)
