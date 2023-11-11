@@ -29,7 +29,7 @@ class Index(Base):
             while(True):
 
                 action = random.randint(1,moods_count)
-                #action = 6
+                action = 6
 
                 mainModule.log("Selected by random: " + str(action))
 
@@ -57,7 +57,7 @@ class Index(Base):
                         await Weather.show_async(self)
                     elif action == 5: #Command
                         Command.show(self)
-                    elif action == 6: #Command
+                    elif action == 6: #Image Gif
                         Images.show_random(self)
                     time.sleep(6)   # show display for 10 seconds before exit
 
