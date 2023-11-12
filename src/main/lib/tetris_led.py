@@ -9,6 +9,7 @@ Total Height : 16 pixel height
 
 import numpy as np
 import time
+from PIL import Image, ImageDraw
 
 num_0 = (
     (2, 5, 4, 16, 0),
