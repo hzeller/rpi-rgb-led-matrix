@@ -90,6 +90,6 @@ class Images:
         print(random_file)
 
         while True:
-            for frame in Images.get_frames(random_file):
+            for frame in Images.get_frames(self, random_file):
                 self.matrix.SetImage(frame)
                 time.sleep(frame.info['duration']/1000)
