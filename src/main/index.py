@@ -12,6 +12,7 @@ from positivephrase import PositivePhrases
 from commands import Command
 from marquesine import Marquesine
 from weather import Weather
+from tetris import TetrisClock
 from base import Base
 from images import Images
 
@@ -24,12 +25,12 @@ class Index(Base):
 
         try:
             mainModule.log("Press CTRL-C to stop.")
-            moods_count = 6
+            moods_count = 7
             randomList=[]
             while(True):
 
                 action = random.randint(1,moods_count)
-                action = 6
+                action = moods_count
 
                 mainModule.log("Selected by random: " + str(action))
 
@@ -58,6 +59,8 @@ class Index(Base):
                     Command.show(self)
                 elif action == 6: #Image Gif
                     Images.show_random(self)
+                elif action == 7: #Tetris Clock
+                    TetrisClock.show(self)
 
                 time.sleep(6)   # show display for 10 seconds before exit
 
