@@ -88,8 +88,9 @@ class Images:
         files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
         random_file = choice(files)
         print(random_file)
-
-        while True:
+        times = 0
+        while times <= 3:
+            times = times + 1
             for frame in Images.get_frames(self, random_file):
                 self.matrix.SetImage(frame)
                 time.sleep(frame.info['duration']/1000)
