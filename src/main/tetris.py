@@ -40,9 +40,9 @@ class TetrisClock():
 
         tetris.make_canvas(canvas_h, canvas_w , 0)
 
-        tetris.set_scale(1)
-        tetris_str = tetris.TetrisString(1, tetris.CHAR_HEIGHT * 2, "TETRIS")
-        tetris_str.animate(self.matrix, double_buffer)
+        # tetris.set_scale(1)
+        # tetris_str = tetris.TetrisString(1, tetris.CHAR_HEIGHT * 2, "TETRIS")
+        # tetris_str.animate(self.matrix, double_buffer)
 
         tetris.set_scale(1)
         tetris_str = tetris.TetrisString(1, tetris.CHAR_HEIGHT * 3, "CLOCK")
