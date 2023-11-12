@@ -28,7 +28,7 @@ class Images:
 
     def show_random(self):
         self.matrix.Clear()
-        main_directory = "../img/fun/amimals"
+        main_directory = "../img/fun/animals"
         # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
         files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
         random_file = choice(files)
