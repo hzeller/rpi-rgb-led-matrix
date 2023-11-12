@@ -3,73 +3,73 @@ import time
 import os
 
 from random import choice
-from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from PIL import Image, ImageSequence
+from datetime import datetime
 from glob import glob
 
 class Images:
-    def show_random_1(self):
-        main_directory = "../img/fun/animals"
-        # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
-        files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
-        random_file = choice(files)
-        print(random_file)
+    # def show_random_1(self):
+    #     main_directory = "../img/fun/animals"
+    #     # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+    #     files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
+    #     random_file = choice(files)
+    #     print(random_file)
 
-        image = Image.open(random_file)
+    #     image = Image.open(random_file)
 
-        # Configuration for the matrix
-        #image.thumbnail((128, 64), Image.ANTIALIAS)
-        image = image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+    #     # Configuration for the matrix
+    #     #image.thumbnail((128, 64), Image.ANTIALIAS)
+    #     image = image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
 
 
-        self.matrix.SetImage(image.convert('RGB'))
+    #     self.matrix.SetImage(image.convert('RGB'))
 
-        time.sleep(5)
+    #     time.sleep(5)
 
-    def show_random_2(self):
-        self.matrix.Clear()
-        main_directory = "../img/fun/animals"
-        # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
-        files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
-        random_file = choice(files)
-        print(random_file)
+    # def show_random_2(self):
+    #     self.matrix.Clear()
+    #     main_directory = "../img/fun/animals"
+    #     # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+    #     files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
+    #     random_file = choice(files)
+    #     print(random_file)
 
-        image = Image.open(random_file).convert('RGB')
-        img_width, img_height = image.size
+    #     image = Image.open(random_file).convert('RGB')
+    #     img_width, img_height = image.size
 
-        print("self.matrix.width: " + str(self.matrix.width))
-        print("self.matrix.height: " + str(self.matrix.height))
-        print("img_width original: " + str(img_width))
-        print("img_height original: " + str(img_height))
+    #     print("self.matrix.width: " + str(self.matrix.width))
+    #     print("self.matrix.height: " + str(self.matrix.height))
+    #     print("img_width original: " + str(img_width))
+    #     print("img_height original: " + str(img_height))
 
-        #if img_height <= self.matrix.height:
-        image = image.resize((img_width, self.matrix.height), Image.ANTIALIAS)
-        # else:
-        #image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+    #     #if img_height <= self.matrix.height:
+    #     image = image.resize((img_width, self.matrix.height), Image.ANTIALIAS)
+    #     # else:
+    #     #image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
 
-        double_buffer = self.matrix.CreateFrameCanvas()
+    #     double_buffer = self.matrix.CreateFrameCanvas()
 
-        img_width, img_height = image.size
-        print("img_width despues: " + str(img_width))
-        print("img_height despues: " + str(img_height))
+    #     img_width, img_height = image.size
+    #     print("img_width despues: " + str(img_width))
+    #     print("img_height despues: " + str(img_height))
 
-        xpos = 0
-        times = 0
+    #     xpos = 0
+    #     times = 0
 
-        try:
-            while times <= 3:
-                xpos += 1
-                if (xpos > img_width):
-                    xpos = 0
-                    times = times + 1
+    #     try:
+    #         while times <= 3:
+    #             xpos += 1
+    #             if (xpos > img_width):
+    #                 xpos = 0
+    #                 times = times + 1
 
-                double_buffer.SetImage(image, -xpos)
-                double_buffer.SetImage(image, -xpos + img_width)
+    #             double_buffer.SetImage(image, -xpos)
+    #             double_buffer.SetImage(image, -xpos + img_width)
 
-                double_buffer = self.matrix.SwapOnVSync(double_buffer)
-                time.sleep(0.01)
-        except Exception as X:
-            print("Error in Images: " + str(X))
+    #             double_buffer = self.matrix.SwapOnVSync(double_buffer)
+    #             time.sleep(0.01)
+    #     except Exception as X:
+    #         print("Error in Images: " + str(X))
 
     def get_frames(self, path):
         """Returns an iterable of gif frames."""
@@ -87,7 +87,12 @@ class Images:
         files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
         random_file = choice(files)
         print(random_file)
-        times = 0
+        now = datetime.now()
+        end_date = now + datetime.timedelta(seconds=30)
+
+        print(now)
+        print(end_date)
+
         while times <= 4:
             times = times + 1
             for frame in Images.get_frames(self, random_file):
