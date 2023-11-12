@@ -83,13 +83,12 @@ class Images:
     def show_random(self):
         """Displays gif frames on matrix."""
         self.matrix.Clear()
-        main_directory = "../img/fun/animals"
-        # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
-        files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
+        main_directory = "../img/fun"
+        files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
         random_file = choice(files)
         print(random_file)
         times = 0
-        while times <= 3:
+        while times <= 4:
             times = times + 1
             for frame in Images.get_frames(self, random_file):
                 self.matrix.SetImage(frame)
