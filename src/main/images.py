@@ -76,7 +76,7 @@ class Images:
         frames = []
         with Image.open(path) as gif:
             for frame in ImageSequence.Iterator(gif):
-                frame = frame.convert('RGB').resize((32, 32))
+                frame = frame.convert('RGB').resize((64, 32))
                 frames.append(frame)
             return frames
 
