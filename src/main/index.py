@@ -65,8 +65,7 @@ class Index(Base):
             print(e.strerror)
         except Exception as X:
             print("Error in Images: " + str(X))
-            if (not asyncio.run(mainModule.process())):
-                mainModule.print_help()
+            asyncio.run(self)
         except KeyboardInterrupt:
             sys.exit(0)
 
