@@ -4,7 +4,7 @@ import os
 
 from random import choice
 from PIL import Image, ImageSequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from glob import glob
 
 class Images:
@@ -88,7 +88,7 @@ class Images:
         random_file = choice(files)
         print(random_file)
         now = datetime.now()
-        end_date = now + datetime.timedelta(seconds=30)
+        end_date = now + timedelta(seconds=30)
 
         print(now)
         print(end_date)
