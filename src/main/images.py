@@ -4,15 +4,11 @@ import os
 
 from random import choice
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
-from models.commands import get_command
-from PIL import Image
+from PIL import Image, ImageSequence
 from glob import glob
 
 class Images:
-    def get(self):
-        return get_command()
-
-    def show_random(self):
+    def show_random_1(self):
         main_directory = "../img/fun/animals"
         # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
         files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
@@ -26,11 +22,11 @@ class Images:
         image = image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
 
 
-        self.matrix.SetImage(image.convert('RGB'), 10)
+        self.matrix.SetImage(image.convert('RGB'))
 
         time.sleep(5)
 
-    def show_random2(self):
+    def show_random_2(self):
         self.matrix.Clear()
         main_directory = "../img/fun/animals"
         # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
@@ -74,3 +70,26 @@ class Images:
                 time.sleep(0.01)
         except Exception as X:
             print("Error in Images: " + str(X))
+
+    def get_frames(self, path):
+        """Returns an iterable of gif frames."""
+        frames = []
+        with Image.open(path) as gif:
+            for frame in ImageSequence.Iterator(gif):
+                frame = frame.convert('RGB').resize((32, 32))
+                frames.append(frame)
+            return frames
+
+    def show_random(self):
+        """Displays gif frames on matrix."""
+        self.matrix.Clear()
+        main_directory = "../img/fun/animals"
+        # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+        files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
+        random_file = choice(files)
+        print(random_file)
+
+        while True:
+            for frame in Images.get_frames(random_file):
+                self.matrix.SetImage(frame)
+                time.sleep(frame.info['duration']/1000)
