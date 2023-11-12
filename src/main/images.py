@@ -12,21 +12,25 @@ class Images:
     def get(self):
         return get_command()
 
-    def show_random2(self):
-        main_directory = "../img/fun"
-        files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+    def show_random(self):
+        main_directory = "../img/fun/animals"
+        # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+        files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
         random_file = choice(files)
         print(random_file)
 
         image = Image.open(random_file)
 
         # Configuration for the matrix
-        image.thumbnail((128, 64), Image.ANTIALIAS)
+        #image.thumbnail((128, 64), Image.ANTIALIAS)
+        image = image.resize((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+
+
         self.matrix.SetImage(image.convert('RGB'), 10)
 
         time.sleep(5)
 
-    def show_random(self):
+    def show_random2(self):
         self.matrix.Clear()
         main_directory = "../img/fun/animals"
         # files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
