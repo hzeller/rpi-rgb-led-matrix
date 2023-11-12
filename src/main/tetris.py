@@ -40,19 +40,11 @@ class TetrisClock():
 
         tetris.make_canvas(canvas_h, canvas_w , 0)
 
-        # tetris.set_scale(1)
-        # tetris_str = tetris.TetrisString(1, tetris.CHAR_HEIGHT * 2, "TETRIS")
-        # tetris_str.animate(self.matrix, double_buffer)
-
-        tetris.set_scale(1)
-        tetris_str = tetris.TetrisString(1, tetris.CHAR_HEIGHT * 3, "CLOCK")
-        tetris_str.animate(self.matrix, double_buffer)
-
         now = time.strftime('%H %M', time.localtime(time.time()))
 
         tetris.set_scale(2)
         tetris.set_bottom_shift(0)
-        tetris_str2 = tetris.TetrisString(1, 0,  now)
+        tetris_str2 = tetris.TetrisString(1, -4,  now)
         tetris_str2.animate(self.matrix, double_buffer)
 
         time.sleep(10)
