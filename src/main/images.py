@@ -81,15 +81,19 @@ class Images:
             return frames
 
     def show_random(self):
-        """Displays gif frames on matrix."""
-        self.matrix.Clear()
-        main_directory = "../img/fun"
-        files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
-        random_file = choice(files)
-        print(random_file)
-        end_date = datetime.now() + timedelta(seconds=30)
+        try:
+            """Displays gif frames on matrix."""
+            self.matrix.Clear()
+            main_directory = "../img/fun"
+            files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+            random_file = choice(files)
+            print(random_file)
+            end_date = datetime.now() + timedelta(seconds=30)
 
-        while datetime.now() <= end_date:
-            for frame in Images.get_frames(self, random_file):
-                self.matrix.SetImage(frame)
-                time.sleep(frame.info['duration']/1000)
+            while datetime.now() <= end_date:
+                for frame in Images.get_frames(self, random_file):
+                    self.matrix.SetImage(frame)
+                    time.sleep(frame.info['duration']/1000)
+        except Exception as ex:
+            print("Error in Images: " + str(ex))
+            return

@@ -54,25 +54,13 @@ class Index(Base):
                         word_selected = Common.center_word(self, word_selected)
                         Common.show_text(self, word_selected)
                     elif action == 4: #Weather
-                        try:
-                            await Weather.show_async(self)
-                        except Exception:
-                            continue
+                        await Weather.show_async(self)
                     elif action == 5: #Command
-                        try:
-                            Command.show(self)
-                        except Exception:
-                            continue
+                        Command.show(self)
                     elif action == 6: #Image Gif
-                        try:
-                            Images.show_random(self)
-                        except Exception:
-                            continue
+                        Images.show_random(self)
                     elif action == 7: #Tetris Clock
-                        try:
-                            TetrisClock.show(self)
-                        except Exception:
-                            continue
+                        TetrisClock.show(self)
 
                 time.sleep(6)   # show display for 10 seconds before exit
 
