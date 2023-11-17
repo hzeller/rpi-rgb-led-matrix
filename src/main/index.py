@@ -62,7 +62,7 @@ class Index(Base):
                     elif action == 7: #Tetris Clock
                         TetrisClock.show(self)
 
-                time.sleep(6)   # show display for 10 seconds before exit
+                time.sleep(1)   # show display for 10 seconds before exit
 
         except IOError as e:
             print(e.strerror)
