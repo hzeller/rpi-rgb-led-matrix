@@ -1226,27 +1226,3 @@ if __name__ == '__main__':
 
     tetris_str = TetrisString(0, 0, scale, "HELLO WORLD")
     tcanv = tetris_str.animate(canvas, tcanv, 0)
-
-
-
-    # A = TetrisChar(0, 0, scale)
-    # A.set_char('A')
-    # B = TetrisChar((CHAR_WIDTH + CHAR_KERNING), 0, scale)
-    # B.set_char('B')
-    # C = TetrisChar((CHAR_WIDTH + CHAR_KERNING) * 2, 0, scale)
-    # C.set_char('C')
-    # while True:
-    #     tcanv, rcanv, ret1 = A.animate(canvas, tcanv, 0)
-    #     if(ret1 == True):
-    #         canvas = rcanv.copy()
-    #     tcanv, rcanv, ret2 = B.animate(canvas, tcanv, 0)
-    #     if(ret2 == True):
-    #         canvas = rcanv.copy()
-    #     tcanv, rcanv, ret3 = C.animate(canvas, tcanv, 0)
-    #     if(ret3 == True):
-    #         canvas = rcanv.copy()
-    #     cv2.imshow("Tetris", tcanv)
-    #     cv2.waitKey(100)
-    #     if A.move_end == True and  B.move_end == True:
-    #         break
-    #     tcanv = canvas

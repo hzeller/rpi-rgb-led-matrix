@@ -15,6 +15,7 @@ class Command:
             print("command selected: " + command_selected)
 
             canvas = self.matrix
+            canvas.Clear()
 
             font_prompt = graphics.Font()
             font_prompt.LoadFont("../../fonts/5x8.bdf") #+ self.args.font)
