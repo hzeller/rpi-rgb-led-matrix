@@ -84,8 +84,10 @@ class Images:
         try:
             """Displays gif frames on matrix."""
             self.matrix.Clear()
-            main_directory = "../img/fun"
-            files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+            #main_directory = "../img/fun"
+            main_directory = "../img/fun/min"
+            #files = [i for i in glob(f'{main_directory}/*/*') if os.path.isfile(i)]
+            files = [i for i in glob(f'{main_directory}/*') if os.path.isfile(i)]
             random_file = choice(files)
             print(random_file)
             end_date = datetime.now() + timedelta(seconds=30)
