@@ -193,6 +193,18 @@ cdef class RGBMatrixOptions:
         def __get__(self): return self.__runtime_options.drop_privileges
         def __set__(self, uint8_t value): self.__runtime_options.drop_privileges = value
 
+    property drop_priv_user:
+        def __get__(self): return self.__runtime_options.drop_priv_user
+        def __set__(self, value):
+            self.__py_encoded_drop_priv_user = value.encode('utf-8')
+            self.__runtime_options.drop_priv_user = self.__py_encoded_drop_priv_user
+
+    property drop_priv_group:
+        def __get__(self): return self.__runtime_options.drop_priv_group
+        def __set__(self, value):
+            self.__py_encoded_drop_priv_group = value.encode('utf-8')
+            self.__runtime_options.drop_priv_group = self.__py_encoded_drop_priv_group
+
 cdef class RGBMatrix(Canvas):
     def __cinit__(self, int rows = 0, int chains = 0, int parallel = 0,
         RGBMatrixOptions options = None):

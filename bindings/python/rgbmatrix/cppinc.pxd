@@ -35,6 +35,8 @@ cdef extern from "led-matrix.h" namespace "rgb_matrix":
       int gpio_slowdown
       int daemon
       int drop_privileges
+      const char * drop_priv_user
+      const char * drop_priv_group
 
 
     RGBMatrix *CreateMatrixFromOptions(Options &options, RuntimeOptions runtime_options)

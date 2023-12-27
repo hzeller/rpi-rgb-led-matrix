@@ -991,6 +991,8 @@ struct __pyx_obj_9rgbmatrix_4core_RGBMatrixOptions {
   PyObject *__pyx___py_encoded_led_rgb_sequence;
   PyObject *__pyx___py_encoded_pixel_mapper_config;
   PyObject *__pyx___py_encoded_panel_type;
+  PyObject *__pyx___py_encoded_drop_priv_user;
+  PyObject *__pyx___py_encoded_drop_priv_group;
 };
 
 
