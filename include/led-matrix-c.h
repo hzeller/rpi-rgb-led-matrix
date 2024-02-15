@@ -152,6 +152,12 @@ struct RGBLedMatrixOptions {
    * to keep a constant refresh rate. <= 0 for no limit.
    */
   int limit_refresh_rate_hz;     /* Corresponding flag: --led-limit-refresh */
+
+  /* Sleep instead of busy waiting when limiting refresh rate. This gives
+   * slightly less accurate frame timing, but lets the CPU work on other
+   * processes when waiting and renders single core boards more responsive.
+   */
+  bool disable_busy_waiting;     /* Corresponding flag: --led-busy-waiting */
 };
 
 /**
