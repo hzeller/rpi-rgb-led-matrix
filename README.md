@@ -445,7 +445,7 @@ to debug if it has something to do with the sound subsystem (see Troubleshooting
 section). This is really only recommended for debugging; typically you actually
 want the hardware pulses as it results in a much more stable picture.
 
-<a name="no-drop-priv"/>
+<a name="no-drop-priv"></a>
 
 ```
 --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
