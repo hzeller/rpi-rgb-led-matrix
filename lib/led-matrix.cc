@@ -170,8 +170,7 @@ public:
         ->DumpToMatrix(io_, start_bit_[low_bit_sequence % 4]);
 
       // SwapOnVSync() exchange.
-      {
-        MutexLock l(&frame_sync_);
+      if (frame_sync_.try_lock()) {
         // Do fast equality test first (likely due to frame_count reset).
         if (frame_count == requested_frame_multiple_
             || frame_count % requested_frame_multiple_ == 0) {
@@ -184,6 +183,7 @@ public:
           }
           pthread_cond_signal(&frame_done_);
         }
+        frame_sync_.Unlock();
       }
 
       // Read input bits.

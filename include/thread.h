@@ -61,6 +61,7 @@ public:
   Mutex() { pthread_mutex_init(&mutex_, NULL); }
   ~Mutex() { pthread_mutex_destroy(&mutex_); }
   void Lock() { pthread_mutex_lock(&mutex_); }
+  bool try_lock() { return pthread_mutex_trylock(&mutex_) == 0; }
   void Unlock() { pthread_mutex_unlock(&mutex_); }
 
   // Wait on condition. If "timeout_ms" is < 0, it waits forever, otherwise
