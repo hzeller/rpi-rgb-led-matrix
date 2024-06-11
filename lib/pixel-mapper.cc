@@ -258,11 +258,17 @@ public:
                                   int *matrix_x, int *matrix_y) const {
     const int panel_width  = matrix_width  / chain_;
     const int panel_height = matrix_height / parallel_;
+    // because the panel you plug into ends up being the "bottom" panel and coordinates
+    // start from the top panel, and you typically don't wire the bottom panel (first in
+    // the chain) upside down, whether each panel gets swapped depends on this.
+    // Without this, if you wire for 4 panels high and add a 5h panel, without this
+    // code everything would get reversed and you'd have to re-layout all the panels
+    bool is_height_even_panels = ( matrix_width / panel_width) % 2;
     const int x_panel_start = y / panel_height * panel_width;
     const int y_panel_start = x / panel_width * panel_height;
     const int x_within_panel = x % panel_width;
     const int y_within_panel = y % panel_height;
-    const bool needs_flipping = z_ && (y / panel_height) % 2 == 1;
+    const bool needs_flipping = z_ && (is_height_even_panels - ((y / panel_height) % 2)) == 0;
     *matrix_x = x_panel_start + (needs_flipping
                                  ? panel_width - 1 - x_within_panel
                                  : x_within_panel);
