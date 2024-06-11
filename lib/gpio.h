@@ -13,10 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
-#ifndef RPI_GPIO_H
-#define RPI_GPIO_H
+#ifndef RPI_GPIO_INTERNAL_H
+#define RPI_GPIO_INTERNAL_H
 
-#include <stdint.h>
+#include "gpio-bits.h"
 
 #include <vector>
 
@@ -25,69 +25,96 @@
 namespace rgb_matrix {
 // For now, everything is initialized as output.
 class GPIO {
- public:
-  // Available bits that actually have pins.
-  static const uint32_t kValidBits;
-
+public:
   GPIO();
 
   // Initialize before use. Returns 'true' if successful, 'false' otherwise
   // (e.g. due to a permission problem).
-  bool Init(int
-#if RGB_SLOWDOWN_GPIO
-            slowdown = RGB_SLOWDOWN_GPIO
-#else
-            slowdown = 1
-#endif
-            );
+  bool Init(int slowdown);
 
   // Initialize outputs.
   // Returns the bits that were available and could be set for output.
   // (never use the optional adafruit_hack_needed parameter, it is used
   // internally to this library).
-  uint32_t InitOutputs(uint32_t outputs, bool adafruit_hack_needed = false);
+  gpio_bits_t InitOutputs(gpio_bits_t outputs,
+                          bool adafruit_hack_needed = false);
 
   // Request given bitmap of GPIO inputs.
   // Returns the bits that were available and could be reserved.
-  uint32_t RequestInputs(uint32_t inputs);
+  gpio_bits_t RequestInputs(gpio_bits_t inputs);
 
   // Set the bits that are '1' in the output. Leave the rest untouched.
-  inline void SetBits(uint32_t value) {
+  inline void SetBits(gpio_bits_t value) {
     if (!value) return;
-    *gpio_set_bits_ = value;
+    WriteSetBits(value);
     for (int i = 0; i < slowdown_; ++i) {
-      *gpio_set_bits_ = value;
+      WriteSetBits(value);
     }
   }
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
-  inline void ClearBits(uint32_t value) {
+  inline void ClearBits(gpio_bits_t value) {
     if (!value) return;
-    *gpio_clr_bits_ = value;
+    WriteClrBits(value);
     for (int i = 0; i < slowdown_; ++i) {
-      *gpio_clr_bits_ = value;
+      WriteClrBits(value);
     }
   }
 
   // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
-  inline void WriteMaskedBits(uint32_t value, uint32_t mask) {
+  inline void WriteMaskedBits(gpio_bits_t value, gpio_bits_t mask) {
     // Writing a word is two operations. The IO is actually pretty slow, so
     // this should probably  be unnoticable.
     ClearBits(~value & mask);
     SetBits(value & mask);
   }
 
-  inline void Write(uint32_t value) { WriteMaskedBits(value, output_bits_); }
-  inline uint32_t Read() const { return *gpio_read_bits_ & input_bits_; }
+  inline gpio_bits_t Read() const { return ReadRegisters() & input_bits_; }
 
- private:
-  uint32_t output_bits_;
-  uint32_t input_bits_;
-  uint32_t reserved_bits_;
+  // Return if this is appears to be a Pi4
+  static bool IsPi4();
+
+private:
+  inline gpio_bits_t ReadRegisters() const {
+    return (static_cast<gpio_bits_t>(*gpio_read_bits_low_)
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+            | (static_cast<gpio_bits_t>(*gpio_read_bits_low_) << 32)
+#endif
+            );
+  }
+
+  inline void WriteSetBits(gpio_bits_t value) {
+    *gpio_set_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+    if (uses_64_bit_)
+      *gpio_set_bits_high_ = static_cast<uint32_t>(value >> 32);
+#endif
+  }
+
+  inline void WriteClrBits(gpio_bits_t value) {
+    *gpio_clr_bits_low_ = static_cast<uint32_t>(value & 0xFFFFFFFF);
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+    if (uses_64_bit_)
+      *gpio_clr_bits_high_ = static_cast<uint32_t>(value >> 32);
+#endif
+  }
+
+private:
+  gpio_bits_t output_bits_;
+  gpio_bits_t input_bits_;
+  gpio_bits_t reserved_bits_;
   int slowdown_;
-  volatile uint32_t *gpio_set_bits_;
-  volatile uint32_t *gpio_clr_bits_;
-  volatile uint32_t *gpio_read_bits_;
+
+  volatile uint32_t *gpio_set_bits_low_;
+  volatile uint32_t *gpio_clr_bits_low_;
+  volatile uint32_t *gpio_read_bits_low_;
+
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+  bool uses_64_bit_;
+  volatile uint32_t *gpio_set_bits_high_;
+  volatile uint32_t *gpio_clr_bits_high_;
+  volatile uint32_t *gpio_read_bits_high_;
+#endif
 };
 
 // A PinPulser is a utility class that pulses a GPIO pin. There can be various
@@ -100,7 +127,7 @@ public:
   //   need negative pulses, this is what it does)
   // "nano_wait_spec" contains a list of time periods we'd like
   //   invoke later. This can be used to pre-process timings if needed.
-  static PinPulser *Create(GPIO *io, uint32_t gpio_mask,
+  static PinPulser *Create(GPIO *io, gpio_bits_t gpio_mask,
                            bool allow_hardware_pulsing,
                            const std::vector<int> &nano_wait_spec);
 
@@ -119,4 +146,4 @@ uint32_t GetMicrosecondCounter();
 
 }  // end namespace rgb_matrix
 
-#endif  // RPI_GPIO_H
+#endif  // RPI_GPIO_INGERNALH

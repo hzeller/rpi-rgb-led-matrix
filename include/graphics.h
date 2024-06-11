@@ -9,8 +9,10 @@
 
 #include "canvas.h"
 
-#include <map>
 #include <stdint.h>
+#include <stddef.h>
+
+#include <map>
 
 namespace rgb_matrix {
 struct Color {

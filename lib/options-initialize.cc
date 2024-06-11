@@ -26,17 +26,22 @@
 #include <vector>
 
 #include "multiplex-mappers-internal.h"
+#include "framebuffer-internal.h"
+
+#include "gpio.h"
 
 namespace rgb_matrix {
 RuntimeOptions::RuntimeOptions() :
 #ifdef RGB_SLOWDOWN_GPIO
   gpio_slowdown(RGB_SLOWDOWN_GPIO),
 #else
-  gpio_slowdown(1),
+  gpio_slowdown(GPIO::IsPi4() ? 2 : 1),
 #endif
   daemon(0),            // Don't become a daemon by default.
-  drop_privileges(1),    // Encourage good practice: drop privileges by default.
-  do_gpio_init(true)
+  drop_privileges(1),   // Encourage good practice: drop privileges by default.
+  do_gpio_init(true),
+  drop_priv_user("daemon"),
+  drop_priv_group("daemon")
 {
   // Nothing to see here.
 }
@@ -223,6 +228,15 @@ static bool FlagInit(int &argc, char **&argv,
         ropts->drop_privileges = bool_scratch ? 1 : 0;
         continue;
       }
+      if (ConsumeStringFlag("drop-priv-user", it, end,
+                            &ropts->drop_priv_user, &err)) {
+        continue;
+      }
+      if (ConsumeStringFlag("drop-priv-group", it, end,
+                            &ropts->drop_priv_group, &err)) {
+        continue;
+      }
+
       if (strncmp(*it, OPTION_PREFIX, OPTION_PREFIX_LEN) == 0) {
         fprintf(stderr, "Option %s starts with %s but it is unknown. Typo?\n",
                 *it, OPTION_PREFIX);
@@ -245,40 +259,16 @@ static bool FlagInit(int &argc, char **&argv,
   return true;
 }
 
-static bool drop_privs(const char *priv_user, const char *priv_group) {
-  uid_t ruid, euid, suid;
-  if (getresuid(&ruid, &euid, &suid) >= 0) {
-    if (euid != 0)   // not root anyway. No priv dropping.
-      return true;
-  }
-
-  struct group *g = getgrnam(priv_group);
-  if (g == NULL) {
-    perror("group lookup.");
-    return false;
-  }
-  if (setresgid(g->gr_gid, g->gr_gid, g->gr_gid) != 0) {
-    perror("setresgid()");
-    return false;
-  }
-  struct passwd *p = getpwnam(priv_user);
-  if (p == NULL) {
-    perror("user lookup.");
-    return false;
-  }
-  if (setresuid(p->pw_uid, p->pw_uid, p->pw_uid) != 0) {
-    perror("setresuid()");
-    return false;
-  }
-  return true;
-}
-
-}  // namespace
+}  // anonymous namespace
 
 bool ParseOptionsFromFlags(int *argc, char ***argv,
                            RGBMatrix::Options *m_opt_in,
                            RuntimeOptions *rt_opt_in,
                            bool remove_consumed_options) {
+  if (argc == NULL || argv == NULL) {
+    fprintf(stderr, "Called ParseOptionsFromFlags() without argc/argv\n");
+    return false;
+  }
   // Replace NULL arguments with some scratch-space.
   RGBMatrix::Options scratch_matrix;
   RGBMatrix::Options *mopt = (m_opt_in != NULL) ? m_opt_in : &scratch_matrix;
@@ -287,50 +277,6 @@ bool ParseOptionsFromFlags(int *argc, char ***argv,
   RuntimeOptions *ropt = (rt_opt_in != NULL) ? rt_opt_in : &scratch_rt;
 
   return FlagInit(*argc, *argv, mopt, ropt, remove_consumed_options);
-}
-
-RGBMatrix *CreateMatrixFromOptions(const RGBMatrix::Options &options,
-                                   const RuntimeOptions &runtime_options) {
-  std::string error;
-  if (!options.Validate(&error)) {
-    fprintf(stderr, "%s\n", error.c_str());
-    return NULL;
-  }
-
-  // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
-  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 5) {
-    fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
-            runtime_options.gpio_slowdown);
-    return NULL;
-  }
-
-  static GPIO io;  // This static var is a little bit icky.
-  if (runtime_options.do_gpio_init &&
-      !io.Init(runtime_options.gpio_slowdown)) {
-    fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
-            "Prepend 'sudo' to the command\n");
-    return NULL;
-  }
-
-  if (runtime_options.daemon > 0 && daemon(1, 0) != 0) {
-    perror("Failed to become daemon");
-  }
-
-  RGBMatrix *result = new RGBMatrix(NULL, options);
-  // Allowing daemon also means we are allowed to start the thread now.
-  const bool allow_daemon = !(runtime_options.daemon < 0);
-  if (runtime_options.do_gpio_init)
-    result->SetGPIO(&io, allow_daemon);
-
-  // TODO(hzeller): if we disallow daemon, then we might also disallow
-  // drop privileges: we can't drop privileges until we have created the
-  // realtime thread that usually requires root to be established.
-  // Double check and document.
-  if (runtime_options.drop_privileges > 0) {
-    drop_privs("daemon", "daemon");
-  }
-
-  return result;
 }
 
 static std::string CreateAvailableMultiplexString(
@@ -343,22 +289,6 @@ static std::string CreateAvailableMultiplexString(
     result.append(buffer);
   }
   return result;
-}
-
-// Public interface.
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
-                                 RGBMatrix::Options *m_opt_in,
-                                 RuntimeOptions *rt_opt_in,
-                                 bool remove_consumed_options) {
-  RGBMatrix::Options scratch_matrix;
-  RGBMatrix::Options *mopt = (m_opt_in != NULL) ? m_opt_in : &scratch_matrix;
-
-  RuntimeOptions scratch_rt;
-  RuntimeOptions *ropt = (rt_opt_in != NULL) ? rt_opt_in : &scratch_rt;
-
-  if (!ParseOptionsFromFlags(argc, argv, mopt, ropt, remove_consumed_options))
-    return NULL;
-  return CreateMatrixFromOptions(*mopt, *ropt);
 }
 
 void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
@@ -382,12 +312,15 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-chain=<chained>     : Number of daisy-chained panels. "
           "(Default: %d).\n"
           "\t--led-parallel=<parallel> : Parallel chains. range=1..3 "
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+          "(6 for CM3) "
+#endif
           "(Default: %d).\n"
           "\t--led-multiplexing=<0..%d> : Mux type: 0=direct; %s (Default: 0)\n"
           "\t--led-pixel-mapper        : Semicolon-separated list of pixel-mappers to arrange pixels.\n"
           "\t                            Optional params after a colon e.g. \"U-mapper;Rotate:90\"\n"
           "\t                            Available: %s. Default: \"\"\n"
-          "\t--led-pwm-bits=<1..11>    : PWM bits (Default: %d).\n"
+          "\t--led-pwm-bits=<1..%d>    : PWM bits (Default: %d).\n"
           "\t--led-brightness=<percent>: Brightness in percent (Default: %d).\n"
           "\t--led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced "
           "(Default: %d).\n"
@@ -405,12 +338,13 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-pwm-dither-bits=<0..2> : Time dithering of lower bits "
           "(Default: 0)\n"
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n"
-          "\t--led-panel-type=<name>  : Needed to initialize special panels. Supported: 'FM6126A', 'FM6127'\n",
+          "\t--led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A', 'FM6127'\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
           available_mappers.c_str(),
-          d.pwm_bits, d.brightness, d.scan_mode,
+          internal::Framebuffer::kBitPlanes, d.pwm_bits,
+          d.brightness, d.scan_mode,
           d.show_refresh_rate ? "no-" : "", d.show_refresh_rate ? "Don't s" : "S",
           d.limit_refresh_rate_hz,
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
@@ -420,7 +354,7 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
 
   fprintf(out, "\t--led-slowdown-gpio=<0..4>: "
           "Slowdown GPIO. Needed for faster Pis/slower panels "
-          "(Default: %d).\n", r.gpio_slowdown);
+          "(Default: %d (2 on Pi4, 1 other)).\n", r.gpio_slowdown);
   if (r.daemon >= 0) {
     const bool on = (r.daemon > 0);
     fprintf(out,
@@ -434,6 +368,12 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
             "\t--led-%sdrop-privs       : %srop privileges from 'root' "
             "after initializing the hardware.\n",
             on ? "no-" : "", on ? "Don't d" : "D");
+    fprintf(out, "\t--led-drop-priv-user      : "
+            "Drop privileges to this username or UID (Default: '%s')\n",
+            r.drop_priv_user);
+    fprintf(out, "\t--led-drop-priv-group     : "
+            "Drop privileges to this groupname or GID (Default: '%s')\n",
+            r.drop_priv_group);
   }
 }
 
@@ -471,8 +411,17 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (parallel < 1 || parallel > 3) {
-    err->append("Parallel outside usable range (1..3 allowed).\n");
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+  const bool is_cm = (strcmp(hardware_mapping, "compute-module") == 0);
+#else
+  const bool is_cm = false;
+#endif
+  if (parallel < 1 || parallel > (is_cm ? 6 : 3)) {
+    err->append("Parallel outside usable range (1..3 allowed"
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+                ", up to 6 only for CM3"
+#endif
+                ").\n");
     success = false;
   }
 
@@ -481,8 +430,12 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (pwm_bits <= 0 || pwm_bits > 11) {
-    err->append("Invalid range of pwm-bits (1..11 allowed).\n");
+  if (pwm_bits <= 0 || pwm_bits > internal::Framebuffer::kBitPlanes) {
+    char buffer[256];
+    snprintf(buffer, sizeof(buffer),
+             "Invalid range of pwm-bits (1..%d allowed).\n",
+             internal::Framebuffer::kBitPlanes);
+    err->append(buffer);
     success = false;
   }
 
@@ -520,28 +473,6 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   }
 
   return success;
-}
-
-// Linker trick: is someone was linking the old library that didn't have the
-// optional parameter defined, the linking will fail it wouldn't find the symbol
-// with less parameters. But we don't want to clutter the header with simple
-// delegation calls.
-//
-// So we define this symbol here and doing the delegation call until
-// really everyone had recompiled their code with the new header.
-//
-// Should be removed in a couple of months (March 2017ish)
-bool ParseOptionsFromFlags(int *argc, char ***argv,
-                           RGBMatrix::Options *default_options,
-                           RuntimeOptions *rt_options) {
-  return ParseOptionsFromFlags(argc, argv, default_options, rt_options,
-                               true);
-}
-RGBMatrix *CreateMatrixFromFlags(int *argc, char ***argv,
-                                 RGBMatrix::Options *default_options,
-                                 RuntimeOptions *default_rt_opts) {
-  return CreateMatrixFromFlags(argc, argv, default_options, default_rt_opts,
-                               true);
 }
 
 }  // namespace rgb_matrix

@@ -1,2 +1,5 @@
-*.dll
-*.exe
+**/.vs
+**/bin
+**/obj
+**/*.sln
+**/*.csproj.user

@@ -42,7 +42,6 @@
 #include <Magick++.h>
 #include <magick/image.h>
 
-using rgb_matrix::GPIO;
 using rgb_matrix::Canvas;
 using rgb_matrix::FrameCanvas;
 using rgb_matrix::RGBMatrix;
@@ -96,7 +95,7 @@ static void StoreInStream(const Magick::Image &img, int delay_time_us,
   for (size_t y = 0; y < img.rows(); ++y) {
     for (size_t x = 0; x < img.columns(); ++x) {
       const Magick::Color &c = img.pixelColor(x, y);
-      if (c.alphaQuantum() < 256) {
+      if (c.alphaQuantum() < 255) {
         scratch->SetPixel(x + x_offset, y + y_offset,
                           ScaleQuantumToChar(c.redQuantum()),
                           ScaleQuantumToChar(c.greenQuantum()),
@@ -252,6 +251,11 @@ int main(int argc, char *argv[]) {
 
   RGBMatrix::Options matrix_options;
   rgb_matrix::RuntimeOptions runtime_opt;
+  // If started with 'sudo': make sure to drop privileges to same user
+  // we started with, which is the most expected (and allows us to read
+  // files as that user).
+  runtime_opt.drop_priv_user = getenv("SUDO_UID");
+  runtime_opt.drop_priv_group = getenv("SUDO_GID");
   if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
                                          &matrix_options, &runtime_opt)) {
     return usage(argv[0]);
@@ -351,7 +355,7 @@ int main(int argc, char *argv[]) {
 
   // Prepare matrix
   runtime_opt.do_gpio_init = (stream_output == NULL);
-  RGBMatrix *matrix = CreateMatrixFromOptions(matrix_options, runtime_opt);
+  RGBMatrix *matrix = RGBMatrix::CreateFromOptions(matrix_options, runtime_opt);
   if (matrix == NULL)
     return 1;
 
@@ -422,7 +426,7 @@ int main(int argc, char *argv[]) {
             CopyStream(&reader, global_stream_writer, offscreen_canvas);
           }
         } else {
-          err_msg = "Can't read as image or compatible stream";
+          err_msg += "; Can't read as image or compatible stream";
           delete file_info->content_stream;
           delete file_info;
           file_info = NULL;

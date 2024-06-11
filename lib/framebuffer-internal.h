@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include "hardware-mapping.h"
+#include "../include/graphics.h"
 
 namespace rgb_matrix {
 class GPIO;
@@ -29,12 +30,12 @@ class RowAddressSetter;
 // An opaque type used within the framebuffer that can be used
 // to copy between PixelMappers.
 struct PixelDesignator {
-  PixelDesignator() : gpio_word(-1), r_bit(0), g_bit(0), b_bit(0), mask(~0){}
-  int gpio_word;
-  uint32_t r_bit;
-  uint32_t g_bit;
-  uint32_t b_bit;
-  uint32_t mask;
+  PixelDesignator() : gpio_word(-1), r_bit(0), g_bit(0), b_bit(0), mask(~0u){}
+  long gpio_word;
+  gpio_bits_t r_bit;
+  gpio_bits_t g_bit;
+  gpio_bits_t b_bit;
+  gpio_bits_t mask;
 };
 
 class PixelDesignatorMap {
@@ -65,6 +66,24 @@ private:
 // written out.
 class Framebuffer {
 public:
+  // Maximum usable bitplanes.
+  //
+  // 11 bits seems to be a sweet spot in which we still get somewhat useful
+  // refresh rate and have good color richness. This is the default setting
+  // However, in low-light situations, we want to be able to scale down
+  // brightness more, having more bits at the bottom.
+  // TODO(hzeller): make the default 15 bit or so, but slide the use of
+  //  timing to lower bits if fewer bits requested to not affect the overall
+  //  refresh in that case.
+  //  This needs to be balanced to not create too agressive timing however.
+  //  To be explored in a separete commit.
+  //
+  // For now, if someone needs very low level of light, change this to
+  // say 13 and recompile. Run with --led-pwm-bits=13. Also, consider
+  // --led-pwm-dither-bits=2 to have the refresh rate not suffer too much.
+  static constexpr int kBitPlanes = 11;
+  static constexpr int kDefaultBitPlanes = 11;
+
   Framebuffer(int rows, int columns, int parallel,
               int scan_mode,
               const char* led_sequence, bool inverse_color,
@@ -108,6 +127,7 @@ public:
   int width() const;
   int height() const;
   void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+  void SetPixels(int x, int y, int width, int height, Color *colors);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
 

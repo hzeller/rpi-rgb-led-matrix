@@ -29,6 +29,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -120,6 +121,16 @@ struct RGBLedMatrixOptions {
    */
   int multiplexing;
 
+  /** The following boolean flags are off by default **/
+
+  /* Allow to use the hardware subsystem to create pulses. This won't do
+   * anything if output enable is not connected to GPIO 18.
+   * Corresponding flag: --led-hardware-pulse
+   */
+  bool disable_hardware_pulsing; /* Flag: --led-hardware-pulse */
+  bool show_refresh_rate;        /* Flag: --led-show-refresh   */
+  bool inverse_colors;           /* Flag: --led-inverse        */
+
   /* In case the internal sequence of mapping is not "RGB", this contains the
    * real mapping. Some panels mix up these colors.
    */
@@ -132,26 +143,66 @@ struct RGBLedMatrixOptions {
   const char *pixel_mapper_config;  /* Corresponding flag: --led-pixel-mapper */
 
   /*
-   * Panel type. Typically just NULL, but certain panels (AM6126) require
+   * Panel type. Typically just NULL, but certain panels (FM6126) require
    * an initialization sequence
    */
   const char *panel_type;  /* Corresponding flag: --led-panel-type */
-
-  /** The following are boolean flags, all off by default **/
-
-  /* Allow to use the hardware subsystem to create pulses. This won't do
-   * anything if output enable is not connected to GPIO 18.
-   * Corresponding flag: --led-hardware-pulse
-   */
-  unsigned disable_hardware_pulsing:1;
-  unsigned show_refresh_rate:1;  /* Corresponding flag: --led-show-refresh    */
-  // unsigned swap_green_blue:1; /* deprecated, use led_sequence instead */
-  unsigned inverse_colors:1;     /* Corresponding flag: --led-inverse         */
 
   /* Limit refresh rate of LED panel. This will help on a loaded system
    * to keep a constant refresh rate. <= 0 for no limit.
    */
   int limit_refresh_rate_hz;     /* Corresponding flag: --led-limit-refresh */
+};
+
+/**
+ * Runtime options to simplify doing common things for many programs such as
+ * dropping privileges and becoming a daemon.
+ */
+struct RGBLedRuntimeOptions {
+  int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
+
+  // ----------
+  // If the following options are set to disabled with -1, they are not
+  // even offered via the command line flags.
+  // ----------
+
+  // Thre are three possible values here
+  //   -1 : don't leave choise of becoming daemon to the command line parsing.
+  //        If set to -1, the --led-daemon option is not offered.
+  //    0 : do not becoma a daemon, run in forgreound (default value)
+  //    1 : become a daemon, run in background.
+  //
+  // If daemon is disabled (= -1), the user has to call
+  // RGBMatrix::StartRefresh() manually once the matrix is created, to leave
+  // the decision to become a daemon
+  // after the call (which requires that no threads have been started yet).
+  // In the other cases (off or on), the choice is already made, so the thread
+  // is conveniently already started for you.
+  int daemon;           // -1 disabled. 0=off, 1=on. Flag: --led-daemon
+
+  // Drop privileges from 'root' to 'daemon' once the hardware is initialized.
+  // This is usually a good idea unless you need to stay on elevated privs.
+  int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
+
+  // By default, the gpio is initialized for you, but if you run on a platform
+  // not the Raspberry Pi, this will fail. If you don't need to access GPIO
+  // e.g. you want to just create a stream output (see content-streamer.h),
+  // set this to false.
+  bool do_gpio_init;
+
+  // If drop privileges is enabled, this is the user/group we drop privileges
+  // to. Unless chosen otherwise, the default is "daemon" for user and group.
+  const char *drop_priv_user;
+  const char *drop_priv_group;
+};
+
+/**
+ * 24-bit RGB color.
+ */
+struct Color {
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
 };
 
 /**
@@ -188,6 +239,37 @@ struct RGBLedMatrixOptions {
 struct RGBLedMatrix *led_matrix_create_from_options(
              struct RGBLedMatrixOptions *options, int *argc, char ***argv);
 
+/* Same, but does not modify the argv array. */
+struct RGBLedMatrix *led_matrix_create_from_options_const_argv(
+             struct RGBLedMatrixOptions *options, int argc, char **argv);
+
+/**
+ * The way to completely initialize your matrix without using command line
+ * flags to initialize some things.
+ *
+ * The actual options used are filled back into the "options" and "rt_options"
+ * struct if not NULL. If they are null, the default value is used.
+ *
+ * Usage:
+ * ----------------
+ * int main(int argc, char **argv) {
+ *   struct RGBLedMatrixOptions options;
+ *   struct RGBLedRuntimeOptions rt_options;
+ *   memset(&options, 0, sizeof(options));
+ *   memset(&rt_options, 0, sizeof(rt_options));
+ *   options.rows = 32;            // You can set defaults if you want.
+ *   options.chain_length = 1;
+ *   rt_options.gpio_slowdown = 4;
+ *   struct RGBLedMatrix *matrix = led_matrix_create_from_options_and_rt_options(&options, &rt_options);
+ *   if (matrix == NULL) {
+ *      return 1;
+ *   }
+ *   // do additional commandline handling; then use matrix...
+ * }
+ * ----------------
+ */
+struct RGBLedMatrix *led_matrix_create_from_options_and_rt_options(
+  struct RGBLedMatrixOptions *opts, struct RGBLedRuntimeOptions * rt_opts);
 
 /**
  * Print available LED matrix options.
@@ -234,6 +316,10 @@ void led_canvas_get_size(const struct LedCanvas *canvas,
 /** Set pixel at (x, y) with color (r,g,b). */
 void led_canvas_set_pixel(struct LedCanvas *canvas, int x, int y,
                           uint8_t r, uint8_t g, uint8_t b);
+
+/** Copies pixels to rectangle at (x, y) with size (width, height). */
+void led_canvas_set_pixels(struct LedCanvas *canvas, int x, int y,
+                           int width, int height, struct Color *colors);
 
 /** Clear screen (black). */
 void led_canvas_clear(struct LedCanvas *canvas);
@@ -292,6 +378,15 @@ void set_image(struct LedCanvas *c, int canvas_offset_x, int canvas_offset_y,
 
 // Load a font given a path to a font file containing a bdf font.
 struct LedFont *load_font(const char *bdf_font_file);
+
+// Read the baseline of a font
+int baseline_font(struct LedFont *font);
+
+// Read the height of a font
+int height_font(struct LedFont *font);
+
+// Creates an outline font based on an existing font instance
+struct LedFont *create_outline_font(struct LedFont *font);
 
 // Delete a font originally created from load_font.
 void delete_font(struct LedFont *font);

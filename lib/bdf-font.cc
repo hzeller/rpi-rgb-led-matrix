@@ -25,26 +25,52 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <algorithm>
+#include <bitset>
+#include <vector>
+
 // The little question-mark box "�" for unknown code.
 static const uint32_t kUnicodeReplacementCodepoint = 0xFFFD;
 
+namespace rgb_matrix {
 // Bitmap for one row. This limits the number of available columns.
 // Make wider if running into trouble.
-typedef uint64_t rowbitmap_t;
+static constexpr int kMaxFontWidth = 196;
+typedef std::bitset<kMaxFontWidth> rowbitmap_t;
 
-namespace rgb_matrix {
 struct Font::Glyph {
   int device_width, device_height;
   int width, height;
   int x_offset, y_offset;
-  rowbitmap_t bitmap[0];  // contains 'height' elements.
+  std::vector<rowbitmap_t> bitmap;  // contains 'height' elements.
 };
+
+static bool readNibble(char c, uint8_t* val) {
+  if (c >= '0' && c <= '9') { *val = c - '0'; return true; }
+  if (c >= 'a' && c <= 'f') { *val = c - 'a' + 0xa; return true; }
+  if (c >= 'A' && c <= 'F') { *val = c - 'A' + 0xa; return true; }
+  return false;
+}
+
+static bool parseBitmap(const char *buffer, rowbitmap_t* result) {
+  // Read the bitmap left-aligned to our buffer.
+  for (int pos = result->size() - 1; *buffer && pos >= 3; buffer+=1) {
+    uint8_t val;
+    if (!readNibble(*buffer, &val))
+      break;
+    (*result)[pos--] = val & 0x8;
+    (*result)[pos--] = val & 0x4;
+    (*result)[pos--] = val & 0x2;
+    (*result)[pos--] = val & 0x1;
+  }
+  return true;
+}
 
 Font::Font() : font_height_(-1), base_line_(0) {}
 Font::~Font() {
   for (CodepointGlyphMap::iterator it = glyphs_.begin();
        it != glyphs_.end(); ++it) {
-    free(it->second);
+    delete it->second;
   }
 }
 
@@ -61,7 +87,6 @@ bool Font::LoadFont(const char *path) {
   Glyph *current_glyph = NULL;
   int row = 0;
 
-  int bitmap_shift = 0;
   while (fgets(buffer, sizeof(buffer), f)) {
     if (sscanf(buffer, "FONTBOUNDINGBOX %d %d %d %d",
                &dummy, &font_height_, &dummy, &base_line_) == 4) {
@@ -72,31 +97,27 @@ bool Font::LoadFont(const char *path) {
     }
     else if (sscanf(buffer, "DWIDTH %d %d", &tmp.device_width, &tmp.device_height
                     ) == 2) {
+      // Limit to width we can actually display, limited by rowbitmap_t
+      tmp.device_width = std::min(tmp.device_width, kMaxFontWidth);
       // parsed.
     }
     else if (sscanf(buffer, "BBX %d %d %d %d", &tmp.width, &tmp.height,
                     &tmp.x_offset, &tmp.y_offset) == 4) {
-      current_glyph = (Glyph*) malloc(sizeof(Glyph)
-                                      + tmp.height * sizeof(rowbitmap_t));
+      current_glyph = new Glyph();
       *current_glyph = tmp;
-      // We only get number of bytes large enough holding our width. We want
-      // it always left-aligned.
-      bitmap_shift =
-        8 * (sizeof(rowbitmap_t) - ((current_glyph->width + 7) / 8))
-        - current_glyph->x_offset;
+      current_glyph->bitmap.resize(tmp.height);
       row = -1;  // let's not start yet, wait for BITMAP
     }
     else if (strncmp(buffer, "BITMAP", strlen("BITMAP")) == 0) {
       row = 0;
     }
     else if (current_glyph && row >= 0 && row < current_glyph->height
-             && (sscanf(buffer, "%" PRIx64, &current_glyph->bitmap[row]) == 1)) {
-      current_glyph->bitmap[row] <<= bitmap_shift;
+             && parseBitmap(buffer, &current_glyph->bitmap[row])) {
       row++;
     }
     else if (strncmp(buffer, "ENDCHAR", strlen("ENDCHAR")) == 0) {
       if (current_glyph && row == current_glyph->height) {
-        free(glyphs_[codepoint]);  // just in case there was one.
+        delete glyphs_[codepoint];  // just in case there was one.
         glyphs_[codepoint] = current_glyph;
         current_glyph = NULL;
       }
@@ -115,8 +136,8 @@ Font *Font::CreateOutlineFont() const {
        it != glyphs_.end(); ++it) {
     const Glyph *orig = it->second;
     const int height = orig->height + 2 * kBorder;
-    const size_t alloc_size = sizeof(Glyph) + height * sizeof(rowbitmap_t);
-    Glyph *const tmp_glyph = (Glyph*) calloc(1, alloc_size);
+    Glyph *const tmp_glyph = new Glyph();
+    tmp_glyph->bitmap.resize(height);
     tmp_glyph->width  = orig->width  + 2*kBorder;
     tmp_glyph->height = height;
     tmp_glyph->device_width  = orig->device_width + 2*kBorder;
@@ -129,8 +150,8 @@ Font *Font::CreateOutlineFont() const {
     for (int h = 0; h < orig->height; ++h) {
       rowbitmap_t fill = fill_pattern;
       rowbitmap_t orig_bitmap = orig->bitmap[h] >> kBorder;
-      for (rowbitmap_t m = start_mask; m; m <<= 1, fill <<= 1) {
-        if (orig_bitmap & m) {
+      for (rowbitmap_t m = start_mask; m.any(); m <<= 1, fill <<= 1) {
+        if ((orig_bitmap & m).any()) {
           tmp_glyph->bitmap[h+kBorder-1] |= fill;
           tmp_glyph->bitmap[h+kBorder+0] |= fill;
           tmp_glyph->bitmap[h+kBorder+1] |= fill;
@@ -166,11 +187,16 @@ int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
   if (g == NULL) g = FindGlyph(kUnicodeReplacementCodepoint);
   if (g == NULL) return 0;
   y_pos = y_pos - g->height - g->y_offset;
+
+  if (x_pos + g->device_width < 0 || x_pos > c->width() ||
+      y_pos + g->height < 0 || y_pos > c->height()) {
+    return g->device_width;  // Outside canvas border. Bail out early.
+  }
+
   for (int y = 0; y < g->height; ++y) {
-    const rowbitmap_t row = g->bitmap[y];
-    rowbitmap_t x_mask = (1LL<<63);
-    for (int x = 0; x < g->device_width; ++x, x_mask >>= 1) {
-      if (row & x_mask) {
+    const rowbitmap_t& row = g->bitmap[y];
+    for (int x = 0; x < g->device_width; ++x) {
+      if (row.test(kMaxFontWidth - 1 - x)) {
         c->SetPixel(x_pos + x, y_pos + y, color.r, color.g, color.b);
       } else if (bgcolor) {
         c->SetPixel(x_pos + x, y_pos + y, bgcolor->r, bgcolor->g, bgcolor->b);

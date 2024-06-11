@@ -6,10 +6,18 @@
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
         thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o \
         pixel-mapper.o multiplex-mappers.o \
-	content-streamer.o \
-        deprecated-transformer.o
+	content-streamer.o
 
 TARGET=librgbmatrix
+
+###
+# After you change any of the following DEFINES, make sure to 'make' again.
+#
+# ###########      NOTE     ###########
+# all of these options can now can be set programmatically and
+# via command line flags as well. No real need to change them in the Makefile.
+# (So be prepared for these to be removed at some point)
+###
 
 # There are several different pinouts for various breakout boards that uses
 # this library. If you are using the described pinout in the toplevel README.md
@@ -27,15 +35,6 @@ TARGET=librgbmatrix
 #   classic            # (deprecated) Classic Pi1/2/. Not used anymore.
 #   classic-pi1        # (deprecated) Classic pinout on Rasperry Pi 1
 HARDWARE_DESC?=regular
-
-###
-# After you change any of the following DEFINES, make sure to 'make' again.
-#
-# ###########      NOTE     ###########
-# all of these options can now can be set programmatically and
-# via command line flags as well. No real need to change them in the Makefile.
-# (So be prepared for these to be removed at some point)
-###
 
 # If you see that your display is inverse, you might have a matrix variant
 # has uses inverse logic for the RGB bits. In that case: uncomment this.
@@ -98,12 +97,6 @@ HARDWARE_DESC?=regular
 # Flag: --led-no-hardware-pulses
 #DEFINES+=-DDISABLE_HARDWARE_PULSES
 
-# If defined, include support for deprecated transformers.
-# This might be useful to support very old code, but you
-# should be use pixel-mappers instead (include/pixel-mapper.h).
-# Transformers will be removed from the code-base soon to avoid confusion.
-#DEFINES+=-DINCLUDE_DEPRECATED_TRANSFORMERS
-
 # This allows to fix the refresh rate to a particular refresh time in
 # microseconds.
 #
@@ -136,6 +129,14 @@ HARDWARE_DESC?=regular
 # Flag: --led-limit-refresh
 #DEFINES+=-DFIXED_FRAME_MICROSECONDS=5000
 
+# Enable wide 64 bit GPIO offered with the compute module.
+# This will use more memory to internally represent the frame buffer, so
+# caches can't be utilized as much.
+# So only switch this on if you really use the compute module and use more
+# than 3 parallel chains.
+# (this is untested right now, waiting for hardware to arrive for testing)
+#DEFINES+=-DENABLE_WIDE_GPIO_COMPUTE_MODULE
+
 # ---- Pinout options for hardware variants; usually no change needed here ----
 
 # Uncomment if you want to use the Adafruit HAT with stable PWM timings.
@@ -164,8 +165,8 @@ DEFINES+=$(USER_DEFINES)
 
 DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
-CFLAGS=-Wall -O3 -g -fPIC $(DEFINES) -Wextra -Wno-unused-parameter
-CXXFLAGS=$(CFLAGS) -fno-exceptions
+CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES)
+CXXFLAGS=$(CFLAGS) -fno-exceptions -std=c++11
 
 all : $(TARGET).a $(TARGET).so.1
 

@@ -23,8 +23,8 @@ You can also build for Python 3:
 
 ```shell
 sudo apt-get update && sudo apt-get install python3-dev python3-pillow -y
-make build-python PYTHON=$(which python3)
-sudo make install-python PYTHON=$(which python3)
+make build-python PYTHON=$(command -v python3)
+sudo make install-python PYTHON=$(command -v python3)
 ```
 
 ### PyPy
@@ -53,16 +53,16 @@ in a tight loop:
   * On a Pi-2 and Pi-3, a Python script will be about 1/8 of the speed compared
     to the corresponding C++ program (pushing ~0.43 Megapixels/s Python
     vs. ~3.5 Megapixels/s C++ on a Pi-3 for instance)
-  * On a Pi-1, the difference is even worse: 1/24 of the speed to the
-    corresponding C++ program. Given that the Pi-1 is already about 1/10 the
+  * On a Pi-1/Pi Zero, the difference is even worse: 1/24 of the speed to the
+    corresponding C++ program. Given that this Pi is already about 1/10 the
     speed of a Pi-3, this almost makes Python unusable on a Pi-1
     (~0.015 Megapixels/s Python vs. ~0.36 Megapixels/s C++)
   * Also interesting: Python3 is a little bit slower than Python2.7.
     So if you can, stick with Python2.7 for now.
   * The good news is, that this is due to overhead per function call. If you
     can do more per function call, then this is less problematic. For instance
-    if you have an image to be displayed with `SetImage()`, that will much faster
-    per pixel (internally this then copies the pixels natively).
+    if you have an image to be displayed with `SetImage()`, that will much
+    faster per pixel (internally this then copies the pixels natively).
 
 The ~0.015 Megapixels/s on a Pi-1 means that you can update a 32x32 matrix
 at most with ~15fps. If you have chained 5, then you barely reach 3fps.
@@ -80,12 +80,12 @@ swap with `SwapOnVSync()` (this is the fastest method).
 Using the library
 -----------------
 
-Be aware of the fact, that using the RGBMatrix requires root privileges.
-Therefore you will need to run all you python scripts as using sudo.
+Be aware of the fact that using the full performance of the RGBMatrix requires root privileges.
+Therefore you should run all you python scripts as using `sudo`.
 
-You find examples in the [samples/](./samples) subdirectory.
+You may find examples in the [samples/](./samples) subdirectory.
 The examples all use the [samplebase.py](./samples/samplebase.py) that provides
-some utility to all example programs, such as command-line parsing: all
+some basic capabilities to all example programs, such as command-line parsing: all
 sample-programs accept `--led-rows`, `--led-chain` and `--led-parallel` as
 command line options to adapt to your configuration
 
@@ -100,7 +100,7 @@ you can use `--led-gpio-mapping` (or `-m`). For example, to use Adafruit HAT:
 sudo ./runtext.py --led-gpio-mapping=adafruit-hat
 ```
 
-Here a complete example how to write an image viewer:
+Here is a complete example showing how to write an image viewer:
 ```python
 #!/usr/bin/env python
 import time
@@ -137,3 +137,11 @@ try:
 except KeyboardInterrupt:
     sys.exit(0)
 ```
+
+## API
+
+The source of truth for what is available in the Python bindings may be found [here](rgbmatrix/core.pyx) (RGBMatrix, FrameCanvas, RGBMatrixOptions) and [here](rgbmatrix/graphics.pyx) (graphics).  The underlying implementation's ground truth documentation may be found [here](../../include), specifically for [RGBMatrix, RGBMatrixOptions, and FrameCanvas](../../include/led-matrix.h), [Canvas](../../include/canvas.h) (base class of RGBMatrix), and [graphics methods and Font](../../include/graphics.h).
+
+### User
+
+As noted in the Performance section above, Python programs not run as `root` will not be as high-performance as those run as `root`.  When running as `root`, be aware of a potentially-unexpected behavior: to reduce the security attack surface, initializing an RGBMatrix as `root` changes the user from `root` to `daemon` (see [#1170](https://github.com/hzeller/rpi-rgb-led-matrix/issues/1170) for more information) by default.  This means, for instance, that some file operations possible before initializing the RGBMatrix will not be possible after initialization.  To disable this behavior, set `drop_privileges=False` in RGBMatrixOptions, but be aware that doing so will reduce security.

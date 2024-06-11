@@ -1,254 +1,112 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Buffers;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace rpi_rgb_led_matrix_sharp
+namespace RPiRgbLEDMatrix;
+
+/// <summary>
+/// Represents a RGB matrix.
+/// </summary>
+public class RGBLedMatrix : IDisposable
 {
-    public class RGBLedMatrix : IDisposable
+    private IntPtr matrix;
+    private bool disposedValue = false;
+
+    /// <summary>
+    /// Initializes a new matrix.
+    /// </summary>
+    /// <param name="rows">Size of a single module. Can be 32, 16 or 8.</param>
+    /// <param name="chained">How many modules are connected in a chain.</param>
+    /// <param name="parallel">How many modules are connected in a parallel.</param>
+    public RGBLedMatrix(int rows, int chained, int parallel)
     {
-        #region DLLImports
-        [DllImport("librgbmatrix.so")]
-        internal static extern IntPtr led_matrix_create(int rows, int chained, int parallel);
-
-        [DllImport("librgbmatrix.so", CallingConvention= CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
-        internal static extern IntPtr led_matrix_create_from_options(
-            ref InternalRGBLedMatrixOptions options,
-            ref int argc,
-            ref string[] argv);
-
-        [DllImport("librgbmatrix.so")]
-        internal static extern void led_matrix_delete(IntPtr matrix);
-
-        [DllImport("librgbmatrix.so")]
-        internal static extern IntPtr led_matrix_create_offscreen_canvas(IntPtr matrix);
-
-        [DllImport("librgbmatrix.so")]
-        internal static extern IntPtr led_matrix_swap_on_vsync(IntPtr matrix, IntPtr canvas);
-
-        [DllImport("librgbmatrix.so")]
-        internal static extern IntPtr led_matrix_get_canvas(IntPtr matrix);
-
-        [DllImport("librgbmatrix.so")]
-        internal static extern byte led_matrix_get_brightness(IntPtr matrix);
-
-        [DllImport("librgbmatrix.so")]
-        internal static extern void led_matrix_set_brightness(IntPtr matrix, byte brightness);
-        #endregion
-
-        public RGBLedMatrix(int rows, int chained, int parallel)
-        {
-            matrix= led_matrix_create(rows, chained, parallel);            
-        }
-
-        public RGBLedMatrix(RGBLedMatrixOptions options)
-        {
-            var opt = new InternalRGBLedMatrixOptions();
-
-            try {      
-                // pass in options to internal data structure           
-                opt.chain_length = options.ChainLength;
-                opt.rows = options.Rows;
-                opt.cols = options.Cols;
-                opt.hardware_mapping = options.HardwareMapping != null ? Marshal.StringToHGlobalAnsi(options.HardwareMapping) : IntPtr.Zero;
-                opt.inverse_colors = (uint)(options.InverseColors ? 0 : 1);  
-                opt.led_rgb_sequence = options.LedRgbSequence != null ? Marshal.StringToHGlobalAnsi(options.LedRgbSequence) : IntPtr.Zero;
-                opt.pixel_mapper_config = options.PixelMapperConfig != null ? Marshal.StringToHGlobalAnsi(options.PixelMapperConfig) : IntPtr.Zero;
-                opt.parallel = options.Parallel;
-                opt.multiplexing = options.Multiplexing;
-                opt.pwm_bits = options.PwmBits;
-                opt.pwm_lsb_nanoseconds = options.PwmLsbNanoseconds;
-                opt.pwm_dither_bits = options.PwmDitherBits;
-                opt.scan_mode = options.ScanMode;
-                opt.show_refresh_rate = (uint)(options.ShowRefreshRate ? 0 : 1);
-                opt.brightness = options.Brightness;
-                opt.disable_hardware_pulsing = (uint)(options.DisableHardwarePulsing ? 1 : 0);
-                opt.row_address_type = options.RowAddressType;
-
-                string[] argv = new string[] { Environment.GetCommandLineArgs()[0],"--led-slowdown-gpio="+options.GpioSlowdown };
-                int argc = argv.Length;
-
-                matrix = led_matrix_create_from_options(ref opt,ref argc,ref argv);
-            }
-            finally
-            {
-                if (options.HardwareMapping != null) Marshal.FreeHGlobal(opt.hardware_mapping);
-                if (options.LedRgbSequence != null) Marshal.FreeHGlobal(opt.led_rgb_sequence);
-                if (options.PixelMapperConfig != null) Marshal.FreeHGlobal(opt.pixel_mapper_config);
-            }
-        }
-
-        private IntPtr matrix;
-
-        public RGBLedCanvas CreateOffscreenCanvas()
-        {
-            var canvas=led_matrix_create_offscreen_canvas(matrix);
-            return new RGBLedCanvas(canvas);
-        }
-
-        public RGBLedCanvas GetCanvas()
-        {
-            var canvas = led_matrix_get_canvas(matrix);
-            return new RGBLedCanvas(canvas);
-        }
-
-        public RGBLedCanvas SwapOnVsync(RGBLedCanvas canvas)
-        {
-            canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
-            return canvas;
-        }
-
-        public byte Brightness
-        {
-          get { return led_matrix_get_brightness(matrix); }
-          set { led_matrix_set_brightness(matrix, value); }
-        }
-
-        #region IDisposable Support
-        private bool disposedValue = false;
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                led_matrix_delete(matrix);
-                disposedValue = true;
-            }
-        }
-        ~RGBLedMatrix() {           
-           Dispose(false);
-        }
-        public void Dispose()
-        {            
-            Dispose(true);            
-            GC.SuppressFinalize(this);
-        }
-        #endregion
-
-        #region RGBLedMatrixOptions struct
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        internal struct InternalRGBLedMatrixOptions
-        {
-            public IntPtr hardware_mapping;
-            public int rows;
-            public int cols;
-            public int chain_length;
-            public int parallel;
-            public int pwm_bits;
-            public int pwm_lsb_nanoseconds;
-            public int pwm_dither_bits;
-            public int brightness;
-            public int scan_mode;
-            public int row_address_type;
-            public int multiplexing;
-            public IntPtr led_rgb_sequence;
-            public IntPtr pixel_mapper_config; 
-            public uint disable_hardware_pulsing;
-            public uint show_refresh_rate;
-            public uint inverse_colors;
-        };
-        #endregion
+        matrix = led_matrix_create(rows, chained, parallel);
+        if (matrix == (IntPtr)0)
+            throw new ArgumentException("Could not initialize a new matrix");
     }
 
-    public struct RGBLedMatrixOptions
+    /// <summary>
+    /// Initializes a new matrix.
+    /// </summary>
+    /// <param name="options">A configuration of a matrix.</param>
+    public RGBLedMatrix(RGBLedMatrixOptions options)
     {
-        /// <summary>
-        /// Name of the hardware mapping used. If passed NULL here, the default is used. 
-        /// </summary>       
-        public string HardwareMapping;
+        InternalRGBLedMatrixOptions opt = default;
+        try
+        {
+            opt = new(options);
+            var args = Environment.GetCommandLineArgs();
 
-        /// <summary>
-        /// The "rows" are the number of rows supported by the display, so 32 or 16.
-        /// Default: 32.
-        /// </summary>
-        public int Rows;
+            // Because gpio-slowdown is not provided in the options struct,
+            // we manually add it.
+            // Let's add it first to the command-line we pass to the
+            // matrix constructor, so that it can be overridden with the
+            // users' commandline.
+            // As always, as the _very_ first, we need to provide the
+            // program name argv[0].
+            var argv = new string[args.Length + 1];
+            argv[0] = args[0];
+            argv[1] = $"--led-slowdown-gpio={options.GpioSlowdown}";
+            Array.Copy(args, 1, argv, 2, args.Length - 1);
 
-        /// <summary>
-        /// The "cols" are the number of columns per panel. Typically something
-        /// like 32, but also 64 is possible. Sometimes even 40.
-        /// cols * chain_length is the total length of the display, so you can
-        /// represent a 64 wide display as cols=32, chain=2 or cols=64, chain=1;
-        /// same thing, but more convenient to think of.
-        /// </summary>
-        public int Cols;
+            matrix = led_matrix_create_from_options_const_argv(ref opt, argv.Length, argv);
+            if (matrix == (IntPtr)0)
+                throw new ArgumentException("Could not initialize a new matrix");
+        }
+        finally
+        {
+            if(options.HardwareMapping is not null) Marshal.FreeHGlobal(opt.hardware_mapping);
+            if(options.LedRgbSequence is not null) Marshal.FreeHGlobal(opt.led_rgb_sequence);
+            if(options.PixelMapperConfig is not null) Marshal.FreeHGlobal(opt.pixel_mapper_config);
+            if(options.PanelType is not null) Marshal.FreeHGlobal(opt.panel_type);
+        }
+    }
 
-        /// <summary>
-        /// The chain_length is the number of displays daisy-chained together
-        /// (output of one connected to input of next). Default: 1
-        /// </summary>
-        public int ChainLength;
+    /// <summary>
+    /// Creates a new backbuffer canvas for drawing on.
+    /// </summary>
+    /// <returns>An instance of <see cref="RGBLedCanvas"/> representing the canvas.</returns>
+    public RGBLedCanvas CreateOffscreenCanvas() => new(led_matrix_create_offscreen_canvas(matrix));
 
-        /// <summary>
-        /// The number of parallel chains connected to the Pi; in old Pis with 26 
-        /// GPIO pins, that is 1, in newer Pis with 40 interfaces pins, that can also 
-        /// be 2 or 3. The effective number of pixels in vertical direction is then 
-        /// thus rows * parallel. Default: 1 
-        /// </summary>
-        public int Parallel;
+    /// <summary>
+    /// Returns a canvas representing the current frame buffer.
+    /// </summary>
+    /// <returns>An instance of <see cref="RGBLedCanvas"/> representing the canvas.</returns>
+    /// <remarks>Consider using <see cref="CreateOffscreenCanvas"/> instead.</remarks>
+    public RGBLedCanvas GetCanvas() => new(led_matrix_get_canvas(matrix));
 
-        /// <summary>
-        /// Set PWM bits used for output. Default is 11, but if you only deal with limited 
-        /// comic-colors, 1 might be sufficient. Lower require less CPU and increases refresh-rate.
-        /// </summary>
-        public int PwmBits;
+    /// <summary>
+    /// Swaps this canvas with the currently active canvas. The active canvas
+    /// becomes a backbuffer and is mapped to <paramref name="canvas"/> instance.
+    /// <br/>
+    /// This operation guarantees vertical synchronization.
+    /// </summary>
+    /// <param name="canvas">Backbuffer canvas to swap.</param>
+    public void SwapOnVsync(RGBLedCanvas canvas) =>
+        canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
 
-        /// <summary>
-        /// Change the base time-unit for the on-time in the lowest significant bit in 
-        /// nanoseconds. Higher numbers provide better quality (more accurate color, less 
-        /// ghosting), but have a negative impact on the frame rate.
-        /// </summary>
-        public int PwmLsbNanoseconds;
+    /// <summary>
+    /// The general brightness of the matrix.
+    /// </summary>
+    public byte Brightness
+    {
+        get => led_matrix_get_brightness(matrix);
+        set => led_matrix_set_brightness(matrix, value);
+    }
 
-        /// <summary>
-        /// The lower bits can be time-dithered for higher refresh rate.
-        /// </summary>
-        public int PwmDitherBits;
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposedValue) return;
 
-        /// <summary>
-        /// The initial brightness of the panel in percent. Valid range is 1..100
-        /// </summary>
-        public int Brightness;
+        led_matrix_delete(matrix);
+        disposedValue = true;
+    }
 
-        /// <summary>
-        /// Scan mode: 0=progressive, 1=interlaced
-        /// </summary>
-        public int ScanMode;
+    ~RGBLedMatrix() => Dispose(false);
 
-        /// <summary>
-        /// Default row address type is 0, corresponding to direct setting of the
-        /// row, while row address type 1 is used for panels that only have A/B,
-        /// typically some 64x64 panels
-        /// </summary>
-        public int RowAddressType;  
-
-        /// <summary>
-        /// Type of multiplexing. 0 = direct, 1 = stripe, 2 = checker (typical 1:8)
-        /// </summary>
-        public int Multiplexing;
-
-        /// <summary>
-        /// In case the internal sequence of mapping is not "RGB", this contains the real mapping. Some panels mix up these colors.
-        /// </summary>         
-        public string LedRgbSequence;
-
-        /// <summary>
-        /// A string describing a sequence of pixel mappers that should be applied
-        /// to this matrix. A semicolon-separated list of pixel-mappers with optional
-        /// parameter.
-        public string PixelMapperConfig;
-
-        /// <summary>
-        /// Allow to use the hardware subsystem to create pulses. This won't do anything if output enable is not connected to GPIO 18.
-        /// </summary>
-        public bool DisableHardwarePulsing;
-        public bool ShowRefreshRate;
-        public bool InverseColors;
-
-        /// <summary>
-        /// Slowdown GPIO. Needed for faster Pis/slower panels.
-        /// </summary>
-        public int GpioSlowdown;
-    };
+    /// <inheritdoc/>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 }

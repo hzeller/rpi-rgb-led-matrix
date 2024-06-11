@@ -40,7 +40,13 @@ public:
   // valid.
   virtual void Start(int realtime_priority = 0, uint32_t cpu_affinity_mask = 0);
 
-  // Override this.
+  // Override this to do the work.
+  //
+  // This will be called in a thread once Start() has been called. You typically
+  // will have an endless loop doing stuff.
+  //
+  // It is a good idea to provide a way to communicate to the thread that
+  // it should stop (see ThreadedCanvasManipulator for an example)
   virtual void Run() = 0;
 
 private:
