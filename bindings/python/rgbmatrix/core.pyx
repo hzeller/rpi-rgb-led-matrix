@@ -2,7 +2,6 @@
 
 from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t, uintptr_t
-from PIL import Image
 import cython
 
 cdef class Canvas:
