@@ -1,3 +1,4 @@
+# cython: language_level=3str
 from . cimport cppinc
 
 cdef class Canvas:
