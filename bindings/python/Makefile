@@ -64,6 +64,7 @@ clean-python-%:
 	$(PYTHON)$* $(SETUP) $(CLEAN_ARGS)
 else
 build-python: $(RGB_LIBRARY)
+	$(MAKE) -C rgbmatrix
 	$(PYTHON) $(SETUP) $(BUILD_ARGS)
 
 install-python:
