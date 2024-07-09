@@ -244,6 +244,14 @@ static int ReadFileToBuffer(char *buffer, size_t size, const char *filename) {
   return r;
 }
 
+static int ReadBinaryFileToBuffer(uint8_t *buffer, size_t size, const char *filename) {
+  const int fd = open(filename, O_RDONLY);
+  if (fd < 0) return -1;
+  ssize_t r = read(fd, buffer, size);
+  close(fd);
+  return r;
+}
+
 /*
  * Try to read the revision from /proc/cpuinfo. In case of any errors, or if
  * /proc/cpuinfo simply contains zero as the revision, this function returns
@@ -268,11 +276,29 @@ static uint32_t ReadRevisionFromProcCpuinfo() {
   return pi_revision;
 }
 
+// Read a 32-bit big-endian number from a 4-byte buffer.
+static uint32_t read_be32(const uint8_t *p) {
+  return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+}
+
+// Try to read the revision from the devicetree.
+static uint32_t ReadRevisionFromDeviceTree() {
+  uint8_t buffer[4];
+  if (ReadBinaryFileToBuffer(buffer, sizeof(buffer), "/proc/device-tree/system/linux,revision") != 4) {
+    fprintf(stderr, "Failed to read revision from /proc/device-tree\n");
+    return 0;
+  }
+  return read_be32(buffer);
+}
+
 static RaspberryPiModel DetermineRaspberryModel() {
   uint32_t pi_revision = ReadRevisionFromProcCpuinfo();
   if (pi_revision == 0) {
-    fprintf(stderr, "Unknown Revision: Could not determine Pi model\n");
-    return PI_MODEL_3;  // safe guess fallback.
+    pi_revision = ReadRevisionFromDeviceTree();
+    if (pi_revision == 0) {
+      fprintf(stderr, "Unknown Revision: Could not determine Pi model\n");
+      return PI_MODEL_3;  // safe guess fallback.
+    }
   }
 
   // https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#raspberry-pi-revision-codes
