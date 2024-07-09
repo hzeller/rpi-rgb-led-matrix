@@ -244,25 +244,38 @@ static int ReadFileToBuffer(char *buffer, size_t size, const char *filename) {
   return r;
 }
 
-static RaspberryPiModel DetermineRaspberryModel() {
+/*
+ * Try to read the revision from /proc/cpuinfo. In case of any errors, or if
+ * /proc/cpuinfo simply contains zero as the revision, this function returns
+ * zero. This is ok because zero was never used as a real revision code.
+ */
+static uint32_t ReadRevisionFromProcCpuinfo() {
   char buffer[4096];
   if (ReadFileToBuffer(buffer, sizeof(buffer), "/proc/cpuinfo") < 0) {
     fprintf(stderr, "Reading cpuinfo: Could not determine Pi model\n");
-    return PI_MODEL_3;  // safe guess fallback.
+    return 0;
   }
   static const char RevisionTag[] = "Revision";
   const char *revision_key;
   if ((revision_key = strstr(buffer, RevisionTag)) == NULL) {
     fprintf(stderr, "non-existent Revision: Could not determine Pi model\n");
-    return PI_MODEL_3;
+    return 0;
   }
   unsigned int pi_revision;
   if (sscanf(index(revision_key, ':') + 1, "%x", &pi_revision) != 1) {
+    return 0;
+  }
+  return pi_revision;
+}
+
+static RaspberryPiModel DetermineRaspberryModel() {
+  uint32_t pi_revision = ReadRevisionFromProcCpuinfo();
+  if (pi_revision == 0) {
     fprintf(stderr, "Unknown Revision: Could not determine Pi model\n");
-    return PI_MODEL_3;
+    return PI_MODEL_3;  // safe guess fallback.
   }
 
-  // https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
+  // https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#raspberry-pi-revision-codes
   const unsigned pi_type = (pi_revision >> 4) & 0xff;
   switch (pi_type) {
   case 0x00: /* A */
