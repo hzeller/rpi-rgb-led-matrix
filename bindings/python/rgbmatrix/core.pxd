@@ -1,7 +1,7 @@
 from . cimport cppinc
 
 cdef class Canvas:
-    cdef cppinc.Canvas *__getCanvas(self) except +
+    cdef cppinc.Canvas *_getCanvas(self) except +
 
 cdef class FrameCanvas(Canvas):
     cdef cppinc.FrameCanvas *__canvas

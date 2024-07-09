@@ -32,7 +32,7 @@ cdef class Font:
             raise Exception("Couldn't load font " + file)
 
     def DrawGlyph(self, core.Canvas c, int x, int y, Color color, uint32_t char):
-        return self.__font.DrawGlyph(c.__getCanvas(), x, y, color.__color, char)
+        return self.__font.DrawGlyph(c._getCanvas(), x, y, color.__color, char)
 
     property height:
         def __get__(self): return self.__font.height()
@@ -41,13 +41,13 @@ cdef class Font:
         def __get__(self): return self.__font.baseline()
 
 def DrawText(core.Canvas c, Font f, int x, int y, Color color, text):
-    return cppinc.DrawText(c.__getCanvas(), f.__font, x, y, color.__color, text.encode('utf-8'))
+    return cppinc.DrawText(c._getCanvas(), f.__font, x, y, color.__color, text.encode('utf-8'))
 
 def DrawCircle(core.Canvas c, int x, int y, int r, Color color):
-    cppinc.DrawCircle(c.__getCanvas(), x, y, r, color.__color)
+    cppinc.DrawCircle(c._getCanvas(), x, y, r, color.__color)
 
 def DrawLine(core.Canvas c, int x1, int y1, int x2, int y2, Color color):
-    cppinc.DrawLine(c.__getCanvas(), x1, y1, x2, y2, color.__color)
+    cppinc.DrawLine(c._getCanvas(), x1, y1, x2, y2, color.__color)
 
 # Local Variables:
 # mode: python
