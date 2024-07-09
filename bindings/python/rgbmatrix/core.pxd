@@ -1,4 +1,4 @@
-cimport cppinc
+from . cimport cppinc
 
 cdef class Canvas:
     cdef cppinc.Canvas *__getCanvas(self) except +

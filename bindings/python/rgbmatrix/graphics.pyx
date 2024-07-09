@@ -3,7 +3,7 @@
 from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t
 
-cimport core
+from . cimport core
 
 cdef class Color:
     def __init__(self, uint8_t red = 0, uint8_t green = 0, uint8_t blue = 0):

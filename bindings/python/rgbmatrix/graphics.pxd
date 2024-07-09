@@ -1,4 +1,4 @@
-cimport cppinc
+from . cimport cppinc
 
 cdef class Color:
     cdef cppinc.Color __color
