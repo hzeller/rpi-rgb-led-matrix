@@ -5,7 +5,7 @@ from libc.stdint cimport uint8_t, uint32_t, uintptr_t
 import cython
 
 cdef class Canvas:
-    cdef cppinc.Canvas* _getCanvas(self) except +:
+    cdef cppinc.Canvas* _getCanvas(self) except *:
         raise Exception("Not implemented")
 
     def SetImage(self, image, int offset_x = 0, int offset_y = 0, unsafe=True):
