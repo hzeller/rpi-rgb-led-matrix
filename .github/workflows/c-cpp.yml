@@ -1,17 +1,22 @@
 name: C/C++ CI
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [ push, pull_request ]
 
 jobs:
   build:
+    strategy:
+      matrix:
+        cython: [cython3-legacy, cython3]
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
     - uses: actions/checkout@v2
+    - name: install cython
+      run: |
+        sudo apt-get update && sudo apt-get install -y ${{ matrix.cython }}
+        cython3 --version
+    - name: regenerate python bindings
+      run: make -B -C bindings/python/rgbmatrix
     - name: make
       run: make

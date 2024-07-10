@@ -2,11 +2,10 @@
 
 from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t, uintptr_t
-from PIL import Image
 import cython
 
 cdef class Canvas:
-    cdef cppinc.Canvas* __getCanvas(self) except +:
+    cdef cppinc.Canvas* _getCanvas(self) except *:
         raise Exception("Not implemented")
 
     def SetImage(self, image, int offset_x = 0, int offset_y = 0, unsafe=True):
@@ -34,7 +33,7 @@ cdef class Canvas:
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def SetPixelsPillow(self, int xstart, int ystart, int width, int height, image):
-        cdef cppinc.FrameCanvas* my_canvas = <cppinc.FrameCanvas*>self.__getCanvas()
+        cdef cppinc.FrameCanvas* my_canvas = <cppinc.FrameCanvas*>self._getCanvas()
         cdef int frame_width = my_canvas.width()
         cdef int frame_height = my_canvas.height()
         cdef int row, col
@@ -58,34 +57,34 @@ cdef class FrameCanvas(Canvas):
         if <void*>self.__canvas != NULL:
             self.__canvas = NULL
 
-    cdef cppinc.Canvas* __getCanvas(self) except *:
+    cdef cppinc.Canvas* _getCanvas(self) except *:
         if <void*>self.__canvas != NULL:
             return self.__canvas
         raise Exception("Canvas was destroyed or not initialized, you cannot use this object anymore")
 
     def Fill(self, uint8_t red, uint8_t green, uint8_t blue):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).Fill(red, green, blue)
+        (<cppinc.FrameCanvas*>self._getCanvas()).Fill(red, green, blue)
 
     def Clear(self):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).Clear()
+        (<cppinc.FrameCanvas*>self._getCanvas()).Clear()
 
     def SetPixel(self, int x, int y, uint8_t red, uint8_t green, uint8_t blue):
-        (<cppinc.FrameCanvas*>self.__getCanvas()).SetPixel(x, y, red, green, blue)
+        (<cppinc.FrameCanvas*>self._getCanvas()).SetPixel(x, y, red, green, blue)
 
 
     property width:
-        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).width()
+        def __get__(self): return (<cppinc.FrameCanvas*>self._getCanvas()).width()
 
     property height:
-        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).height()
+        def __get__(self): return (<cppinc.FrameCanvas*>self._getCanvas()).height()
 
     property pwmBits:
-        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).pwmbits()
-        def __set__(self, pwmBits): (<cppinc.FrameCanvas*>self.__getCanvas()).SetPWMBits(pwmBits)
+        def __get__(self): return (<cppinc.FrameCanvas*>self._getCanvas()).pwmbits()
+        def __set__(self, pwmBits): (<cppinc.FrameCanvas*>self._getCanvas()).SetPWMBits(pwmBits)
 
     property brightness:
-        def __get__(self): return (<cppinc.FrameCanvas*>self.__getCanvas()).brightness()
-        def __set__(self, val): (<cppinc.FrameCanvas*>self.__getCanvas()).SetBrightness(val)
+        def __get__(self): return (<cppinc.FrameCanvas*>self._getCanvas()).brightness()
+        def __set__(self, val): (<cppinc.FrameCanvas*>self._getCanvas()).SetBrightness(val)
 
 
 cdef class RGBMatrixOptions:
@@ -216,7 +215,7 @@ cdef class RGBMatrix(Canvas):
         self.__matrix.Clear()
         del self.__matrix
 
-    cdef cppinc.Canvas* __getCanvas(self) except *:
+    cdef cppinc.Canvas* _getCanvas(self) except *:
         if <void*>self.__matrix != NULL:
             return self.__matrix
         raise Exception("Canvas was destroyed or not initialized, you cannot use this object anymore")
