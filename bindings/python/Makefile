@@ -1,5 +1,5 @@
 # TODO: This contains a lot of {c|p}ython build boilerplate, this needs cleanup.
-PYTHON     ?= python
+PYTHON     ?= python3
 SETUP      := setup.py
 BUILD_ARGS := build --build-lib .
 INST_ARGS  := install
