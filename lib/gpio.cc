@@ -234,21 +234,20 @@ enum RaspberryPiModel {
   PI_MODEL_4
 };
 
-static int ReadFileToBuffer(char *buffer, size_t size, const char *filename) {
-  buffer[0] = '\0';
+static int ReadBinaryFileToBuffer(uint8_t *buffer, size_t size,
+                                  const char *filename) {
   const int fd = open(filename, O_RDONLY);
   if (fd < 0) return -1;
-  ssize_t r = read(fd, buffer, size - 1); // assume one read enough
-  buffer[r >= 0 ? r : 0] = '\0';
+  const ssize_t r = read(fd, buffer, size); // assume one read enough.
   close(fd);
   return r;
 }
 
-static int ReadBinaryFileToBuffer(uint8_t *buffer, size_t size, const char *filename) {
-  const int fd = open(filename, O_RDONLY);
-  if (fd < 0) return -1;
-  ssize_t r = read(fd, buffer, size);
-  close(fd);
+// Like ReadBinaryFileToBuffer(), but adds null-termination.
+static int ReadTextFileToBuffer(char *buffer, size_t size,
+                                const char *filename) {
+  int r = ReadBinaryFileToBuffer((uint8_t *)buffer, size - 1, filename);
+  buffer[r >= 0 ? r : 0] = '\0';
   return r;
 }
 
@@ -259,7 +258,7 @@ static int ReadBinaryFileToBuffer(uint8_t *buffer, size_t size, const char *file
  */
 static uint32_t ReadRevisionFromProcCpuinfo() {
   char buffer[4096];
-  if (ReadFileToBuffer(buffer, sizeof(buffer), "/proc/cpuinfo") < 0) {
+  if (ReadTextFileToBuffer(buffer, sizeof(buffer), "/proc/cpuinfo") < 0) {
     fprintf(stderr, "Reading cpuinfo: Could not determine Pi model\n");
     return 0;
   }
@@ -283,9 +282,10 @@ static uint32_t read_be32(const uint8_t *p) {
 
 // Try to read the revision from the devicetree.
 static uint32_t ReadRevisionFromDeviceTree() {
+  const char *const kDeviceTreeRev = "/proc/device-tree/system/linux,revision";
   uint8_t buffer[4];
-  if (ReadBinaryFileToBuffer(buffer, sizeof(buffer), "/proc/device-tree/system/linux,revision") != 4) {
-    fprintf(stderr, "Failed to read revision from /proc/device-tree\n");
+  if (ReadBinaryFileToBuffer(buffer, sizeof(buffer), kDeviceTreeRev) != 4) {
+    fprintf(stderr, "Failed to read revision from %s\n", kDeviceTreeRev);
     return 0;
   }
   return read_be32(buffer);
@@ -473,7 +473,7 @@ private:
 // Check that 3 shows up in isolcpus
 static bool HasIsolCPUs() {
   char buf[256];
-  ReadFileToBuffer(buf, sizeof(buf), "/sys/devices/system/cpu/isolated");
+  ReadTextFileToBuffer(buf, sizeof(buf), "/sys/devices/system/cpu/isolated");
   return index(buf, '3') != NULL;
 }
 
