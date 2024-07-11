@@ -14,4 +14,7 @@ pkgs.mkShell {
       python311Packages.cython
       python311Packages.distutils-extra
     ];
+    shellHook = ''
+      export CYTHON=cython
+    '';
 }
