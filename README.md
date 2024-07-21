@@ -41,12 +41,16 @@ Check out [utils/ directory for some ready-made tools](./utils) to get started
 using the library, or the [examples-api-use/](./examples-api-use) directory if
 you want to get started programming your own utils.
 
-All Raspberry Pi versions supported
------------------------------------
+Raspberry Pi up to 4 supported
+------------------------------
 
-This supports the old Raspberry Pi's Version 1 with 26 pin header and also the
-B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well as the
-Compute Modules which have 44 GPIOs.
+This library supports the old Raspberry Pi's Version 1 with 26 pin header and
+also the B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well
+as the Compute Modules which have 44 GPIOs.
+
+The Raspberry Pi 5 still needs some research into the vastly changed peripherals
+and is not yet supported.
+
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
 The Compute Module can drive **up to 6 chains in parallel**.
