@@ -481,9 +481,9 @@ class P3Outdoor64x64MultiplexMapper : public MultiplexMapperBase {
 public:
   P3Outdoor64x64MultiplexMapper() : MultiplexMapperBase("P3Outdoor64x64MultiplexMapper", 2) {}
   // P3 RGB panel 64x64
-  // with pattern   [1] [3] [4] [7]
-  //                   |   /   |
-  //                [0] [2] [5] [6]
+  // with pattern   [1] [3]
+  //                 | \ |
+  //                [0] [2]
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     const bool is_top_stripe = (y % (panel_rows_/2)) < panel_rows_/4;
