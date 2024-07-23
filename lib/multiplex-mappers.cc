@@ -487,11 +487,7 @@ public:
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     const bool is_top_stripe = (y % (panel_rows_/2)) < panel_rows_/4;
-    const int quarter = x;
-    *matrix_x = ((2*quarter)
-                 + (is_top_stripe
-                    ? 1
-                    : 0));
+    *matrix_x = ((x*2) + (is_top_stripe ? 1 : 0));
     *matrix_y = ((y / (panel_rows_/2)) * (panel_rows_/4)
                  + y % (panel_rows_/4));
   }
