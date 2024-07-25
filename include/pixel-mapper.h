@@ -80,6 +80,14 @@ public:
   virtual void MapVisibleToMatrix(int matrix_width, int matrix_height,
                                   int visible_x, int visible_y,
                                   int *matrix_x, int *matrix_y) const = 0;
+
+  virtual bool MapMatrixToVisible(int matrix_width, int matrix_height,
+                                  int matrix_x, int matrix_y,
+                                  int *visible_x, int *visible_y) const { return false; };
+  enum MappingType {
+    VisibleToMatrix, MatrixToVisible
+  };
+  virtual MappingType GetMappingType() const { return VisibleToMatrix; }
 };
 
 // This is a place to register PixelMappers globally. If you register your
