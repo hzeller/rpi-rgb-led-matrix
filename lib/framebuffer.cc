@@ -17,6 +17,11 @@
 // format that is friendly to be dumped to the matrix quickly. Provides methods
 // to manipulate the content.
 
+// TODO: Add rebalancing to S-PWM implementation (Required for proper operation)
+// 	Add CPU overhead
+// 	Makes little sense without hardware
+// 	Explain how S-PWM is supposed to work
+
 #include "framebuffer-internal.h"
 
 #include <assert.h>
@@ -294,7 +299,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     columns_(columns),
     scan_mode_(scan_mode),
     inverse_color_(inverse_color),
-    pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
+    pwm_bits_(kBitPlanes), seg_bits_(8), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_),
     buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
     shared_mapper_(mapper) {
@@ -567,9 +572,14 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
 }
 
 bool Framebuffer::SetPWMBits(uint8_t value) {
-  if (value < 1 || value > kBitPlanes)
+  return SetPWMBits(value, 8);
+}
+
+bool Framebuffer::SetPWMBits(uint8_t value, uint8_t seg) {
+  if (value < 1 || value > kBitPlanes || seg < 1 || seg > kBitPlanes)
     return false;
   pwm_bits_ = value;
+  seg_bits_ = seg;
   return true;
 }
 
@@ -840,48 +850,103 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
 
   // Depending if we do dithering, we might not always show the lowest bits.
   const int start_bit = std::max(pwm_low_bit, kBitPlanes - pwm_bits_);
+  int counter = 0;
 
   const uint8_t half_double = double_rows_/2;
-  for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
-    uint8_t d_row;
-    switch (scan_mode_) {
-    case 0:  // progressive
-    default:
-      d_row = row_loop;
-      break;
+  for (int b = start_bit; b < kBitPlanes;) {
+    for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
+      uint8_t d_row;
+      switch (scan_mode_) {
+      case 0:  // progressive
+      default:
+        d_row = row_loop;
+        break;
 
-    case 1:  // interlaced
-      d_row = ((row_loop < half_double)
-               ? (row_loop << 1)
-               : ((row_loop - half_double) << 1) + 1);
-    }
-
-    // Rows can't be switched very quickly without ghosting, so we do the
-    // full PWM of one row before switching rows.
-    for (int b = start_bit; b < kBitPlanes; ++b) {
-      gpio_bits_t *row_data = ValueAt(d_row, 0, b);
-      // While the output enable is still on, we can already clock in the next
-      // data.
-      for (int col = 0; col < columns_; ++col) {
-        const gpio_bits_t &out = *row_data++;
-        io->WriteMaskedBits(out, color_clk_mask);  // col + reset clock
-        io->SetBits(h.clock);               // Rising edge: clock color in.
+      case 1:  // interlaced
+        d_row = ((row_loop < half_double)
+                 ? (row_loop << 1)
+                 : ((row_loop - half_double) << 1) + 1);
       }
-      io->ClearBits(color_clk_mask);    // clock back to normal.
 
-      // OE of the previous row-data must be finished before strobe.
-      sOutputEnablePulser->WaitPulseFinished();
+      if (b < seg_bits_) {
+        for (int b2 = b; b2 < seg_bits_; b2++) {
+          gpio_bits_t *row_data = ValueAt(d_row, 0, b2);
+          // While the output enable is still on, we can already clock in the next
+          // data.
+          for (int col = 0; col < columns_; ++col) {
+            const gpio_bits_t &out = *row_data++;
+            io->WriteMaskedBits(out, color_clk_mask);  // col + reset clock
+            io->SetBits(h.clock);               // Rising edge: clock color in.
+          }
+          io->ClearBits(color_clk_mask);    // clock back to normal.
 
-      // Setting address and strobing needs to happen in dark time.
-      row_setter_->SetRowAddress(io, d_row);
+          // OE of the previous row-data must be finished before strobe.
+          sOutputEnablePulser->WaitPulseFinished();
 
-      io->SetBits(h.strobe);   // Strobe in the previously clocked in row.
-      io->ClearBits(h.strobe);
+          // Setting address and strobing needs to happen in dark time.
+          row_setter_->SetRowAddress(io, d_row);
 
-      // Now switch on for the sleep time necessary for that bit-plane.
-      sOutputEnablePulser->SendPulse(b);
+          io->SetBits(h.strobe);   // Strobe in the previously clocked in row.
+          io->ClearBits(h.strobe);
+          
+          // Now switch on for the sleep time necessary for that bit-plane.
+          sOutputEnablePulser->SendPulse(b2);
+        }
+      }
+      else {
+        gpio_bits_t *row_data = ValueAt(d_row, 0, b);
+        // While the output enable is still on, we can already clock in the next
+        // data.
+        for (int col = 0; col < columns_; ++col) {
+          const gpio_bits_t &out = *row_data++;
+          io->WriteMaskedBits(out, color_clk_mask);  // col + reset clock
+          io->SetBits(h.clock);               // Rising edge: clock color in.
+        }
+        io->ClearBits(color_clk_mask);    // clock back to normal.
+
+        // OE of the previous row-data must be finished before strobe.
+        sOutputEnablePulser->WaitPulseFinished();
+
+        // Setting address and strobing needs to happen in dark time.
+        row_setter_->SetRowAddress(io, d_row);
+
+        io->SetBits(h.strobe);   // Strobe in the previously clocked in row.
+        io->ClearBits(h.strobe);
+        
+        // Now switch on for the sleep time necessary for that bit-plane.
+        sOutputEnablePulser->SendPulse(seg_bits_);
+      }
+    }
+    
+    if (b < seg_bits_)
+      b = seg_bits_;
+    else if (++counter >= (1 << (b - seg_bits_))) {
+          ++b;
+          counter = 0;
     }
   }
+}
+
+PWMFrameBuffer::PWMFramebuffer(int rows, int columns, int parallel,
+              int scan_mode,
+              const char* led_sequence, bool inverse_color,
+              PixelDesignatorMap **mapper) : FrameBuffer(rows, colums, parallel, scan_mode, led_sequence, inverse_color, mapper) {
+  driver_bits_ = 7;
+  SetPWMBits(driver_bits_);
+}
+
+bool PWMFrameBuffer::SetPWMBits(uint8_t value) {
+  return FrameBuffer::SetPWMBits(value % (driver_bits_ + 1));
+}
+  
+void PWMFrameBuffer::DumpToMatrix(GPIO *io, int pwm_bits_to_show) {
+  // TODO: Port ESP32 logic
+}
+
+inline gpio_bits_t *PWMFrameBuffer::ValueAt(int double_row, int column, int bit) {
+  return &bitplane_buffer_[ double_row * (columns_ * kBitPlanes)
+                            + kBitPlanes * column
+                            + bit ];
 }
 }  // namespace internal
 }  // namespace rgb_matrix

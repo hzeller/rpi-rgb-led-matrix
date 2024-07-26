@@ -75,6 +75,7 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     OPT_COPY_IF_SET(chain_length);
     OPT_COPY_IF_SET(parallel);
     OPT_COPY_IF_SET(pwm_bits);
+    OPT_COPY_IF_SET(seg_bits);
     OPT_COPY_IF_SET(pwm_lsb_nanoseconds);
     OPT_COPY_IF_SET(pwm_dither_bits);
     OPT_COPY_IF_SET(brightness);
@@ -121,6 +122,7 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     ACTUAL_VALUE_BACK_TO_OPT(chain_length);
     ACTUAL_VALUE_BACK_TO_OPT(parallel);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_bits);
+    ACTUAL_VALUE_BACK_TO_OPT(seg_bits);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_lsb_nanoseconds);
     ACTUAL_VALUE_BACK_TO_OPT(pwm_dither_bits);
     ACTUAL_VALUE_BACK_TO_OPT(brightness);

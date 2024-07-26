@@ -155,6 +155,11 @@ public:
     // Limit refresh rate of LED panel. This will help on a loaded system
     // to keep a constant refresh rate. <= 0 for no limit.
     int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
+    
+    // Set S-PWM segment bits used for output. Default is 8. Higher require less CPU and
+    // decreases refresh-rate.
+    // Flag: --led-seg-bits
+    int seg_bits;
   };
 
   // Factory to create a matrix. Additional functionality includes dropping
