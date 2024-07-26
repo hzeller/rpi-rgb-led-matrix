@@ -34,6 +34,7 @@ extern "C" {
 #  include <libavformat/avformat.h>
 #  include <libavutil/imgutils.h>
 #  include <libswscale/swscale.h>
+#  include <libavdevice/avdevice.h>
 }
 
 #include <fcntl.h>
@@ -264,6 +265,7 @@ int main(int argc, char *argv[]) {
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 9, 100)
   av_register_all();
 #endif
+  avdevice_register_all();
   avformat_network_init();
 
   signal(SIGTERM, InterruptHandler);

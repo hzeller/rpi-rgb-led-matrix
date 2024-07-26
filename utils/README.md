@@ -265,7 +265,7 @@ built with `make video-viewer`.
 
 ```
 sudo apt-get update
-sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev libavdevice-dev
 make video-viewer
 ```
 
@@ -297,6 +297,11 @@ General LED matrix options:
 # Play video. If you observe that the Pi has trouble to keep up (extensive
 # flickering), transcode the video first to the exact size of your display.
 sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 myvideo.webm
+
+# Output a webcam. Since /dev/video0 is usually not readable by the user
+# the privileges are dropped to ('daemon'), in the simplest case, just
+# switch of privilege dropping.
+sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 --led-no-drop-privs /dev/video0
 
 # If you observe flicker you can try to synchronize video output with
 # the refresh rate of the panel. For that, first figure out with
