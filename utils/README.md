@@ -298,11 +298,6 @@ General LED matrix options:
 # flickering), transcode the video first to the exact size of your display.
 sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 myvideo.webm
 
-# Output a webcam. Since /dev/video0 is usually not readable by the user
-# the privileges are dropped to ('daemon'), in the simplest case, just
-# switch of privilege dropping.
-sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 --led-no-drop-privs /dev/video0
-
 # If you observe flicker you can try to synchronize video output with
 # the refresh rate of the panel. For that, first figure out with
 # --led-show-refresh what the 'natural' refresh rate is of your LED panel.
@@ -313,6 +308,24 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 --led-no-drop-privs /dev/
 # Let's fix the refresh rate to 200 and sync a new frame with every
 # 8th refresh to get the desired video fps (200/8 = 25)
 sudo ./video-viewer --led-chain=4 --led-parallel=3 --led-limit-refresh=200 -V8 myvideo.webm
+
+# Output a webcam. Since /dev/video0 is usually not readable by the user
+# the privileges are dropped to ('daemon'), in the simplest case, just
+# switch of privilege dropping.
+# (Note, reading from a camerea device and scaling it then writing to the LED
+#  panel might create enough contention on the Pi memory busses that slight
+#  flicker might be noticeable)
+sudo ./video-viewer --led-chain=5 --led-parallel=3 --led-no-drop-privs /dev/video0
+
+# Often, webcam camera streams are pretty large which need to be scaled
+# in the video viewer. Reading large amounts of data from USB and scaling are
+# known to result in flickering on the matrix, so setting the video resolution
+# as close as possible using the video4linux utils can reduce the impact.
+# Consider you have an RGB panel with 160x96 pixels, use `v4l2-ctl` for an best
+# effort to pre-scale the video. Use the `-v` verbose option on the
+# video-viewer to see some meta-data about the stream it receives:
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=160,height=96
+sudo ./video-viewer -v --led-chain=5 --led-parallel=3 --led-no-drop-privs /dev/video0
 ```
 
 **Example preparing a preprocessed stream**
