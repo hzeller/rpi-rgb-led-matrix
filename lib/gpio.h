@@ -20,6 +20,12 @@
 
 #include <vector>
 
+#if __ARM_ARCH >= 7
+#define LED_MATRIX_ALLOW_BARRIER_DELAY 1
+#else
+#define LED_MATRIX_ALLOW_BARRIER_DELAY 0
+#endif
+
 // Putting this in our namespace to not collide with other things called like
 // this.
 namespace rgb_matrix {
@@ -73,19 +79,17 @@ public:
 
 private:
   inline void delay() const {
-    switch(slowdown_) {
-      case -1:
-#if __ARM_ARCH >= 7
+#if LED_MATRIX_ALLOW_BARRIER_DELAY
+    if (slowdown_ == -1) {
         asm volatile("dsb\tst");
+        return;
+    }
 #endif
-        break;
-      case 0:
-        break;
-      default:
-        for (int n = 0; n < slowdown_; n++)
-          *gpio_clr_bits_low_ = 0;
+    for (int n = 0; n < slowdown_; n++) {
+      *gpio_clr_bits_low_ = 0;
     }
   }
+
   inline gpio_bits_t ReadRegisters() const {
     return (static_cast<gpio_bits_t>(*gpio_read_bits_low_)
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
