@@ -477,6 +477,23 @@ public:
 };
 
 
+class P3Outdoor64x64MultiplexMapper : public MultiplexMapperBase {
+public:
+  P3Outdoor64x64MultiplexMapper() : MultiplexMapperBase("P3Outdoor64x64MultiplexMapper", 2) {}
+  // P3 RGB panel 64x64
+  // with pattern   [1] [3]
+  //                 | \ |
+  //                [0] [2]
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const bool is_top_stripe = (y % (panel_rows_/2)) < panel_rows_/4;
+    *matrix_x = ((x*2) + (is_top_stripe ? 1 : 0));
+    *matrix_y = ((y / (panel_rows_/2)) * (panel_rows_/4)
+                 + y % (panel_rows_/4));
+  }
+};
+
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -505,6 +522,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new FlippedStripeMultiplexMapper());
   result->push_back(new P10Outdoor32x16HalfScanMapper());
   result->push_back(new P10Outdoor32x16QuarterScanMapper());
+  result->push_back(new P3Outdoor64x64MultiplexMapper());
   return result;
 }
 
