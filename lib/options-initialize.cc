@@ -209,6 +209,12 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       }
 
+      bool allow_busy_waiting = !mopts->disable_busy_waiting;
+      if (ConsumeBoolFlag("busy-waiting", it, &allow_busy_waiting)) {
+        mopts->disable_busy_waiting = !allow_busy_waiting;
+        continue;
+      }
+
       bool request_help = false;
       if (ConsumeBoolFlag("help", it, &request_help) && request_help) {
         // In that case, we pretend to have failure in parsing, which will
@@ -338,7 +344,8 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           "\t--led-pwm-dither-bits=<0..2> : Time dithering of lower bits "
           "(Default: 0)\n"
           "\t--led-%shardware-pulse   : %sse hardware pin-pulse generation.\n"
-          "\t--led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A', 'FM6127'\n",
+          "\t--led-panel-type=<name>   : Needed to initialize special panels. Supported: 'FM6126A', 'FM6127'\n"
+          "\t--led-%sbusy-waiting     : %sse busy waiting when limiting refresh rate.\n",
           d.hardware_mapping,
           d.rows, d.cols, d.chain_length, d.parallel,
           (int) muxers.size(), CreateAvailableMultiplexString(muxers).c_str(),
@@ -350,7 +357,9 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           d.inverse_colors ? "no-" : "",    d.inverse_colors ? "off" : "on",
           d.pwm_lsb_nanoseconds,
           !d.disable_hardware_pulsing ? "no-" : "",
-          !d.disable_hardware_pulsing ? "Don't u" : "U");
+          !d.disable_hardware_pulsing ? "Don't u" : "U",
+          !d.disable_busy_waiting ? "no-" : "",
+          !d.disable_busy_waiting ? "Don't u" : "U");
 
   fprintf(out, "\t--led-slowdown-gpio=<0..4>: "
           "Slowdown GPIO. Needed for faster Pis/slower panels "

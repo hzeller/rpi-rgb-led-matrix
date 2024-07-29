@@ -88,6 +88,7 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     OPT_COPY_IF_SET(pixel_mapper_config);
     OPT_COPY_IF_SET(panel_type);
     OPT_COPY_IF_SET(limit_refresh_rate_hz);
+    OPT_COPY_IF_SET(disable_busy_waiting);
 #undef OPT_COPY_IF_SET
   }
 
@@ -134,6 +135,7 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     ACTUAL_VALUE_BACK_TO_OPT(pixel_mapper_config);
     ACTUAL_VALUE_BACK_TO_OPT(panel_type);
     ACTUAL_VALUE_BACK_TO_OPT(limit_refresh_rate_hz);
+    ACTUAL_VALUE_BACK_TO_OPT(disable_busy_waiting);
 #undef ACTUAL_VALUE_BACK_TO_OPT
   }
 

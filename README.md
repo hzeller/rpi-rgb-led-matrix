@@ -385,6 +385,20 @@ the vsync-multiple flag `-V` in the [led-image-viewer] or
 [video-viewer] utility programs.
 
 ```
+--led-no-busy-waiting     : Don't use busy waiting when limiting refresh rate.
+```
+
+This allows to switch from busy waiting to sleep waiting when limiting the
+refresh rate (`--led-limit-refresh`).
+
+By default, refresh rate limiting uses busy waiting, which is CPU intensive but
+gives most accurate timings. This is fine for multi-core boards.
+
+On single core boards (e.g.: Raspberry Pi Zero) busy waiting makes the system
+unresponsive for other/background tasks. There, sleep waiting improves the
+system's responsiveness at the cost of slightly less accurate timings.
+
+```
 --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
 ```
 
@@ -449,7 +463,7 @@ to debug if it has something to do with the sound subsystem (see Troubleshooting
 section). This is really only recommended for debugging; typically you actually
 want the hardware pulses as it results in a much more stable picture.
 
-<a name="no-drop-priv"/>
+<a name="no-drop-priv"></a>
 
 ```
 --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.

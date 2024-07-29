@@ -853,4 +853,9 @@ uint32_t GetMicrosecondCounter() {
   return epoch_usec & 0xFFFFFFFF;
 }
 
+// For external use, e.g. to lessen busy waiting.
+void SleepMicroseconds(long t) {
+  Timers::sleep_nanos(t * 1000);
+}
+
 } // namespace rgb_matrix

@@ -144,6 +144,8 @@ public:
 // if possible and a terrible slow fallback otherwise.
 uint32_t GetMicrosecondCounter();
 
+void SleepMicroseconds(long);
+
 }  // end namespace rgb_matrix
 
 #endif  // RPI_GPIO_INGERNALH
