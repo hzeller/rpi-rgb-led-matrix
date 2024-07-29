@@ -47,26 +47,23 @@ public:
   inline void SetBits(gpio_bits_t value) {
     if (!value) return;
     WriteSetBits(value);
-    for (int i = 0; i < slowdown_; ++i) {
-      WriteSetBits(value);
-    }
+    delay();
   }
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   inline void ClearBits(gpio_bits_t value) {
     if (!value) return;
     WriteClrBits(value);
-    for (int i = 0; i < slowdown_; ++i) {
-      WriteClrBits(value);
-    }
+    delay();
   }
 
   // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
   inline void WriteMaskedBits(gpio_bits_t value, gpio_bits_t mask) {
     // Writing a word is two operations. The IO is actually pretty slow, so
     // this should probably  be unnoticable.
-    ClearBits(~value & mask);
-    SetBits(value & mask);
+    WriteClrBits(~value & mask);
+    WriteSetBits(value & mask);
+    delay();
   }
 
   inline gpio_bits_t Read() const { return ReadRegisters() & input_bits_; }
@@ -75,6 +72,20 @@ public:
   static bool IsPi4();
 
 private:
+  inline void delay() const {
+    switch(slowdown_) {
+      case -1:
+#if __ARM_ARCH >= 7
+        asm volatile("dsb\tst");
+#endif
+        break;
+      case 0:
+        break;
+      default:
+        for (int n = 0; n < slowdown_; n++)
+          *gpio_clr_bits_low_ = 0;
+    }
+  }
   inline gpio_bits_t ReadRegisters() const {
     return (static_cast<gpio_bits_t>(*gpio_read_bits_low_)
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
