@@ -19,6 +19,8 @@ cdef class RGBMatrixOptions:
     cdef bytes __py_encoded_led_rgb_sequence
     cdef bytes __py_encoded_pixel_mapper_config
     cdef bytes __py_encoded_panel_type
+    cdef bytes __py_encoded_drop_priv_user
+    cdef bytes __py_encoded_drop_priv_group
 
 # Local Variables:
 # mode: python
