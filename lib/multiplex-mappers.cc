@@ -201,7 +201,7 @@ public:
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     // Now we have a 128x4 matrix
-    int offset = ((y%4)/2) == 0 ? -1 : 1;// Add o substract
+    int offset = ((y%4)/2) == 0 ? -1 : 1;// Add or substract
     int deltaOffset = offset < 0 ? 7:8;
     int deltaColumn = ((y%8)/4)== 0 ? 64 : 0;
 
@@ -293,7 +293,7 @@ public:
 
 
 /*
- * Vairous P10 1R1G1B Outdoor implementations for 16x16 modules with separate
+ * Various P10 1R1G1B Outdoor implementations for 16x16 modules with separate
  * RGB LEDs, e.g.:
  * https://www.ledcontrollercard.com/english/p10-outdoor-rgb-led-module-160x160mm-dip.html
  *

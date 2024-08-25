@@ -54,7 +54,7 @@ and is not yet supported.
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
 The Compute Module can drive **up to 6 chains in parallel**.
-The Raspberry Pi 2 and 3 are faster and generally perferred to the older
+The Raspberry Pi 2 and 3 are faster and generally preferred to the older
 models (and the Pi Zero). With the faster models, the panels sometimes
 can't keep up with the speed; check out
 this [troubleshooting section](#troubleshooting) what to do.
@@ -87,7 +87,7 @@ Flag                                | Descriptio
 `--led-cols`          | Columns in the LED matrix, the 'width'.
 `--led-rows`          | Rows in the LED matrix, the 'height'.
 `--led-multiplexing`  | In particular bright outdoor panels with small multiplex ratios require this. Often an indicator: if there are fewer address lines than expected: ABC (instead of ABCD) for 32 high panels and ABCD (instead of ABCDE) for 64 high panels.
-`--led-row-addr-type` | Adressing of rows; in particular panels with only AB address lines might indicate that this is needed.
+`--led-row-addr-type` | Addressing of rows; in particular panels with only AB address lines might indicate that this is needed.
 `--led-panel-type`    | Chipset of the panel. In particular if it doesn't light up at all, you might need to play with this option because it indicates that the panel requires a particular initialization sequence.
 
 Panels can be chained by connecting the output of one panel to the input of
@@ -447,8 +447,8 @@ This will allow higher refresh rate (or same refresh rate with increased
 `--led-pwm-lsb-nanoseconds`).
 The disadvantage could be slightly lower brightness, in particular for longer
 chains, and higher CPU use.
-CPU use is not of concern for Rasbperry Pi 2 or 3 (as we run on a dedicated
-core anyway) but proably for Raspberry Pi 1 or Pi Zero.
+CPU use is not of concern for Raspberry Pi 2 or 3 (as we run on a dedicated
+core anyway) but probably for Raspberry Pi 1 or Pi Zero.
 Default: no dithering; if you have a Pi 3 and struggle with low frame-rate due
 to high multiplexing panels (1:16 or 1:32) or long chains, it might be
 worthwhile to try.
@@ -693,7 +693,7 @@ with traces under the chip, this involves lifting a leg from the
 HCT245 (figure out a free bus driver from the schematic). If all of the
 above makes sense to you, you have the Ninja level to do it!
 
-It might be more convienent at this point to consider the [Active3 adapter](./adapter/active-3)
+It might be more convenient at this point to consider the [Active3 adapter](./adapter/active-3)
 that has that covered already.
 
 Running as root
@@ -728,11 +728,11 @@ about 1'000'000 write operations have to happen every second!
 We can't use hardware support for writing these as DMA is too slow,
 thus the constant CPU use on an RPi is roughly 30-40% of one core.
 Keep that in mind if you plan to run other things on this computer (This
-is less noticable on Raspberry Pi, Version 2 or 3 that has more cores).
+is less noticeable on Raspberry Pi, Version 2 or 3 that has more cores).
 
 Also, the output quality is susceptible to other heavy tasks running on that
-computer - there might be changes in the overall brigthness when this affects
-the referesh rate.
+computer - there might be changes in the overall brightness when this affects
+the refresh rate.
 
 If you have a loaded system and one of the newer Pis with 4 cores, you can
 reserve one core just for the refresh of the display:

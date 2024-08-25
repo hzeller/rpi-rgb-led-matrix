@@ -16,7 +16,7 @@ Adapter PCB to support up to 3 panel chains
      it easy to hand-solder. Make sure to get the variant with the **T**: HC**T** or AHC**T**
      (there are also HC or AHC, don't use these).
      - 4x 100nF ceramic capacitor (0805 package)
-     - 1x 10kOhm resistor (0805 package). Not critcial, just a pullup (2.2k .. 15k probably ok).
+     - 1x 10kOhm resistor (0805 package). Not critical, just a pullup (2.2k .. 15k probably ok).
      - 3x 16pin IDC (=2x8) male receptible to connect the panels.
      - 1x 40pin female connector to connect to the RPi.
      - 1x (optional) 22μF .. 100μF capacitor for 5V rail (either 1206 SMD or
