@@ -1,6 +1,9 @@
 using RPiRgbLEDMatrix;
 using System.Runtime.InteropServices;
 using Color = RPiRgbLEDMatrix.Color;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 
 Console.Write("GIF path: ");
 var path = Console.ReadLine()!;
