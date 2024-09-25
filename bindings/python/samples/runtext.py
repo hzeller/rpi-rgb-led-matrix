@@ -8,7 +8,7 @@ import time
 class RunText(SampleBase):
     def __init__(self, *args, **kwargs):
         super(RunText, self).__init__(*args, **kwargs)
-        self.parser.add_argument("-t", "--text", help="The text to scroll on the RGB LED panel", default="Shmello world!")
+        self.parser.add_argument("-t", "--text", help="The text to scroll on the RGB LED panel", default="I find myself living in times that profess to be three things simultaneously: the future, the precipice of the end and the aftermath. And I sit with the things I have seen filling up my pockets until I am no longer able to walk. For how is one supposed to hold the future, the end and the aftermath in one pocket (or even two)? As I write this it becomes clear that the world has ended many times and continues to end in front of my eyes.")
 
     def run(self):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
