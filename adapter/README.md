@@ -14,6 +14,8 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
      They are given to help you locate premade boards but no guarantees are given or implied:
      * https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-raspberry-pi/
        ($3/board, but fairly long and/or expensive shipping from HKG)
+       
+       * https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-for-raspberry-pi-v2/ (V2 of the above board, better design and no battery required.)
      * Seller #2 (fill me)
    * The [Passive-RPi1](./passive-rpi1) adapter board is to connect one panel to
      Raspberry Pi 1 with 26 GPIO pins.
