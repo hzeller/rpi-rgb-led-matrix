@@ -1,34 +1,33 @@
 #!/usr/bin/env python
 import time
-import sys
 from samplebase import SampleBase
-from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from PIL import Image
 
-if len(sys.argv) < 2:
-    sys.exit("Require an image argument")
-else:
-    image_file = sys.argv[1]
 
-image = Image.open(image_file)
+class ImageViewer(SampleBase):
+    def __init__(self, *args, **kwargs):
+        super(ImageViewer, self).__init__(*args, **kwargs)
+        self.parser.add_argument("-i", "--image", help="The image to display", required=True)
 
-# Configuration for the matrix
-options = RGBMatrixOptions()
-options.rows = 32
-options.chain_length = 1
-options.parallel = 1
-options.hardware_mapping = 'regular'  # If you have an Adafruit HAT: 'adafruit-hat'
+    def run(self):
+        # Load image
+        image = Image.open(self.args.image).convert('RGB')
+        image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
 
-matrix = RGBMatrix(options = options)
+        # Set the image on the matrix
+        self.matrix.SetImage(image)
 
-# Make image fit our screen.
-image.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
+        try:
+            print("Press CTRL-C to stop.")
+            while True:
+                time.sleep(100)
+        except KeyboardInterrupt:
+            sys.exit(0)
 
-matrix.SetImage(image.convert('RGB'))
 
-try:
-    print("Press CTRL-C to stop.")
-    while True:
-        time.sleep(100)
-except KeyboardInterrupt:
-    sys.exit(0)
+# Main function
+if __name__ == "__main__":
+    image_viewer = ImageViewer()
+    if not image_viewer.process():
+        image_viewer.print_help()
+
