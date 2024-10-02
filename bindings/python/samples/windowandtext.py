@@ -2,7 +2,7 @@
 import threading
 import time
 from samplebase import SampleBase
-from rgbmatrix import graphics
+from rgbmatrix import graphics, RGBMatrix, RGBMatrixOptions
 
 class BasicWindow(SampleBase):
     def __init__(self, *args, **kwargs):
