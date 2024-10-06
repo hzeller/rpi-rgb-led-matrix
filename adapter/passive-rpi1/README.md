@@ -1,4 +1,4 @@
-Adapter PCB to connect to Rasbperry Pi1
+Adapter PCB to connect to Raspberry Pi1
 =======================================
 
    * Passive board. Simple, but might need to define `--led-slowdown-gpio` if you see

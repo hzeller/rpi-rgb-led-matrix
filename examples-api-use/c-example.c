@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
   /* Let's do an example with double-buffering. We create one extra
    * buffer onto which we draw, which is then swapped on each refresh.
-   * This is typically a good aproach for animations and such.
+   * This is typically a good approach for animations and such.
    */
   offscreen_canvas = led_matrix_create_offscreen_canvas(matrix);
 
