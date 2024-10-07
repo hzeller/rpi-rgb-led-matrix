@@ -7,7 +7,7 @@ from PIL import Image
 class GifViewer(SampleBase):
     def _init_(self, *args, **kwargs):
         super(GifViewer, self)._init_(*args, **kwargs)
-        self.parser.add_argument("-g", "--gifs", help="The comma-separated list of GIF files to display", required=True)
+        self.parser.add_argument("-g", "--gif", help="The comma-separated list of GIF files to display", required=True)
 
     def run(self):
         # Load the gif file
