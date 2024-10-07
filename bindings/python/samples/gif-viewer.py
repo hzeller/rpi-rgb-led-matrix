@@ -47,7 +47,7 @@ class GifViewer(SampleBase):
 
 
 # Main function
-if __name__ == "_main_":
+if __name__ == "__main__":
     gif_viewer = GifViewer()
     if not gif_viewer.process():
         gif_viewer.print_help()
