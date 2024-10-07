@@ -25,7 +25,7 @@ class GifViewer(SampleBase):
         for frame_index in range(0, num_frames):
             gif.seek(frame_index)
             frame = gif.copy()  # Copy the current frame
-            frame.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+            frame.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
             canvas = self.matrix.CreateFrameCanvas()
             canvas.SetImage(frame.convert("RGB"))
             canvases.append(canvas)
