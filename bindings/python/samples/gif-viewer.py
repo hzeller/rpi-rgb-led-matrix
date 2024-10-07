@@ -16,6 +16,7 @@ class GifViewer(SampleBase):
         # Ensure the file is a GIF by checking frames
         try:
             num_frames = gif.n_frames
+            print(num_frames)
         except Exception:
             sys.exit("Provided image is not a gif")
 
@@ -35,15 +36,10 @@ class GifViewer(SampleBase):
         print("Completed preprocessing, displaying gif")
 
         try:
-            print("Press CTRL-C to stop.")
-            cur_frame = 0
             # Loop infinitely through the gif frames
-            while cur_frame <= num_frames:
-                self.matrix.SwapOnVSync(canvases[cur_frame], framerate_fraction=10)
-                if cur_frame == num_frames - 1:
-                    cur_frame = 0
-                else:
-                    cur_frame += 1
+            for i in range(num_frames):
+                self.matrix.SwapOnVSync(canvases[i], framerate_fraction=10)
+                
         except KeyboardInterrupt:
             sys.exit(0)
 
