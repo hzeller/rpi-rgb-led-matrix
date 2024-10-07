@@ -1,0 +1,3 @@
+#!/bin/bash
+sudo python3 gif-viewer.py --led-cols=64 --led-rows=64 --led-chain=3 --led-gpio-mapping=adafruit-hat --led-slowdown-gpio=2 --gif hannah1234.gif
+sudo python3 gif-viewer.py --led-cols=64 --led-rows=64 --led-chain=3 --led-gpio-mapping=adafruit-hat --led-slowdown-gpio=2 --gif hannah12345.gif
