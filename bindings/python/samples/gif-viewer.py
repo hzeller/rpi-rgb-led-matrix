@@ -38,7 +38,7 @@ class GifViewer(SampleBase):
             print("Press CTRL-C to stop.")
             cur_frame = 0
             # Loop infinitely through the gif frames
-            while cur_frame < 1:
+            while cur_frame <= num_frames:
                 self.matrix.SwapOnVSync(canvases[cur_frame], framerate_fraction=10)
                 if cur_frame == num_frames - 1:
                     cur_frame = 0
