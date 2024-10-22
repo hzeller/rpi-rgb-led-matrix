@@ -7,6 +7,7 @@ Original readme can be found [here](https://github.com/hzeller/rpi-rgb-led-matri
     - If you get an error similar to `WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!` just follow the instructions listed
     - When prompted, enter your Raspberry Pi password, default is `raspberry`
 1. Install git: `sudo apt install git`
+1. Clone this repo into the Raspberry PI
 1. `cd rpi-rgb-led-matrix`
 1. In the root directory above build for Python 3:
     1. `sudo apt-get update && sudo apt-get install python3-dev python3-pillow -y`
