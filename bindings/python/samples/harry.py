@@ -42,8 +42,8 @@ red = graphics.Color(213, 0, 0)
 yellow = graphics.Color(201, 181, 0)
 
 def run():
-    matrix.Clear()
     transit_times = get_transit()
+    matrix.Clear()
     if transit_times:
         draw_dividing_lines()
         draw_trains(transit_times["train"])
