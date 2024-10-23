@@ -146,7 +146,7 @@ try:
     print("Press CTRL-C to stop.")
     while True:
         run()
-        time.sleep(30)
+        time.sleep(10)
 
 except KeyboardInterrupt:
     sys.exit(0)
