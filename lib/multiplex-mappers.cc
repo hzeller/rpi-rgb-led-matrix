@@ -549,7 +549,6 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P10Outdoor32x16QuarterScanMapper());
   result->push_back(new P3Outdoor64x64MultiplexMapper());
   result->push_back(new P4Outdoor80x40Mapper());
-  //result->push_back(new P4Outdoor80x40Mapper1());
   return result;
 }
 
