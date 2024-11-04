@@ -10,21 +10,12 @@ the hardware in question (see below for setting it via command line argument).
 
 Then, in the root directory for the matrix library simply type:
 
-### Python 2
-
-```shell
-sudo apt-get update && sudo apt-get install python2.7-dev python-pillow -y
-make build-python
-sudo make install-python
-```
-
 ### Python 3
-You can also build for Python 3:
 
 ```shell
-sudo apt-get update && sudo apt-get install python3-dev python3-pillow -y
-make build-python PYTHON=$(command -v python3)
-sudo make install-python PYTHON=$(command -v python3)
+sudo apt-get update && sudo apt-get install python3-dev cython3 -y
+make build-python 
+sudo make install-python 
 ```
 
 ### PyPy
