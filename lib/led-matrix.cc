@@ -122,9 +122,10 @@ class RGBMatrix::Impl::UpdateThread : public Thread {
 public:
   UpdateThread(GPIO *io, FrameCanvas *initial_frame,
                int pwm_dither_bits, bool show_refresh,
-               int limit_refresh_hz)
+               int limit_refresh_hz, bool allow_busy_waiting)
     : io_(io), show_refresh_(show_refresh),
       target_frame_usec_(limit_refresh_hz < 1 ? 0 : 1e6/limit_refresh_hz),
+      allow_busy_waiting_(allow_busy_waiting),
       running_(true),
       current_frame_(initial_frame), next_frame_(NULL),
       requested_frame_multiple_(1) {
@@ -199,8 +200,13 @@ public:
       ++low_bit_sequence;
 
       if (target_frame_usec_) {
-        while ((GetMicrosecondCounter() - start_time_us) < target_frame_usec_) {
-          // busy wait. We have our dedicated core, so ok to burn cycles.
+        if (allow_busy_waiting_) {
+          while ((GetMicrosecondCounter() - start_time_us) < target_frame_usec_) {
+            // busy wait. We have our dedicated core, so ok to burn cycles.
+          }
+        } else {
+          long spent_us = GetMicrosecondCounter() - start_time_us;
+          SleepMicroseconds(target_frame_usec_ - spent_us);
         }
       }
 
@@ -245,6 +251,7 @@ private:
   GPIO *const io_;
   const bool show_refresh_;
   const uint32_t target_frame_usec_;
+  const bool allow_busy_waiting_;
   uint32_t start_bit_[4];
 
   Mutex running_mutex_;
@@ -314,9 +321,14 @@ RGBMatrix::Options::Options() :
   pixel_mapper_config(NULL),
   panel_type(NULL),
 #ifdef FIXED_FRAME_MICROSECONDS
-  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS)
+  limit_refresh_rate_hz(1e6 / FIXED_FRAME_MICROSECONDS),
 #else
-  limit_refresh_rate_hz(0)
+  limit_refresh_rate_hz(0),
+#endif
+#ifdef DISABLE_BUSY_WAITING
+    disable_busy_waiting(true)
+#else
+    disable_busy_waiting(false)
 #endif
 {
   // Nothing to see here.
@@ -348,6 +360,7 @@ static void PrintOptions(const RGBMatrix::Options &o) {
   P_STR(pixel_mapper_config);
   P_STR(panel_type);
   P_INT(limit_refresh_rate_hz);
+  P_BOOL(disable_busy_waiting);
 #undef P_INT
 #undef P_STR
 #undef P_BOOL
@@ -412,17 +425,17 @@ RGBMatrix::~RGBMatrix() {
 }
 
 uint64_t RGBMatrix::Impl::RequestInputs(uint64_t bits) {
-  return io_->RequestInputs(bits);
+  return io_->RequestInputs(static_cast<gpio_bits_t>(bits));
 }
 
 uint64_t RGBMatrix::Impl::RequestOutputs(uint64_t output_bits) {
-  uint64_t success_bits = io_->InitOutputs(output_bits);
+  uint64_t success_bits = io_->InitOutputs(static_cast<gpio_bits_t>(output_bits));
   user_output_bits_ |= success_bits;
   return success_bits;
 }
 
 void RGBMatrix::Impl::OutputGPIO(uint64_t output_bits) {
-  io_->WriteMaskedBits(output_bits, user_output_bits_);
+  io_->WriteMaskedBits(static_cast<gpio_bits_t>(output_bits), static_cast<gpio_bits_t>(user_output_bits_));
 }
 
 void RGBMatrix::Impl::ApplyNamedPixelMappers(const char *pixel_mapper_config,
@@ -469,7 +482,8 @@ bool RGBMatrix::Impl::StartRefresh() {
   if (updater_ == NULL && io_ != NULL) {
     updater_ = new UpdateThread(io_, active_, params_.pwm_dither_bits,
                                 params_.show_refresh_rate,
-                                params_.limit_refresh_rate_hz);
+                                params_.limit_refresh_rate_hz,
+                                !params_.disable_busy_waiting);
     // If we have multiple processors, the kernel
     // jumps around between these, creating some global flicker.
     // So let's tie it to the last CPU available.
@@ -644,7 +658,9 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
   }
 
   // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
-  if (runtime_options.gpio_slowdown < 0 || runtime_options.gpio_slowdown > 5) {
+  // on supproted architectures, -1 will emit memory barier (DSB ST) after GPIO write
+  if (runtime_options.gpio_slowdown < (LED_MATRIX_ALLOW_BARRIER_DELAY ? -1 : 0)
+      || runtime_options.gpio_slowdown > 5) {
     fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
             runtime_options.gpio_slowdown);
     return NULL;
