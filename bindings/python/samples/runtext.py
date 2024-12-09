@@ -19,7 +19,7 @@ class RunText(SampleBase):
         my_text = self.args.text
         
         # Centering text vertically (assuming the font height is 13 pixels)
-        font_height = 20
+        font_height = 25
         canvas_height = offscreen_canvas.height
         vertical_position = (canvas_height // 2) + (font_height // 2)  # Centered vertically
 
