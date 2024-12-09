@@ -13,13 +13,13 @@ class RunText(SampleBase):
     def run(self):
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         font = graphics.Font()
-        font.LoadFont("../../../fonts/10x20.bdf")
+        font.LoadFont("../../../fonts/9x18.bdf")
         textColor = graphics.Color(255, 0, 0)  # Red color
         pos = offscreen_canvas.width
         my_text = self.args.text
         
         # Centering text vertically (assuming the font height is 13 pixels)
-        font_height = 35
+        font_height = 20
         canvas_height = offscreen_canvas.height
         vertical_position = (canvas_height // 2) + (font_height // 2)  # Centered vertically
 
