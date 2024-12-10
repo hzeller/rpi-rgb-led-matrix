@@ -1,49 +1,49 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 import time
 from samplebase import SampleBase
 from PIL import Image
+import sys
 
 
 class GifViewer(SampleBase):
     def __init__(self, *args, **kwargs):
         super(GifViewer, self).__init__(*args, **kwargs)
-        self.parser.add_argument("-g", "--gif", help="The GIF file to display", required=True)
+        self.parser.add_argument("-g", "--gif", help="The GIF file(s) to display (comma-separated)", required=True)
 
     def run(self):
-        # Load the gif file
+        # Load the GIF file paths
         gif_paths = self.args.gif.split(",")
 
+        # Preprocess all GIFs
+        gif_frames = []
+        print("Preprocessing gifs, this may take a moment depending on the size of the gifs...")
         for gif_path in gif_paths:
-            gif = Image.open(gif_path)
-            # Ensure the file is a GIF by checking frames
             try:
+                gif = Image.open(gif_path)
                 num_frames = gif.n_frames
-                print(num_frames)
-            except Exception:
-                sys.exit("Provided image is not a gif")
-    
-            # Preprocess the gif's frames into canvases to improve playback performance
-            canvases = []
-            print("Preprocessing gif, this may take a moment depending on the size of the gif...")
-            for frame_index in range(0, num_frames):
-                gif.seek(frame_index)
-                frame = gif.copy()  # Copy the current frame
-                frame.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
-                canvas = self.matrix.CreateFrameCanvas()
-                canvas.SetImage(frame.convert("RGB"))
-                canvases.append(canvas)
-    
-            # Close the gif file to save memory
-            gif.close()
-            print("Completed preprocessing, displaying gif")
-    
-            try:
-                # Loop infinitely through the gif frames
-                for i in range(num_frames):
-                    self.matrix.SwapOnVSync(canvases[i], framerate_fraction=10)
-    
-            except KeyboardInterrupt:
-                sys.exit(0)
+                canvases = []
+                for frame_index in range(num_frames):
+                    gif.seek(frame_index)
+                    frame = gif.copy()  # Copy the current frame
+                    frame.thumbnail((self.matrix.width, self.matrix.height), Image.LANCZOS)
+                    canvas = self.matrix.CreateFrameCanvas()
+                    canvas.SetImage(frame.convert("RGB"))
+                    canvases.append(canvas)
+                gif_frames.append(canvases)
+                gif.close()
+            except Exception as e:
+                sys.exit(f"Error processing gif {gif_path}: {e}")
+
+        print("Completed preprocessing, displaying gifs")
+
+        # Display the GIFs in a loop
+        try:
+            while True:  # Infinite loop to play all gifs repeatedly
+                for canvases in gif_frames:
+                    for canvas in canvases:
+                        self.matrix.SwapOnVSync(canvas, framerate_fraction=10)
+        except KeyboardInterrupt:
+            sys.exit(0)
 
 
 # Main function
