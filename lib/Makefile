@@ -129,6 +129,13 @@ HARDWARE_DESC?=regular
 # Flag: --led-limit-refresh
 #DEFINES+=-DFIXED_FRAME_MICROSECONDS=5000
 
+# When limiting refrash rate, a CPU core is busy waiting to get accurate
+# timing. On single board systems, this results in an unresponsive system.
+# By disabling busy waiting, CPU cycles are freed up, leading to a more
+# responsive system at the cost of slightly less accurate frame timing.
+# Flag: --led-no-busy-waiting
+#DEFINES+=-DDISABLE_BUSY_WAITING
+
 # Enable wide 64 bit GPIO offered with the compute module.
 # This will use more memory to internally represent the frame buffer, so
 # caches can't be utilized as much.
@@ -165,7 +172,7 @@ DEFINES+=$(USER_DEFINES)
 
 DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
-CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES)
+CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES) -march=native
 CXXFLAGS=$(CFLAGS) -fno-exceptions -std=c++11
 
 all : $(TARGET).a $(TARGET).so.1

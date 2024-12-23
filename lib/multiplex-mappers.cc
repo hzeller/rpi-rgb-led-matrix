@@ -454,6 +454,46 @@ public:
   }
 };
 
+class P10Outdoor32x16QuarterScanMapper : public MultiplexMapperBase {
+public:
+  P10Outdoor32x16QuarterScanMapper() : MultiplexMapperBase("P10Outdoor32x16QuarterScanMapper", 4) {}
+  // P10 quarter scan panel, e.g. https://www.ebay.com.au/itm/175517677191
+
+  void EditColsRows(int *cols, int *rows) const {
+    panel_rows_ = *rows;
+    panel_cols_ = *cols;
+  
+    *rows /= panel_stretch_factor_/2;  // has half stretch factor in y compared to x
+    *cols *= panel_stretch_factor_;
+  }
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    int cell_starting_point = (x/8)*32;
+    int delta_x = x%8;
+    int offset = (3 - (y/4))*8;
+    *matrix_x = cell_starting_point + delta_x + offset;
+    *matrix_y = y%4;
+  }
+};
+
+
+class P3Outdoor64x64MultiplexMapper : public MultiplexMapperBase {
+public:
+  P3Outdoor64x64MultiplexMapper() : MultiplexMapperBase("P3Outdoor64x64MultiplexMapper", 2) {}
+  // P3 RGB panel 64x64
+  // with pattern   [1] [3]
+  //                 | \ |
+  //                [0] [2]
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+    const bool is_top_stripe = (y % (panel_rows_/2)) < panel_rows_/4;
+    *matrix_x = ((x*2) + (is_top_stripe ? 1 : 0));
+    *matrix_y = ((y / (panel_rows_/2)) * (panel_rows_/4)
+                 + y % (panel_rows_/4));
+  }
+};
+
+
 /*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
@@ -481,6 +521,8 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P8Outdoor1R1G1BMultiplexMapper());
   result->push_back(new FlippedStripeMultiplexMapper());
   result->push_back(new P10Outdoor32x16HalfScanMapper());
+  result->push_back(new P10Outdoor32x16QuarterScanMapper());
+  result->push_back(new P3Outdoor64x64MultiplexMapper());
   return result;
 }
 

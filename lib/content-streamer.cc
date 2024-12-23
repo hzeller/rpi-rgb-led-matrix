@@ -3,12 +3,14 @@
 #include "content-streamer.h"
 #include "led-matrix.h"
 
+#include <cstddef>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include <algorithm>
 
@@ -73,6 +75,40 @@ ssize_t MemStreamIO::Read(void *buf, size_t count) {
 ssize_t MemStreamIO::Append(const void *buf, size_t count) {
   buffer_.append((const char*)buf, count);
   return count;
+}
+
+MemMapViewInput::MemMapViewInput(int fd) : buffer_(nullptr) {
+  struct stat s;
+  if (fstat(fd, &s) < 0) {
+    close(fd);
+    perror("Couldn't get size");
+    return;   // Can't return error state from constructor. Stay uninitialized.
+  }
+
+  const size_t file_size = s.st_size;
+  buffer_ = (char*)mmap(nullptr, file_size, PROT_READ, MAP_SHARED, fd, 0);
+  close(fd);
+  if (buffer_ == MAP_FAILED) {
+    perror("Can't mmmap()");
+    return;
+  }
+  end_ = buffer_ + file_size;
+#ifdef POSIX_MADV_WILLNEED
+  // Trigger read-ahead if possible.
+  posix_madvise(buffer_, file_size, POSIX_MADV_WILLNEED);
+#endif
+}
+
+void MemMapViewInput::Rewind() { pos_ = buffer_; }
+ssize_t MemMapViewInput::Read(void *buf, size_t count) {
+  if (pos_ + count >= end_) return -1;
+  memcpy(buf, pos_, count);
+  pos_ += count;
+  return count;
+}
+
+MemMapViewInput::~MemMapViewInput() {
+  if (buffer_) munmap(buffer_, end_ - buffer_);
 }
 
 // Read exactly count bytes including retries. Returns success.

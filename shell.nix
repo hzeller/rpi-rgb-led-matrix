@@ -10,6 +10,11 @@ pkgs.mkShell {
       libwebp
       ffmpeg
       pkg-config
-      python3
+      python311
+      python311Packages.cython
+      python311Packages.distutils-extra
     ];
+    shellHook = ''
+      export CYTHON=cython
+    '';
 }
