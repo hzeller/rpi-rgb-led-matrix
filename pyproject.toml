@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rgbmatrix"
+version = "0.0.1+20240924"
+description = "Packaged version of Christoph Friedrich's rpi-rgb-led-matrix library."
+authors = [{name="Christoph Friedrich", email="christoph.friedrich@vonaffenfels.de"}]
+maintainers = [{name="Chris Gill", email="chris@chrisgill.net"}]
+license = "GPL-2.0-or-later"
+readme = "README.md"
+requires-python = ">=3.11"

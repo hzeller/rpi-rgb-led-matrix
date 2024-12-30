@@ -1,0 +1,22 @@
+# Build environment.
+[envs.hatch-build]
+dependencies = ["cython"]
+
+# External hook script which invokes the makefile to build C library.
+[build.targets.wheel.hooks.custom]
+dependencies = ["cython"]
+path = "build-rpi-rgb-led-matrix.py"
+
+# cython build for the python bindings.
+[build.targets.wheel]
+packages = ["bindings/python/"]
+
+[build.targets.wheel.hooks.cython]
+dependencies = ["hatch-cython"]
+
+[build.targets.wheel.hooks.cython.options]
+src = "src/bindings/python"
+includes = ["../../include"]
+libraries = "rgbmatrix"
+library_dirs = ["../../lib"]
+compile_args = ["-O3", "-Wall"]
