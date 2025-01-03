@@ -17,10 +17,13 @@ With fewer colors or so-called 'outdoor panels' you can control even more,
 faster.
 
 The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org>, licensed with
-[GNU General Public License Version 2.0](http://www.gnu.org/licenses/gpl-2.0.txt)
+[GNU General Public License Version 2.0 (or any later version)](http://www.gnu.org/licenses/gpl-2.0.txt)
 (which means, if you use it in a product somewhere, you need to make the
 source and all your modifications available to the receiver of such product so
-that they have the freedom to adapt and improve).
+that they have the freedom to adapt and improve). 
+Yes, you are also allowed to use
+this code under the [GNU General Public License Version 3.0](http://www.gnu.org/licenses/gpl-3.0.txt) 
+which allows linking with Apache 2.0 code and LGPL-3.0 code.
 
 ## Discourse discussion group
 
