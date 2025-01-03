@@ -4,6 +4,10 @@ PCB adapter for Raspberry Pi to Hub75 RGB Matrixes
 Since hand-wiring can be a little tedious, here are some PCBs that help
 with the wiring when using the `rpi-rgb-led-matrix` code.
 
+![Three Panels connected][three-panels]
+
+[three-panels]: ../img/three-parallel-panels-soic.jpg
+
    * [Passive-3](./passive-3) Supports three parallel chains, directly connected
      to the output of a Rapsberry Pi with 40 GPIO pins. Works, but usually it is better to
      buffer the outputs using the ...
@@ -27,6 +31,7 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
      electrodragon board, but it does ship quicker if you're in the US (note that you will
      need special compile option or command line argument since it uses non standard wiring)
 
-![Three Panels connected][three-panels]
+   * As of 2024/12 and this thread: https://rpi-rgb-led-matrix.discourse.group/t/solved-aliexpress-2-string-passive-adapter-not-working-because-rpi-connector-was-soldered-on-the-wrong-side-of-the-board/892/26 , there is also a cheap passive 2 channel board that works great on a small board like rPi0 2W, but all chinese sellers that Marc Merlin surveyed at the time, sold the board soldered wrong and they do not work unless you order the board unsoldered and solder it yourself. Electrodragon is in the process of finishing a low profile 3 channel passive board that will be a proper replacement for the unnamed mis-soldered chinese board.
+     
+![8a584b59a1da068112905d3a37923521a756353e_2_664x500](https://github.com/user-attachments/assets/38b0163f-bf62-4393-a084-dab432c3ef49)
 
-[three-panels]: ../img/three-parallel-panels-soic.jpg
