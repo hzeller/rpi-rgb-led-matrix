@@ -24,8 +24,11 @@ that they have the freedom to adapt and improve).
 
 ## Discourse discussion group
 
-If you'd like help, please do not file a bug, use the discussion board instead:
-https://rpi-rgb-led-matrix.discourse.group/
+**If you'd like help, please do not file a bug, use the discussion board instead:**
+https://rpi-rgb-led-matrix.discourse.group/  (obviously please read this whole page first).
+If you file a bug asking for personal help instead of using the discourse group, please
+state in your bug that you have read this entire page and that you're indeed filing a bug
+or request for improvement. Otherwise, please use the discourse group.
 
 Overview
 --------
