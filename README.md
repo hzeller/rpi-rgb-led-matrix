@@ -137,6 +137,15 @@ sudo examples-api-use/demo -D0
   4. Write your own programs using the Matrix in C++ or one of the
      bindings such as Python or C#.
 
+### Wiring / Boards
+
+Please see the [Adadpter Boards or Self Wiring](./adapter). 
+
+Summary is:
+- Yes you can self wire without level shifters and it will work most of the time, but if you're not in a hurry get a board
+- https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-for-raspberry-pi-v2/ **is the recommended solution with 3 channels and level shifters**. You can't go wrong there, but expect a bit of shipping time.
+- If shipping time is crucial and you don't want to wire your own, Adafruit sells a single channel board (the electrodragon one is 3 channels), but note that its wiring is non standard and requires a special compile option or command line argument: https://www.adafruit.com/product/3211
+
 ### Utilities
 
 The [utils directory](./utils) is meant for ready utilities to show images or
