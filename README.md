@@ -52,7 +52,8 @@ also the B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well
 as the Compute Modules which have 44 GPIOs.
 
 The Raspberry Pi 5 still needs some research into the vastly changed peripherals
-and is not yet supported.
+and is not yet supported. See https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603#issuecomment-2624713250
+and https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter
 
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
