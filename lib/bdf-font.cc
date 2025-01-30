@@ -113,6 +113,7 @@ bool Font::LoadFont(const char *path) {
     }
     else if (current_glyph && row >= 0 && row < current_glyph->height
              && parseBitmap(buffer, &current_glyph->bitmap[row])) {
+      current_glyph->bitmap[row] >>= current_glyph->x_offset;
       row++;
     }
     else if (strncmp(buffer, "ENDCHAR", strlen("ENDCHAR")) == 0) {
