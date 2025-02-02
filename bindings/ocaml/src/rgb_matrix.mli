@@ -18,6 +18,72 @@ open Base
     ]}
 *)
 
+module Options : sig
+  type t = {
+    hardware_mapping : string option;
+    rows : int;
+    cols : int;
+    chain_length : int;
+    parallel : int;
+    pwm_bits : int;
+    pwm_lsb_nanoseconds : int;
+    pwm_dither_bits : int;
+    brightness : int;
+    scan_mode : int;
+    row_address_type : int;
+    multiplexing : int;
+    disable_hardware_pulsing : bool;
+    show_refresh_rate : bool;
+    inverse_colors : bool;
+    led_rgb_sequence : string option;
+    pixel_mapper_config : string option;
+    panel_type : string option;
+    limit_refresh_rate_hz : int;
+    disable_busy_waiting : bool;
+  }
+
+  val create : ?hardware_mapping:string ->
+    ?rows:int ->
+    ?cols:int ->
+    ?chain_length:int ->
+    ?parallel:int ->
+    ?pwm_bits:int ->
+    ?pwm_lsb_nanoseconds:int ->
+    ?pwm_dither_bits:int ->
+    ?brightness:int ->
+    ?scan_mode:int ->
+    ?row_address_type:int ->
+    ?multiplexing:int ->
+    ?disable_hardware_pulsing:bool ->
+    ?show_refresh_rate:bool ->
+    ?inverse_colors:bool ->
+    ?led_rgb_sequence:string ->
+    ?pixel_mapper_config:string ->
+    ?panel_type:string ->
+    ?limit_refresh_rate_hz:int ->
+    ?disable_busy_waiting:bool ->
+    unit -> t
+end
+
+module Runtime_options : sig
+  type t = {
+    gpio_slowdown : int;
+    daemon : int;
+    drop_privileges : int;
+    do_gpio_init : bool;
+    drop_priv_user : string option;
+    drop_priv_group : string option;
+  }
+
+  val create : ?gpio_slowdown:int ->
+    ?daemon:int ->
+    ?drop_privileges:int ->
+    ?do_gpio_init:bool ->
+    ?drop_priv_user:string ->
+    ?drop_priv_group:string ->
+    unit -> t
+end
+
 module Canvas : sig
   type t [@@deriving sexp]
 
@@ -37,6 +103,7 @@ module Matrix : sig
   type t [@@deriving sexp]
 
   val create : rows:int -> chained:int -> parallel:int -> t
+  val create_from_options : Options.t -> Runtime_options.t option -> t
   val destroy : t -> unit
   val get_canvas : t -> Canvas.t
   val create_offscreen_canvas : t -> Canvas.t
