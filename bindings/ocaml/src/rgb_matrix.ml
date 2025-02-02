@@ -14,41 +14,37 @@ let matrix : matrix structure typ = structure "Matrix"
 
 type rgb_led_matrix_options
 let rgb_led_matrix_options : rgb_led_matrix_options structure typ = structure "RGBLedMatrixOptions"
-let () = begin
-  field rgb_led_matrix_options "hardware_mapping" (ptr char);
-  field rgb_led_matrix_options "rows" int;
-  field rgb_led_matrix_options "cols" int;
-  field rgb_led_matrix_options "chain_length" int;
-  field rgb_led_matrix_options "parallel" int;
-  field rgb_led_matrix_options "pwm_bits" int;
-  field rgb_led_matrix_options "pwm_lsb_nanoseconds" int;
-  field rgb_led_matrix_options "pwm_dither_bits" int;
-  field rgb_led_matrix_options "brightness" int;
-  field rgb_led_matrix_options "scan_mode" int;
-  field rgb_led_matrix_options "row_address_type" int;
-  field rgb_led_matrix_options "multiplexing" int;
-  field rgb_led_matrix_options "disable_hardware_pulsing" bool;
-  field rgb_led_matrix_options "show_refresh_rate" bool;
-  field rgb_led_matrix_options "inverse_colors" bool;
-  field rgb_led_matrix_options "led_rgb_sequence" (ptr char);
-  field rgb_led_matrix_options "pixel_mapper_config" (ptr char);
-  field rgb_led_matrix_options "panel_type" (ptr char);
-  field rgb_led_matrix_options "limit_refresh_rate_hz" int;
-  field rgb_led_matrix_options "disable_busy_waiting" bool;
-  seal rgb_led_matrix_options
-end
+let hardware_mapping = field rgb_led_matrix_options "hardware_mapping" (ptr char)
+let rows = field rgb_led_matrix_options "rows" int
+let cols = field rgb_led_matrix_options "cols" int
+let chain_length = field rgb_led_matrix_options "chain_length" int
+let parallel = field rgb_led_matrix_options "parallel" int
+let pwm_bits = field rgb_led_matrix_options "pwm_bits" int
+let pwm_lsb_nanoseconds = field rgb_led_matrix_options "pwm_lsb_nanoseconds" int
+let pwm_dither_bits = field rgb_led_matrix_options "pwm_dither_bits" int
+let brightness = field rgb_led_matrix_options "brightness" int
+let scan_mode = field rgb_led_matrix_options "scan_mode" int
+let row_address_type = field rgb_led_matrix_options "row_address_type" int
+let multiplexing = field rgb_led_matrix_options "multiplexing" int
+let disable_hardware_pulsing = field rgb_led_matrix_options "disable_hardware_pulsing" bool
+let show_refresh_rate = field rgb_led_matrix_options "show_refresh_rate" bool
+let inverse_colors = field rgb_led_matrix_options "inverse_colors" bool
+let led_rgb_sequence = field rgb_led_matrix_options "led_rgb_sequence" (ptr char)
+let pixel_mapper_config = field rgb_led_matrix_options "pixel_mapper_config" (ptr char)
+let panel_type = field rgb_led_matrix_options "panel_type" (ptr char)
+let limit_refresh_rate_hz = field rgb_led_matrix_options "limit_refresh_rate_hz" int
+let disable_busy_waiting = field rgb_led_matrix_options "disable_busy_waiting" bool
+let () = seal rgb_led_matrix_options
 
 type rgb_led_runtime_options
 let rgb_led_runtime_options : rgb_led_runtime_options structure typ = structure "RGBLedRuntimeOptions"
-let () = begin
-  field rgb_led_runtime_options "gpio_slowdown" int;
-  field rgb_led_runtime_options "daemon" int;
-  field rgb_led_runtime_options "drop_privileges" int;
-  field rgb_led_runtime_options "do_gpio_init" bool;
-  field rgb_led_runtime_options "drop_priv_user" (ptr char);
-  field rgb_led_runtime_options "drop_priv_group" (ptr char);
-  seal rgb_led_runtime_options
-end
+let gpio_slowdown = field rgb_led_runtime_options "gpio_slowdown" int
+let daemon = field rgb_led_runtime_options "daemon" int
+let drop_privileges = field rgb_led_runtime_options "drop_privileges" int
+let do_gpio_init = field rgb_led_runtime_options "do_gpio_init" bool
+let drop_priv_user = field rgb_led_runtime_options "drop_priv_user" (ptr char)
+let drop_priv_group = field rgb_led_runtime_options "drop_priv_group" (ptr char)
+let () = seal rgb_led_runtime_options
 
 (* C function bindings *)
 let led_matrix_create =
@@ -233,68 +229,68 @@ module Matrix = struct
 
   let create_from_options options rt_options =
     let opts = make rgb_led_matrix_options in
-    setf opts "rows" options.Options.rows;
-    setf opts "cols" options.Options.cols;
-    setf opts "chain_length" options.Options.chain_length;
-    setf opts "parallel" options.Options.parallel;
-    setf opts "pwm_bits" options.Options.pwm_bits;
-    setf opts "pwm_lsb_nanoseconds" options.Options.pwm_lsb_nanoseconds;
-    setf opts "pwm_dither_bits" options.Options.pwm_dither_bits;
-    setf opts "brightness" options.Options.brightness;
-    setf opts "scan_mode" options.Options.scan_mode;
-    setf opts "row_address_type" options.Options.row_address_type;
-    setf opts "multiplexing" options.Options.multiplexing;
-    setf opts "disable_hardware_pulsing" options.Options.disable_hardware_pulsing;
-    setf opts "show_refresh_rate" options.Options.show_refresh_rate;
-    setf opts "inverse_colors" options.Options.inverse_colors;
-    setf opts "limit_refresh_rate_hz" options.Options.limit_refresh_rate_hz;
-    setf opts "disable_busy_waiting" options.Options.disable_busy_waiting;
+    setf opts rows options.Options.rows;
+    setf opts cols options.Options.cols;
+    setf opts chain_length options.Options.chain_length;
+    setf opts parallel options.Options.parallel;
+    setf opts pwm_bits options.Options.pwm_bits;
+    setf opts pwm_lsb_nanoseconds options.Options.pwm_lsb_nanoseconds;
+    setf opts pwm_dither_bits options.Options.pwm_dither_bits;
+    setf opts brightness options.Options.brightness;
+    setf opts scan_mode options.Options.scan_mode;
+    setf opts row_address_type options.Options.row_address_type;
+    setf opts multiplexing options.Options.multiplexing;
+    setf opts disable_hardware_pulsing options.Options.disable_hardware_pulsing;
+    setf opts show_refresh_rate options.Options.show_refresh_rate;
+    setf opts inverse_colors options.Options.inverse_colors;
+    setf opts limit_refresh_rate_hz options.Options.limit_refresh_rate_hz;
+    setf opts disable_busy_waiting options.Options.disable_busy_waiting;
     
     (* Handle string options *)
-    let hardware_mapping = match options.Options.hardware_mapping with
+    let hardware_mapping_ptr = match options.Options.hardware_mapping with
       | None -> coerce (ptr void) (ptr char) null
       | Some s -> coerce (ptr char) (ptr char) (allocate string s)
     in
-    setf opts "hardware_mapping" hardware_mapping;
+    setf opts hardware_mapping hardware_mapping_ptr;
     
-    let led_rgb_sequence = match options.Options.led_rgb_sequence with
+    let led_rgb_sequence_ptr = match options.Options.led_rgb_sequence with
       | None -> coerce (ptr void) (ptr char) null
       | Some s -> coerce (ptr char) (ptr char) (allocate string s)
     in
-    setf opts "led_rgb_sequence" led_rgb_sequence;
+    setf opts led_rgb_sequence led_rgb_sequence_ptr;
     
-    let pixel_mapper_config = match options.Options.pixel_mapper_config with
+    let pixel_mapper_config_ptr = match options.Options.pixel_mapper_config with
       | None -> coerce (ptr void) (ptr char) null
       | Some s -> coerce (ptr char) (ptr char) (allocate string s)
     in
-    setf opts "pixel_mapper_config" pixel_mapper_config;
+    setf opts pixel_mapper_config pixel_mapper_config_ptr;
     
-    let panel_type = match options.Options.panel_type with
+    let panel_type_ptr = match options.Options.panel_type with
       | None -> coerce (ptr void) (ptr char) null
       | Some s -> coerce (ptr char) (ptr char) (allocate string s)
     in
-    setf opts "panel_type" panel_type;
+    setf opts panel_type panel_type_ptr;
 
     let rt_opts = match rt_options with
       | None -> coerce (ptr void) (ptr rgb_led_runtime_options) null
       | Some rt -> begin
           let rt_opts = make rgb_led_runtime_options in
-          setf rt_opts "gpio_slowdown" rt.Runtime_options.gpio_slowdown;
-          setf rt_opts "daemon" rt.Runtime_options.daemon;
-          setf rt_opts "drop_privileges" rt.Runtime_options.drop_privileges;
-          setf rt_opts "do_gpio_init" rt.Runtime_options.do_gpio_init;
+          setf rt_opts gpio_slowdown rt.Runtime_options.gpio_slowdown;
+          setf rt_opts daemon rt.Runtime_options.daemon;
+          setf rt_opts drop_privileges rt.Runtime_options.drop_privileges;
+          setf rt_opts do_gpio_init rt.Runtime_options.do_gpio_init;
           
-          let drop_priv_user = match rt.Runtime_options.drop_priv_user with
+          let drop_priv_user_ptr = match rt.Runtime_options.drop_priv_user with
             | None -> coerce (ptr void) (ptr char) null
             | Some s -> coerce (ptr char) (ptr char) (allocate string s)
           in
-          setf rt_opts "drop_priv_user" drop_priv_user;
+          setf rt_opts drop_priv_user drop_priv_user_ptr;
           
-          let drop_priv_group = match rt.Runtime_options.drop_priv_group with
+          let drop_priv_group_ptr = match rt.Runtime_options.drop_priv_group with
             | None -> coerce (ptr void) (ptr char) null
             | Some s -> coerce (ptr char) (ptr char) (allocate string s)
           in
-          setf rt_opts "drop_priv_group" drop_priv_group;
+          setf rt_opts drop_priv_group drop_priv_group_ptr;
           addr rt_opts
         end
     in
