@@ -2,6 +2,5 @@
  (name rgb_matrix)
  (public_name rgb_matrix)
  (libraries ctypes ctypes.foreign)
- (foreign_archives rpi-rgb-led-matrix)
  (c_library_flags
   (-L%{project_root}/../../lib -lrgbmatrix)))

@@ -1,4 +1,5 @@
 open Ctypes
+open Rgb_matrix_types
 
 (** RGB LED Matrix bindings for controlling LED matrix displays on Raspberry Pi.
     This library provides a safe OCaml interface to the C rpi-rgb-led-matrix library.
