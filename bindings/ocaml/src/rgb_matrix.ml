@@ -250,7 +250,7 @@ module Matrix = struct
     let hardware_mapping_ptr = match options.Options.hardware_mapping with
       | None -> coerce (ptr void) (ptr char) null
       | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
-          String.iteri (fun i c -> p +@ i <-@ c) s;
+          String.iteri s ~f:(fun i c -> p +@ i <-@ c);
           p +@ String.length s <-@ '\000';
           p))
     in
@@ -259,7 +259,7 @@ module Matrix = struct
     let led_rgb_sequence_ptr = match options.Options.led_rgb_sequence with
       | None -> coerce (ptr void) (ptr char) null
       | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
-          String.iteri (fun i c -> p +@ i <-@ c) s;
+          String.iteri s ~f:(fun i c -> p +@ i <-@ c);
           p +@ String.length s <-@ '\000';
           p))
     in
@@ -268,7 +268,7 @@ module Matrix = struct
     let pixel_mapper_config_ptr = match options.Options.pixel_mapper_config with
       | None -> coerce (ptr void) (ptr char) null
       | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
-          String.iteri (fun i c -> p +@ i <-@ c) s;
+          String.iteri s ~f:(fun i c -> p +@ i <-@ c);
           p +@ String.length s <-@ '\000';
           p))
     in
@@ -277,7 +277,7 @@ module Matrix = struct
     let panel_type_ptr = match options.Options.panel_type with
       | None -> coerce (ptr void) (ptr char) null
       | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
-          String.iteri (fun i c -> p +@ i <-@ c) s;
+          String.iteri s ~f:(fun i c -> p +@ i <-@ c);
           p +@ String.length s <-@ '\000';
           p))
     in
@@ -295,7 +295,7 @@ module Matrix = struct
           let drop_priv_user_ptr = match rt.Runtime_options.drop_priv_user with
             | None -> coerce (ptr void) (ptr char) null
             | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
-                String.iteri (fun i c -> p +@ i <-@ c) s;
+                String.iteri s ~f:(fun i c -> p +@ i <-@ c);
                 p +@ String.length s <-@ '\000';
                 p))
           in
@@ -304,7 +304,7 @@ module Matrix = struct
           let drop_priv_group_ptr = match rt.Runtime_options.drop_priv_group with
             | None -> coerce (ptr void) (ptr char) null
             | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
-                String.iteri (fun i c -> p +@ i <-@ c) s;
+                String.iteri s ~f:(fun i c -> p +@ i <-@ c);
                 p +@ String.length s <-@ '\000';
                 p))
           in
