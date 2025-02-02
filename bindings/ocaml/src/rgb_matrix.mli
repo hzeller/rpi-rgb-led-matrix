@@ -42,7 +42,7 @@ module Options : sig
     disable_busy_waiting : bool;
   }
 
-  val create : ?hardware_mapping:string ->
+  val create : ?hardware_mapping:string option ->
     ?rows:int ->
     ?cols:int ->
     ?chain_length:int ->
@@ -57,9 +57,9 @@ module Options : sig
     ?disable_hardware_pulsing:bool ->
     ?show_refresh_rate:bool ->
     ?inverse_colors:bool ->
-    ?led_rgb_sequence:string ->
-    ?pixel_mapper_config:string ->
-    ?panel_type:string ->
+    ?led_rgb_sequence:string option ->
+    ?pixel_mapper_config:string option ->
+    ?panel_type:string option ->
     ?limit_refresh_rate_hz:int ->
     ?disable_busy_waiting:bool ->
     unit -> t
