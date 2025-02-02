@@ -4,15 +4,12 @@ open Base
 
 (* Bindings to the C types and functions *)
 type canvas
-
 let canvas : canvas structure typ = structure "Canvas"
 
 type font
-
 let font : font structure typ = structure "Font"
 
-type matrix
-
+type matrix 
 let matrix : matrix structure typ = structure "Matrix"
 
 (* C function bindings *)
@@ -61,7 +58,7 @@ let delete_font = foreign "delete_font" (ptr font @-> returning void)
 
 (* OCaml modules implementing the interface *)
 module Canvas = struct
-  type t = private canvas structure ptr
+  type t = canvas structure ptr
   
   let sexp_of_t _ = Sexp.Atom "<canvas>"
   let t_of_sexp _ = failwith "Cannot create canvas from sexp"
@@ -72,7 +69,7 @@ module Canvas = struct
 end
 
 module Font = struct
-  type t = private font structure ptr
+  type t = font structure ptr
   
   let sexp_of_t _ = Sexp.Atom "<font>"
   let t_of_sexp _ = failwith "Cannot create font from sexp"
@@ -82,7 +79,7 @@ module Font = struct
 end
 
 module Matrix = struct
-  type t = private matrix structure ptr
+  type t = matrix structure ptr
   
   let sexp_of_t _ = Sexp.Atom "<matrix>"
   let t_of_sexp _ = failwith "Cannot create matrix from sexp"
