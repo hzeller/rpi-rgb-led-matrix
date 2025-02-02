@@ -1,0 +1,14 @@
+(lang dune 3.0)
+(name rgb_matrix)
+
+(generate_opam_files true)
+
+(package
+ (name rgb_matrix)
+ (synopsis "OCaml bindings for rpi-rgb-led-matrix")
+ (description "OCaml bindings for the Raspberry Pi RGB LED matrix library")
+ (depends
+  (ocaml (>= 4.08.0))
+  dune
+  ctypes
+  ctypes-foreign))
