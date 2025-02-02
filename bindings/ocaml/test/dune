@@ -4,5 +4,4 @@
  (inline_tests)
  (preprocess (pps ppx_jane))
  (c_library_flags
-  (-L%{project_root}/../../lib -Wl,-rpath,%{project_root}/../../lib -lrgbmatrix))
-)
+  (-L%{project_root}/../../lib -Wl,-whole-archive -lrgbmatrix -Wl,-no-whole-archive)))
