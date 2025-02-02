@@ -61,7 +61,10 @@ let delete_font = foreign "delete_font" (ptr font @-> returning void)
 
 (* OCaml modules implementing the interface *)
 module Canvas = struct
-  type t = canvas structure ptr
+  type t = private canvas structure ptr
+  
+  let sexp_of_t _ = Sexp.Atom "<canvas>"
+  let t_of_sexp _ = failwith "Cannot create canvas from sexp"
 
   let set_pixel canvas ~x ~y ~r ~g ~b = led_canvas_set_pixel canvas x y r g b
   let clear canvas = led_canvas_clear canvas
@@ -69,23 +72,25 @@ module Canvas = struct
 end
 
 module Font = struct
-  type t = font structure ptr
+  type t = private font structure ptr
+  
+  let sexp_of_t _ = Sexp.Atom "<font>"
+  let t_of_sexp _ = failwith "Cannot create font from sexp"
 
   let load path = load_font path
   let destroy font = delete_font font
 end
 
 module Matrix = struct
-  type t = matrix structure ptr
+  type t = private matrix structure ptr
+  
+  let sexp_of_t _ = Sexp.Atom "<matrix>"
+  let t_of_sexp _ = failwith "Cannot create matrix from sexp"
 
   let create ~rows ~chained ~parallel = led_matrix_create rows chained parallel
   let destroy matrix = led_matrix_delete matrix
   let get_canvas matrix = led_matrix_get_canvas matrix
   let create_offscreen_canvas matrix = led_matrix_create_offscreen_canvas matrix
-
-  let set_brightness matrix ~brightness =
-    led_matrix_set_brightness matrix brightness
-  ;;
-
+  let set_brightness matrix ~brightness = led_matrix_set_brightness matrix brightness
   let get_brightness matrix = led_matrix_get_brightness matrix
 end
