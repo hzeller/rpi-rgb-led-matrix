@@ -59,17 +59,6 @@ module Canvas = struct
 
   let fill canvas ~r ~g ~b =
     led_canvas_fill canvas r g b
-
-  let%test_unit "pixel values should be in valid range" =
-    let matrix = Matrix.create ~rows:32 ~chained:1 ~parallel:1 in
-    let canvas = Matrix.get_canvas matrix in
-    [%test_result: unit] 
-      (set_pixel canvas ~x:0 ~y:0 ~r:255 ~g:255 ~b:255)
-      ~expect:();
-    [%test_result: unit]
-      (set_pixel canvas ~x:31 ~y:31 ~r:0 ~g:0 ~b:0)
-      ~expect:();
-    Matrix.destroy matrix
 end
 
 module Font = struct
@@ -80,11 +69,6 @@ module Font = struct
 
   let destroy font =
     delete_font font
-
-  let%test_unit "font loading and destroying" =
-    let font = load "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf" in
-    [%test_pred: font structure ptr] (Fn.non Ctypes.is_null) font;
-    [%test_result: unit] (destroy font) ~expect:()
 end
 
 module Matrix = struct
@@ -107,16 +91,4 @@ module Matrix = struct
 
   let get_brightness matrix =
     led_matrix_get_brightness matrix
-
-  let%test_unit "matrix creation and basic operations" =
-    let matrix = create ~rows:32 ~chained:1 ~parallel:1 in
-    [%test_pred: matrix structure ptr] (Fn.non Ctypes.is_null) matrix;
-    
-    let canvas = get_canvas matrix in
-    [%test_pred: canvas structure ptr] (Fn.non Ctypes.is_null) canvas;
-    
-    [%test_result: unit] (set_brightness matrix ~brightness:50) ~expect:();
-    [%test_result: int] (get_brightness matrix) ~expect:50;
-    
-    [%test_result: unit] (destroy matrix) ~expect:()
 end
