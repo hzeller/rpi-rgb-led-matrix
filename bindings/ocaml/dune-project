@@ -11,4 +11,5 @@
   (ocaml (>= 4.08.0))
   dune
   ctypes
-  ctypes-foreign))
+  ctypes-foreign
+  ppx_jane))

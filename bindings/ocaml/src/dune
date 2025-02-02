@@ -2,5 +2,6 @@
  (name rgb_matrix)
  (public_name rgb_matrix)
  (libraries base ctypes ctypes.foreign)
+ (preprocess (pps ppx_jane))
  (c_library_flags
   (-L%{project_root}/../../lib -lrgbmatrix)))
