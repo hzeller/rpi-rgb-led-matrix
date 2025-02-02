@@ -1,6 +1,6 @@
 (library
  (name rgb_matrix)
  (public_name rgb_matrix)
- (libraries ctypes ctypes.foreign)
+ (libraries base ctypes ctypes.foreign)
  (c_library_flags
   (-L%{project_root}/../../lib -lrgbmatrix)))
