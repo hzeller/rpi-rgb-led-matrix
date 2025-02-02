@@ -79,8 +79,8 @@ module Runtime_options : sig
     ?daemon:int ->
     ?drop_privileges:int ->
     ?do_gpio_init:bool ->
-    ?drop_priv_user:string ->
-    ?drop_priv_group:string ->
+    ?drop_priv_user:string option ->
+    ?drop_priv_group:string option ->
     unit -> t
 end
 
