@@ -1,3 +1,6 @@
-(test
- (name test_rgb_matrix)
- (libraries rgb_matrix ounit))
+(library
+ (name rgb_matrix_test)
+ (libraries rgb_matrix base stdio)
+ (inline_tests)
+ (preprocess (pps ppx_inline_test))
+ (formatting disabled))
