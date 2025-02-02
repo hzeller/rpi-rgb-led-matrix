@@ -249,25 +249,37 @@ module Matrix = struct
     (* Handle string options *)
     let hardware_mapping_ptr = match options.Options.hardware_mapping with
       | None -> coerce (ptr void) (ptr char) null
-      | Some s -> coerce (ptr char) (ptr char) (allocate string s)
+      | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
+          String.iteri (fun i c -> p +@ i <-@ c) s;
+          p +@ String.length s <-@ '\000';
+          p))
     in
     setf opts hardware_mapping hardware_mapping_ptr;
     
     let led_rgb_sequence_ptr = match options.Options.led_rgb_sequence with
       | None -> coerce (ptr void) (ptr char) null
-      | Some s -> coerce (ptr char) (ptr char) (allocate string s)
+      | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
+          String.iteri (fun i c -> p +@ i <-@ c) s;
+          p +@ String.length s <-@ '\000';
+          p))
     in
     setf opts led_rgb_sequence led_rgb_sequence_ptr;
     
     let pixel_mapper_config_ptr = match options.Options.pixel_mapper_config with
       | None -> coerce (ptr void) (ptr char) null
-      | Some s -> coerce (ptr char) (ptr char) (allocate string s)
+      | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
+          String.iteri (fun i c -> p +@ i <-@ c) s;
+          p +@ String.length s <-@ '\000';
+          p))
     in
     setf opts pixel_mapper_config pixel_mapper_config_ptr;
     
     let panel_type_ptr = match options.Options.panel_type with
       | None -> coerce (ptr void) (ptr char) null
-      | Some s -> coerce (ptr char) (ptr char) (allocate string s)
+      | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
+          String.iteri (fun i c -> p +@ i <-@ c) s;
+          p +@ String.length s <-@ '\000';
+          p))
     in
     setf opts panel_type panel_type_ptr;
 
@@ -282,13 +294,19 @@ module Matrix = struct
           
           let drop_priv_user_ptr = match rt.Runtime_options.drop_priv_user with
             | None -> coerce (ptr void) (ptr char) null
-            | Some s -> coerce (ptr char) (ptr char) (allocate string s)
+            | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
+                String.iteri (fun i c -> p +@ i <-@ c) s;
+                p +@ String.length s <-@ '\000';
+                p))
           in
           setf rt_opts drop_priv_user drop_priv_user_ptr;
           
           let drop_priv_group_ptr = match rt.Runtime_options.drop_priv_group with
             | None -> coerce (ptr void) (ptr char) null
-            | Some s -> coerce (ptr char) (ptr char) (allocate string s)
+            | Some s -> coerce (ptr void) (ptr char) (allocate_n char ~count:(String.length s + 1) |> (fun p ->
+                String.iteri (fun i c -> p +@ i <-@ c) s;
+                p +@ String.length s <-@ '\000';
+                p))
           in
           setf rt_opts drop_priv_group drop_priv_group_ptr;
           addr rt_opts
