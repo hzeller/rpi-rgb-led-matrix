@@ -4,4 +4,4 @@
  (libraries base ctypes ctypes.foreign)
  (preprocess (pps ppx_jane))
  (c_library_flags
-  (-L%{project_root}/../../ -lrgbmatrix)))
+  (-L%{project_root}/../../../lib -lrgbmatrix)))
