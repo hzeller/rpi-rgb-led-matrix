@@ -1,3 +1,3 @@
 (test
  (name test_rgb_matrix)
- (libraries rgb_matrix oUnit))
+ (libraries rgb_matrix ounit))
