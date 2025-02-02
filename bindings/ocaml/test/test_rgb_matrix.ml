@@ -2,7 +2,7 @@ open Base
 
 let%test_unit "matrix creation" =
   let matrix = Rgb_matrix.Matrix.create ~rows:32 ~chained:1 ~parallel:1 in
-  assert (not (Ctypes.is_null matrix));
+  assert (not (Ctypes.is_null (Rgb_matrix.Matrix.to_ptr matrix)));
   Rgb_matrix.Matrix.destroy matrix
 
 let%test_unit "canvas operations" =

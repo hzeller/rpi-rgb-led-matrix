@@ -42,4 +42,7 @@ module Matrix : sig
   val create_offscreen_canvas : t -> Canvas.t
   val set_brightness : t -> brightness:int -> unit
   val get_brightness : t -> int
+  
+  (* For testing purposes only *)
+  val to_ptr : t -> unit Ctypes.ptr
 end

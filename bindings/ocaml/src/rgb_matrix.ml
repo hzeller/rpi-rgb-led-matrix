@@ -83,6 +83,7 @@ module Matrix = struct
   
   let sexp_of_t _ = Sexp.Atom "<matrix>"
   let t_of_sexp _ = failwith "Cannot create matrix from sexp"
+  let to_ptr t = t
 
   let create ~rows ~chained ~parallel = led_matrix_create rows chained parallel
   let destroy matrix = led_matrix_delete matrix
