@@ -1,10 +1,11 @@
 open Core
 open Rgb_matrix
+open Float.O
 
 let scale_col val_ lo hi =
-  if Float.(val_ < lo)
+  if val_ < lo
   then 0
-  else if Float.(val_ > hi)
+  else if val_ > hi
   then 255
   else Int.of_float (255.0 *. (val_ -. lo) /. (hi -. lo))
 ;;
@@ -17,7 +18,6 @@ let rotate x y sin_ cos_ =
 ;;
 
 let run ~rows ~cols ~chain_length ~parallel ~hardware_mapping =
-  let open Float.O in
   let options =
     Options.create
       ~rows
