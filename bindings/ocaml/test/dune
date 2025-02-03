@@ -2,6 +2,4 @@
  (name rgb_matrix_test)
  (libraries rgb_matrix base stdio)
  (inline_tests)
- (preprocess (pps ppx_jane))
- (c_library_flags
-  (-L%{project_root}/../../../lib -Wl,-whole-archive -lrgbmatrix -Wl,-no-whole-archive -lstdc++)))
+ (preprocess (pps ppx_jane)))
