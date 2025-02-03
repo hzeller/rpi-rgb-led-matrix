@@ -9,3 +9,14 @@
    core_unix
    core_unix.command_unix)
  (preprocess (pps ppx_jane)))
+(executable
+ (name rotating_block_generator)
+ (libraries rgb_matrix core core_unix.command_unix)
+ (preprocess
+  (pps ppx_jane))
+ (c_library_flags
+  (-L%{workspace_root}/../../../lib -lrgbmatrix -lstdc++))
+ (foreign_stubs
+  (language c)
+  (names dummy)
+  (flags (-I%{workspace_root}/../../../include))))
