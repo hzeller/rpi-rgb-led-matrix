@@ -58,21 +58,25 @@ let run ~rows ~cols ~chain_length ~parallel ~hardware_mapping =
             cos_
         in
         let x_col =
-          if Float.of_int x >= min_display
-             && Float.of_int x < max_display
-             && Float.of_int y >= min_display
-             && Float.of_int y < max_display
+          let x_float = Float.of_int x in
+          let y_float = Float.of_int y in
+          if x_float >= min_display
+             && x_float < max_display
+             && y_float >= min_display
+             && y_float < max_display
           then
-            scale_col (Float.of_int x) min_display max_display
+            scale_col x_float min_display max_display
           else 0
         in
         let y_col =
-          if Float.of_int x >= min_display
-             && Float.of_int x < max_display
-             && Float.of_int y >= min_display
-             && Float.of_int y < max_display
+          let x_float = Float.of_int x in
+          let y_float = Float.of_int y in
+          if x_float >= min_display
+             && x_float < max_display
+             && y_float >= min_display
+             && y_float < max_display
           then
-            scale_col (Float.of_int y) min_display max_display
+            scale_col y_float min_display max_display
           else 0
         in
         Canvas.set_pixel
