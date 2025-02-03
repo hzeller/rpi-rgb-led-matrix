@@ -13,10 +13,11 @@ let rotate x y sin_ cos_ =
   let open Float in
   let x = of_int x in
   let y = of_int y in
-  x * cos_ - y * sin_, x * sin_ + y * cos_
+  (x * cos_) - (y * sin_), (x * sin_) + (y * cos_)
 ;;
 
 let run ~rows ~cols ~chain_length ~parallel ~hardware_mapping =
+  let open Float.O in
   let options =
     Options.create
       ~rows
@@ -31,20 +32,16 @@ let run ~rows ~cols ~chain_length ~parallel ~hardware_mapping =
   let height = rows in
   let cent_x = Float.of_int width /. 2.0 in
   let cent_y = Float.of_int height /. 2.0 in
-  let rotate_square =
-    Float.of_int (Int.min width height) *. 1.41
-  in
+  let rotate_square = Float.of_int (Int.min width height) *. 1.41 in
   let min_rotate = cent_x -. (rotate_square /. 2.0) in
   let max_rotate = cent_x +. (rotate_square /. 2.0) in
-  let display_square =
-    Float.of_int (Int.min width height) *. 0.7
-  in
+  let display_square = Float.of_int (Int.min width height) *. 0.7 in
   let min_display = cent_x -. (display_square /. 2.0) in
   let max_display = cent_x +. (display_square /. 2.0) in
   let deg_to_rad = 2.0 *. Float.pi /. 360.0 in
   let canvas = Matrix.get_canvas matrix in
   let rec loop rotation =
-    let rotation = (rotation + 1) % 360 in
+    let rotation = Int.O.((rotation + 1) % 360) in
     let angle = Float.of_int rotation *. deg_to_rad in
     let sin_ = Float.sin angle in
     let cos_ = Float.cos angle in
@@ -52,31 +49,31 @@ let run ~rows ~cols ~chain_length ~parallel ~hardware_mapping =
       for y = Int.of_float min_rotate to Int.of_float max_rotate do
         let rot_x, rot_y =
           rotate
-            (x - Int.of_float cent_x)
-            (y - Int.of_float cent_x)
+            Int.O.(x - Int.of_float cent_x)
+            Int.O.(y - Int.of_float cent_x)
             sin_
             cos_
         in
         let x_col =
           let x_float = Float.of_int x in
           let y_float = Float.of_int y in
-          if x_float >= min_display
-             && x_float < max_display
-             && y_float >= min_display
-             && y_float < max_display
-          then
-            scale_col x_float min_display max_display
+          if
+            x_float >= min_display
+            && x_float < max_display
+            && y_float >= min_display
+            && y_float < max_display
+          then scale_col x_float min_display max_display
           else 0
         in
         let y_col =
           let x_float = Float.of_int x in
           let y_float = Float.of_int y in
-          if x_float >= min_display
-             && x_float < max_display
-             && y_float >= min_display
-             && y_float < max_display
-          then
-            scale_col y_float min_display max_display
+          if
+            x_float >= min_display
+            && x_float < max_display
+            && y_float >= min_display
+            && y_float < max_display
+          then scale_col y_float min_display max_display
           else 0
         in
         Canvas.set_pixel
@@ -84,7 +81,7 @@ let run ~rows ~cols ~chain_length ~parallel ~hardware_mapping =
           ~x:(Int.of_float (rot_x +. cent_x))
           ~y:(Int.of_float (rot_y +. cent_y))
           ~r:x_col
-          ~g:(255 - y_col)
+          ~g:Int.O.(255 - y_col)
           ~b:y_col
       done
     done;
@@ -124,8 +121,7 @@ let command =
          (optional_with_default "regular" string)
          ~doc:"STRING hardware mapping (default: regular)"
      in
-     fun () ->
-       run ~rows ~cols ~chain_length ~parallel ~hardware_mapping)
+     fun () -> run ~rows ~cols ~chain_length ~parallel ~hardware_mapping)
 ;;
 
 let () = Command_unix.run command
