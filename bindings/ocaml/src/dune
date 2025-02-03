@@ -5,5 +5,8 @@
  (preprocess
   (pps ppx_jane))
  (c_library_flags
-  (-L%{project_root}/../../../lib -lrgbmatrix -lstdc++))
- (foreign_archives rgbmatrix))
+  (-L%{project_root}/../../lib -lrgbmatrix -lstdc++))
+ (foreign_stubs
+  (language c)
+  (names dummy)
+  (flags (-I%{project_root}/../../include))))
