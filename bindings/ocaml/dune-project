@@ -12,4 +12,6 @@
   dune
   ctypes
   ctypes-foreign
+  core
+  core_unix
   ppx_jane))
