@@ -1,7 +1,32 @@
+(** Rotating Block Generator
+
+    This example demonstrates how to use the RGB LED Matrix library to create an animated
+    display of a rotating colored block. The block's colors are determined by its x and y
+    coordinates, creating a gradient effect that rotates around the center of the display.
+
+    The animation works by:
+    1. Setting up a matrix with the specified dimensions and configuration
+    2. Computing the display area and rotation parameters
+    3. For each frame:
+       - Rotating the coordinate system around the center
+       - Mapping spatial coordinates to colors
+       - Drawing the result to the LED matrix
+    
+    This is a direct port of the Python example with the same name, demonstrating
+    how to use the OCaml bindings to achieve the same effect.
+*)
+
 open Core
 open Rgb_matrix
 open Float.O
 
+(** [scale_col val_ lo hi] maps a float value to an RGB color component (0-255).
+    
+    @param val_ The value to scale
+    @param lo The lower bound of the input range
+    @param hi The upper bound of the input range
+    @return An integer in the range [0,255] representing the color intensity
+*)
 let scale_col val_ lo hi =
   if val_ < lo
   then 0
@@ -10,6 +35,15 @@ let scale_col val_ lo hi =
   else Int.of_float (255.0 *. (val_ -. lo) /. (hi -. lo))
 ;;
 
+(** [rotate x y sin_ cos_] rotates a point (x,y) around the origin using the given
+    sine and cosine values.
+    
+    @param x The x coordinate to rotate
+    @param y The y coordinate to rotate
+    @param sin_ Sine of the rotation angle
+    @param cos_ Cosine of the rotation angle
+    @return A tuple (x',y') containing the rotated coordinates
+*)
 let rotate x y sin_ cos_ =
   let open Float in
   let x = of_int x in
@@ -17,6 +51,14 @@ let rotate x y sin_ cos_ =
   (x * cos_) - (y * sin_), (x * sin_) + (y * cos_)
 ;;
 
+(** [run] is the main animation loop that creates and displays the rotating block.
+    
+    @param rows Number of rows in the LED matrix
+    @param cols Number of columns in the LED matrix
+    @param chain_length Number of displays daisy-chained together
+    @param parallel Number of parallel chains
+    @param hardware_mapping The GPIO hardware mapping to use
+*)
 let run ~rows ~cols ~chain_length ~parallel ~hardware_mapping =
   let options =
     Options.create
@@ -92,6 +134,8 @@ let run ~rows ~cols ~chain_length ~parallel ~hardware_mapping =
   loop 0
 ;;
 
+(** Command line interface for the rotating block generator.
+    Provides options to configure the LED matrix dimensions and hardware setup. *)
 let command =
   Command.basic
     ~summary:"Display a rotating block pattern on an RGB LED matrix"
