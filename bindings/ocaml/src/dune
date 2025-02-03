@@ -5,8 +5,8 @@
  (preprocess
   (pps ppx_jane))
  (c_library_flags
-  (-L%{workspace_root}/../../lib -lrgbmatrix -lstdc++))
+  (-L%{workspace_root}/../../../lib -lrgbmatrix -lstdc++))
  (foreign_stubs
   (language c)
   (names dummy)
-  (flags (-I%{workspace_root}/../../include))))
+  (flags (-I%{workspace_root}/../../../include))))
