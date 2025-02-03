@@ -24,8 +24,11 @@ that they have the freedom to adapt and improve).
 
 ## Discourse discussion group
 
-If you'd like help, please do not file a bug, use the discussion board instead:
-https://rpi-rgb-led-matrix.discourse.group/
+**If you'd like help, please do not file a bug, use the discussion board instead:**
+https://rpi-rgb-led-matrix.discourse.group/  (obviously please read this whole page first).
+If you file a bug asking for personal help instead of using the discourse group, please
+state in your bug that you have read this entire page and that you're indeed filing a bug
+or request for improvement. Otherwise, please use the discourse group.
 
 Overview
 --------
@@ -49,7 +52,8 @@ also the B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well
 as the Compute Modules which have 44 GPIOs.
 
 The Raspberry Pi 5 still needs some research into the vastly changed peripherals
-and is not yet supported.
+and is not yet supported. See https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603#issuecomment-2624713250
+and https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter
 
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
@@ -136,6 +140,15 @@ sudo examples-api-use/demo -D0
     compile and run these.
   4. Write your own programs using the Matrix in C++ or one of the
      bindings such as Python or C#.
+
+### Wiring / Boards
+
+Please see the [Adadpter Boards or Self Wiring](./adapter). 
+
+Summary is:
+- Yes you can self wire without level shifters and it will work most of the time, but if you're not in a hurry get a board
+- https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-for-raspberry-pi-v2/ **is the recommended solution with 3 channels and level shifters**. You can't go wrong there, but expect a bit of shipping time.
+- If shipping time is crucial and you don't want to wire your own, Adafruit sells a single channel board (the electrodragon one is 3 channels), but note that its wiring is non standard and requires a special compile option or command line argument: https://www.adafruit.com/product/3211
 
 ### Utilities
 
