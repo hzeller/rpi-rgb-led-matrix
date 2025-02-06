@@ -16,8 +16,8 @@
 #ifndef RPI_THREAD_H
 #define RPI_THREAD_H
 
-#include <stdint.h>
 #include <pthread.h>
+#include <stdint.h>
 
 namespace rgb_matrix {
 // Simple thread abstraction.
@@ -73,14 +73,20 @@ private:
 };
 
 // Useful RAII wrapper around mutex.
+// RAII - Resource acquisition is initialization
+// 즉, 자원을 획득하는 모든 과정의 시작은 재시작이라는 뜻입니다.
+// 그말은 즉, 이전에 자원 유지를 위해 사용한 객체나 버퍼, 스레드를 할당 해제하는
+// 일이 먼저 일어난 다음에 다음 자원 획득 과정을 진행한다는 것입니다. 이러한
+// 프로그래밍 기법을 가능하게 하는 구조를 RAII Wrapper 라고 부릅니다.
 class MutexLock {
 public:
   MutexLock(Mutex *m) : mutex_(m) { mutex_->Lock(); }
   ~MutexLock() { mutex_->Unlock(); }
+
 private:
   Mutex *const mutex_;
 };
 
-}  // end namespace rgb_matrix
+} // end namespace rgb_matrix
 
-#endif  // RPI_THREAD_H
+#endif // RPI_THREAD_H
