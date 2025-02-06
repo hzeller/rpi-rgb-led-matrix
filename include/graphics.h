@@ -50,7 +50,7 @@ public:
   // If we don't have it in the font, draws the replacement character "�" if
   // available.
   // Returns how much we advance on the screen, which is the width of the
-  // character or 0 if we didn't draw any chracter.
+  // character or 0 if we didn't draw any character.
   int DrawGlyph(Canvas *c, int x, int y,
                 const Color &color, const Color *background_color,
                 uint32_t unicode_codepoint) const;
@@ -82,7 +82,7 @@ private:
 
 // -- Some utility functions.
 
-// Utility function: set an image from the given buffer containting pixels.
+// Utility function: set an image from the given buffer containing pixels.
 //
 // Draw image of size "image_width" and "image_height" from pixel at
 // canvas-offset "canvas_offset_x", "canvas_offset_y". Image will be shown
