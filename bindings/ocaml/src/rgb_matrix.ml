@@ -1,3 +1,95 @@
+[@@@warning "-69"]
+
+module Color = struct
+  open Ctypes
+  type t = Types_generated.Color.t structure ptr
+
+  let create ~r ~g ~b () =
+    let v = make C.Types.Color.t in
+    setf v C.Types.Color.r (Unsigned.UInt8.of_int r);
+    setf v C.Types.Color.g (Unsigned.UInt8.of_int g);
+    setf v C.Types.Color.b (Unsigned.UInt8.of_int b);
+    allocate C.Types.Color.t @@ v
+
+  let r v = getf !@v C.Types.Color.r |> Unsigned.UInt8.to_int
+  let g v = getf !@v C.Types.Color.g |> Unsigned.UInt8.to_int
+  let b v = getf !@v C.Types.Color.b |> Unsigned.UInt8.to_int
+end
+
+module Options = struct
+  type t =
+    { hardware_mapping : string option
+    ; rows : int
+    ; cols : int
+    ; chain_length : int
+    ; parallel : int
+    ; pwm_bits : int
+    ; pwm_lsb_nanoseconds : int
+    ; pwm_dither_bits : int
+    ; brightness : int
+    ; scan_mode : int
+    ; row_address_type : int
+    ; multiplexing : int
+    ; disable_hardware_pulsing : bool
+    ; show_refresh_rate : bool
+    ; inverse_colors : bool
+    ; led_rgb_sequence : string option
+    ; pixel_mapper_config : string option
+    ; panel_type : string option
+    ; limit_refresh_rate_hz : int
+    ; disable_busy_waiting : bool
+    }
+
+  let _create
+        ?(hardware_mapping = None)
+        ?(rows = 32)
+        ?(cols = 32)
+        ?(chain_length = 1)
+        ?(parallel = 1)
+        ?(pwm_bits = 11)
+        ?(pwm_lsb_nanoseconds = 130)
+        ?(pwm_dither_bits = 0)
+        ?(brightness = 100)
+        ?(scan_mode = 0)
+        ?(row_address_type = 0)
+        ?(multiplexing = 0)
+        ?(disable_hardware_pulsing = false)
+        ?(show_refresh_rate = false)
+        ?(inverse_colors = false)
+        ?(led_rgb_sequence = None)
+        ?(pixel_mapper_config = None)
+        ?(panel_type = None)
+        ?(limit_refresh_rate_hz = 0)
+        ?(disable_busy_waiting = false)
+        ()
+    =
+    { hardware_mapping
+    ; rows
+    ; cols
+    ; chain_length
+    ; parallel
+    ; pwm_bits
+    ; pwm_lsb_nanoseconds
+    ; pwm_dither_bits
+    ; brightness
+    ; scan_mode
+    ; row_address_type
+    ; multiplexing
+    ; disable_hardware_pulsing
+    ; show_refresh_rate
+    ; inverse_colors
+    ; led_rgb_sequence
+    ; pixel_mapper_config
+    ; panel_type
+    ; limit_refresh_rate_hz
+    ; disable_busy_waiting
+    }
+  ;;
+
+end
+
+
+(*
 open Ctypes
 open Foreign
 open Base
@@ -129,77 +221,6 @@ let led_canvas_fill =
 
 let load_font = foreign "load_font" (string @-> returning (ptr font))
 let delete_font = foreign "delete_font" (ptr font @-> returning void)
-
-module Options = struct
-  type t =
-    { hardware_mapping : string option
-    ; rows : int
-    ; cols : int
-    ; chain_length : int
-    ; parallel : int
-    ; pwm_bits : int
-    ; pwm_lsb_nanoseconds : int
-    ; pwm_dither_bits : int
-    ; brightness : int
-    ; scan_mode : int
-    ; row_address_type : int
-    ; multiplexing : int
-    ; disable_hardware_pulsing : bool
-    ; show_refresh_rate : bool
-    ; inverse_colors : bool
-    ; led_rgb_sequence : string option
-    ; pixel_mapper_config : string option
-    ; panel_type : string option
-    ; limit_refresh_rate_hz : int
-    ; disable_busy_waiting : bool
-    }
-
-  let create
-        ?(hardware_mapping = None)
-        ?(rows = 32)
-        ?(cols = 32)
-        ?(chain_length = 1)
-        ?(parallel = 1)
-        ?(pwm_bits = 11)
-        ?(pwm_lsb_nanoseconds = 130)
-        ?(pwm_dither_bits = 0)
-        ?(brightness = 100)
-        ?(scan_mode = 0)
-        ?(row_address_type = 0)
-        ?(multiplexing = 0)
-        ?(disable_hardware_pulsing = false)
-        ?(show_refresh_rate = false)
-        ?(inverse_colors = false)
-        ?(led_rgb_sequence = None)
-        ?(pixel_mapper_config = None)
-        ?(panel_type = None)
-        ?(limit_refresh_rate_hz = 0)
-        ?(disable_busy_waiting = false)
-        ()
-    =
-    { hardware_mapping
-    ; rows
-    ; cols
-    ; chain_length
-    ; parallel
-    ; pwm_bits
-    ; pwm_lsb_nanoseconds
-    ; pwm_dither_bits
-    ; brightness
-    ; scan_mode
-    ; row_address_type
-    ; multiplexing
-    ; disable_hardware_pulsing
-    ; show_refresh_rate
-    ; inverse_colors
-    ; led_rgb_sequence
-    ; pixel_mapper_config
-    ; panel_type
-    ; limit_refresh_rate_hz
-    ; disable_busy_waiting
-    }
-  ;;
-end
 
 module Runtime_options = struct
   type t =
@@ -364,3 +385,4 @@ module Matrix = struct
     led_matrix_create_from_options_and_rt_options (addr opts) rt_opts
   ;;
 end
+*)

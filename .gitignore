@@ -5,3 +5,4 @@
 .envrc
 .direnv
 .aider*
+_build

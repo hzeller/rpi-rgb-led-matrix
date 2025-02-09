@@ -1,0 +1,10 @@
+(rule
+  (deps (source_tree ../..))
+  (targets librgbmatrix.a librgbmatrix.so.1)
+  (action
+    (no-infer
+      (progn
+         (chdir ../.. (run make))
+         (copy ../../lib/librgbmatrix.a librgbmatrix.a)
+         (copy ../../lib/librgbmatrix.so.1 librgbmatrix.so.1)
+      ))))

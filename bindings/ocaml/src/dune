@@ -1,12 +1,31 @@
+(rule
+  (deps (source_tree ../../../lib) ../../../Makefile (source_tree ../../../include))
+  (targets librgbmatrix.a dllrgbmatrix.so)
+  (action (no-infer (progn
+     (chdir ../../.. (run make -j CFLAGS=-fPIC))
+     (copy ../../../lib/librgbmatrix.a librgbmatrix.a)
+     (copy ../../../lib/librgbmatrix.so.1 dllrgbmatrix.so)))))
+
+(copy_files ../../../include/led-matrix-c.h)
+
 (library
  (name rgb_matrix)
  (public_name rgb_matrix)
- (libraries base ctypes ctypes.foreign)
+ (libraries base)
+ (foreign_archives rgbmatrix)
  (preprocess
   (pps ppx_jane))
- (c_library_flags
-  (-L%{workspace_root}/../../../lib -lrgbmatrix -lstdc++))
- (foreign_stubs
-  (language c)
-  (names dummy)
-  (flags (-I%{workspace_root}/../../../include))))
+ (flags (:standard -w -9-27))
+ (ctypes
+   (external_library_name librgbmatrix)
+   (headers (include "led-matrix-c.h"))
+   (build_flags_resolver (vendored (c_flags "-I.") (c_library_flags "-I TODO2")))
+   (type_description
+     (instance Types)
+     (functor Type_description))
+   (function_description
+      (concurrency unlocked)
+      (instance Functions)
+      (functor Function_description))
+   (generated_types Types_generated)
+   (generated_entry_point C)))

@@ -1,6 +1,7 @@
 (lang dune 3.17)
 (name rgb_matrix)
 
+(using ctypes 0.3)
 (generate_opam_files true)
 
 (package
@@ -11,7 +12,6 @@
   (ocaml (>= 4.08.0))
   dune
   ctypes
-  ctypes-foreign
   core
   core_unix
   ppx_jane))
