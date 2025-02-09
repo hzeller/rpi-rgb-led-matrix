@@ -1,10 +1,10 @@
 (rule
-  (deps (source_tree ../../..))
-  (targets librgbmatrix.a dlllibrgbmatrix.so)
+  (deps (source_tree ../../../lib) ../../../Makefile (source_tree ../../../include))
+  (targets librgbmatrix.a dllrgbmatrix.so)
   (action (no-infer (progn
      (chdir ../../.. (run make CFLAGS=-fPIC))
      (copy ../../../lib/librgbmatrix.a librgbmatrix.a)
-     (copy ../../../lib/librgbmatrix.so.1 dlllibrgbmatrix.so)))))
+     (copy ../../../lib/librgbmatrix.so.1 dllrgbmatrix.so)))))
 
 (copy_files ../../../include/led-matrix-c.h)
 
@@ -19,7 +19,7 @@
  (ctypes
    (external_library_name librgbmatrix)
    (headers (include "led-matrix-c.h"))
-   (build_flags_resolver (vendored (c_flags "-ITODO") (c_library_flags "-I TODO2")))
+   (build_flags_resolver (vendored (c_flags "-I.") (c_library_flags "-I TODO2")))
    (type_description
      (instance Types)
      (functor Type_description))
