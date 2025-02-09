@@ -8,9 +8,23 @@ module Types = Types_generated
 module Functions (F : Ctypes.FOREIGN) = struct
   open F
 
-  let foo_init = foreign "foo_init" (void @-> returning int)
+  (* Create function bindings *)
+  let matrix_create_from_options =
+    foreign "led_matrix_create_from_options"
+      ((ptr Types.Options.t @->
+        ptr int @->
+        ptr (ptr (ptr char)) @->
+        returning (ptr Types.matrix)))
 
-  let foo_fnubar = foreign "foo_fnubar" (string_opt @-> returning int)
+  let matrix_create_from_options_const_argv =
+    foreign "led_matrix_create_from_options_const_argv"
+      ((ptr Types.Options.t @->
+        int @->
+        ptr (ptr char) @->
+        returning (ptr Types.matrix)))
 
-  let foo_exit = foreign "foo_exit" (void @-> returning void)
+  let matrix_create =
+    foreign "led_matrix_create"
+      (int @-> int @-> int @-> returning (ptr Types.matrix))
+
 end

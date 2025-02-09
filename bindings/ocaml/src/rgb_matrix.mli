@@ -1,5 +1,3 @@
-open Base
-
 (** RGB LED Matrix bindings for controlling LED matrix displays on Raspberry Pi.
     This library provides a safe OCaml interface to the C rpi-rgb-led-matrix library.
 
@@ -18,6 +16,14 @@ open Base
     ]}
 *)
 
+module Color : sig
+  type t
+  val create : r:int -> g:int -> b:int -> unit -> t
+  val r : t -> int
+  val g : t -> int
+  val b : t -> int
+end
+(*
 module Options : sig
   type t =
     { hardware_mapping : string option
@@ -117,3 +123,4 @@ module Matrix : sig
   (* For testing purposes only *)
   val to_ptr : t -> unit Ctypes.ptr
 end
+*)

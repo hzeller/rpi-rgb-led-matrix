@@ -2,7 +2,7 @@
   (deps (source_tree ../../../lib) ../../../Makefile (source_tree ../../../include))
   (targets librgbmatrix.a dllrgbmatrix.so)
   (action (no-infer (progn
-     (chdir ../../.. (run make CFLAGS=-fPIC))
+     (chdir ../../.. (run make -j CFLAGS=-fPIC))
      (copy ../../../lib/librgbmatrix.a librgbmatrix.a)
      (copy ../../../lib/librgbmatrix.so.1 dllrgbmatrix.so)))))
 
