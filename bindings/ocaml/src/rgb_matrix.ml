@@ -1,3 +1,16 @@
+let () =
+  if (C.Types.foo_version <> 1) then
+    failwith "foo only works with libfoo version 1";
+
+  match C.Functions.foo_init () with
+  | 0 ->
+    C.Functions.foo_fnubar "fnubar!";
+    C.Functions.foo_exit ()
+  | err_code ->
+    Printf.eprintf "foo_init failed: %d" err_code;
+;;
+
+(*
 open Ctypes
 open Foreign
 open Base
@@ -364,3 +377,4 @@ module Matrix = struct
     led_matrix_create_from_options_and_rt_options (addr opts) rt_opts
   ;;
 end
+*)

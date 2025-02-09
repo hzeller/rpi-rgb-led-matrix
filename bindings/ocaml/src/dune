@@ -1,12 +1,20 @@
 (library
  (name rgb_matrix)
  (public_name rgb_matrix)
- (libraries base ctypes ctypes.foreign)
+ (libraries base)
  (preprocess
   (pps ppx_jane))
- (c_library_flags
-  (-L%{workspace_root}/../../../lib -lrgbmatrix -lstdc++))
- (foreign_stubs
-  (language c)
-  (names dummy)
-  (flags (-I%{workspace_root}/../../../include))))
+ (flags (:standard -w -9-27))
+ (ctypes
+   (external_library_name libTODO)
+   (headers (include "TODO.h"))
+   (build_flags_resolver (vendored (c_flags "-ITODO") (c_library_flags "-I TODO2")))
+   (type_description
+     (instance Types)
+     (functor Type_description))
+   (function_description
+      (concurrency unlocked)
+      (instance Functions)
+      (functor Function_description))
+   (generated_types Types_generated)
+   (generated_entry_point C)))
