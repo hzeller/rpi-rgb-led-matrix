@@ -1,13 +1,24 @@
+(rule
+  (deps (source_tree ../../..))
+  (targets librgbmatrix.a dlllibrgbmatrix.so)
+  (action (no-infer (progn
+     (chdir ../../.. (run make CFLAGS=-fPIC))
+     (copy ../../../lib/librgbmatrix.a librgbmatrix.a)
+     (copy ../../../lib/librgbmatrix.so.1 dlllibrgbmatrix.so)))))
+
+(copy_files ../../../include/led-matrix-c.h)
+
 (library
  (name rgb_matrix)
  (public_name rgb_matrix)
  (libraries base)
+ (foreign_archives rgbmatrix)
  (preprocess
   (pps ppx_jane))
  (flags (:standard -w -9-27))
  (ctypes
-   (external_library_name libTODO)
-   (headers (include "TODO.h"))
+   (external_library_name librgbmatrix)
+   (headers (include "led-matrix-c.h"))
    (build_flags_resolver (vendored (c_flags "-ITODO") (c_library_flags "-I TODO2")))
    (type_description
      (instance Types)

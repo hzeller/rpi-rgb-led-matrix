@@ -8,5 +8,3 @@
          (copy ../../lib/librgbmatrix.a librgbmatrix.a)
          (copy ../../lib/librgbmatrix.so.1 librgbmatrix.so.1)
       ))))
-
-  
