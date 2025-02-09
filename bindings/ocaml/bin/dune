@@ -8,9 +8,4 @@
    core
    core_unix
    core_unix.command_unix)
- (preprocess (pps ppx_jane))
- (foreign_library_flags -lrgbmatrix)
- (foreign_stubs
-  (language c)
-  (names dummy)
-  (flags (-I%{workspace_root}/../../../include))))
+ (preprocess (pps ppx_jane)))

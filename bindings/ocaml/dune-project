@@ -1,4 +1,4 @@
-(lang dune 3.0)
+(lang dune 3.17)
 (name rgb_matrix)
 
 (generate_opam_files true)
