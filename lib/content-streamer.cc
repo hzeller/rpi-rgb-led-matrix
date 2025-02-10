@@ -138,6 +138,7 @@ static bool FullAppend(StreamIO *io, const void *buf, const size_t count) {
 
 StreamWriter::StreamWriter(StreamIO *io) : io_(io), header_written_(false) {}
 bool StreamWriter::Stream(const FrameCanvas &frame, uint32_t hold_time_us) {
+#ifndef MOCK_RPI
   const char *data;
   size_t len;
   frame.Serialize(&data, &len);
@@ -151,6 +152,9 @@ bool StreamWriter::Stream(const FrameCanvas &frame, uint32_t hold_time_us) {
   h.hold_time_us = hold_time_us;
   FullAppend(io_, &h, sizeof(h));
   return FullAppend(io_, data, len) == (ssize_t)len;
+#else
+  return true;
+#endif
 }
 
 void StreamWriter::WriteFileHeader(const FrameCanvas &frame, size_t len) {
