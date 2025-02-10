@@ -9,8 +9,7 @@
  (synopsis "OCaml bindings for rpi-rgb-led-matrix")
  (description "OCaml bindings for the Raspberry Pi RGB LED matrix library")
  (depends
-  (ocaml (>= 4.08.0))
-  dune
+  (ocaml (>= 4.13.0))
   ctypes
   core
   core_unix
