@@ -1,11 +1,6 @@
 (executable
  (name rotating_block_generator)
  (public_name rotating-block-generator)
- (libraries
-   rgb_matrix
-   base
-   stdio
-   core
-   core_unix
-   core_unix.command_unix)
- (preprocess (pps ppx_jane)))
+ (libraries rgb_matrix base stdio core core_unix core_unix.command_unix)
+ (preprocess
+  (pps ppx_jane)))

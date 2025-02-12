@@ -1,10 +1,17 @@
 (rule
-  (deps (source_tree ../../../lib) ../../../Makefile (source_tree ../../../include))
-  (targets librgbmatrix.a dllrgbmatrix.so)
-  (action (no-infer (progn
-     (chdir ../../../lib (run make librgbmatrix.a librgbmatrix.so.1))
-     (copy ../../../lib/librgbmatrix.a librgbmatrix.a)
-     (copy ../../../lib/librgbmatrix.so.1 dllrgbmatrix.so)))))
+ (deps
+  (source_tree ../../../lib)
+  ../../../Makefile
+  (source_tree ../../../include))
+ (targets librgbmatrix.a dllrgbmatrix.so)
+ (action
+  (no-infer
+   (progn
+    (chdir
+     ../../../lib
+     (run make librgbmatrix.a librgbmatrix.so.1))
+    (copy ../../../lib/librgbmatrix.a librgbmatrix.a)
+    (copy ../../../lib/librgbmatrix.so.1 dllrgbmatrix.so)))))
 
 (copy_files ../../../include/led-matrix-c.h)
 
@@ -15,17 +22,22 @@
  (foreign_archives rgbmatrix)
  (preprocess
   (pps ppx_jane))
- (flags (:standard -w -9-27))
+ (flags
+  (:standard -w -9-27))
  (ctypes
-   (external_library_name librgbmatrix)
-   (headers (include "led-matrix-c.h"))
-   (build_flags_resolver (vendored (c_flags (:standard -I.))))
-   (type_description
-     (instance Types)
-     (functor Type_description))
-   (function_description
-      (concurrency unlocked)
-      (instance Functions)
-      (functor Function_description))
-   (generated_types Types_generated)
-   (generated_entry_point C)))
+  (external_library_name librgbmatrix)
+  (headers
+   (include "led-matrix-c.h"))
+  (build_flags_resolver
+   (vendored
+    (c_flags
+     (:standard -I.))))
+  (type_description
+   (instance Types)
+   (functor Type_description))
+  (function_description
+   (concurrency unlocked)
+   (instance Functions)
+   (functor Function_description))
+  (generated_types Types_generated)
+  (generated_entry_point C)))

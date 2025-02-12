@@ -4,16 +4,20 @@ module Types (F : Ctypes.TYPE) = struct
   open F
 
   type canvas
+
   let canvas : canvas structure typ = structure "LedCanvas"
 
   type font
+
   let font : font structure typ = structure "LedFont"
 
   type matrix
+
   let matrix : matrix structure typ = structure "RGBLedMatrix"
 
   module Options = struct
     type t
+
     let t : t structure typ = structure "RGBLedMatrixOptions"
     let hardware_mapping = field t "hardware_mapping" (ptr char)
     let led_rgb_sequence = field t "led_rgb_sequence" (ptr char)
@@ -40,6 +44,7 @@ module Types (F : Ctypes.TYPE) = struct
 
   module Color = struct
     type t
+
     let t : t structure typ = structure "Color"
     let r = field t "r" uint8_t
     let g = field t "g" uint8_t
