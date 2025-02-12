@@ -10,21 +10,26 @@ module Functions (F : Ctypes.FOREIGN) = struct
 
   (* Create function bindings *)
   let matrix_create_from_options =
-    foreign "led_matrix_create_from_options"
-      ((ptr Types.Options.t @->
-        ptr int @->
-        ptr (ptr (ptr char)) @->
-        returning (ptr Types.matrix)))
+    foreign
+      "led_matrix_create_from_options"
+      (ptr Types.Options.t
+       @-> ptr int
+       @-> ptr (ptr (ptr char))
+       @-> returning (ptr Types.matrix))
+  ;;
 
   let matrix_create_from_options_const_argv =
-    foreign "led_matrix_create_from_options_const_argv"
-      ((ptr Types.Options.t @->
-        int @->
-        ptr (ptr char) @->
-        returning (ptr Types.matrix)))
+    foreign
+      "led_matrix_create_from_options_const_argv"
+      (ptr Types.Options.t
+       @-> int
+       @-> ptr (ptr char)
+       @-> returning (ptr Types.matrix))
+  ;;
 
   let matrix_create =
-    foreign "led_matrix_create"
+    foreign
+      "led_matrix_create"
       (int @-> int @-> int @-> returning (ptr Types.matrix))
-
+  ;;
 end

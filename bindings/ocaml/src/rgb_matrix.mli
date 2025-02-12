@@ -6,11 +6,11 @@
       (* Create a new 32x32 matrix *)
       let matrix = Matrix.create ~rows:32 ~chained:1 ~parallel:1 in
       let canvas = Matrix.get_canvas matrix in
-      
+
       (* Draw something *)
       Canvas.fill canvas ~r:0 ~g:0 ~b:0;  (* Clear to black *)
       Canvas.set_pixel canvas ~x:0 ~y:0 ~r:255 ~g:0 ~b:0;  (* Red pixel at 0,0 *)
-      
+
       (* Clean up *)
       Matrix.destroy matrix
     ]}
@@ -18,13 +18,14 @@
 
 module Color : sig
   type t
+
   val create : r:int -> g:int -> b:int -> unit -> t
   val r : t -> int
   val g : t -> int
   val b : t -> int
 end
 (*
-module Options : sig
+   module Options : sig
   type t =
     { hardware_mapping : string option
     ; rows : int

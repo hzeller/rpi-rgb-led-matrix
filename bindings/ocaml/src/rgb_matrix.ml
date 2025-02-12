@@ -2,6 +2,7 @@
 
 module Color = struct
   open Ctypes
+
   type t = Types_generated.Color.t structure ptr
 
   let create ~r ~g ~b () =
@@ -10,6 +11,7 @@ module Color = struct
     setf v C.Types.Color.g (Unsigned.UInt8.of_int g);
     setf v C.Types.Color.b (Unsigned.UInt8.of_int b);
     allocate C.Types.Color.t @@ v
+  ;;
 
   let r v = getf !@v C.Types.Color.r |> Unsigned.UInt8.to_int
   let g v = getf !@v C.Types.Color.g |> Unsigned.UInt8.to_int
@@ -85,12 +87,10 @@ module Options = struct
     ; disable_busy_waiting
     }
   ;;
-
 end
 
-
 (*
-open Ctypes
+   open Ctypes
 open Foreign
 open Base
 
