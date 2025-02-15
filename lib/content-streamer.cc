@@ -175,11 +175,16 @@ StreamReader::StreamReader(StreamIO *io)
 StreamReader::~StreamReader() { delete [] header_frame_buffer_; }
 
 void StreamReader::Rewind() {
+#ifndef MOCK_RPI
   io_->Rewind();
   state_ = STREAM_AT_BEGIN;
+#endif
 }
 
 bool StreamReader::GetNext(FrameCanvas *frame, uint32_t* hold_time_us) {
+#ifdef MOCK_RPI
+  return true;
+#endif
   if (state_ == STREAM_AT_BEGIN && !ReadFileHeader(*frame)) return false;
   if (state_ != STREAM_READING) return false;
 
