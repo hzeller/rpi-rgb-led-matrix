@@ -44,3 +44,14 @@ module Options : sig
   val set_hardware_mapping : t -> string -> unit
   val get_hardware_mapping : t -> string
 end
+
+module Color : sig
+  type t
+  val create : unit -> t
+  val set_r : t -> int -> unit
+  val get_r : t -> int
+  val set_g : t -> int -> unit
+  val get_g : t -> int
+  val set_b : t -> int -> unit
+  val get_b : t -> int
+end

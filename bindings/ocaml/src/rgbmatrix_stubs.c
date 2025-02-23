@@ -289,3 +289,51 @@ CAMLprim value caml_led_matrix_options_get_hardware_mapping(value v_opts) {
   CAMLreturn(caml_copy_string(opts->hardware_mapping));
 }
 
+CAMLprim value caml_color_create(value v_unit) {
+  CAMLparam1(v_unit);
+  CAMLlocal1(v_color);
+  v_color = caml_alloc(sizeof(struct Color), Abstract_tag);
+  struct Color *color = (struct Color *)Data_abstract_val(v_color);
+  memset(color, 0, sizeof(struct Color));
+  CAMLreturn(v_color);
+}
+
+CAMLprim value caml_color_set_r(value v_color, value v_r) {
+  CAMLparam2(v_color, v_r);
+  struct Color *color = (struct Color *)Data_abstract_val(v_color);
+  color->r = Int_val(v_r);
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value caml_color_get_r(value v_color) {
+  CAMLparam1(v_color);
+  struct Color *color = (struct Color *)Data_abstract_val(v_color);
+  CAMLreturn(Val_int(color->r));
+}
+
+CAMLprim value caml_color_set_g(value v_color, value v_g) {
+  CAMLparam2(v_color, v_g);
+  struct Color *color = (struct Color *)Data_abstract_val(v_color);
+  color->g = Int_val(v_g);
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value caml_color_get_g(value v_color) {
+  CAMLparam1(v_color);
+  struct Color *color = (struct Color *)Data_abstract_val(v_color);
+  CAMLreturn(Val_int(color->g));
+}
+
+CAMLprim value caml_color_set_b(value v_color, value v_b) {
+  CAMLparam2(v_color, v_b);
+  struct Color *color = (struct Color *)Data_abstract_val(v_color);
+  color->b = Int_val(v_b);
+  CAMLreturn(Val_unit);
+}
+
+CAMLprim value caml_color_get_b(value v_color) {
+  CAMLparam1(v_color);
+  struct Color *color = (struct Color *)Data_abstract_val(v_color);
+  CAMLreturn(Val_int(color->b));
+}
+

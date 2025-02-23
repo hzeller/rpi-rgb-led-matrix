@@ -64,4 +64,15 @@ module Options = struct
   external get_hardware_mapping : t -> string = "caml_led_matrix_options_get_hardware_mapping"
 end
 
+module Color = struct
+  type t
+  external create : unit -> t = "caml_color_create"
+  external set_r : t -> int -> unit = "caml_color_set_r"
+  external get_r : t -> int = "caml_color_get_r"
+  external set_g : t -> int -> unit = "caml_color_set_g"
+  external get_g : t -> int = "caml_color_get_g"
+  external set_b : t -> int -> unit = "caml_color_set_b"
+  external get_b : t -> int = "caml_color_get_b"
+end
+
 
