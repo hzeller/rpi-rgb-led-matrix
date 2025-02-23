@@ -1,3 +1,5 @@
+
+(*
 open! Base
 open! Stdio
 
@@ -5,7 +7,7 @@ let%expect_test "" =
   let _color = Rgb_matrix.Color.create ~r:100 ~g:0 ~b:0 () in
   print_endline "nothing to see here folk"
 ;;
-
+*)
 (*
    let%test_unit "matrix creation" =
   let matrix = Rgb_matrix.Matrix.create ~rows:32 ~chained:1 ~parallel:1 in

@@ -1,22 +1,27 @@
-name: C/C++ CI
+name: OCaml bindings
 
 on: [ push, pull_request ]
 
 jobs:
   build:
     strategy:
+      fail-fat: false
       matrix:
-        cython: [cython3-legacy, cython3]
+        os:
+          - ubuntu-latest
+          - macos-latest
 
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
-    - name: install cython
-      run: |
-        sudo apt-get update && sudo apt-get install -y ${{ matrix.cython }}
-        cython3 --version
-    - name: regenerate python bindings
-      run: make -B -C bindings/python/rgbmatrix
-    - name: make
-      run: make
+    - name: setup OCaml
+      uses: ocaml/setup-ocaml@v3
+      with:
+        ocaml-compiler: 5.3.0
+    - run: opam switch create rpi-cross 5.3.0 -y
+    - run: opam repo add cross https://github.com/avsm/opam-cross-lambda.git#single-pkg
+    - run: opam install -y ocaml-zig-cross
+    - run: opam switch default
+    - run: opam install -y dune
+    - run: opam exec -- dune build -x cross --verbose

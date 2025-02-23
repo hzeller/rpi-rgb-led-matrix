@@ -9,7 +9,7 @@
    (progn
     (chdir
      ../../../lib
-     (run make librgbmatrix.a librgbmatrix.so.1))
+     (run make CC=zig-cross-target-cc CXX=zig-cross-target-c++ AR=zig-cross-target-ar RANLIB=zig-cross-target-ranlib librgbmatrix.a librgbmatrix.so.1))
     (copy ../../../lib/librgbmatrix.a librgbmatrix.a)
     (copy ../../../lib/librgbmatrix.so.1 dllrgbmatrix.so)))))
 
@@ -18,26 +18,8 @@
 (library
  (name rgb_matrix)
  (public_name rgb_matrix)
- (libraries base)
+ (flags (:standard -w -9-27))
  (foreign_archives rgbmatrix)
- (preprocess
-  (pps ppx_jane))
- (flags
-  (:standard -w -9-27))
- (ctypes
-  (external_library_name librgbmatrix)
-  (headers
-   (include "led-matrix-c.h"))
-  (build_flags_resolver
-   (vendored
-    (c_flags
-     (:standard -I.))))
-  (type_description
-   (instance Types)
-   (functor Type_description))
-  (function_description
-   (concurrency unlocked)
-   (instance Functions)
-   (functor Function_description))
-  (generated_types Types_generated)
-  (generated_entry_point C)))
+ (c_library_flags -lstdc++)
+ (foreign_stubs (language c) (names rgbmatrix_stubs))
+)
