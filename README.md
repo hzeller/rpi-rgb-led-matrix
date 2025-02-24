@@ -757,7 +757,8 @@ reserve one core just for the refresh of the display:
 isolcpus=3
 ```
 
-.. at the end of the line of `/boot/cmdline.txt` (needs to be in the same as
+.. at the end of the line of `/boot/cmdline.txt` (pre-bookworm) or
+`boot/firmware/cmdline.txt` (post-bookworm) (needs to be in the same as
 the other arguments, no newline). This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
