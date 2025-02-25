@@ -520,7 +520,9 @@ In general, run a minimal configuration on your Pi.
     perfectly good embedded device.).
     Always operate your Raspberry Pi [headless].
 
-  * Switch off on-board sound (`dtparam=audio=off` in `/boot/config.txt`).
+  * Switch off on-board sound
+    (`dtparam=audio=off` in `/boot/config.txt` pre-bookworm)
+    (`dtparam=audio=off` in `/boot/firmware/config.txt` post-bookworm)
     External USB sound adapters work, and are much better quality anyway,
     so that is recommended if you happen to need sound. The on-board sound
     uses a timing circuit that the RGB-Matrix needs (it seems in some
@@ -533,7 +535,8 @@ In general, run a minimal configuration on your Pi.
 
   * I have also seen reports that on some Pis, the one-wire protocol is
     enabled (w1-gpio). This will also not work (disable by removing
-    `dtoverlay=w1-gpio` in `/boot/config.txt`; or using `raspi-config`,
+    `dtoverlay=w1-gpio` in `/boot/config.txt` (pre-bookworm) or in
+    `/boot/firmware/config.txt` (post-bookworm); or using `raspi-config`,
     Interface Options -> 1-Wire)
 
   * If you see some regular flickering, make sure that there is no other
@@ -748,14 +751,15 @@ computer - there might be changes in the overall brigthness when this affects
 the referesh rate.
 
 If you have a loaded system and one of the newer Pis with 4 cores, you can
-reserve one core just for the refresh of the display:
+reserve one core just for the refresh of the display. Add:
 
 ```
 isolcpus=3
 ```
 
-.. at the end of the line of `/boot/cmdline.txt` (needs to be in the same as
-the other arguments, no newline). This will use the last core
+to the end of the line in `/boot/cmdline.txt` (pre-bookworm) or
+`boot/firmware/cmdline.txt` (post-bookworm). It needs to be in the same line
+line as the existing arguments -- no newline. This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
 
