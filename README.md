@@ -751,15 +751,15 @@ computer - there might be changes in the overall brigthness when this affects
 the referesh rate.
 
 If you have a loaded system and one of the newer Pis with 4 cores, you can
-reserve one core just for the refresh of the display:
+reserve one core just for the refresh of the display. Add:
 
 ```
 isolcpus=3
 ```
 
-.. at the end of the line of `/boot/cmdline.txt` (pre-bookworm) or
-`boot/firmware/cmdline.txt` (post-bookworm) (needs to be in the same as
-the other arguments, no newline). This will use the last core
+to the end of the line in `/boot/cmdline.txt` (pre-bookworm) or
+`boot/firmware/cmdline.txt` (post-bookworm). It needs to be in the same line
+line as the existing arguments -- no newline. This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
 
