@@ -25,4 +25,10 @@ typedef uint64_t gpio_bits_t;
 typedef uint32_t gpio_bits_t;
 #endif
 
+typedef enum
+{
+    GPIO_ACTIVE_LOW = 0,
+    GPIO_ACTIVE_HIGH = 1,
+} gpio_active_t;
+
 #endif

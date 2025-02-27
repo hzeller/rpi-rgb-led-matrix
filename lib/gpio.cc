@@ -449,8 +449,9 @@ public:
 class TimerBasedPinPulser : public PinPulser {
 public:
   TimerBasedPinPulser(GPIO *io, gpio_bits_t bits,
+                      gpio_active_t polarity,
                       const std::vector<int> &nano_specs)
-    : io_(io), bits_(bits), nano_specs_(nano_specs) {
+    : io_(io), bits_(bits), polarity_(polarity), nano_specs_(nano_specs) {
     if (!s_Timer1Mhz) {
       fprintf(stderr, "FYI: not running as root which means we can't properly "
               "control timing unless this is a real-time kernel. Expect color "
@@ -459,14 +460,22 @@ public:
   }
 
   virtual void SendPulse(int time_spec_number) {
-    io_->ClearBits(bits_);
-    Timers::sleep_nanos(nano_specs_[time_spec_number]);
-    io_->SetBits(bits_);
+    if (polarity_ == GPIO_ACTIVE_HIGH) {
+      io_->SetBits(bits_);
+      Timers::sleep_nanos(nano_specs_[time_spec_number]);
+      io_->ClearBits(bits_);
+    }
+    else {
+      io_->ClearBits(bits_);
+      Timers::sleep_nanos(nano_specs_[time_spec_number]);
+      io_->SetBits(bits_);
+    }
   }
 
 private:
   GPIO *const io_;
   const gpio_bits_t bits_;
+  const gpio_active_t polarity_;
   const std::vector<int> nano_specs_;
 };
 
@@ -661,7 +670,8 @@ public:
 #endif
   }
 
-  HardwarePinPulser(gpio_bits_t pins, const std::vector<int> &specs)
+  HardwarePinPulser(gpio_bits_t pins, gpio_active_t polarity,
+                    const std::vector<int> &specs)
     : triggered_(false) {
     assert(CanHandle(pins));
     assert(s_CLK_registers && s_PWM_registers && s_Timer1Mhz);
@@ -682,6 +692,11 @@ public:
               "\033[1;31m", "\033[0m");
       exit(1);
     }
+
+    if (polarity == GPIO_ACTIVE_HIGH)
+      pwm_polarity_ = 0;
+    else
+      pwm_polarity_ = PWM_CTL_POLA1;
 
     for (size_t i = 0; i < specs.size(); ++i) {
       // Hints how long to nanosleep, already corrected for system overhead.
@@ -749,7 +764,7 @@ public:
     sleep_hint_us_ = sleep_hints_us_[c];
     start_time_ = *s_Timer1Mhz;
     triggered_ = true;
-    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | PWM_CTL_POLA1;
+    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_PWEN1 | pwm_polarity_;
   }
 
   virtual void WaitPulseFinished() {
@@ -786,7 +801,7 @@ public:
     while ((s_PWM_registers[PWM_STA] & PWM_STA_EMPT1) == 0) {
       // busy wait until done.
     }
-    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
+    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | pwm_polarity_ | PWM_CTL_CLRF1;
     triggered_ = false;
   }
 
@@ -800,7 +815,7 @@ private:
   void InitPWMDivider(uint32_t divider) {
     assert(divider < (1<<12));  // we only have 12 bits.
 
-    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | PWM_CTL_POLA1 | PWM_CTL_CLRF1;
+    s_PWM_registers[PWM_CTL] = PWM_CTL_USEF1 | pwm_polarity_ | PWM_CTL_CLRF1;
 
     // reset PWM clock
     s_CLK_registers[CLK_PWMCTL] = CLK_PASSWD | CLK_CTL_KILL;
@@ -824,19 +839,21 @@ private:
   uint32_t start_time_;
   int sleep_hint_us_;
   bool triggered_;
+  uint32_t pwm_polarity_;
 };
 
 } // end anonymous namespace
 
 // Public PinPulser factory
 PinPulser *PinPulser::Create(GPIO *io, gpio_bits_t gpio_mask,
+                             gpio_active_t polarity,
                              bool allow_hardware_pulsing,
                              const std::vector<int> &nano_wait_spec) {
   if (!Timers::Init()) return NULL;
   if (allow_hardware_pulsing && HardwarePinPulser::CanHandle(gpio_mask)) {
-    return new HardwarePinPulser(gpio_mask, nano_wait_spec);
+    return new HardwarePinPulser(gpio_mask, polarity, nano_wait_spec);
   } else {
-    return new TimerBasedPinPulser(io, gpio_mask, nano_wait_spec);
+    return new TimerBasedPinPulser(io, gpio_mask, polarity, nano_wait_spec);
   }
 }
 
