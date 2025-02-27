@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) {
   // there is a flag modifying them. This map keeps track of filenames
   // and their image params (also for unrelated elements of argv[], but doesn't
   // matter).
-  // We map the pointer instad of the string of the argv parameter so that
+  // We map the pointer instead of the string of the argv parameter so that
   // we can have two times the same image on the commandline list with different
   // parameters.
   std::map<const void *, struct ImageParams> filename_params;
