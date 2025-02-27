@@ -62,6 +62,10 @@ public:
   ssize_t Read(void *buf, size_t count) final;
   ssize_t Append(const void *buf, size_t count) final;
 
+  public:
+  void Clear();
+  ~MemStreamIO() override;
+
 private:
   std::string buffer_;  // super simplistic.
   size_t pos_;

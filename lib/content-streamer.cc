@@ -77,6 +77,15 @@ ssize_t MemStreamIO::Append(const void *buf, size_t count) {
   return count;
 }
 
+void MemStreamIO::Clear() {
+  buffer_.clear();
+  pos_ = 0;
+}
+
+MemStreamIO::~MemStreamIO() {
+  Clear();
+}
+
 MemMapViewInput::MemMapViewInput(int fd) : buffer_(nullptr) {
   struct stat s;
   if (fstat(fd, &s) < 0) {
