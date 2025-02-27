@@ -30,14 +30,4 @@ target_include_directories(${PROJECT_NAME}
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# Installation configuration
-include(GNUInstallDirs)
-
-install(TARGETS ${PROJECT_NAME}
-    EXPORT ${PROJECT_NAME}Targets
-    LIBRARY DESTINATION "."
-    ARCHIVE DESTINATION "."
-    RUNTIME DESTINATION "."
-)
-
 # Remove header installation and export targets as they're not needed
