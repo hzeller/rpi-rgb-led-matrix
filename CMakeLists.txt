@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5.0)
 project(rpi-rgb-led-matrix VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 14)
 
 file(GLOB_RECURSE SHARED_SOURCES
         lib/*.c*
@@ -29,5 +29,3 @@ target_include_directories(${PROJECT_NAME}
         # where external projects will look for the library's public headers
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-
-# Remove header installation and export targets as they're not needed
