@@ -18,7 +18,7 @@ target_sources(${PROJECT_NAME}
 )
 # Main Target Compile
 
-target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
+target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_14)
 target_include_directories(${PROJECT_NAME}
         PRIVATE
         # where the library itself will look for its internal headers
