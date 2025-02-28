@@ -600,14 +600,15 @@ class ColorLookupTable {
       return instance.lookups_[brightness - 1];
     }
 
+    
+  private:
     // Do CIE1931 luminance correction and scale to output bitplanes
     static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
       float out_factor = ((1 << internal::Framebuffer::kBitPlanes) - 1);
       float v = (float) c * brightness / 255.0;
       return roundf(out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3)));
     }
-    
-  private:
+
     ColorLookupTable() {
       for (int c = 0; c < 256; ++c)
         for (int b = 0; b < 100; ++b)
