@@ -6,10 +6,6 @@ set(CMAKE_CXX_STANDARD 14)
 file(GLOB_RECURSE SHARED_SOURCES
         lib/*.c*
 )
-if(MOCK_RPI)
-    add_definitions(-DDISABLE_HARDWARE_PULSES)
-    add_definitions(-DMOCK_RPI)
-endif()
 
 add_library(${PROJECT_NAME} SHARED)
 target_sources(${PROJECT_NAME}
