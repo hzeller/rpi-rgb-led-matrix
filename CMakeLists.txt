@@ -3,14 +3,17 @@ project(rpi-rgb-led-matrix VERSION 0.1.0)
 
 set(CMAKE_CXX_STANDARD 14)
 
-file(GLOB_RECURSE SHARED_SOURCES
-        lib/*.c*
-)
-
 add_library(${PROJECT_NAME} SHARED)
 target_sources(${PROJECT_NAME}
         PRIVATE
-        ${SHARED_SOURCES}
+        lib/bdf-font.cc
+        lib/content-streamer.cc
+        lib/framebuffer.cc
+        lib/gpio.cc
+        lib/graphics.cc
+        lib/hardware-mapping.cc
+        lib/led-matrix-c.cc
+        lib/led-matrix.cc
 )
 # Main Target Compile
 
