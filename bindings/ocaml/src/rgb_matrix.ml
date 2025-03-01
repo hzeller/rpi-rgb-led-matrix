@@ -75,4 +75,49 @@ module Color = struct
   external get_b : t -> int = "caml_color_get_b"
 end
 
+module RuntimeOptions = struct
+  type t
+  external create : unit -> t = "caml_runtime_options_create"
+  external set_gpio_slowdown : t -> int -> unit = "caml_runtime_options_set_gpio_slowdown"
+  external set_daemon : t -> int -> unit = "caml_runtime_options_set_daemon"
+  external set_drop_privileges : t -> int -> unit = "caml_runtime_options_set_drop_privileges"
+  external set_do_gpio_init : t -> int -> unit = "caml_runtime_options_set_do_gpio_init"
+end
+
+module Canvas = struct
+  type t
+  
+  external get_size : t -> int * int = "caml_led_canvas_get_size"
+  
+  external set_pixel_native : t -> int -> int -> int -> int -> int -> unit = "caml_led_canvas_set_pixel_bytecode" "caml_led_canvas_set_pixel"
+  let set_pixel t ~x ~y ~r ~g ~b = set_pixel_native t x y r g b
+  
+  external set_pixels_native : t -> int -> int -> int -> int -> Color.t array -> unit = "caml_led_canvas_set_pixels_bytecode" "caml_led_canvas_set_pixels"
+  let set_pixels t ~x ~y ~width ~height colors = set_pixels_native t x y width height colors
+  
+  external clear : t -> unit = "caml_led_canvas_clear"
+  
+  external fill_native : t -> int -> int -> int -> unit = "caml_led_canvas_fill"
+  let fill t ~r ~g ~b = fill_native t r g b
+  
+  external draw_circle_native : t -> int -> int -> int -> int -> int -> int -> unit = "caml_draw_circle_bytecode" "caml_draw_circle"
+  let draw_circle t ~x ~y ~radius ~r ~g ~b = draw_circle_native t x y radius r g b
+  
+  external draw_line_native : t -> int -> int -> int -> int -> int -> int -> int -> unit = "caml_draw_line_bytecode" "caml_draw_line"
+  let draw_line t ~x0 ~y0 ~x1 ~y1 ~r ~g ~b = draw_line_native t x0 y0 x1 y1 r g b
+end
+
+module Matrix = struct
+  type t
+  
+  external create : Options.t -> RuntimeOptions.t -> t = "caml_led_matrix_create_from_options_and_rt_options"
+  external delete : t -> unit = "caml_led_matrix_delete"
+  external get_canvas : t -> Canvas.t = "caml_led_matrix_get_canvas"
+  external create_offscreen_canvas : t -> Canvas.t = "caml_led_matrix_create_offscreen_canvas"
+  external swap_on_vsync : t -> Canvas.t -> Canvas.t = "caml_led_matrix_swap_on_vsync"
+  external get_brightness : t -> int = "caml_led_matrix_get_brightness"
+  external set_brightness : t -> int -> unit = "caml_led_matrix_set_brightness"
+  (* TODO:avsm finaliser instead *)
+end
+
 
