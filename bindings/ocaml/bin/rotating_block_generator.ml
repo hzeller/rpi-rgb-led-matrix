@@ -3,28 +3,21 @@ module R = Rgb_matrix.RuntimeOptions
 module M = Rgb_matrix.Matrix
 module C = Rgb_matrix.Canvas
 module Col = Rgb_matrix.Color
+module CLI = Rgb_matrix.Cmdliner
+
+open Cmdliner
 
 (* 3D vector type *)
 type vec3 = { x : float; y : float; z : float }
 
-(* Setup matrix options *)
-let setup_options () =
-  let o = O.create () in
-  O.set_rows o 64;
-  O.set_cols o 64;
-  O.set_hardware_mapping o Rgb_matrix.AdafruitHat;
-  O.set_chain_length o 1;
-  O.set_parallel o 1;
-  O.set_pwm_bits o 11;
-  O.set_pwm_lsb_nanoseconds o 130;
-  O.set_brightness o 100;
-  O.set_scan_mode o Rgb_matrix.Progressive;
-  O.set_row_address_type o Rgb_matrix.DirectRowAddress;
-  O.set_multiplexing o Rgb_matrix.DirectMultiplexing;
-  O.set_disable_hardware_pulsing o false;
-  O.set_show_refresh_rate o false;
-  O.set_inverse_colors o false;
-  o
+(* Animation parameters *)
+type animation_params = {
+  duration : float;  (* Duration in seconds *)
+  scale : float;     (* Scale factor for the cube *)
+  rotate_x : float;  (* Rotation speed around X axis *)
+  rotate_y : float;  (* Rotation speed around Y axis *)
+  rotate_z : float;  (* Rotation speed around Z axis *)
+}
 
 (* Define a cube centered at origin with side length 2 *)
 let cube_vertices = [|
@@ -92,7 +85,7 @@ let clamp value min_val max_val =
   else value
 
 (* Draw the cube on the canvas *)
-let draw_cube canvas vertices edges ~angle_x ~angle_y ~angle_z =
+let draw_cube canvas vertices edges ~angle_x ~angle_y ~angle_z ~scale_factor =
   C.clear canvas;
   
   let width, height = C.get_size canvas in
@@ -100,7 +93,7 @@ let draw_cube canvas vertices edges ~angle_x ~angle_y ~angle_z =
   let center_y = height / 2 in
   
   (* Scale factor to fit the cube on the display *)
-  let scale = float_of_int (min width height) *. 0.35 in
+  let scale = float_of_int (min width height) *. scale_factor in
   
   (* Apply rotations to each vertex and draw the edges *)
   let transformed_vertices = Array.map (fun v ->
@@ -132,12 +125,36 @@ let draw_cube canvas vertices edges ~angle_x ~angle_y ~angle_z =
     C.draw_line canvas ~x0:x1 ~y0:y1 ~x1:x2 ~y1:y2 ~r ~g ~b
   ) edges
 
-let () =
+(* Animation parameters command-line arguments *)
+let duration =
+  let doc = "Duration of the animation in seconds." in
+  Arg.(value & opt float 60.0 & info ["d"; "duration"] ~docv:"SECONDS" ~doc)
+
+let scale =
+  let doc = "Scale factor for the cube (0.1-1.0)." in
+  Arg.(value & opt float 0.35 & info ["s"; "scale"] ~docv:"SCALE" ~doc)
+
+let rotate_x_speed =
+  let doc = "Rotation speed around X axis." in
+  Arg.(value & opt float 0.02 & info ["x"; "rotate-x"] ~docv:"SPEED" ~doc)
+
+let rotate_y_speed =
+  let doc = "Rotation speed around Y axis." in
+  Arg.(value & opt float 0.03 & info ["y"; "rotate-y"] ~docv:"SPEED" ~doc)
+
+let rotate_z_speed =
+  let doc = "Rotation speed around Z axis." in
+  Arg.(value & opt float 0.01 & info ["z"; "rotate-z"] ~docv:"SPEED" ~doc)
+
+let animation_params_term =
+  let combine duration scale rotate_x rotate_y rotate_z =
+    { duration; scale; rotate_x; rotate_y; rotate_z }
+  in
+  Term.(const combine $ duration $ scale $ rotate_x_speed $ rotate_y_speed $ rotate_z_speed)
+
+(* Main program logic *)
+let run_animation options runtime_options animation_params =
   try
-    (* Set up the options *)
-    let options = setup_options () in
-    let runtime_options = R.create () in
-    R.set_gpio_slowdown runtime_options 2;
     Gc.compact ();
     
     (* Create the matrix *)
@@ -154,19 +171,19 @@ let () =
     print_endline "Starting animation...";
     
     let start_time = Unix.gettimeofday () in
-    let run_time_seconds = 60.0 in (* Run for 1 minute *)
+    let run_time_seconds = animation_params.duration in
     let rec animation_loop canvas angle_x angle_y angle_z =
       (* Draw the rotating cube *)
       draw_cube canvas cube_vertices cube_edges 
-        ~angle_x ~angle_y ~angle_z;
+        ~angle_x ~angle_y ~angle_z ~scale_factor:animation_params.scale;
       
       (* Swap canvases on vsync for smooth animation *)
       let canvas = M.swap_on_vsync matrix canvas in
       
       (* Increment rotation angles *)
-      let angle_x' = angle_x +. 0.02 in
-      let angle_y' = angle_y +. 0.03 in
-      let angle_z' = angle_z +. 0.01 in
+      let angle_x' = angle_x +. animation_params.rotate_x in
+      let angle_y' = angle_y +. animation_params.rotate_y in
+      let angle_z' = angle_z +. animation_params.rotate_z in
       
       (* Check if we should continue the animation *)
       let current_time = Unix.gettimeofday () in
@@ -181,5 +198,34 @@ let () =
     
     (* Clean up *)
     M.delete matrix;
+    `Ok ()
+      
   with e ->
-    Printf.printf "Error: %s\n" (Printexc.to_string e)
+    Printf.eprintf "Error: %s\n%!" (Printexc.to_string e);
+    `Error (false, "Animation failed")
+
+(* Main command definition *)
+let cmd =
+  let doc = "Display a rotating 3D cube on an RGB LED matrix" in
+  let man = [
+    `S Manpage.s_description;
+    `P "This program displays a rotating 3D wireframe cube on an RGB LED matrix.";
+    `P "The cube's appearance and animation can be customized via command-line options.";
+    `S Manpage.s_examples;
+    `P "Run with default settings:";
+    `P "  $(tname)";
+    `P "Run with custom hardware mapping and size:";
+    `P "  $(tname) --hardware-mapping=adafruit-hat --rows=64 --cols=64";
+    `P "Run with custom animation parameters:";
+    `P "  $(tname) --duration=30 --scale=0.5 --rotate-x=0.05";
+  ] in
+  let info = Cmd.info "rotating_block_generator" ~version:"1.0.0" ~doc ~man in
+  
+  let term = Term.(ret (const run_animation 
+                        $ CLI.options_term 
+                        $ CLI.runtime_options_term 
+                        $ animation_params_term)) in
+  Cmd.v info term
+
+(* Program entry point *)
+let () = exit (Cmd.eval cmd)

@@ -1,4 +1,4 @@
 (executable
   (name rotating_block_generator)
   (public_name rotating-block-generator)
-  (libraries rgb_matrix unix))
+  (libraries rgb_matrix unix cmdliner))
