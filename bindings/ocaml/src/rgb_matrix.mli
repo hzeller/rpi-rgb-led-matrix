@@ -1,6 +1,67 @@
 (** Print available LED matrix options to stdout *)
 val print_flags : unit -> unit
 
+(** Hardware mapping options for different Raspberry Pi GPIO configurations *)
+type hardware_mapping =
+  | Regular       (** Default for Raspberry Pi 2 or later *)
+  | AdafruitHat   (** Adafruit Bonnet or HAT *)
+  | AdafruitHatPWM (** Adafruit HAT with hardware PWM *)
+  | RegularPi1    (** Regular GPIO mapping on Raspberry Pi 1 *)
+  | Classic       (** Classic mapping used in previous library versions *)
+  | ClassicPi1    (** Classic mapping on Raspberry Pi 1 *)
+  | ComputeModule (** Compute Module mapping *)
+  | Custom of string (** Custom mapping specified as a string *)
+
+(** Scan mode for LED panel refresh *)
+type scan_mode =
+  | Progressive (** Progressive scanning - typically better image quality *)
+  | Interlaced  (** Interlaced scanning - may reduce flicker in some panels *)
+
+(** Row address type for the LED panel *)
+type row_address_type =
+  | DirectRowAddress  (** Direct setting of row - default for most panels *)
+  | ABRowAddress      (** A/B addressing used for 64x64 panels *)
+
+(** Multiplexing type for the LED panel *)
+type multiplexing =
+  | DirectMultiplexing      (** 0: Direct multiplexing *)
+  | Stripe                  (** 1: Stripe multiplexing *)
+  | Checker                 (** 2: Checker multiplexing (typical for 1:8) *)
+  | Spiral                  (** 3: Spiral multiplexing *)
+  | ZStripe                 (** 4: Z-Stripe multiplexing *)
+  | ZnMirrorZStripe         (** 5: ZnMirrorZStripe multiplexing *)
+  | Coreman                 (** 6: Coreman multiplexing *)
+  | Kaler2Scan              (** 7: Kaler2Scan multiplexing *)
+  | ZStripeUneven           (** 8: ZStripeUneven multiplexing *)
+  | P10MapperZ              (** 9: P10MapperZ multiplexing *)
+  | QiangLiQ8               (** 10: QiangLiQ8 multiplexing *)
+  | InversedZStripe         (** 11: InversedZStripe multiplexing *)
+  | P10Outdoor1R1G1_1       (** 12: P10Outdoor1R1G1_1 multiplexing *)
+  | P10Outdoor1R1G1_2       (** 13: P10Outdoor1R1G1_2 multiplexing *)
+  | P10Outdoor1R1G1_3       (** 14: P10Outdoor1R1G1_3 multiplexing *)
+  | P10CoremanMapper        (** 15: P10CoremanMapper multiplexing *)
+  | P8Outdoor1R1G1          (** 16: P8Outdoor1R1G1 multiplexing *)
+  | FlippedStripe           (** 17: FlippedStripe multiplexing *)
+  | P10Outdoor32x16HalfScan (** 18: P10Outdoor32x16HalfScan multiplexing *)
+  | P10Outdoor32x16QuarterScan (** 19: P10Outdoor32x16QuarterScan multiplexing *)
+  | P3Outdoor64x64MultiplexMapper (** 20: P3Outdoor64x64MultiplexMapper *)
+  | Custom of int           (** Custom multiplexing specified as an integer *)
+
+(** Panel type for special initialization sequences *)
+type panel_type =
+  | Default     (** Default panel with no special initialization *)
+  | FM6126A     (** FM6126A panel that requires special initialization *)
+  | Custom of string (** Custom panel type specified as a string *)
+
+(** RGB sequence for panels with different color wiring *)
+type rgb_sequence =
+  | RGB (** Standard RGB sequence *)
+  | RBG (** Red, Blue, Green sequence *)
+  | GRB (** Green, Red, Blue sequence *)
+  | GBR (** Green, Blue, Red sequence *)
+  | BRG (** Blue, Red, Green sequence *)
+  | BGR (** Blue, Green, Red sequence *)
+
 (** Configuration options for the LED matrix *)
 module Options : sig
   type t
@@ -56,23 +117,23 @@ module Options : sig
   (** Get the configured brightness *)
   val get_brightness : t -> int
   
-  (** Set scan mode: 0=progressive, 1=interlaced *)
-  val set_scan_mode : t -> int -> unit
+  (** Set the scan mode (progressive or interlaced) *)
+  val set_scan_mode : t -> scan_mode -> unit
   
   (** Get the configured scan mode *)
-  val get_scan_mode : t -> int
+  val get_scan_mode : t -> scan_mode
   
-  (** Set row address type: 0=direct setting of row, 1=used for panels with A/B addressing (e.g. 64x64) *)
-  val set_row_address_type : t -> int -> unit
+  (** Set the row address type (direct or A/B addressing) *)
+  val set_row_address_type : t -> row_address_type -> unit
   
   (** Get the configured row address type *)
-  val get_row_address_type : t -> int
+  val get_row_address_type : t -> row_address_type
   
-  (** Set multiplexing type: 0=direct, 1=stripe, 2=checker (typical 1:8) *)
-  val set_multiplexing : t -> int -> unit
+  (** Set the multiplexing type *)
+  val set_multiplexing : t -> multiplexing -> unit
   
   (** Get the configured multiplexing type *)
-  val get_multiplexing : t -> int
+  val get_multiplexing : t -> multiplexing
   
   (** Set whether to disable hardware pulsing (true=disabled, false=enabled) *)
   val set_disable_hardware_pulsing : t -> bool -> unit
@@ -93,10 +154,10 @@ module Options : sig
   val get_inverse_colors : t -> bool
   
   (** Set the RGB sequence for the LED matrix when the panel wiring mixes up colors *)
-  val set_led_rgb_sequence : t -> string -> unit
+  val set_led_rgb_sequence : t -> rgb_sequence -> unit
   
   (** Get the configured LED RGB sequence *)
-  val get_led_rgb_sequence : t -> string
+  val get_led_rgb_sequence : t -> rgb_sequence
   
   (** Set the pixel mapper configuration for arranging panels. Format is a semicolon-separated list of mappers *)
   val set_pixel_mapper_config : t -> string -> unit
@@ -104,11 +165,11 @@ module Options : sig
   (** Get the configured pixel mapper configuration *)
   val get_pixel_mapper_config : t -> string
   
-  (** Set the panel type for special initialization requirements (e.g. "FM6126" panels) *)
-  val set_panel_type : t -> string -> unit
+  (** Set the panel type for special initialization requirements *)
+  val set_panel_type : t -> panel_type -> unit
   
   (** Get the configured panel type *)
-  val get_panel_type : t -> string
+  val get_panel_type : t -> panel_type
   
   (** Set refresh rate limit in Hz to maintain constant rate on loaded systems (<=0 for no limit) *)
   val set_limit_refresh_rate_hz : t -> int -> unit
@@ -122,11 +183,11 @@ module Options : sig
   (** Get whether busy waiting is disabled *)
   val get_disable_busy_waiting : t -> bool
   
-  (** Set the hardware mapping used for the GPIO pins (e.g. "regular", "adafruit-hat", etc.) *)
-  val set_hardware_mapping : t -> string -> unit
+  (** Set the hardware mapping used for the GPIO pins *)
+  val set_hardware_mapping : t -> hardware_mapping -> unit
   
   (** Get the configured hardware mapping *)
-  val get_hardware_mapping : t -> string
+  val get_hardware_mapping : t -> hardware_mapping
 end
 
 (** 24-bit RGB color representation *)
@@ -135,6 +196,12 @@ module Color : sig
   
   (** Create a new RGB color initialized to black (0,0,0) *)
   val create : unit -> t
+  
+  (** Create a color with specified RGB components
+      @param r Red component (0-255)
+      @param g Green component (0-255)
+      @param b Blue component (0-255) *)
+  val create_rgb : r:int -> g:int -> b:int -> t
   
   (** Set the red component (0-255) *)
   val set_r : t -> int -> unit
@@ -153,7 +220,46 @@ module Color : sig
   
   (** Get the blue component *)
   val get_b : t -> int
+  
+  (** Predefined color: black (0,0,0) *)
+  val black : t
+  
+  (** Predefined color: white (255,255,255) *)
+  val white : t
+  
+  (** Predefined color: red (255,0,0) *)
+  val red : t
+  
+  (** Predefined color: green (0,255,0) *)
+  val green : t
+  
+  (** Predefined color: blue (0,0,255) *)
+  val blue : t
+  
+  (** Predefined color: yellow (255,255,0) *)
+  val yellow : t
+  
+  (** Predefined color: cyan (0,255,255) *)
+  val cyan : t
+  
+  (** Predefined color: magenta (255,0,255) *)
+  val magenta : t
 end
+
+(** Daemon mode options *)
+type daemon_mode =
+  | Off        (** Run in foreground (default) *)
+  | On         (** Run as daemon in background *)
+
+(** Privilege drop options *)
+type privilege_mode =
+  | Maintain   (** Keep current privileges (typically root) *)
+  | Drop       (** Drop privileges to 'daemon' user after initializing hardware *)
+
+(** GPIO initialization options *)
+type gpio_init_mode =
+  | Skip       (** Skip GPIO initialization, useful for non-Raspberry Pi platforms *)
+  | Initialize (** Initialize GPIO pins (default) *)
 
 (** Runtime options to control system-level behavior *)
 module RuntimeOptions : sig
@@ -163,23 +269,29 @@ module RuntimeOptions : sig
   val create : unit -> t
   
   (** Set GPIO slowdown factor to compensate for faster Raspberry Pi models
-      @param n Slowdown factor (0=no slowdown, 1=slowest, range: 0-4) *)
+      @param slowdown Slowdown factor (0=no slowdown, 1=slowest, range: 0-4) *)
   val set_gpio_slowdown : t -> int -> unit
   
-  (** Control whether the process runs as a daemon in the background
-      @param b Daemon flag (0=off, 1=on) - when set to 1, the process
-         goes into the background and becomes a daemon *)
-  val set_daemon : t -> int -> unit
+  (** Get the configured GPIO slowdown factor *)
+  val get_gpio_slowdown : t -> int
   
-  (** Control whether to drop root privileges
-      @param b Drop privileges flag (0=off, 1=on) - when set to 1, drops 
-         privileges from 'root' to 'daemon' after initializing hardware *)
-  val set_drop_privileges : t -> int -> unit
+  (** Control whether the process runs as a daemon in the background *)
+  val set_daemon : t -> daemon_mode -> unit
   
-  (** Control whether to initialize GPIO pins
-      @param b GPIO init flag (0=skip, 1=initialize) - when set to 0, 
-         skips the GPIO initialization which is useful for non-Raspberry Pi platforms *)
-  val set_do_gpio_init : t -> int -> unit
+  (** Get the configured daemon mode *)
+  val get_daemon : t -> daemon_mode
+  
+  (** Control whether to drop root privileges *)
+  val set_drop_privileges : t -> privilege_mode -> unit
+  
+  (** Get the configured privilege drop mode *)
+  val get_drop_privileges : t -> privilege_mode
+  
+  (** Control whether to initialize GPIO pins *)
+  val set_do_gpio_init : t -> gpio_init_mode -> unit
+  
+  (** Get the configured GPIO initialization mode *)
+  val get_do_gpio_init : t -> gpio_init_mode
 end
 
 (** Canvas represents the drawing surface for the LED matrix *)
@@ -196,6 +308,12 @@ module Canvas : sig
       @param g Green component (0-255) 
       @param b Blue component (0-255) *)
   val set_pixel : t -> x:int -> y:int -> r:int -> g:int -> b:int -> unit
+  
+  (** Set pixel at position (x, y) with a Color.t
+      @param x X coordinate (0 is left edge)
+      @param y Y coordinate (0 is top edge)
+      @param color The color to set *)
+  val set_pixel_color : t -> x:int -> y:int -> color:Color.t -> unit
   
   (** Set multiple pixels at once in a rectangular region
       @param x X coordinate of top-left corner
@@ -214,6 +332,10 @@ module Canvas : sig
       @param b Blue component (0-255) *)
   val fill : t -> r:int -> g:int -> b:int -> unit
   
+  (** Fill the canvas with a single Color.t
+      @param color The color to fill the canvas with *)
+  val fill_color : t -> color:Color.t -> unit
+  
   (** Draw a circle
       @param x X coordinate of center
       @param y Y coordinate of center
@@ -222,6 +344,13 @@ module Canvas : sig
       @param g Green component (0-255)
       @param b Blue component (0-255) *)
   val draw_circle : t -> x:int -> y:int -> radius:int -> r:int -> g:int -> b:int -> unit
+  
+  (** Draw a circle with a Color.t
+      @param x X coordinate of center
+      @param y Y coordinate of center
+      @param radius Radius of circle in pixels
+      @param color The color to draw the circle with *)
+  val draw_circle_color : t -> x:int -> y:int -> radius:int -> color:Color.t -> unit
   
   (** Draw a line from (x0,y0) to (x1,y1)
       @param x0 X coordinate of start point
@@ -232,6 +361,14 @@ module Canvas : sig
       @param g Green component (0-255)
       @param b Blue component (0-255) *)
   val draw_line : t -> x0:int -> y0:int -> x1:int -> y1:int -> r:int -> g:int -> b:int -> unit
+  
+  (** Draw a line from (x0,y0) to (x1,y1) with a Color.t
+      @param x0 X coordinate of start point
+      @param y0 Y coordinate of start point
+      @param x1 X coordinate of end point
+      @param y1 Y coordinate of end point
+      @param color The color to draw the line with *)
+  val draw_line_color : t -> x0:int -> y0:int -> x1:int -> y1:int -> color:Color.t -> unit
 end
 
 (** The main RGB LED Matrix controller *)

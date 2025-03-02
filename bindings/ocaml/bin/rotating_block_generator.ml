@@ -11,15 +11,15 @@ let setup_options () =
   let o = O.create () in
   O.set_rows o 64;
   O.set_cols o 64;
-  O.set_hardware_mapping o "adafruit-hat";
+  O.set_hardware_mapping o Rgb_matrix.AdafruitHat;
   O.set_chain_length o 1;
   O.set_parallel o 1;
   O.set_pwm_bits o 11;
   O.set_pwm_lsb_nanoseconds o 130;
   O.set_brightness o 100;
-  O.set_scan_mode o 0;
-  O.set_row_address_type o 0;
-  O.set_multiplexing o 0;
+  O.set_scan_mode o Rgb_matrix.Progressive;
+  O.set_row_address_type o Rgb_matrix.DirectRowAddress;
+  O.set_multiplexing o Rgb_matrix.DirectMultiplexing;
   O.set_disable_hardware_pulsing o false;
   O.set_show_refresh_rate o false;
   O.set_inverse_colors o false;
