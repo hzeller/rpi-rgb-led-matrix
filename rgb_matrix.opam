@@ -5,7 +5,6 @@ description: "OCaml bindings for the Raspberry Pi RGB LED matrix library"
 depends: [
   "dune" {>= "3.17"}
   "ocaml" {>= "4.13.0"}
-  "ctypes"
   "core"
   "core_unix"
   "ppx_jane"
