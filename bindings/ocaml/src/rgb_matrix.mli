@@ -1,6 +1,3 @@
-(** Print available LED matrix options to stdout *)
-val print_flags : unit -> unit
-
 (** Hardware mapping options for different Raspberry Pi GPIO configurations *)
 type hardware_mapping =
   | Regular       (** Default for Raspberry Pi 2 or later *)
@@ -414,4 +411,59 @@ module Matrix : sig
       @param matrix The matrix
       @param brightness New brightness value (0-100) *)
   val set_brightness : t -> int -> unit
+end
+
+(** Command-line interface using Cmdliner *)
+module Cmdliner : sig
+  (** Terms for options *)
+  val rows : int Cmdliner.Term.t
+  val cols : int Cmdliner.Term.t
+  val chain_length : int Cmdliner.Term.t
+  val parallel : int Cmdliner.Term.t
+  val hardware_mapping : hardware_mapping Cmdliner.Term.t
+  val brightness : int Cmdliner.Term.t
+  val pwm_bits : int Cmdliner.Term.t
+  val pwm_lsb_nanoseconds : int Cmdliner.Term.t
+  val pwm_dither_bits : int Cmdliner.Term.t
+  val scan_mode : scan_mode Cmdliner.Term.t
+  val row_address_type : row_address_type Cmdliner.Term.t
+  val multiplexing : multiplexing Cmdliner.Term.t
+  val disable_hardware_pulsing : bool Cmdliner.Term.t
+  val show_refresh_rate : bool Cmdliner.Term.t
+  val inverse_colors : bool Cmdliner.Term.t
+  val led_rgb_sequence : rgb_sequence Cmdliner.Term.t
+  val pixel_mapper_config : string Cmdliner.Term.t
+  val panel_type : panel_type Cmdliner.Term.t
+  val limit_refresh_rate_hz : int Cmdliner.Term.t
+  val disable_busy_waiting : bool Cmdliner.Term.t
+  
+  (** Terms for runtime options *)
+  val gpio_slowdown : int Cmdliner.Term.t
+  val daemon : daemon_mode Cmdliner.Term.t
+  val drop_privileges : privilege_mode Cmdliner.Term.t
+  val do_gpio_init : gpio_init_mode Cmdliner.Term.t
+  
+  (** Apply command-line options to an Options.t instance *)
+  val apply_options : Options.t ->
+    rows:int -> cols:int -> chain_length:int -> parallel:int ->
+    hardware_mapping:hardware_mapping -> brightness:int ->
+    pwm_bits:int -> pwm_lsb_nanoseconds:int -> pwm_dither_bits:int ->
+    scan_mode:scan_mode -> row_address_type:row_address_type ->
+    multiplexing:multiplexing -> disable_hardware_pulsing:bool ->
+    show_refresh_rate:bool -> inverse_colors:bool ->
+    led_rgb_sequence:rgb_sequence -> pixel_mapper_config:string ->
+    panel_type:panel_type -> limit_refresh_rate_hz:int ->
+    disable_busy_waiting:bool -> Options.t
+    
+  (** Apply command-line runtime options to a RuntimeOptions.t instance *)
+  val apply_runtime_options : RuntimeOptions.t ->
+    gpio_slowdown:int -> daemon:daemon_mode ->
+    drop_privileges:privilege_mode -> do_gpio_init:gpio_init_mode ->
+    RuntimeOptions.t
+    
+  (** Term that produces a fully configured Options.t from command-line arguments *)
+  val options_term : Options.t Cmdliner.Term.t
+  
+  (** Term that produces a fully configured RuntimeOptions.t from command-line arguments *)
+  val runtime_options_term : RuntimeOptions.t Cmdliner.Term.t
 end

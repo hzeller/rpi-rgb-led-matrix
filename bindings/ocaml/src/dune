@@ -21,6 +21,6 @@
  (public_name rgb_matrix)
  (flags (:standard -w -9-27))
  (foreign_archives rgbmatrix)
+ (libraries cmdliner)
  (c_library_flags -lstdc++)
- (foreign_stubs (language c) (names rgbmatrix_stubs))
-)
+ (foreign_stubs (language c) (names rgbmatrix_stubs)))
