@@ -9,7 +9,8 @@
    (progn
     (chdir
      ../../../lib
-     (run make CC=zig-cross-target-cc CXX=zig-cross-target-c++ AR=zig-cross-target-ar RANLIB=zig-cross-target-ranlib librgbmatrix.a librgbmatrix.so.1))
+;     (run make CC=zig-cross-target-cc CXX=zig-cross-target-c++ AR=zig-cross-target-ar RANLIB=zig-cross-target-ranlib librgbmatrix.a librgbmatrix.so.1))
+     (run make librgbmatrix.a librgbmatrix.so.1))
     (copy ../../../lib/librgbmatrix.a librgbmatrix.a)
     (copy ../../../lib/librgbmatrix.so.1 dllrgbmatrix.so)))))
 
