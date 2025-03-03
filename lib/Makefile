@@ -6,7 +6,7 @@
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
         thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o \
         pixel-mapper.o multiplex-mappers.o \
-	content-streamer.o
+	content-streamer.o emulator.o matrix-factory.o
 
 TARGET=librgbmatrix
 
@@ -174,6 +174,65 @@ DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
 CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES) -march=native
 CXXFLAGS=$(CFLAGS) -fno-exceptions -std=c++11
+
+# Creating a lib for crosscompilation. Other option is to compile directly but
+# that makes the build process for all the different binaries more convoluted.
+#
+# The following defines help with the physical wiring of your display.
+# The default is the wiring of the AdaFruit HAT
+#
+#  This option is only useful for the old way of wiring (the one that needs
+#   to be done to disable the pwm pin). The define moves the output for the
+#   second chain for -led-parallel=2 to pin 4 and 18. This used to be the default
+#   for rpi-rgb-led-matrix, but newer versions use the one below.
+#   Pin 17 is freedup to use for the optional PWM pin.
+# CXXFLAGS+=-DRGB_CLASSIC_PINOUT
+#
+#  This allows using a separate driver chip for the clock and strobe lines,
+#   freeing two GPIOs to be used for an FM6126 panel.
+#   Uncomment line below if you want to use an external driver shift register.
+# CXXFLAGS+=-DRGB_EXTCLK_PINOUT
+#
+#  If you use this together with the -led-slowdown-gpio=1 option in the binary,
+#  then you can connect multiple parallel chains. This is only in the AdaFruit
+#  HAT so far.
+# CXXFLAGS+=-DRGB_MULTI_PARALLEL
+
+# The hardware mapping for the RGB. If your hardware is different, need to edit.
+# A useful tool to figure out the pin mapping is the
+# "gpio readall" command. Look for the BCM column. For instance, Pin 12 maps
+# to GPIO 18 in the BCM column, so a value of 18 would be used here.
+# Particularly for the timing sensitive ones, you might want to change the
+# hardware pin numbers to get the best timing.
+#
+# Different mappings designated by flag name. Add more if needed.
+
+# Should we enable emulator support?
+ENABLE_EMULATOR?=0
+
+# Additional flags for emulator when enabled
+ifeq ($(ENABLE_EMULATOR), 1)
+  CXXFLAGS+=-DENABLE_EMULATOR
+  OBJECTS+=emulator.o
+  # SDL2 flags, use sdl2-config tool to find them
+  SDL2_CFLAGS=$(shell sdl2-config --cflags)
+  SDL2_LDFLAGS=$(shell sdl2-config --libs)
+  CXXFLAGS+=$(SDL2_CFLAGS)
+  LDFLAGS+=$(SDL2_LDFLAGS)
+endif
+
+# Where our library resides. It is split between includes and the binary
+# library in lib
+RGB_LIBDIR=.
+RGB_LIBRARY_NAME=rgbmatrix
+RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
+LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+
+INCLUDES=-I../include -I.
+# Comment out or remove this duplicate OBJECTS line:
+#OBJECTS=gpio.o led-matrix.o framebuffer.o thread.o bdf-font.o graphics.o led-matrix-c.o \
+#        hardware-mapping.o pixel-mapper.o multiplex-mappers.o content-streamer.o \
+#        utf8-internal.o options-initialize.o
 
 all : $(TARGET).a $(TARGET).so.1
 
