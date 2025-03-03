@@ -98,61 +98,22 @@ int main(int argc, char *argv[]) {
 
   printf("Press Ctrl+C to exit\n");
   
+  bool switch_1 = false;
   // Main animation loop
   while (!interrupt_received) {
     // Clear the canvas and draw a circle
-    offscreen->Fill(0, 0, 0);
-    
-    // Draw the bouncy circle
-    DrawCircle(offscreen, x, y, radius, Color(r, g, b));
-    
-    // Update position
-    x += velocity_x;
-    y += velocity_y;
-    
-    // Bounce off edges with a little elasticity
-    if (x - radius <= 0) {
-      x = radius;
-      velocity_x = -velocity_x * 0.9;
-      
-      // Change color on bounce
-      r = rand() % 256;
-      g = rand() % 256;
-      b = rand() % 256;
-    }
-    if (x + radius >= width - 1) {
-      x = width - 1 - radius;
-      velocity_x = -velocity_x * 0.9;
-      
-      // Change color on bounce
-      r = rand() % 256;
-      g = rand() % 256;
-      b = rand() % 256;
-    }
-    if (y - radius <= 0) {
-      y = radius;
-      velocity_y = -velocity_y * 0.9;
-      
-      // Change color on bounce
-      r = rand() % 256;
-      g = rand() % 256;
-      b = rand() % 256;
-    }
-    if (y + radius >= height - 1) {
-      y = height - 1 - radius;
-      velocity_y = -velocity_y * 0.9;
-      
-      // Change color on bounce
-      r = rand() % 256;
-      g = rand() % 256;
-      b = rand() % 256;
+    switch_1 = !switch_1;
+    if(switch_1) {
+      offscreen->Fill(0, 0, 0);
+    } else {
+      offscreen->Fill(255, 255, 255);
     }
 
     // Swap buffers
     offscreen = matrix->SwapOnVSync(offscreen);
     
     // Sleep for a bit to control animation speed
-    usleep(16000);  // ~60 Hz refresh rate
+    usleep(160000);  // ~60 Hz refresh rate
   }
 
   // Cleanup

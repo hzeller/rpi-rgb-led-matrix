@@ -211,6 +211,7 @@ public:
       
     pixels_ = new EmulatedPixel[width_ * height_];
     Clear();
+    buffer_size_ = width_ * height_ * sizeof(EmulatedPixel);
   }
   
   ~EmulatorFramebuffer() override {
@@ -274,19 +275,19 @@ public:
     // Not used in the emulator - this would normally send data to GPIO
   }
   
-  void Serialize(const char** data, size_t* len) const {
-    // Not implemented for emulator
-    *data = nullptr;
-    *len = 0;
+  void Serialize(const char** data, size_t* len) const override {
+    *data = reinterpret_cast<const char*>(pixels_);
+    *len = buffer_size_;
   }
   
-  bool Deserialize(const char* data, size_t len) {
-    // Not implemented for emulator
-    return false;
+  bool Deserialize(const char* data, size_t len) override {
+    if (len != buffer_size_) return false;
+    memcpy(pixels_, data, len);
+    return true;
   }
   
-  void CopyFrom(const Framebuffer& other) {
-    const EmulatorFramebuffer* o = dynamic_cast<const EmulatorFramebuffer*>(&other);
+  void CopyFrom(const Framebuffer *other) override {
+    const EmulatorFramebuffer* o = dynamic_cast<const EmulatorFramebuffer*>(other);
     if (!o) return;
     
     memcpy(pixels_, o->pixels_, width_ * height_ * sizeof(EmulatedPixel));
@@ -312,6 +313,7 @@ private:
   bool do_luminance_correct_;
   EmulatedPixel* pixels_;
   rgb_matrix::internal::PixelDesignatorMap* shared_pixel_mapper_;
+  size_t buffer_size_;  // Added buffer size member to track serialized data size
 };
 } // namespace internal
 
