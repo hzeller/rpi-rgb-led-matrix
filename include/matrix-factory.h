@@ -38,8 +38,11 @@ public:
     // Runtime options specific to the hardware matrix
     RuntimeOptions runtime_options;
     
+
+#ifdef ENABLE_EMULATOR
     // Options specific to the emulator
     EmulatorOptions emulator_options;
+#endif
   };
   
   // Updated to return RGBMatrixBase instead of Canvas

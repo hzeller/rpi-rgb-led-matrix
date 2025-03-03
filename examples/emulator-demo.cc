@@ -13,6 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://gnu.org/licenses/gpl-2.0.txt>
 
+#ifdef ENABLE_EMULATOR
+
 #include "matrix-factory.h"
 #include "graphics.h"
 
@@ -150,3 +152,14 @@ int main(int argc, char *argv[]) {
   printf("\nAnimation stopped. Exiting.\n");
   return 0;
 }
+
+#else
+// Compiled without emulator support
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+  fprintf(stderr, "This demo requires ENABLE_EMULATOR to be defined.\n");
+  fprintf(stderr, "Please compile with 'make ENABLE_EMULATOR=1'\n");
+  return 1;
+}
+#endif // ENABLE_EMULATOR

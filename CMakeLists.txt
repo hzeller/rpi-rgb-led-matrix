@@ -4,7 +4,7 @@ project(rpi-rgb-led-matrix VERSION 0.1.0)
 set(CMAKE_CXX_STANDARD 14)
 
 # Option to enable/disable emulator functionality
-option(ENABLE_EMULATOR "Enable LED matrix emulator functionality" OFF)
+option(ENABLE_EMULATOR "Enable LED matrix emulator functionality" ON)
 
 # Define core library source files
 set(MATRIX_CORE_SOURCES
@@ -18,7 +18,6 @@ set(MATRIX_CORE_SOURCES
     lib/content-streamer.cc
     lib/bdf-font.cc
     lib/graphics.cc
-    lib/utf8-internal.cc
     lib/options-initialize.cc
     lib/led-matrix-c.cc
 )

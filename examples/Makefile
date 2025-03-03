@@ -1,72 +1,66 @@
-# If you see that your LED matrix is too dark at the default setting,
-# remove the comment mark below for the line containing "BRIGHTNESS"
-# and set it to a higher value (upto 100).
-#BRIGHTNESS=       -DLED_BRIGHTNESS=60
+# Makefile for the emulator-demo program
 
-# If you have a different mapping of your LED colors in your matrix, you can
-# pass this via the color-order flag. The normal situation is "RGB", but
-# there are matrices out there with
-#   "RBG" (yes, this is a thing);
-#   "BGR" (Chipsets from China that use this color order);
-# Spelling out the color order on the command line is also possible, e.g.
-#   ./scrolling-text.py --led-rgb-sequence=BGR
-#COLOR_ORDER_MAPPING=-DRGB_MAPPING_OPTIONS="RBG"
+# Location of the RGB Matrix Library
+RGB_LIB_DISTRIBUTION=..
+RGB_INCDIR=$(RGB_LIB_DISTRIBUTION)/include
+RGB_LIBDIR=$(RGB_LIB_DISTRIBUTION)/lib
 
-CFLAGS=-Wall -O3 -g -Wextra -Wno-unused-parameter
-CXXFLAGS=$(CFLAGS) -std=c++17
-OBJECTS=demo-main.o minimal-example.o c-example.o
-BINARIES=demo minimal-example c-example
+# Compiler options
+CC = g++
+CFLAGS = -Wall -O3 -g -Wextra -Wno-unused-parameter
+CXXFLAGS = $(CFLAGS)
+LDFLAGS = -L$(RGB_LIBDIR) 
+LDLIBS = -lrgbmatrix -lrt -lm -lpthread
 
-# Emulator demo
-ENABLE_EMULATOR?=0
-
-ifeq ($(ENABLE_EMULATOR), 1)
-  OBJECTS+=emulator-demo.o
-  BINARIES+=ledmatrix-emulator
-  # SDL2 flags, use sdl2-config tool to find them
-  SDL2_CFLAGS=$(shell sdl2-config --cflags)
-  SDL2_LDFLAGS=$(shell sdl2-config --libs)
+# Check if ENABLE_EMULATOR is defined
+ifdef ENABLE_EMULATOR
+CFLAGS += -DENABLE_EMULATOR
+LDLIBS += -lSDL2
+EMULATOR_TARGETS = emulator-demo
+EMULATOR_OBJECTS = emulator-demo.o
+EMULATOR_DESC = --led-emulator-scale=12 --led-emulator-refresh=60
+else
+EMULATOR_TARGETS =
+EMULATOR_OBJECTS =
 endif
 
-# Where our library resides. It is split between includes and the binary
-# library in lib
-RGB_INCDIR=../include
-RGB_LIBDIR=../lib
-RGB_LIBRARY_NAME=rgbmatrix
-RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
-LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+# If you're using a Raspberry Pi, uncomment to use hardware
+# Otherwise stick with emulator mode
+#HARDWARE_DESC=--led-cols=64 --led-rows=32 --led-chain=1
+#HARDWARE_DESC+= --led-parallel=1 --led-slowdown-gpio=4
+# Add any other flags you might need
 
-# To compile with emulator support when enabled
-ifeq ($(ENABLE_EMULATOR), 1)
-  CXXFLAGS+=-DENABLE_EMULATOR $(SDL2_CFLAGS)
-  LDFLAGS+=$(SDL2_LDFLAGS)
-endif
+# Default build target
+all : $(EMULATOR_TARGETS)
 
-all : $(BINARIES)
+# Only build emulator-demo with SDL2 support when ENABLE_EMULATOR is defined
+emulator-demo: emulator-demo.o
+	$(CC) $(CXXFLAGS) emulator-demo.o $(LDFLAGS) -o $@ $(LDLIBS)
 
-$(RGB_LIBRARY):
-	$(MAKE) -C $(RGB_LIBDIR) ENABLE_EMULATOR=$(ENABLE_EMULATOR)
-
-minimal-example : minimal-example.o $(RGB_LIBRARY)
-	$(CXX) $< -o $@ $(LDFLAGS)
-
-c-example : c-example.o $(RGB_LIBRARY)
-	$(CC) $< -o $@ $(LDFLAGS)
-
-# Special target for emulator demo when enabled
-ifeq ($(ENABLE_EMULATOR), 1)
-ledmatrix-emulator : emulator-demo.o $(RGB_LIBRARY)
-	$(CXX) $< -o $@ $(LDFLAGS)
-endif
-
-# Since the C example uses the C API, which is a simple wrapper via a C++
-# method call, we need to link it with the C++ compiler to get the
-# C++ dependencies right.
-c-example.o : c-example.c
-	$(CC) -I$(RGB_INCDIR) $(CFLAGS) -c -o $@ $<
-
+# Rule for building object files
 %.o : %.cc
-	$(CXX) -I$(RGB_INCDIR) $(CXXFLAGS) -c -o $@ $<
+	$(CC) -I$(RGB_INCDIR) $(CXXFLAGS) -c -o $@ $<
 
+# Install SDL2 dependency (for Ubuntu/Debian)
+install-deps:
+	sudo apt-get update
+	sudo apt-get install -y libsdl2-dev
+
+# Clean up built files
 clean:
-	rm -f $(OBJECTS) $(BINARIES)
+	rm -f $(EMULATOR_TARGETS) $(EMULATOR_OBJECTS)
+
+# Run the demo using the emulator (only if ENABLE_EMULATOR is defined)
+ifdef ENABLE_EMULATOR
+run: emulator-demo
+	./emulator-demo $(EMULATOR_DESC)
+else
+run:
+	@echo "Emulator not enabled. Build with ENABLE_EMULATOR=1 to use the emulator."
+endif
+
+# Run the demo on hardware (if you have the physical matrix)
+run-hw: emulator-demo
+	./emulator-demo $(HARDWARE_DESC) --led-no-emulator
+
+.PHONY: all clean install-deps run run-hw
