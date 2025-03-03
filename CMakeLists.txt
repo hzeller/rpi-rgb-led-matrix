@@ -57,21 +57,3 @@ target_include_directories(${PROJECT_NAME}
         # where external projects will look for the library's public headers
         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
-
-# Conditionally add SDL2 if emulator is enabled
-if(ENABLE_EMULATOR)
-    # Add SDL2 include directories
-    target_include_directories(${PROJECT_NAME}
-        PRIVATE
-            ${SDL2_INCLUDE_DIRS}
-    )
-    
-    # Link SDL2
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${SDL2_LIBRARIES})
-    
-    # Build emulator demo
-    add_executable(emulator-demo examples/emulator-demo.cc)
-    target_link_libraries(emulator-demo PRIVATE ${PROJECT_NAME})
-    
-    message(STATUS "Emulator demo will be built")
-endif()
