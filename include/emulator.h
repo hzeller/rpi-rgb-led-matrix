@@ -31,15 +31,16 @@ struct EmulatorOptions {
   // Window scaling factor (default: 10)
   int display_scale;
   
-  // Window title
+  // Window title (default: "RGB Matrix Emulator")
   std::string window_title;
-  
+
   // Emulate slowness/hardware timing (default: false)
   // When true, it will simulate timing issues to match hardware behavior
   bool emulate_hardware_timing;
   
   // Display refresh rate in Hz (default: 60)
   int refresh_rate_hz;
+
 };
 
 // EmulatorMatrix is an implementation of RGBMatrix that shows the matrix content
@@ -101,40 +102,5 @@ void PrintEmulatorFlags(FILE *out, const EmulatorOptions &defaults = EmulatorOpt
 
 }  // namespace rgb_matrix
 
-#else  // !ENABLE_EMULATOR
-
-// When ENABLE_EMULATOR is not defined, provide minimal stubs for EmulatorOptions
-// to maintain API compatibility without any functionality
-namespace rgb_matrix {
-
-struct EmulatorOptions {
-  EmulatorOptions() {}
-  
-  int display_scale = 10;
-  std::string window_title = "RGB Matrix Emulator";
-  bool emulate_hardware_timing = false;
-  int refresh_rate_hz = 60;
-};
-
-// Stub functions that do nothing when emulator is disabled
-inline bool ParseEmulatorOptionsFromFlags(int *argc, char ***argv,
-                                         EmulatorOptions *default_options,
-                                         bool remove_consumed_flags = true) {
-  (void)argc;
-  (void)argv;
-  (void)default_options;
-  (void)remove_consumed_flags;
-  return true;  // Nothing to do, just return success
-}
-
-inline void PrintEmulatorFlags(FILE *out, const EmulatorOptions &defaults = EmulatorOptions()) {
-  (void)out;
-  (void)defaults;
-  // No emulator flags to print when disabled
-}
-
-}  // namespace rgb_matrix
-
-#endif  // ENABLE_EMULATOR
-
+#endif // ENABLE_EMULATOR
 #endif  // RPI_RGBMATRIX_EMULATOR_H

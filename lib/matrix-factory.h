@@ -17,6 +17,7 @@
 #define RPI_RGBMATRIX_FACTORY_H
 
 #include "led-matrix.h"
+#include <cstring>
 
 // Only include emulator.h when ENABLE_EMULATOR is defined
 #ifdef ENABLE_EMULATOR
