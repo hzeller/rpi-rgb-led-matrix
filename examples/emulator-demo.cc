@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
+#include <ostream>
+#include <iostream>
 
 using namespace rgb_matrix;
 
@@ -43,12 +45,13 @@ int main(int argc, char *argv[]) {
   MatrixFactory::Options options;
   
   // Set default options
-  options.led_options.cols = 32;
-  options.led_options.rows = 32;
-  options.led_options.chain_length = 1;
+  options.led_options.cols = 64;
+  options.led_options.rows = 64;
+  options.led_options.chain_length = 2;
+  options.led_options.parallel = 2;
   options.led_options.hardware_mapping = "regular";  // Add this line to ensure hardware mapping is set
   options.use_emulator = true;
-  options.emulator_options.display_scale = 12;  // Larger window for emulator
+  options.emulator_options.display_scale = 5;  // Larger window for emulator
   options.emulator_options.window_title = "LED Matrix Emulator Demo";
 
   // Parse options from command line
@@ -71,6 +74,8 @@ int main(int argc, char *argv[]) {
   const int width = matrix->width();
   const int height = matrix->height();
   
+  std::cout << "Canvas width: " << width << ", height: " << height << std::endl << std::flush;
+
   // Create a canvas for double-buffering
   FrameCanvas *offscreen = matrix->CreateFrameCanvas();
 

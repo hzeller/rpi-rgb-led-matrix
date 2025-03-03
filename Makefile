@@ -16,7 +16,7 @@ all : $(RGB_LIBRARY)
 	$(MAKE) -C examples-api-use
 	$(MAKE) -C examples
 ifeq ($(ENABLE_EMULATOR), 1)
-	$(MAKE) -C examples ledmatrix-emulator
+	$(MAKE) -C examples ENABLE_EMULATOR=1 emulator-demo
 endif
 
 $(RGB_LIBRARY): FORCE
