@@ -238,6 +238,11 @@ public:
     }
   }
   
+  // Override the width and height methods to use our local values
+  // REVIEW This was a sigfault before overwriting, should probably review this
+  int width() const override { return width_; }
+  int height() const override { return height_; }
+  
   // Remove the override keyword from methods that don't match exactly
   bool SetPWMBits(uint8_t bits) {
     if (bits < 1 || bits > 11) return false;

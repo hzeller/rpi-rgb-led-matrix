@@ -74,9 +74,15 @@ int main(int argc, char *argv[]) {
   const int height = matrix->height();
   
   std::cout << "Canvas width: " << width << ", height: " << height << std::endl << std::flush;
-
+  
   // Create a canvas for double-buffering
   FrameCanvas *offscreen = matrix->CreateFrameCanvas();
+  if (offscreen == NULL) {
+    fprintf(stderr, "Failed to create offscreen canvas\n");
+    delete matrix;
+    return 1;
+  }
+  std::cout << "Offscreen canvas width: " << offscreen->width() << std::endl << std::flush;
 
   // Setup drawing parameters
   float radius = height / 4;

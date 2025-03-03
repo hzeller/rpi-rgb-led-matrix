@@ -3,7 +3,13 @@
         "*.scss": "scss",
         "functional": "cpp",
         "chrono": "cpp",
-        "*.old": "cpp"
+        "*.old": "cpp",
+        "atomic": "cpp",
+        "*.tcc": "cpp",
+        "iomanip": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "format": "cpp"
     },
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }
