@@ -29,13 +29,7 @@ set(MATRIX_SOURCES ${MATRIX_CORE_SOURCES})
 if(ENABLE_EMULATOR)
     # Add emulator source
     list(APPEND MATRIX_SOURCES lib/emulator.cc)
-    
-    # Find SDL2 for the emulator
-    find_package(SDL2 REQUIRED)
-    
-    # Define preprocessor macro to indicate emulator is enabled
-    add_compile_definitions(ENABLE_EMULATOR)
-    
+
     message(STATUS "Building with emulator support")
 else()
     message(STATUS "Building without emulator support")
@@ -49,11 +43,20 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_14)
 # Include directories
 target_include_directories(${PROJECT_NAME}
     PRIVATE
-        # where the library itself will look for its internal headers
-        ${CMAKE_CURRENT_SOURCE_DIR}/lib
+    # where the library itself will look for its internal headers
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib
     PUBLIC
-        # where top-level project will look for the library's public headers
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        # where external projects will look for the library's public headers
-        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    # where top-level project will look for the library's public headers
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    # where external projects will look for the library's public headers
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+# Export ENABLE_EMULATOR define to consumers of the library
+if(ENABLE_EMULATOR)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_EMULATOR)
+
+    # Find SDL2 for the emulator
+    find_package(SDL2 REQUIRED)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2)
+endif()

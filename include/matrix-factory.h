@@ -17,7 +17,11 @@
 #define RPI_RGBMATRIX_FACTORY_H
 
 #include "led-matrix.h"
+
+// Only include emulator.h when emulator support is enabled
+#ifdef ENABLE_EMULATOR
 #include "emulator.h"
+#endif
 
 namespace rgb_matrix {
 
@@ -38,7 +42,6 @@ public:
     // Runtime options specific to the hardware matrix
     RuntimeOptions runtime_options;
     
-
 #ifdef ENABLE_EMULATOR
     // Options specific to the emulator
     EmulatorOptions emulator_options;

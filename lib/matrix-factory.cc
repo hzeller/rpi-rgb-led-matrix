@@ -69,7 +69,8 @@ namespace rgb_matrix
                 options->use_emulator = true;
                 if (remove_consumed_flags)
                 {
-                    (*argv)[i] = nullptr;
+                    // Very unclean way of doing this, but it works
+                    (*argv)[i] = "";
                 }
             }
         }

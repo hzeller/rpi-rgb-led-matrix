@@ -50,7 +50,6 @@ int main(int argc, char *argv[]) {
   options.led_options.chain_length = 2;
   options.led_options.parallel = 2;
   options.led_options.hardware_mapping = "regular";  // Add this line to ensure hardware mapping is set
-  options.use_emulator = true;
   options.emulator_options.display_scale = 5;  // Larger window for emulator
   options.emulator_options.window_title = "LED Matrix Emulator Demo";
 
