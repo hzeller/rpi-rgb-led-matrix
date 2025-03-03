@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.scss": "scss",
+        "functional": "cpp",
+        "chrono": "cpp",
+        "*.old": "cpp"
+    },
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}

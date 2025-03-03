@@ -20,6 +20,7 @@ set(MATRIX_CORE_SOURCES
     lib/graphics.cc
     lib/options-initialize.cc
     lib/led-matrix-c.cc
+    lib/matrix-factory.cc
 )
 
 # Set up emulator if enabled

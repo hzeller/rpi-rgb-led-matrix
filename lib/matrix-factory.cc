@@ -15,90 +15,88 @@
 
 #include "matrix-factory.h"
 #include <string.h>
+#include <iostream>
 
 namespace rgb_matrix
 {
-
-    // Helper to remove command line option
-    static void remove_option(int *argc, char ***argv, int index)
-    {
-        for (int i = index; i < (*argc) - 1; ++i)
-        {
-            (*argv)[i] = (*argv)[i + 1];
-        }
-        (*argv)[--(*argc)] = NULL;
-    }
 
     MatrixFactory::Options::Options()
         : use_emulator(false)
     {
     }
 
-    RGBMatrixBase *MatrixFactory::CreateMatrix(const MatrixFactory::Options &options)
+    RGBMatrixBase* MatrixFactory::CreateMatrix(const MatrixFactory::Options& options)
     {
-        // Try to create hardware matrix first
-        if (!options.use_emulator)
-        {
-            return RGBMatrix::CreateFromOptions(options.led_options,
-                                                options.runtime_options);
-        }
+        RGBMatrixBase *result = nullptr;
 
 #ifdef ENABLE_EMULATOR
-        // Create emulator if requested and available
-        return EmulatorMatrix::Create(options.led_options, options.emulator_options);
+        if (options.use_emulator)
+        {
+            // Create an emulator
+            result = EmulatorMatrix::Create(options.led_options, options.emulator_options);
+            if (result)
+            {
+                // Start the refresh thread for the emulator
+                std::cout << "Starting refresh thread" << std::endl;
+                static_cast<EmulatorMatrix *>(result)->StartRefresh();
+            }
+        }
+        else
+        {
+            // Create a real hardware matrix
+            result = RGBMatrix::CreateFromOptions(options.led_options, options.runtime_options);
+        }
 #else
-        // If emulator requested but not available, fallback to hardware matrix
-        fprintf(stderr, "Emulator requested but not available in this build.\n"
-                        "Rebuild with -DENABLE_EMULATOR=ON to enable emulator support.\n"
-                        "Falling back to hardware matrix.\n");
-        return RGBMatrix::CreateFromOptions(options.led_options, options.runtime_options);
+        result = RGBMatrix::CreateFromOptions(options.led_options, options.runtime_options);
+
 #endif
+
+        return result;
     }
 
     bool MatrixFactory::ParseOptionsFromFlags(int *argc, char ***argv,
                                               MatrixFactory::Options *options,
                                               bool remove_consumed_flags)
     {
-        // Parse regular RGBMatrix options
-        if (!rgb_matrix::ParseOptionsFromFlags(argc, argv,
-                                               &options->led_options,
-                                               &options->runtime_options))
-        {
+        if (!options)
             return false;
-        }
 
-        // Parse factory-specific options
+        // First, check for --led-emulator flag
         for (int i = 1; i < *argc; ++i)
         {
-            if (*argv == NULL || *argv[i] == NULL)
-                continue;
-            if (strcmp(*argv[i], "--led-emulator") == 0)
+            if (strcmp((*argv)[i], "--led-emulator") == 0)
             {
                 options->use_emulator = true;
-                remove_option(argc, argv, i);
-                --i;
+                if (remove_consumed_flags)
+                {
+                    (*argv)[i] = nullptr;
+                }
             }
         }
 
+        // Parse options for the appropriate matrix type
+        bool result = true;
+        rgb_matrix::RuntimeOptions *rt_options = &options->runtime_options;
+
+        // Parse core RGB matrix options regardless of type
+        result &= rgb_matrix::ParseOptionsFromFlags(argc, argv, &options->led_options, rt_options, remove_consumed_flags);
 #ifdef ENABLE_EMULATOR
-        // Parse emulator options if emulator is enabled
         if (options->use_emulator)
         {
-            if (!ParseEmulatorOptionsFromFlags(argc, argv, &options->emulator_options))
-            {
-                return false;
-            }
+            // Parse emulator-specific options
+            result &= rgb_matrix::ParseEmulatorOptionsFromFlags(argc, argv, &options->emulator_options, remove_consumed_flags);
+        }
+        else
+        {
+            // Parse hardware-specific runtime options
+            // Use a temporary variable with the exact type to help the compiler pick the right overload
+            result &= rgb_matrix::ParseOptionsFromFlags(argc, argv, &options->led_options, rt_options, remove_consumed_flags);
         }
 #else
-        if (options->use_emulator)
-        {
-            fprintf(stderr, "Emulator requested but not available in this build.\n"
-                            "Rebuild with -DENABLE_EMULATOR=ON to enable emulator support.\n");
-            return false;
-        }
+        result &= rgb_matrix::ParseOptionsFromFlags(argc, argv, &options->led_options, rt_options, remove_consumed_flags);
 #endif
 
-        return true;
+        return result;
     }
 
     void MatrixFactory::PrintMatrixFactoryFlags(FILE *out, const MatrixFactory::Options &defaults)
