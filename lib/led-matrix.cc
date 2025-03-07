@@ -650,7 +650,6 @@ static bool drop_privs(const char *priv_user, const char *priv_group) {
 
 RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
                                         const RuntimeOptions &runtime_options) {
-
   std::string error;
   if (!options.Validate(&error)) {
     fprintf(stderr, "%s\n", error.c_str());
@@ -667,14 +666,12 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
   }
 
   static GPIO io;  // This static var is a little bit icky.
-#ifndef MOCK_RPI
   if (runtime_options.do_gpio_init
       && !io.Init(runtime_options.gpio_slowdown)) {
     fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
             "Prepend 'sudo' to the command\n");
     return NULL;
   }
-#endif
 
   if (runtime_options.daemon > 0 && daemon(1, 0) != 0) {
     perror("Failed to become daemon");
@@ -683,10 +680,8 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
   RGBMatrix::Impl *result = new RGBMatrix::Impl(NULL, options);
   // Allowing daemon also means we are allowed to start the thread now.
   const bool allow_daemon = !(runtime_options.daemon < 0);
-#ifndef MOCK_RPI
   if (runtime_options.do_gpio_init)
     result->SetGPIO(&io, allow_daemon);
-#endif
 
   // TODO(hzeller): if we disallow daemon, then we might also disallow
   // drop privileges: we can't drop privileges until we have created the
@@ -721,11 +716,7 @@ FrameCanvas *RGBMatrix::CreateFrameCanvas() {
 }
 FrameCanvas *RGBMatrix::SwapOnVSync(FrameCanvas *other,
                                     unsigned framerate_fraction) {
-#ifdef MOCK_RPI
-    return other;
-#else
   return impl_->SwapOnVSync(other, framerate_fraction);
-#endif
 }
 bool RGBMatrix::ApplyPixelMapper(const PixelMapper *mapper) {
   return impl_->ApplyPixelMapper(mapper);
@@ -807,16 +798,10 @@ void FrameCanvas::SetBrightness(uint8_t brightness) { frame_->SetBrightness(brig
 uint8_t FrameCanvas::brightness() { return frame_->brightness(); }
 
 void FrameCanvas::Serialize(const char **data, size_t *len) const {
-#ifndef MOCK_RPI
   frame_->Serialize(data, len);
-#endif
 }
 bool FrameCanvas::Deserialize(const char *data, size_t len) {
-#ifndef MOCK_RPI
   return frame_->Deserialize(data, len);
-#else
-    return true;
-#endif
 }
 void FrameCanvas::CopyFrom(const FrameCanvas &other) {
   frame_->CopyFrom(other.frame_);

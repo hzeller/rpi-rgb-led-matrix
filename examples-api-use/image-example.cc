@@ -82,18 +82,14 @@ static ImageVector LoadImageAndScaleImage(const char *filename,
 void CopyImageToCanvas(const Magick::Image &image, Canvas *canvas) {
   const int offset_x = 0, offset_y = 0;  // If you want to move the image.
   // Copy all the pixels to the canvas.
-  // Get direct access to pixel data
-  const Magick::PixelPacket *pixels = image.getConstPixels(0, 0, image.columns(), image.rows());
-
   for (size_t y = 0; y < image.rows(); ++y) {
-    const Magick::PixelPacket *row = pixels + (y * image.columns());
     for (size_t x = 0; x < image.columns(); ++x) {
-      const auto &[blue, green, red, opacity] = row[x];
-      if (opacity != MaxRGB) {  // Check for non-transparent pixels
+      const Magick::Color &c = image.pixelColor(x, y);
+      if (c.alphaQuantum() < 256) {
         canvas->SetPixel(x + offset_x, y + offset_y,
-                         ScaleQuantumToChar(red),
-                         ScaleQuantumToChar(green),
-                         ScaleQuantumToChar(blue));
+                         ScaleQuantumToChar(c.redQuantum()),
+                         ScaleQuantumToChar(c.greenQuantum()),
+                         ScaleQuantumToChar(c.blueQuantum()));
       }
     }
   }
