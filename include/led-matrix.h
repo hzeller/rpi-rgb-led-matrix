@@ -36,6 +36,23 @@ class RGBMatrix;
 class FrameCanvas;   // Canvas for Double- and Multibuffering
 struct RuntimeOptions;
 
+// Add a common base class for both RGBMatrix and EmulatorMatrix that extends Canvas
+class RGBMatrixBase : public Canvas {
+public:
+  virtual ~RGBMatrixBase() {}
+  
+  // Common methods for both real matrix and emulator
+  virtual FrameCanvas *CreateFrameCanvas() = 0;
+  virtual FrameCanvas *SwapOnVSync(FrameCanvas *other, unsigned framerate_fraction = 1) = 0;
+  virtual bool SetPWMBits(uint8_t value) = 0;
+  virtual uint8_t pwmbits() = 0;
+  virtual void SetBrightness(uint8_t brightness) = 0;
+  virtual uint8_t brightness() = 0;
+  virtual void set_luminance_correct(bool on) = 0;
+  virtual bool luminance_correct() const = 0;
+  virtual bool StartRefresh() = 0;
+};
+
 // The RGB matrix provides the framebuffer and the facilities to constantly
 // update the LED matrix.
 //
@@ -48,7 +65,7 @@ struct RuntimeOptions;
 // If you arrange the panels in a different way in the physical space, write
 // a CanvasTransformer that does coordinate remapping and which should be added
 // to the transformers, like with UArrangementTransformer in demo-main.cc.
-class RGBMatrix : public Canvas {
+class RGBMatrix : public RGBMatrixBase {
 public:
   // Options to initialize the RGBMatrix. Also see the main README.md for
   // detailed descriptions of the command line flags.
@@ -389,12 +406,15 @@ public:
 
 private:
   friend class RGBMatrix;
+  friend class EmulatorMatrix;  // Add EmulatorMatrix as a friend
 
   FrameCanvas(internal::Framebuffer *frame) : frame_(frame){}
   virtual ~FrameCanvas();   // Any FrameCanvas is owned by RGBMatrix.
-  internal::Framebuffer *framebuffer() { return frame_; }
 
   internal::Framebuffer *const frame_;
+
+  // Make framebuffer() accessible to EmulatorMatrix
+  internal::Framebuffer *framebuffer() { return frame_; }
 };
 
 // Runtime options to simplify doing common things for many programs such as

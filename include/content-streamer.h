@@ -11,7 +11,8 @@
 // These abstractions are used in util/led-image-viewer.cc to read and
 // write such animations to disk. It is also used in util/video-viewer.cc
 // to write a version to disk that then can be played with the led-image-viewer.
-#pragma once
+#ifndef RPI_CONTENT_STREAMER_H
+#define RPI_CONTENT_STREAMER_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -136,3 +137,5 @@ private:
   char *header_frame_buffer_;
 };
 }
+
+#endif
