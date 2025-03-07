@@ -604,18 +604,28 @@ static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
 struct ColorLookup {
   uint16_t color[256];
 };
-static ColorLookup *CreateLuminanceCIE1931LookupTable() {
-  ColorLookup *for_brightness = new ColorLookup[100];
-  for (int c = 0; c < 256; ++c)
-    for (int b = 0; b < 100; ++b)
-      for_brightness[b].color[c] = luminance_cie1931(c, b + 1);
 
-  return for_brightness;
-}
+// Singleton manager for the lookup table
+class ColorLookupManager {
+public:
+  static ColorLookup* GetLookup(uint8_t brightness) {
+    static ColorLookupManager instance;
+    return &instance.lookups_[brightness - 1];
+  }
+  
+private:
+  ColorLookupManager() {
+    for (int c = 0; c < 256; ++c)
+      for (int b = 0; b < 100; ++b)
+        lookups_[b].color[c] = luminance_cie1931(c, b + 1);
+  }
+  ~ColorLookupManager() = default; // Cleanup happens automatically
+  
+  ColorLookup lookups_[100]{};
+};
 
 static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
-  static ColorLookup *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-  return luminance_lookup[brightness - 1].color[c];
+  return ColorLookupManager::GetLookup(brightness)->color[c];
 }
 
 // Non luminance correction. TODO: consider getting rid of this.
