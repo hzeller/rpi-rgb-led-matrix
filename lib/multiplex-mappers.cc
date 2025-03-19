@@ -566,6 +566,19 @@ namespace rgb_matrix
       }
     };
 
+    class P5Outdoor8S64x32MultiplexMapper : public MultiplexMapperBase
+    {
+    public:
+      P5Outdoor8S64x32MultiplexMapper() : MultiplexMapperBase("P5Outdoor8S64x32", 2) {}
+
+      void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const
+      {
+        int pix_nb = x + (y * 64);
+        *matrix_x = ((((pix_nb % 64) / 4) + 1) * 8) - ((((pix_nb % 1024) / 512) + 1) * 4) + (pix_nb % 4);
+        *matrix_y = ((pix_nb / 64) % 8) + ((pix_nb / 1024) * 8);
+      }
+    };
+
     /*
      * Here is where the registration happens.
      * If you add an instance of the mapper here, it will automatically be
@@ -597,6 +610,7 @@ namespace rgb_matrix
       result->push_back(new P10Outdoor32x16QuarterScanMapper());
       result->push_back(new P3Outdoor64x64MultiplexMapper());
       result->push_back(new P5_8S_64x32());
+      result->push_back(new P5Outdoor8S64x32MultiplexMapper());
       return result;
     }
 
