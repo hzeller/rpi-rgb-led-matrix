@@ -28,15 +28,21 @@ With fewer colors or so-called 'outdoor panels' you can control even more,
 faster.
 
 The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org>, licensed with
-[GNU General Public License Version 2.0](http://www.gnu.org/licenses/gpl-2.0.txt)
+[GNU General Public License Version 2.0 (or any later version)](http://www.gnu.org/licenses/gpl-2.0.txt)
 (which means, if you use it in a product somewhere, you need to make the
 source and all your modifications available to the receiver of such product so
-that they have the freedom to adapt and improve).
+that they have the freedom to adapt and improve). 
+Yes, you are also allowed to use
+this code under the [GNU General Public License Version 3.0](http://www.gnu.org/licenses/gpl-3.0.txt) 
+which allows linking with Apache 2.0 code and LGPL-3.0 code.
 
 ## Discourse discussion group
 
-If you'd like help, please do not file a bug, use the discussion board instead:
-https://rpi-rgb-led-matrix.discourse.group/
+**If you'd like help, please do not file a bug, use the discussion board instead:**
+https://rpi-rgb-led-matrix.discourse.group/  (obviously please read this whole page first).
+If you file a bug asking for personal help instead of using the discourse group, please
+state in your bug that you have read this entire page and that you're indeed filing a bug
+or request for improvement. Otherwise, please use the discourse group.
 
 Overview
 --------
@@ -60,7 +66,8 @@ also the B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well
 as the Compute Modules which have 44 GPIOs.
 
 The Raspberry Pi 5 still needs some research into the vastly changed peripherals
-and is not yet supported.
+and is not yet supported. See https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603#issuecomment-2624713250
+and https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter
 
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
@@ -147,6 +154,15 @@ sudo examples-api-use/demo -D0
     compile and run these.
   4. Write your own programs using the Matrix in C++ or one of the
      bindings such as Python or C#.
+
+### Wiring / Boards
+
+Please see the [Adadpter Boards or Self Wiring](./adapter). 
+
+Summary is:
+- Yes you can self wire without level shifters and it will work most of the time, but if you're not in a hurry get a board
+- https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-for-raspberry-pi-v2/ **is the recommended solution with 3 channels and level shifters**. You can't go wrong there, but expect a bit of shipping time.
+- If shipping time is crucial and you don't want to wire your own, Adafruit sells a single channel board (the electrodragon one is 3 channels), but note that its wiring is non standard and requires a special compile option or command line argument: https://www.adafruit.com/product/3211
 
 ### Utilities
 
@@ -518,7 +534,9 @@ In general, run a minimal configuration on your Pi.
     perfectly good embedded device.).
     Always operate your Raspberry Pi [headless].
 
-  * Switch off on-board sound (`dtparam=audio=off` in `/boot/config.txt`).
+  * Switch off on-board sound
+    (`dtparam=audio=off` in `/boot/config.txt` pre-bookworm)
+    (`dtparam=audio=off` in `/boot/firmware/config.txt` post-bookworm)
     External USB sound adapters work, and are much better quality anyway,
     so that is recommended if you happen to need sound. The on-board sound
     uses a timing circuit that the RGB-Matrix needs (it seems in some
@@ -531,7 +549,8 @@ In general, run a minimal configuration on your Pi.
 
   * I have also seen reports that on some Pis, the one-wire protocol is
     enabled (w1-gpio). This will also not work (disable by removing
-    `dtoverlay=w1-gpio` in `/boot/config.txt`; or using `raspi-config`,
+    `dtoverlay=w1-gpio` in `/boot/config.txt` (pre-bookworm) or in
+    `/boot/firmware/config.txt` (post-bookworm); or using `raspi-config`,
     Interface Options -> 1-Wire)
 
   * If you see some regular flickering, make sure that there is no other
@@ -746,14 +765,15 @@ computer - there might be changes in the overall brigthness when this affects
 the referesh rate.
 
 If you have a loaded system and one of the newer Pis with 4 cores, you can
-reserve one core just for the refresh of the display:
+reserve one core just for the refresh of the display. Add:
 
 ```
 isolcpus=3
 ```
 
-.. at the end of the line of `/boot/cmdline.txt` (needs to be in the same as
-the other arguments, no newline). This will use the last core
+to the end of the line in `/boot/cmdline.txt` (pre-bookworm) or
+`boot/firmware/cmdline.txt` (post-bookworm). It needs to be in the same line
+line as the existing arguments -- no newline. This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
 
