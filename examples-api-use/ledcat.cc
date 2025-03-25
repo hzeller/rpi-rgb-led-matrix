@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
 
-  ssize_t frame_size = canvas->width() * canvas->height() * 3;
+  ssize_t frame_size = (ssize_t)canvas->width() * (ssize_t)canvas->height() * 3;
   uint8_t buf[frame_size];
 
   while (1) {

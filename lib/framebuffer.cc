@@ -296,7 +296,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_),
-    buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
+    buffer_size_((size_t)double_rows_ * (size_t)columns_ * kBitPlanes * sizeof(gpio_bits_t)),
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
   assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
@@ -842,7 +842,7 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
   const int start_bit = std::max(pwm_low_bit, kBitPlanes - pwm_bits_);
 
   const uint8_t half_double = double_rows_/2;
-  for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
+  for (int row_loop = 0; row_loop < double_rows_; ++row_loop) {
     uint8_t d_row;
     switch (scan_mode_) {
     case 0:  // progressive
