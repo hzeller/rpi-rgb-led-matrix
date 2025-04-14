@@ -93,7 +93,6 @@ public:
   uint64_t RequestOutputs(uint64_t output_bits);
   void OutputGPIO(uint64_t output_bits);
 
-  void Clear();
 private:
   friend class RGBMatrix;
 
