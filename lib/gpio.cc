@@ -545,42 +545,58 @@ static uint32_t JitterAllowanceMicroseconds() {
 }
 
 void Timers::sleep_nanos(long nanos) {
-  // For smaller durations, we go straight to busy wait.
+    // For smaller durations, we go straight to busy wait.
+    // For larger duration, we use nanosleep() to give the operating system
+    // a chance to do something else.
 
-  // For larger duration, we use nanosleep() to give the operating system
-  // a chance to do something else.
-
-  // However, these timings have a lot of jitter, so if we have the 1Mhz timer
-  // available, we use that to accurately mesure time spent and do the
-  // remaining time with busy wait. If we don't have the timer available
-  // (not running as root), we just use nanosleep() for larger values.
-
-  if (s_Timer1Mhz) {
-    static long kJitterAllowanceNanos = JitterAllowanceMicroseconds() * 1000;
-    if (nanos > kJitterAllowanceNanos + MINIMUM_NANOSLEEP_TIME_US*1000) {
-      const uint32_t before = *s_Timer1Mhz;
-      struct timespec sleep_time = { 0, nanos - kJitterAllowanceNanos };
-      nanosleep(&sleep_time, NULL);
-      const uint32_t after = *s_Timer1Mhz;
-      const long nanoseconds_passed = 1000 * (uint32_t)(after - before);
-      if (nanoseconds_passed > nanos) {
-        return;  // darn, missed it.
-      } else {
-        nanos -= nanoseconds_passed; // remaining time with busy-loop
-      }
+    if (s_Timer1Mhz) {
+        static long kJitterAllowanceNanos = JitterAllowanceMicroseconds() * 1000;
+        if (nanos > kJitterAllowanceNanos + MINIMUM_NANOSLEEP_TIME_US*1000) {
+            // Capture start time
+            const uint32_t before = *s_Timer1Mhz;
+            
+            // Sleep for most of the requested time, accounting for expected overhead
+            struct timespec sleep_time = { 0, nanos - kJitterAllowanceNanos };
+            nanosleep(&sleep_time, NULL);
+            
+            // Capture end time
+            const uint32_t after = *s_Timer1Mhz;
+            
+            // Calculate elapsed time handling timer wraparound
+            uint32_t elapsed_ticks;
+            if (after >= before) {
+                elapsed_ticks = after - before;
+            } else {
+                // Timer wrapped around (we assume just once)
+                elapsed_ticks = after + (UINT32_MAX - before + 1);
+            }
+            
+            // Convert to nanoseconds safely using uint64_t to avoid overflow
+            const uint64_t nanoseconds_passed = static_cast<uint64_t>(elapsed_ticks) * 1000;
+            
+            // Check if we've overshot our target
+            if (nanoseconds_passed >= static_cast<uint64_t>(nanos)) {
+                return;  // We've already waited long enough
+            } else {
+                // Calculate remaining time, protected against underflow
+                nanos = nanos - static_cast<long>(nanoseconds_passed);
+                // Safety check in case of any calculation errors
+                if (nanos < 0) return;
+            }
+        }
+    } else {
+        // Not running as root, not having access to 1Mhz timer.
+        // Approximate large durations with nanosleep()
+        if (nanos > (EMPIRICAL_NANOSLEEP_OVERHEAD_US + MINIMUM_NANOSLEEP_TIME_US)*1000) {
+            struct timespec sleep_time
+                = { 0, nanos - EMPIRICAL_NANOSLEEP_OVERHEAD_US*1000 };
+            nanosleep(&sleep_time, NULL);
+            return;
+        }
     }
-  } else {
-    // Not running as root, not having access to 1Mhz timer. Approximate large
-    // durations with nanosleep(); small durations are done with busy wait.
-    if (nanos > (EMPIRICAL_NANOSLEEP_OVERHEAD_US + MINIMUM_NANOSLEEP_TIME_US)*1000) {
-      struct timespec sleep_time
-        = { 0, nanos - EMPIRICAL_NANOSLEEP_OVERHEAD_US*1000 };
-      nanosleep(&sleep_time, NULL);
-      return;
-    }
-  }
 
-  busy_wait_impl(nanos);  // Use model-specific busy-loop for remaining time.
+    // Use model-specific busy-loop for remaining time
+    busy_wait_impl(nanos);
 }
 
 static void busy_wait_nanos_rpi_1(long nanos) {
