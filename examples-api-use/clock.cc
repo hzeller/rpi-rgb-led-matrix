@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
+#include <iostream>
 
 #include <vector>
 #include <string>
@@ -193,6 +193,6 @@ int main(int argc, char *argv[]) {
   // Finished. Shut down the RGB matrix.
   delete matrix;
 
-  write(STDOUT_FILENO, "\n", 1);  // Create a fresh new line after ^C on screen
+  std::cout << std::endl;  // Create a fresh new line after ^C on screen
   return 0;
 }
