@@ -9,7 +9,7 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
 [three-panels]: ../img/three-parallel-panels-soic.jpg
 
    * [Passive-3](./passive-3) Supports three parallel chains, directly connected
-     to the output of a Rapsberry Pi with 40 GPIO pins. Works, but usually it is better to
+     to the output of a Raspberry Pi with 40 GPIO pins. Works, but usually it is better to
      buffer the outputs using the ...
    * [Active-3](./active-3) board. Supports three parallel chains with active buffering
      and 3.3V -> 5V level shifting for best reliability. Requires SMD soldering.

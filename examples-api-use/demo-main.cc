@@ -1037,7 +1037,7 @@ static int usage(const char *progname) {
 
   rgb_matrix::PrintMatrixFlags(stderr);
 
-  fprintf(stderr, "Demos, choosen with -D\n");
+  fprintf(stderr, "Demos, chosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
           "\t2  - backward scrolling an image (-m <scroll-ms>)\n"
