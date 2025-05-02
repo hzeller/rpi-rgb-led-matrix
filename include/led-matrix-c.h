@@ -391,6 +391,9 @@ int baseline_font(struct LedFont *font);
 // Read the height of a font
 int height_font(struct LedFont *font);
 
+// Get the width of a specific codepoint in the given font
+int character_width_font(struct LedFont *font, uint32_t unicode_codepoint);
+
 // Creates an outline font based on an existing font instance
 struct LedFont *create_outline_font(struct LedFont *font);
 
