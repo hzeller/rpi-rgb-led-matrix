@@ -50,11 +50,11 @@ you want to get started programming your own utils.
 Panels supported
 ----------------
 This library does not support PWM panels (which actually are better, but need 
-a completely different driver). 
+a completely different driver).\
 It should support most other panels with direct addressing (3 to 5 address lines,
 ABC for 8x2=16 lines, ABCD for 16x2=32 lines, and ABCDE for 32x2=64 lines). 
 It also supports panels using shift registers for line addressing, also called ABC 
-panels up to 64 lines.
+panels up to 64 lines.\
 However some amount of panels have uncommon pixel layouts, especially the brighter
 panels and may require special pixel mappers (some are called zigzag or zagzig, see
 https://rpi-rgb-led-matrix.discourse.group/t/p10rgb-3535-4s-zaggiz-1-4scan-abc-p10-panels-and-https-github-com-2dom-pxmatrix/921 )
