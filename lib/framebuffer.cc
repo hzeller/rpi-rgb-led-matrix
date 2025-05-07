@@ -169,6 +169,43 @@ private:
   gpio_bits_t row_lookup_[32];
 };
 
+class B707ShiftRegisterRowAddressSetter : public RowAddressSetter {
+public:
+  B707ShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
+    : row_mask_(h.a | h.b | h.c),
+      last_row_(-1),
+      bk_(h.b),
+      din_(h.c),
+      dck_(h.a) {
+    assert(double_rows <= 32); // designed for up to 1/32 panel
+  }
+
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    io->SetBits(bk_);  // Enable serial input for the shifter
+    if (row == 0) {
+        io->SetBits(din_);
+      } else {
+        io->ClearBits(din_);
+      }
+    io->SetBits(dck_);
+    io->SetBits(dck_);  // Longer clock time; tested with Pi3
+    io->ClearBits(dck_);
+    io->ClearBits(bk_);  // Disable serial input to keep unwanted bits out of the shifters
+    last_row_ = row;
+  }
+
+private:
+  gpio_bits_t row_mask_;
+  int last_row_;
+  const gpio_bits_t bk_;
+  const gpio_bits_t din_;
+  const gpio_bits_t dck_;
+};
+
+
 class ShiftRegisterRowAddressSetter : public RowAddressSetter {
 public:
   ShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
@@ -296,7 +333,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     inverse_color_(inverse_color),
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_),
-    buffer_size_((size_t)double_rows_ * (size_t)columns_ * kBitPlanes * sizeof(gpio_bits_t)),
+    buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
   assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
@@ -440,6 +477,11 @@ Framebuffer::~Framebuffer() {
   case 4:
     row_setter_ = new SM5266RowAddressSetter(double_rows, h);
     break;
+  case 5:
+    row_setter_ = new B707ShiftRegisterRowAddressSetter(double_rows, h);
+    break;
+
+
   default:
     assert(0);  // unexpected type.
   }
@@ -842,7 +884,7 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
   const int start_bit = std::max(pwm_low_bit, kBitPlanes - pwm_bits_);
 
   const uint8_t half_double = double_rows_/2;
-  for (int row_loop = 0; row_loop < double_rows_; ++row_loop) {
+  for (uint8_t row_loop = 0; row_loop < double_rows_; ++row_loop) {
     uint8_t d_row;
     switch (scan_mode_) {
     case 0:  // progressive
