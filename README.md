@@ -124,6 +124,10 @@ parameter. So-called 'outdoor panels' are typically brighter and allow for
 faster refresh-rate for the same size, but do some multiplexing internally
 of which there are a few types out there; they can be chosen with
 the `--led-multiplexing` parameter.
+Many 128x64 panels now use ABC addressing using shift registers, instead of direct
+ABCDE addressing. Look at using --led-row-addr-type=5 or --led-row-addr-type=3
+with them (and you may need to use --led-slowdown-gpio of 2 or more. Please
+see this bug for more details: https://github.com/hzeller/rpi-rgb-led-matrix/issues/1774
 
 There are some panels that have a different chip-set than the default HUB75.
 These require some initialization sequence. The current supported types are
@@ -231,7 +235,7 @@ Learn more about the mappings in the [wiring documentation](wiring.md#alternativ
 #### GPIO speed
 
 ```
---led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
+--led-slowdown-gpio=<0..10>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
 ```
 
 The Raspberry Pi starting with Pi2 are putting out data too fast for almost
@@ -241,6 +245,10 @@ GPIO. Zero for this parameter means 'no slowdown'.
 The default 1 (one) typically works fine, but often you have to even go further
 by setting it to 2 (two). If you have a Raspberry Pi with a slower processor
 (Model A, A+, B+, Zero), then a value of 0 (zero) might work and is desirable.
+
+If you find yourself needing very high values of slowdown like 8 for ABC 128x64 panels, 
+do try --led-row-addr-type=5 instead of --led-row-addr-type=3. Details in this bug:
+https://github.com/hzeller/rpi-rgb-led-matrix/issues/1773
 
 A Raspberry Pi 3 or Pi4 might even need higher values for the panels to be
 happy.
@@ -310,7 +318,7 @@ two chained panels, so then you'd use
 `--led-rows=32 --led-cols=32 --led-chain=2 --led-multiplexing=1`;
 
 ```
---led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct (Default: 0).
+--led-row-addr-type=<0..5>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct, 5 = ABC method similar to 3, but faster on some panels (needs less of a slowdown) (Default: 0).
 ```
 
 This option is useful for certain 64x64 or 32x16 panels. For 64x64 panels,
@@ -320,6 +328,54 @@ please send a pull request.
 
 For 32x16 outdoor panels, that have have 4 address line (A, B, C, D), it is
 necessary to use `--led-row-addr-type=2`.
+
+Performance improvements and limits, Maximizing refresh rate, ABC vs ABCDE, row-addr-type=5 vs 3
+-------------------------------------------------------------------------------------------------
+Regardless of which driving hardware you use, ultimately you can only push pixels
+so fast to a string of panels before you get flickering due to too low a refresh
+rate (less than 80-100Hz), or before you refresh the panel lines too fast and they
+appear too dim because each line is not displayed long enough before it is turned off.
+
+Basic performance tips:
+- Use --led-show-refresh to see the refresh rate while you try parameters
+- use an active-3 board with led-parallel=3 any time possible instead of chaining panels.
+- led-pwm-dither-bits=1 gives you a speed boost but potentially less brightness
+- led-pwm-lsb-nanoseconds=50 also gives you a speed boost but may lead to less brightness
+- led-pwm-bits=7 or even lower decrease color depth but increases refresh speed
+- AB panels and other panels with that use values of led-multiplexing bigger than 0,
+will also go faster, although as you tune more options given above, their advantage will decrease.
+- 32x16 ABC panels are faster than ABCD which are faster than ABCDE, which are faster than 128x64 ABC panels
+(which do use 5 address lines, but over only 3 wires)
+- For 128x64 ABC speed on shift registers vs ABCDE 
+- Use at least an rPi3 (rPi4 is still slightly faster but may need --led-slowdown-gpio=2)
+
+Maximizing refresh rate to 300 or even 400Mhz refresh for 3x 128x64 panels:
+- ABCDE panels will allow for faster refresh rate than ABC panels because they can be run with
+lower --led-slowdown-gpio=1 (which may need to be 2 for ABCDE) on rPi3 (rPi4 may require bigger
+slowdowns. You may even end up in a situation where a Pi3 will give you faster refresh than a Pi4
+by needing smaller slowdowns
+- To achieve 410Hz refresh for 3x 128x64 direct ABCDE panels, use this "~/rpi-rgb-led-matrix/examples-api-use/demo --led-rows=64 --led-cols=128 --led-chain=1 --led-parallel=3 --led-show-refresh --led-scan-mode=0 --led-pwm-bits=7 --led-pwm-lsb-nanoseconds=50 --led-pwm-dither-bits=1 -D0  --led-row-addr-type=0 --led-slowdown-gpio=1"
+- To achieve 350hz refresh for 3x 128x64 shift register panels, use this: "~/rpi-rgb-led-matrix/examples-api-use/demo --led-rows=64 --led-cols=128 --led-chain=1 --led-parallel=3 --led-show-refresh --led-scan-mode=0 --led-pwm-bits=7 --led-pwm-lsb-nanoseconds=50 --led-pwm-dither-bits=1 -D0  --led-row-addr-type=5 --led-slowdown-gpio=2"
+
+Please see this bug for discussion of ABC vs ABCDE and using --led-row-addr-type=5 instead of --led-row-addr-type=3: 
+https://github.com/hzeller/rpi-rgb-led-matrix/issues/1774#issuecomment-2860617056
+
+Maximum resolutions reasonably achievable:
+A general rule of thumb is that running 16K pixels (128x128 or otherwise) on a single chain,
+is already pushing limits and you will have to make tradeoffs in visual quality. 32K pixels
+(like 128x256) is definitely pushing things and you'll get 100Hz or less depending on the
+performance options you choose.
+This puts the maximum reasonable resolution around 100K pixels (like 384x256) for 3 chains.
+You can see more examples and video capture of speed on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)
+If your refresh rate is below 300Hz, expect likely black bars when taking cell phone pictures.
+A real camera with shutter speed lowered accordingly, will get around this.
+
+Ultimately, you should not expect to go past 64K pixels using 3 chains without significant
+quality tradeoffs. If you need bigger displays, you should use multiple boards and synchronize the
+output.
+
+
+
 
 #### Panel Arrangement
 
@@ -782,39 +838,6 @@ to the end of the line in `/boot/cmdline.txt` (pre-bookworm) or
 line as the existing arguments -- no newline. This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
-
-Performance improvements and limits
------------------------------------
-Regardless of which driving hardware you use, ultimately you can only push pixels
-so fast to a string of panels before you get flickering due to too low a refresh
-rate (less than 80-100Hz), or before you refresh the panel lines too fast and they
-appear too dim because each line is not displayed long enough before it is turned off.
-
-Basic performance tips:
-- Use --led-show-refresh to see the refresh rate while you try parameters
-- use an active-3 board with led-parallel=3
-- led-pwm-dither-bits=1 gives you a speed boost but less brightness
-- led-pwm-lsb-nanoseconds=50 also gives you a speed boost but less brightness
-- led-pwm-bits=7 or even lower decrease color depth but increases refresh speed
-- AB panels and other panels with that use values of led-multiplexing bigger than 0,
-will also go faster, although as you tune more options given above, their advantage will decrease.
-- 32x16 ABC panels are faster than ABCD which are faster than ABCDE, which are faster than 128x64 ABC panels
-(which do use 5 address lines, but over only 3 wires)
-- Use at least an rPi3 (rPi4 is still slightly faster but may need --led-slowdown-gpio=2)
-
-Maximum resolutions reasonably achievable:
-A general rule of thumb is that running 16K pixels (128x128 or otherwise) on a single chain,
-is already pushing limits and you will have to make tradeoffs in visual quality. 32K pixels
-(like 128x256) is definitely pushing things and you'll get 100Hz or less depending on the
-performance options you choose.
-This puts the maximum reasonable resolution around 100K pixels (like 384x256) for 3 chains.
-You can see more examples and video capture of speed on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)
-If your refresh rate is below 300Hz, expect likely black bars when taking cell phone pictures.
-A real camera with shutter speed lowered accordingly, will get around this.
-
-Ultimately, you should not expect to go past 64K pixels using 3 chains without significant
-quality tradeoffs. If you need bigger displays, you should use multiple boards and synchronize the
-output.
 
 Limitations
 -----------
