@@ -62,7 +62,9 @@ https://rpi-rgb-led-matrix.discourse.group/t/p10rgb-3535-4s-zaggiz-1-4scan-abc-p
 Until this wiki has its own confirmed list of working panels, you can refer to
 this list: https://github.com/board707/DMD_STM32/wiki/Led_drivers and assume
 that all supported panels there should work with this library, or could work
-with minimal work to create a pixel mapper.
+with minimal work to create a pixel mapper.  
+Please do refer to --led-multiplexing=<0..17> mentioned below and try all values.
+
 
 Raspberry Pi up to 4 supported
 ------------------------------
