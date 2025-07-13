@@ -150,7 +150,7 @@ private:
 // we have a panel that has double the height but only uses one chain.
 // A single chain display with four 32x32 panels can then be arranged in this
 // 64x64 display:
-//    [<][<][<][<] }- Raspbery Pi connector
+//    [<][<][<][<] }- Raspberry Pi connector
 //
 // can be arranged in this U-shape
 //    [<][<] }----- Raspberry Pi connector

@@ -256,7 +256,7 @@ guidelines:
      at the board are a good choice (two, because lower parallel ESR; also
      fits easier under board).
      (In reality, we need of course less, as the highest ripple comes with
-      50% duty cyle thus half the current; also the input is recharching all
+      50% duty cycle thus half the current; also the input is recharching all
       the time. But: as engineer plan for maximum and then some; in the picture
       above I am using 1x3300uF per panel and it works fine).
 
