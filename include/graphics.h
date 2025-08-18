@@ -21,6 +21,7 @@ struct Color {
   uint8_t r;
   uint8_t g;
   uint8_t b;
+  void setColor(uint8_t rr, uint8_t gg, uint8_t bb) {r = rr; g = gg; b = bb;}
 };
 
 // Font loading bdf files. If this ever becomes more types, just make virtual
@@ -32,6 +33,7 @@ public:
   ~Font();
 
   bool LoadFont(const char *path);
+  bool ReadFont(const char *font_file_as_string);
 
   // Return height of font in pixels. Returns -1 if font has not been loaded.
   int height() const { return font_height_; }
@@ -74,6 +76,8 @@ private:
   typedef std::map<uint32_t, Glyph*> CodepointGlyphMap;
 
   const Glyph *FindGlyph(uint32_t codepoint) const;
+
+  void parseLine(const char* buffer, Glyph* &current_glyph, uint32_t &codepoint, Glyph &tmp, int &row);
 
   int font_height_;
   int base_line_;
