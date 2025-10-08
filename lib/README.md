@@ -67,10 +67,17 @@ The important bit is your 32x16 panels become some single 64x16 horizontal panel
 as the library is concerned and count as a single panel for the V configuration. 
 That way, you can get the layout you wanted.
 
-There is an option `--led-pixel-mapper` that allows you to choose between
-some re-mapping options, and also programmatic ways to do so.
+This shows how to turn 32x16 panels into 64x16 panels usable as single vertical
+panels for Vmapper:Z.  Note that this is not visible in the picture, every other 
+level the panels are upside down to allow for shorter ribbon cables in between.
+Note that you can also use Vmapper, keep all the panels in the same orientation
+and use longer ribbon cables between the panels.
+<img width="1232" height="927" alt="image" src="https://github.com/user-attachments/assets/c7986117-9071-48da-be30-0c628f576ac9" />
+
 
 ### Standard mappers
+There is an option `--led-pixel-mapper` that allows you to choose between
+some re-mapping options, and also programmatic ways to do so.
 
 #### U-mapper (U-shape connection)
 Say you have 4 displays with 32x32 and only a single output
@@ -79,7 +86,9 @@ them, we get a display 32 pixel high, (4*32)=128 pixel long. If we arrange
 the boards in a U-shape so that they form a square, we get a logical display
 of 64x64 pixels:
 
-<img src="../img/chained-64x64.jpg" width="400px"> In action:
+<img src="../img/chained-64x64.jpg" width="400px"> 
+
+In action:
 [![PixelPusher video][pp-vid]](http://youtu.be/ZglGuMaKvpY)
 
 ```
