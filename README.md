@@ -145,26 +145,32 @@ use `--led-row-addr-type=2` parameter. Also the matrix Qiangli Q10(1/4)
 have "Z"-stripe pixel mapping and in this case, you'd use two parameters
 at the same time `--led-row-addr-type=2 --led-multiplexing=4`.
 
-Let's do it
-------------
+Sub-Pages
+---------
 This documentation is split into parts that help you through the process
 
-  1. <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
+- <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
     [**Wire up the matrix to your Pi**](./wiring.md). This document describes
-    what goes where. You might also be interested
-    in [breakout boards](./adapter) for that.
+    what goes where.
+- [Adapter GPIO boards output to up to 3 channels (electrodragon board recommended)](./adapter).
     If you have an [Adafruit HAT] or [Adafruit Bonnet], you can choose that with
     a command line option [described below](#if-you-have-an-adafruit-hat-or-bonnet)
-  2. Run a demo. You find that in the
+- [All the command line options you can give to demo and in turn use in your library code](./examples-api-use).
+This is crutial for figuring out pixel mappers, matrix mappers and so forth. This is where you will learn
+about panel layout with U-Mapper, V-Mapper, V-Mapper:Z
+
+Let's do it
+------------
+  1. Run a demo. You find that in the
      [examples-api-use/](./examples-api-use#running-some-demos) directory:
 ```
 make -C examples-api-use
 sudo examples-api-use/demo -D0
 ```
-  3. Use the utilities. The [utils](./utils) directory has some ready-made
+  2. Use the utilities. The [utils](./utils) directory has some ready-made
     useful utilities to show content. [Go there](./utils) to see how to
     compile and run these.
-  4. Write your own programs using the Matrix in C++ or one of the
+  3. Write your own programs using the Matrix in C++ or one of the
      bindings such as Python or C#.
 
 ### Wiring / Boards
