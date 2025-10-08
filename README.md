@@ -152,12 +152,13 @@ This documentation is split into parts that help you through the process
 - <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
     [**Wire up the matrix to your Pi**](./wiring.md). This document describes
     what goes where.
+- [How to map pixels between panels or withing panels](./lib). This is crutial for figuring out pixel mappers,
+  matrix mappers and so forth. This is where you will learn about panel layout with U-Mapper, V-Mapper, V-Mapper:Z
 - [Adapter GPIO boards output to up to 3 channels (electrodragon board recommended)](./adapter).
     If you have an [Adafruit HAT] or [Adafruit Bonnet], you can choose that with
     a command line option [described below](#if-you-have-an-adafruit-hat-or-bonnet)
 - [All the command line options you can give to demo and in turn use in your library code](./examples-api-use).
-This is crutial for figuring out pixel mappers, matrix mappers and so forth. This is where you will learn
-about panel layout with U-Mapper, V-Mapper, V-Mapper:Z
+
 
 Let's do it
 ------------
