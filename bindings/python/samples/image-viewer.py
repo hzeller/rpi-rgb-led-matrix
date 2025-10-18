@@ -68,7 +68,7 @@ try:
                         canvas.SetPixel(x, y, pixel[0], pixel[1], pixel[2])
         
         song_pos -= 1
-        if song_pos + song_len <= 32:  # Reset when the end of text reaches the boundary at x=32
+        if song_pos + 32 + song_len <= 32:  # Reset when the rightmost text reaches x=32
             song_pos = 32  # Start from right edge of text area
         
         # Artist text scrolling - draw at actual position
@@ -84,7 +84,7 @@ try:
                         canvas.SetPixel(x, y, pixel[0], pixel[1], pixel[2])
         
         artist_pos -= 1
-        if artist_pos + artist_len <= 32:  # Reset when the end of text reaches the boundary at x=32
+        if artist_pos + 32 + artist_len <= 32:  # Reset when the rightmost text reaches x=32
             artist_pos = 32  # Start from right edge of text area
         
         canvas = matrix.SwapOnVSync(canvas)
