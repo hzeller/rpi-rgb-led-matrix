@@ -79,31 +79,28 @@ class SimpleClock:
                 
                 # Calculate text positions with proper dynamic centering
                 # Use actual text width measurements for perfect centering
-                # Account for negative letter spacing in width calculation
                 
-                # Measure actual date text width with tight spacing
+                # Measure actual date text width
                 date_text_width = 0
                 for char in date_str:
                     date_text_width += self.date_font.CharacterWidth(ord(char))
-                date_text_width -= len(date_str) * 2  # Account for negative letter spacing
                 date_x = (64 - date_text_width) // 2  # Perfect horizontal center
                 
                 # Vertical centering: keep them close together
                 date_y = 11  # Close to original position
                 
-                # Measure actual time text width with tight spacing
+                # Measure actual time text width
                 time_text_width = 0
                 for char in full_time_str:
                     time_text_width += self.font.CharacterWidth(ord(char))
-                time_text_width -= len(full_time_str) * 2  # Account for negative letter spacing
                 time_x = (64 - time_text_width) // 2  # Perfect horizontal center
                 time_y = 25  # Keep close to date
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
                 
-                # Draw the date and time with negative letter spacing for tighter characters
-                graphics.DrawText(self.canvas, self.date_font, date_x, date_y, self.date_color, date_str, -2)
-                graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, full_time_str, -2)
+                # Draw the date and time with reduced letter spacing
+                graphics.DrawText(self.canvas, self.date_font, date_x, date_y, self.date_color, None, date_str, -1)
+                graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, None, full_time_str, -1)
                 
                 # Swap buffers
                 self.canvas = self.matrix.SwapOnVSync(self.canvas)
