@@ -29,9 +29,9 @@ image.thumbnail((32, 32), resample=resample_mode)
 
 # Load fonts for text - bold for song, regular for artist
 song_font = graphics.Font()
-song_font.LoadFont("../../../fonts/7x13B.bdf")  # Bold version
+song_font.LoadFont("../../../fonts/5x8.bdf")  # Smaller font
 artist_font = graphics.Font()
-artist_font.LoadFont("../../../fonts/7x13.bdf")  # Regular version
+artist_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font
 text_color = graphics.Color(255, 255, 255)
 
 # Create canvas for drawing
