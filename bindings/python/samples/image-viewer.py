@@ -22,14 +22,14 @@ options.hardware_mapping = 'adafruit-hat-pwm'
 
 matrix = RGBMatrix(options = options)
 
-# Load the image and resize it to 26x26 for lower left placement
+# Load the image and resize it to 20x20 for lower left placement
 image = Image.open(image_file)
 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-image.thumbnail((26, 26), resample=resample_mode)
+image.thumbnail((20, 20), resample=resample_mode)
 
 # Load font for text
 font = graphics.Font()
-font.LoadFont("../../../fonts/7x13.bdf")
+font.LoadFont("../../../fonts/4x6.bdf")
 text_color = graphics.Color(255, 255, 255)
 
 # Create canvas for drawing
@@ -40,15 +40,15 @@ try:
     while True:
         canvas.Clear()
         
-        # Draw image in lower left (26x26)
+        # Draw image in lower left (20x20)
         image_y = canvas.height - image.height
         canvas.SetImage(image.convert('RGB'), 0, image_y)
         
         # Draw song name across the top
-        graphics.DrawText(canvas, font, 1, 12, text_color, song_name)
+        graphics.DrawText(canvas, font, 1, 8, text_color, song_name)
         
         # Draw artist name to the right of the image
-        graphics.DrawText(canvas, font, 28, canvas.height - 8, text_color, artist_name)
+        graphics.DrawText(canvas, font, 22, canvas.height - 4, text_color, artist_name)
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.1)
