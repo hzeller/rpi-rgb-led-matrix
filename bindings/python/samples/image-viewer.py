@@ -35,8 +35,8 @@ artist_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font
 
 # Text scrolling variables
 available_width = matrix.width - 32 - 2  # Width minus image minus small margin
-song_pos = available_width
-artist_pos = available_width
+song_pos = 34  # Start at the beginning of text area
+artist_pos = 34  # Start at the beginning of text area
 song_len = 0
 artist_len = 0
 text_color = graphics.Color(255, 255, 255)
@@ -54,25 +54,25 @@ try:
         
         # Check if song text needs to scroll
         if song_len > available_width:
-            # Calculate text position but ensure it doesn't go left of x=34
-            text_x = max(song_pos + 34, 34)
+            # Clip text so it doesn't appear over the image (x < 34)
+            text_x = max(song_pos, 34)
             song_len = graphics.DrawText(canvas, song_font, text_x, 16, text_color, song_name)
             song_pos -= 1
-            # Reset when the right edge of text would reach the image edge
-            if song_pos + 34 + song_len < 34:
-                song_pos = available_width
+            # Reset when the entire text has scrolled past (rightmost edge reaches image)
+            if song_pos + song_len < 34:
+                song_pos = 34  # Reset to start position
         else:
             song_len = graphics.DrawText(canvas, song_font, 34, 16, text_color, song_name)
         
         # Check if artist text needs to scroll
         if artist_len > available_width:
-            # Calculate text position but ensure it doesn't go left of x=34
-            text_x = max(artist_pos + 34, 34)
+            # Clip text so it doesn't appear over the image (x < 34)
+            text_x = max(artist_pos, 34)
             artist_len = graphics.DrawText(canvas, artist_font, text_x, canvas.height - 4, text_color, artist_name)
             artist_pos -= 1
-            # Reset when the right edge of text would reach the image edge
-            if artist_pos + 34 + artist_len < 34:
-                artist_pos = available_width
+            # Reset when the entire text has scrolled past (rightmost edge reaches image)
+            if artist_pos + artist_len < 34:
+                artist_pos = 34  # Reset to start position
         else:
             artist_len = graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, artist_name)
         
