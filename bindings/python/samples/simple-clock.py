@@ -84,17 +84,17 @@ class SimpleClock:
                 date_text_width = 0
                 for char in date_str:
                     date_text_width += self.date_font.CharacterWidth(ord(char))
-                date_x = (64 - date_text_width) // 2  # Perfect horizontal center
+                date_x = (64 - date_text_width) // 2 + 3  # Perfect horizontal center + 3 pixels right
                 
                 # Vertical centering: keep them close together
-                date_y = 11  # Close to original position
+                date_y = 13  # Close to original position + 2 pixels down
                 
                 # Measure actual time text width
                 time_text_width = 0
                 for char in full_time_str:
                     time_text_width += self.font.CharacterWidth(ord(char))
-                time_x = (64 - time_text_width) // 2  # Perfect horizontal center
-                time_y = 25  # Keep close to date
+                time_x = (64 - time_text_width) // 2 + 3  # Perfect horizontal center + 3 pixels right
+                time_y = 27  # Keep close to date + 2 pixels down
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
                 
