@@ -232,8 +232,12 @@ try:
             display_x = song_x - song_scroll_pos
             current_x = display_x
             for char in song_display:
-                char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
-                current_x += char_width - 1
+                if char == ' ':
+                    # Space between words - make it smaller
+                    current_x += 2  # Reduced space width (instead of normal space width)
+                else:
+                    char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
+                    current_x += char_width - 1  # Normal character spacing
             
             # Clear pixels outside the allowed boundaries (clipping effect)
             # Clear left side (before song area)
@@ -248,8 +252,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position at medium speed
-            if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
+            # Update scroll position at slightly faster speed
+            if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
                 song_scroll_pos += 1
                 if song_scroll_pos > total_song_width + 20:  # Reset with some delay
                     song_scroll_pos = 0
@@ -259,8 +263,12 @@ try:
             for char in song_display:
                 if current_x + 5 > max_x:
                     break
-                char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
-                current_x += char_width - 1
+                if char == ' ':
+                    # Space between words - make it smaller
+                    current_x += 2  # Reduced space width
+                else:
+                    char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
+                    current_x += char_width - 1  # Normal character spacing
         
         # Artist name in middle right in all caps (scrolls if cut off)
         artist_x = padding + 20 + padding  # 2px + 20px album + 2px spacing = x=24
@@ -279,8 +287,12 @@ try:
             display_x = artist_x - artist_scroll_pos
             current_x = display_x
             for char in artist_name:
-                char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
-                current_x += char_width - 1
+                if char == ' ':
+                    # Space between words - make it smaller
+                    current_x += 2  # Reduced space width
+                else:
+                    char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
+                    current_x += char_width - 1  # Normal character spacing
             
             # Clear pixels outside the allowed boundaries (clipping effect)
             # Clear everything to the left of artist area (including album cover area for this text row)
@@ -295,8 +307,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position at medium speed
-            if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
+            # Update scroll position at slightly faster speed
+            if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
                 artist_scroll_pos += 1
                 if artist_scroll_pos > total_artist_width + 20:  # Reset with delay
                     artist_scroll_pos = 0
@@ -306,8 +318,12 @@ try:
             for char in artist_name:
                 if current_x + 5 > max_x:
                     break
-                char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
-                current_x += char_width - 1
+                if char == ' ':
+                    # Space between words - make it smaller
+                    current_x += 2  # Reduced space width
+                else:
+                    char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
+                    current_x += char_width - 1  # Normal character spacing
         
         # Album name in lower right in normal case (scrolls if cut off)
         album_x = padding + 20 + padding  # 2px + 20px album + 2px spacing = x=24
@@ -326,8 +342,12 @@ try:
             display_x = album_x - album_scroll_pos
             current_x = display_x
             for char in album_name:
-                char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
-                current_x += char_width - 1
+                if char == ' ':
+                    # Space between words - make it smaller
+                    current_x += 2  # Reduced space width
+                else:
+                    char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
+                    current_x += char_width - 1  # Normal character spacing
             
             # Clear pixels outside the allowed boundaries (clipping effect)
             # Clear everything to the left of album area (including album cover area for this text row)
@@ -342,8 +362,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position at medium speed
-            if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
+            # Update scroll position at slightly faster speed
+            if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
                 album_scroll_pos += 1
                 if album_scroll_pos > total_album_width + 20:  # Reset with delay
                     album_scroll_pos = 0
@@ -353,8 +373,12 @@ try:
             for char in album_name:
                 if current_x + 5 > max_x:
                     break
-                char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
-                current_x += char_width - 1
+                if char == ' ':
+                    # Space between words - make it smaller
+                    current_x += 2  # Reduced space width
+                else:
+                    char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
+                    current_x += char_width - 1  # Normal character spacing
         
         # Redraw album cover after text clipping to ensure it's always visible
         # (Text clipping may have cleared parts of the album cover)
