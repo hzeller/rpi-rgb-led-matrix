@@ -22,14 +22,16 @@ options.hardware_mapping = 'adafruit-hat-pwm'
 
 matrix = RGBMatrix(options = options)
 
-# Load the image and resize it to 20x20 for lower left placement
+# Load the image and resize it to 32x32 for left placement
 image = Image.open(image_file)
 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-image.thumbnail((20, 20), resample=resample_mode)
+image.thumbnail((32, 32), resample=resample_mode)
 
-# Load font for text
-font = graphics.Font()
-font.LoadFont("../../../fonts/4x6.bdf")
+# Load fonts for text - big for song, smaller for artist
+big_font = graphics.Font()
+big_font.LoadFont("../../../fonts/7x13.bdf")
+small_font = graphics.Font()
+small_font.LoadFont("../../../fonts/5x7.bdf")
 text_color = graphics.Color(255, 255, 255)
 
 # Create canvas for drawing
@@ -40,15 +42,14 @@ try:
     while True:
         canvas.Clear()
         
-        # Draw image in lower left (20x20)
-        image_y = canvas.height - image.height
-        canvas.SetImage(image.convert('RGB'), 0, image_y)
+        # Draw image on the left (32x32)
+        canvas.SetImage(image.convert('RGB'), 0, 0)
         
-        # Draw song name across the top
-        graphics.DrawText(canvas, font, 1, 8, text_color, song_name)
+        # Draw song name big on top right
+        graphics.DrawText(canvas, big_font, 34, 12, text_color, song_name)
         
-        # Draw artist name to the right of the image
-        graphics.DrawText(canvas, font, 22, canvas.height - 4, text_color, artist_name)
+        # Draw artist name smaller beneath song name
+        graphics.DrawText(canvas, small_font, 34, 22, text_color, artist_name)
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.1)
