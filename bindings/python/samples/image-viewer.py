@@ -184,7 +184,7 @@ try:
     image_rgb = image.convert('RGB')
     
     last_spotify_check = 0
-    spotify_check_interval = 10  # Check Spotify every 10 seconds
+    spotify_check_interval = 3  # Check Spotify every 3 seconds
     
     while True:
         # Update from Spotify if using integration
