@@ -269,7 +269,7 @@ try:
                 scroll_offset = song_scroll_pos
             
             # Draw text with wraparound - draw it twice to create seamless loop
-            for offset in [0, total_song_width + 20]:  # Draw original and wrapped version
+            for offset in [0, total_song_width + 10]:  # Draw original and wrapped version
                 display_x = song_x - scroll_offset + offset
                 current_x = display_x
                 for char in song_display:
@@ -300,7 +300,7 @@ try:
             # Update scroll position only after static delay
             if song_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
                 song_scroll_pos += 1
-                if song_scroll_pos >= total_song_width + 20:  # Reset when first copy is off-screen
+                if song_scroll_pos >= total_song_width + 10:  # Reset when first copy is off-screen
                     song_scroll_pos = 0
                     song_static_delay = 0  # Reset static delay for next cycle
         else:
@@ -339,7 +339,7 @@ try:
                 scroll_offset = artist_scroll_pos
             
             # Draw text with wraparound - draw it twice to create seamless loop
-            for offset in [0, total_artist_width + 20]:  # Draw original and wrapped version
+            for offset in [0, total_artist_width + 10]:  # Draw original and wrapped version
                 display_x = artist_x - scroll_offset + offset
                 current_x = display_x
                 for char in artist_name:
@@ -370,7 +370,7 @@ try:
             # Update scroll position only after static delay
             if artist_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
                 artist_scroll_pos += 1
-                if artist_scroll_pos >= total_artist_width + 20:  # Reset when first copy is off-screen
+                if artist_scroll_pos >= total_artist_width + 10:  # Reset when first copy is off-screen
                     artist_scroll_pos = 0
                     artist_static_delay = 0  # Reset static delay for next cycle
         else:
@@ -440,7 +440,7 @@ try:
             # Update scroll position only after static delay
             if album_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
                 album_scroll_pos += 1
-                if album_scroll_pos >= total_album_width + 20:  # Reset when first copy is off-screen
+                if album_scroll_pos >= total_album_width + 10:  # Reset when first copy is off-screen
                     album_scroll_pos = 0
                     album_static_delay = 0  # Reset static delay for next cycle
         else:
