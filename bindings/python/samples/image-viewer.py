@@ -56,29 +56,20 @@ try:
         # Draw image on the left (32x32)
         canvas.SetImage(image.convert('RGB'), 0, 0)
         
-        # Check if song text needs to scroll
-        if song_len > available_width:
-            # Clip text so it doesn't appear over the image (x < 34)
-            text_x = max(song_pos, 34)
-            graphics.DrawText(canvas, song_font, text_x, 16, text_color, song_name)
-            song_pos -= 1
-            # Reset when the entire text has scrolled past (rightmost edge reaches image)
-            if song_pos + song_len < 34:
-                song_pos = 34  # Reset to start position
-        else:
-            graphics.DrawText(canvas, song_font, 34, 16, text_color, song_name)
+        # Force scrolling for testing - remove length check temporarily
+        # Song text scrolling
+        text_x = max(song_pos, 34)
+        graphics.DrawText(canvas, song_font, text_x, 16, text_color, song_name)
+        song_pos -= 1
+        if song_pos + song_len < 34:
+            song_pos = 34  # Reset to start position
         
-        # Check if artist text needs to scroll
-        if artist_len > available_width:
-            # Clip text so it doesn't appear over the image (x < 34)
-            text_x = max(artist_pos, 34)
-            graphics.DrawText(canvas, artist_font, text_x, canvas.height - 4, text_color, artist_name)
-            artist_pos -= 1
-            # Reset when the entire text has scrolled past (rightmost edge reaches image)
-            if artist_pos + artist_len < 34:
-                artist_pos = 34  # Reset to start position
-        else:
-            graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, artist_name)
+        # Artist text scrolling  
+        text_x = max(artist_pos, 34)
+        graphics.DrawText(canvas, artist_font, text_x, canvas.height - 4, text_color, artist_name)
+        artist_pos -= 1
+        if artist_pos + artist_len < 34:
+            artist_pos = 34  # Reset to start position
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
