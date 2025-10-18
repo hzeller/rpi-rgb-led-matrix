@@ -146,7 +146,7 @@ image.thumbnail((24, 24), resample=resample_mode)
 
 # Load fonts for different elements
 song_font = graphics.Font()
-song_font.LoadFont("../../../fonts/7x13B.bdf")  # Larger font for song title
+song_font.LoadFont("../../../fonts/6x10.bdf")  # Medium font for song title (made smaller)
 artist_font = graphics.Font()
 artist_font.LoadFont("../../../fonts/6x10.bdf")  # Medium font for artist
 album_font = graphics.Font()
@@ -158,9 +158,8 @@ artist_color = graphics.Color(255, 255, 255) # White for artist name
 album_color = graphics.Color(200, 200, 200)  # Light gray for album name
 
 # Text scrolling variables - new layout
-song_available_width = matrix.width - 2    # Song spans entire width
+song_available_width = matrix.width        # Song spans entire width at top
 other_available_width = matrix.width - 26  # Other text after 24px image + margin
-song_pos = matrix.width                    # Song starts from right edge
 artist_pos = 26                           # Artist starts after image
 album_pos = 26                            # Album starts after image
 
@@ -209,12 +208,18 @@ try:
         image_y = canvas.height - image_rgb.height  # Bottom of screen
         canvas.SetImage(image_rgb, 0, image_y)
         
-        # Song title across entire top in large green font
-        song_x = song_pos
-        song_len = graphics.DrawText(canvas, song_font, song_x, 12, song_color, song_name)
-        song_pos -= 1
-        if song_pos + song_len <= 0:  # Reset when song fully scrolls off left
-            song_pos = matrix.width
+        # Song title spans entire width at top (static, no scrolling)
+        song_x = 0   # Start at left edge
+        song_y = 10  # Top of screen (well above album cover)
+        song_len = graphics.DrawText(canvas, song_font, song_x, song_y, song_color, song_name)
+        
+        # If song is too long, truncate it to fit available width
+        if song_len > song_available_width:
+            # Calculate how many characters we can fit
+            char_width = 6  # Approximate width of 6x10 font
+            max_chars = song_available_width // char_width
+            truncated_song = song_name[:max_chars-1] + "..." if len(song_name) > max_chars else song_name
+            graphics.DrawText(canvas, song_font, song_x, song_y, song_color, truncated_song)
         
         # Artist name in middle right in all caps (white)
         artist_x = artist_pos
