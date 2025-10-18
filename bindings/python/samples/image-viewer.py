@@ -23,6 +23,9 @@ def get_spotify_access_token():
     """Get access token using refresh token"""
     if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET or not SPOTIFY_REFRESH_TOKEN:
         print("Error: Spotify credentials not found. Please check your .env file.")
+        print(f"CLIENT_ID present: {bool(SPOTIFY_CLIENT_ID)}")
+        print(f"CLIENT_SECRET present: {bool(SPOTIFY_CLIENT_SECRET)}")
+        print(f"REFRESH_TOKEN present: {bool(SPOTIFY_REFRESH_TOKEN)}")
         return None
         
     auth_str = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}"
@@ -40,37 +43,72 @@ def get_spotify_access_token():
     }
     
     response = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data)
+    print(f"Token request status: {response.status_code}")
+    
     if response.status_code == 200:
         return response.json()["access_token"]
-    return None
+    else:
+        print(f"Token request failed: {response.text}")
+        return None
 
 def get_current_playing():
     """Get currently playing track from Spotify"""
     access_token = get_spotify_access_token()
     if not access_token:
+        print("Failed to get Spotify access token")
         return None, None, None
     
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
     
+    print(f"Spotify API response status: {response.status_code}")
+    
+    if response.status_code == 401:
+        print("Unauthorized - check your Spotify credentials and refresh token")
+        return None, None, None
+    elif response.status_code == 403:
+        print("Forbidden - check your Spotify app permissions")
+        return None, None, None
+    elif response.status_code == 429:
+        print("Rate limited - too many requests to Spotify API")
+        return None, None, None
+    elif response.status_code == 204:
+        print("No content - no music currently playing")
+        return None, None, None
+    
     if response.status_code == 200 and response.text:
-        data = response.json()
-        if data and data.get("is_playing"):
-            track = data["item"]
-            song_name = track["name"]
-            artist_name = ", ".join([artist["name"] for artist in track["artists"]])
+        try:
+            data = response.json()
+            print(f"Spotify response data keys: {data.keys() if data else 'No data'}")
             
-            # Get album cover
-            album_images = track["album"]["images"]
-            if album_images:
-                # Get the smallest image (usually 64x64)
-                image_url = album_images[-1]["url"]
-                img_response = requests.get(image_url)
-                if img_response.status_code == 200:
-                    image = Image.open(BytesIO(img_response.content))
-                    return song_name, artist_name, image
-            
-            return song_name, artist_name, None
+            if data and data.get("is_playing"):
+                track = data["item"]
+                if track:
+                    song_name = track["name"]
+                    artist_name = ", ".join([artist["name"] for artist in track["artists"]])
+                    print(f"Found track: {song_name} by {artist_name}")
+                    
+                    # Get album cover
+                    album_images = track["album"]["images"]
+                    if album_images:
+                        # Get the smallest image (usually 64x64)
+                        image_url = album_images[-1]["url"]
+                        img_response = requests.get(image_url)
+                        if img_response.status_code == 200:
+                            image = Image.open(BytesIO(img_response.content))
+                            return song_name, artist_name, image
+                    
+                    return song_name, artist_name, None
+                else:
+                    print("Track item is None")
+            else:
+                print(f"Not playing or no data. is_playing: {data.get('is_playing') if data else 'No data'}")
+        except json.JSONDecodeError as e:
+            print(f"JSON decode error: {e}")
+        except Exception as e:
+            print(f"Error parsing Spotify response: {e}")
+    else:
+        print(f"Unexpected response: status {response.status_code}, content: {response.text[:200] if response.text else 'No content'}")
     
     return None, None, None
 
