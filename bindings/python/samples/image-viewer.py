@@ -210,7 +210,7 @@ try:
         
         # Song title spans width at top with padding (static, all caps, tight spacing)
         song_x = padding  # Start 2px from left edge
-        song_y = padding + 5   # 2px padding + 5px for font baseline
+        song_y = padding + 6   # 2px padding + 6px for font baseline (moved down 1px)
         song_display = song_name.upper()  # Convert to all caps
         # Draw each character with tighter spacing
         current_x = song_x
@@ -229,7 +229,7 @@ try:
         
         # Album name in lower right in normal case (light gray, static, tight spacing)
         album_x = padding + 20 + padding  # 2px padding + 20px image + 2px spacing
-        album_y = canvas.height - padding - 2  # 2px from bottom edge
+        album_y = canvas.height - padding - 1  # 1px from bottom edge (moved down 1px)
         # Draw each character with tighter spacing
         current_x = album_x
         for char in album_name:
