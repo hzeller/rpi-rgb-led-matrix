@@ -24,17 +24,17 @@ class SimpleClock:
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
         
-        # Set up Mountain Time timezone (UTC-7 for MST, UTC-6 for MDT)
-        # Python will automatically handle daylight saving time
-        self.mountain_tz = timezone(timedelta(hours=-7))  # Mountain Standard Time
+        # Set up Mountain Time timezone (UTC-6 for MDT, UTC-7 for MST)
+        # Currently in Daylight Saving Time (March-November)
+        self.mountain_tz = timezone(timedelta(hours=-6))  # Mountain Daylight Time
         
         # Load font - use a bigger, bolder font for classic alarm clock look
         self.font = graphics.Font()
         self.font.LoadFont("../../../fonts/9x18B.bdf")  # Bold 9x18 font
         
-        # Load smaller font for date
+        # Load smaller font for date to fit better
         self.date_font = graphics.Font()
-        self.date_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for date
+        self.date_font.LoadFont("../../../fonts/4x6.bdf")  # Even smaller font for date
         
         # Colors - classic alarm clock style
         self.time_color = graphics.Color(255, 255, 255)  # Bright white for time
@@ -78,10 +78,10 @@ class SimpleClock:
                 print(f"Time: {full_time_str} (Mountain Time)")
                 
                 # Calculate text positions with much tighter character spacing
-                # Very tight spacing - characters almost touching
-                date_width = len(date_str) * 3  # 5x7 font - very tight spacing
+                # Very tight spacing for smaller date font
+                date_width = len(date_str) * 2.5  # 4x6 font - very tight spacing
                 date_x = (64 - date_width) // 2
-                date_y = 8  # Top area for date
+                date_y = 7  # Top area for date (adjusted for smaller font)
                 
                 # Time font spacing - very tight
                 full_time_width = len(full_time_str) * 4  # 9x18B font - very tight spacing
