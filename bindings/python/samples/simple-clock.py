@@ -79,15 +79,15 @@ class SimpleClock:
                 # Calculate text positions with proper horizontal AND vertical centering
                 # Much shorter date string should fit easily
                 date_width = len(date_str) * 3  # More realistic spacing for tom-thumb
-                date_x = (64 - date_width) // 2 - 2  # Center horizontally, shift left slightly
+                date_x = (64 - date_width) // 2 - 4  # Center horizontally, shift more left
                 
-                # Vertical centering: move closer to center of 32px height
-                date_y = 10  # Move date closer to center
+                # Vertical centering: move down from previous position
+                date_y = 12  # Move date down slightly
                 
                 # Time font spacing - very tight
                 full_time_width = len(full_time_str) * 4  # 9x18B font - very tight spacing
-                time_x = (64 - full_time_width) // 2 - 2  # Center horizontally, shift left slightly
-                time_y = 22  # Move time closer to center (tighter gap)
+                time_x = (64 - full_time_width) // 2 - 4  # Center horizontally, shift more left
+                time_y = 24  # Move time down slightly
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
                 
