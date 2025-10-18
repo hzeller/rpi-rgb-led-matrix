@@ -208,21 +208,33 @@ try:
         image_y = canvas.height - image_rgb.height - padding  # 2px from bottom edge
         canvas.SetImage(image_rgb, image_x, image_y)
         
-        # Song title spans width at top with padding (static, all caps)
+        # Song title spans width at top with padding (static, all caps, tight spacing)
         song_x = padding  # Start 2px from left edge
         song_y = padding + 5   # 2px padding + 5px for font baseline
         song_display = song_name.upper()  # Convert to all caps
-        graphics.DrawText(canvas, song_font, song_x, song_y, song_color, song_display)
+        # Draw each character with tighter spacing
+        current_x = song_x
+        for char in song_display:
+            char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
+            current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
         
-        # Artist name in middle right in all caps (white, static)
+        # Artist name in middle right in all caps (white, static, tight spacing)
         artist_x = padding + 20 + padding  # 2px padding + 20px image + 2px spacing
         artist_y = canvas.height // 2  # Middle of screen
-        graphics.DrawText(canvas, artist_font, artist_x, artist_y, artist_color, artist_name)
+        # Draw each character with tighter spacing
+        current_x = artist_x
+        for char in artist_name:
+            char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
+            current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
         
-        # Album name in lower right in normal case (light gray, static)
+        # Album name in lower right in normal case (light gray, static, tight spacing)
         album_x = padding + 20 + padding  # 2px padding + 20px image + 2px spacing
         album_y = canvas.height - padding - 2  # 2px from bottom edge
-        graphics.DrawText(canvas, album_font, album_x, album_y, album_color, album_name)
+        # Draw each character with tighter spacing
+        current_x = album_x
+        for char in album_name:
+            char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
+            current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
