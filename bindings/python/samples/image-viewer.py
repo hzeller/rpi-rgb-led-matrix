@@ -183,10 +183,8 @@ try:
     # Convert image to RGB for pixel access
     image_rgb = image.convert('RGB')
     
-    last_spotify_check = time.time()
-    spotify_check_interval = 3  # Check Spotify every 3 seconds
     spotify_frame_counter = 0
-    spotify_check_frames = int(spotify_check_interval * 20)  # 3 seconds at 20fps = 60 frames
+    spotify_check_frames = 100  # Check every 100 frames (5 seconds at 20fps) to reduce interruptions
     
     while True:
         # Update from Spotify if using integration (use frame counter to avoid time.time() calls)
@@ -240,7 +238,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > -8 and current_x < matrix.width + 8:
+                        if current_x > -6 and current_x < matrix.width + 6:
                             char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
@@ -300,7 +298,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > artist_x - 8 and current_x < matrix.width + 8:
+                        if current_x > artist_x - 6 and current_x < matrix.width + 6:
                             char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
@@ -360,7 +358,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > album_x - 8 and current_x < matrix.width + 8:
+                        if current_x > album_x - 6 and current_x < matrix.width + 6:
                             char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
