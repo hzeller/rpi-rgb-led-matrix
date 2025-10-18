@@ -37,14 +37,18 @@ artist_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font
 available_width = matrix.width - 32 - 2  # Width minus image minus small margin
 song_pos = 34  # Start at the beginning of text area
 artist_pos = 34  # Start at the beginning of text area
-song_len = 0
-artist_len = 0
+
+# Measure text lengths once
+song_len = len(song_name) * 6  # Approximate width for 6x13B font
+artist_len = len(artist_name) * 5  # Approximate width for 5x7 font
 text_color = graphics.Color(255, 255, 255)
 
 # Create canvas for drawing
 canvas = matrix.CreateFrameCanvas()
 
 try:
+    print(f"Available width: {available_width}")
+    print(f"Song length: {song_len}, Artist length: {artist_len}")
     print("Press CTRL-C to stop.")
     while True:
         canvas.Clear()
@@ -56,25 +60,25 @@ try:
         if song_len > available_width:
             # Clip text so it doesn't appear over the image (x < 34)
             text_x = max(song_pos, 34)
-            song_len = graphics.DrawText(canvas, song_font, text_x, 16, text_color, song_name)
+            graphics.DrawText(canvas, song_font, text_x, 16, text_color, song_name)
             song_pos -= 1
             # Reset when the entire text has scrolled past (rightmost edge reaches image)
             if song_pos + song_len < 34:
                 song_pos = 34  # Reset to start position
         else:
-            song_len = graphics.DrawText(canvas, song_font, 34, 16, text_color, song_name)
+            graphics.DrawText(canvas, song_font, 34, 16, text_color, song_name)
         
         # Check if artist text needs to scroll
         if artist_len > available_width:
             # Clip text so it doesn't appear over the image (x < 34)
             text_x = max(artist_pos, 34)
-            artist_len = graphics.DrawText(canvas, artist_font, text_x, canvas.height - 4, text_color, artist_name)
+            graphics.DrawText(canvas, artist_font, text_x, canvas.height - 4, text_color, artist_name)
             artist_pos -= 1
             # Reset when the entire text has scrolled past (rightmost edge reaches image)
             if artist_pos + artist_len < 34:
                 artist_pos = 34  # Reset to start position
         else:
-            artist_len = graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, artist_name)
+            graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, artist_name)
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
