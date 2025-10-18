@@ -5,6 +5,7 @@ import requests
 import base64
 import json
 import os
+import threading
 from io import BytesIO
 from dotenv import load_dotenv
 
@@ -113,6 +114,32 @@ def get_current_playing():
     
     return None, None, None, None
 
+def spotify_update_thread():
+    """Background thread for updating Spotify data"""
+    global current_spotify_data
+    while True:
+        try:
+            current_song, current_artist, current_album, current_image = get_current_playing()
+            with spotify_lock:
+                if current_song and current_artist:
+                    current_spotify_data['song_name'] = current_song
+                    current_spotify_data['artist_name'] = current_artist.upper()
+                    current_spotify_data['album_name'] = current_album if current_album else "Album Name"
+                    if current_image:
+                        # Resize image to 20x20 in background thread
+                        resample_mode = getattr(Image, "Resampling", Image).LANCZOS
+                        current_image.thumbnail((20, 20), resample=resample_mode)
+                        current_spotify_data['image'] = current_image.convert('RGB')
+                    print(f"Updated: {current_song} by {current_artist} from {current_album}")
+                else:
+                    current_spotify_data['song_name'] = "No music playing"
+                    current_spotify_data['artist_name'] = "SPOTIFY"
+                    current_spotify_data['album_name'] = "Album Name"
+        except Exception as e:
+            print(f"Spotify update error: {e}")
+        
+        time.sleep(3)  # Update every 3 seconds in background
+
 if len(sys.argv) > 1:
     # Use provided image file
     image_file = sys.argv[1]
@@ -168,6 +195,15 @@ artist_scroll_pos = 0
 album_scroll_pos = 0
 scroll_counter = 0
 
+# Global variables for Spotify data (thread-safe)
+current_spotify_data = {
+    'song_name': "Loading...",
+    'artist_name': "SPOTIFY", 
+    'album_name': "Album Name",
+    'image': None
+}
+spotify_lock = threading.Lock()
+
 # Initialize album name
 album_name = "Album Name"
 
@@ -177,35 +213,24 @@ canvas = matrix.CreateFrameCanvas()
 try:
     print(f"Song width: {song_available_width}, Other width: {other_available_width}")
     if use_spotify:
-        print("Using Spotify integration - fetching current track every 130 seconds")
+        print("Using Spotify integration - background updates every 3 seconds")
+        # Start background thread for Spotify updates
+        spotify_thread = threading.Thread(target=spotify_update_thread, daemon=True)
+        spotify_thread.start()
     print("Press CTRL-C to stop.")
     
     # Convert image to RGB for pixel access
     image_rgb = image.convert('RGB')
     
-    spotify_frame_counter = 0
-    spotify_check_frames = 100  # Check every 100 frames (5 seconds at 20fps) to reduce interruptions
-    
     while True:
-        # Update from Spotify if using integration (use frame counter to avoid time.time() calls)
-        if use_spotify and spotify_frame_counter >= spotify_check_frames:
-            current_song, current_artist, current_album, current_image = get_current_playing()
-            if current_song and current_artist:
-                song_name = current_song
-                artist_name = current_artist.upper()  # Convert artist to all caps
-                album_name = current_album if current_album else "Album Name"
-                if current_image:
-                    image = current_image
-                    # Resize image to 20x20
-                    resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-                    image.thumbnail((20, 20), resample=resample_mode)
-                    image_rgb = image.convert('RGB')
-                print(f"Now playing: {song_name} by {artist_name} from {album_name}")
-            else:
-                song_name = "No music playing"
-                artist_name = "SPOTIFY"
-                album_name = "Album Name"
-            spotify_frame_counter = 0  # Reset frame counter
+        # Get current Spotify data from background thread (no API calls in main loop)
+        if use_spotify:
+            with spotify_lock:
+                song_name = current_spotify_data['song_name']
+                artist_name = current_spotify_data['artist_name']
+                album_name = current_spotify_data['album_name']
+                if current_spotify_data['image'] is not None:
+                    image_rgb = current_spotify_data['image']
         
         canvas.Clear()
         
@@ -238,7 +263,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > -6 and current_x < matrix.width + 6:
+                        if current_x > -8 and current_x < matrix.width + 8:
                             char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
@@ -298,7 +323,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > artist_x - 6 and current_x < matrix.width + 6:
+                        if current_x > artist_x - 8 and current_x < matrix.width + 8:
                             char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
@@ -358,7 +383,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > album_x - 6 and current_x < matrix.width + 6:
+                        if current_x > album_x - 8 and current_x < matrix.width + 8:
                             char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
@@ -399,9 +424,8 @@ try:
         # (Text clipping may have cleared parts of the album cover)
         canvas.SetImage(image_rgb, image_x, image_y)
         
-        # Increment counters for timing
+        # Increment scroll counter for timing
         scroll_counter += 1
-        spotify_frame_counter += 1
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
