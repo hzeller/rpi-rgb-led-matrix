@@ -177,18 +177,20 @@ canvas = matrix.CreateFrameCanvas()
 try:
     print(f"Song width: {song_available_width}, Other width: {other_available_width}")
     if use_spotify:
-        print("Using Spotify integration - fetching current track every 10 seconds")
+        print("Using Spotify integration - fetching current track every 130 seconds")
     print("Press CTRL-C to stop.")
     
     # Convert image to RGB for pixel access
     image_rgb = image.convert('RGB')
     
-    last_spotify_check = 0
+    last_spotify_check = time.time()
     spotify_check_interval = 3  # Check Spotify every 3 seconds
+    spotify_frame_counter = 0
+    spotify_check_frames = int(spotify_check_interval * 20)  # 3 seconds at 20fps = 60 frames
     
     while True:
-        # Update from Spotify if using integration
-        if use_spotify and time.time() - last_spotify_check > spotify_check_interval:
+        # Update from Spotify if using integration (use frame counter to avoid time.time() calls)
+        if use_spotify and spotify_frame_counter >= spotify_check_frames:
             current_song, current_artist, current_album, current_image = get_current_playing()
             if current_song and current_artist:
                 song_name = current_song
@@ -205,7 +207,7 @@ try:
                 song_name = "No music playing"
                 artist_name = "SPOTIFY"
                 album_name = "Album Name"
-            last_spotify_check = time.time()
+            spotify_frame_counter = 0  # Reset frame counter
         
         canvas.Clear()
         
@@ -238,7 +240,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > -10 and current_x < matrix.width + 10:
+                        if current_x > -8 and current_x < matrix.width + 8:
                             char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
@@ -298,7 +300,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > artist_x - 10 and current_x < matrix.width + 10:
+                        if current_x > artist_x - 8 and current_x < matrix.width + 8:
                             char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
@@ -358,7 +360,7 @@ try:
                         current_x += 2  # Reduced space width
                     else:
                         # Only draw if within visible area (with some buffer)
-                        if current_x > album_x - 10 and current_x < matrix.width + 10:
+                        if current_x > album_x - 8 and current_x < matrix.width + 8:
                             char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
                             current_x += char_width - 1  # Normal character spacing
                         else:
@@ -399,8 +401,9 @@ try:
         # (Text clipping may have cleared parts of the album cover)
         canvas.SetImage(image_rgb, image_x, image_y)
         
-        # Increment scroll counter for timing
+        # Increment counters for timing
         scroll_counter += 1
+        spotify_frame_counter += 1
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
