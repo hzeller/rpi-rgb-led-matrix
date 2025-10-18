@@ -98,9 +98,24 @@ class SimpleClock:
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
                 
-                # Draw the date and time with reduced letter spacing
-                graphics.DrawText(self.canvas, self.date_font, date_x, date_y, self.date_color, None, date_str, -1)
-                graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, None, full_time_str, -1)
+                # Draw the date and time with custom tight spacing
+                # Draw date with tighter character spacing
+                current_x = date_x
+                for char in date_str:
+                    if char == ' ':
+                        current_x += 2  # Reduced space width
+                    else:
+                        char_width = graphics.DrawText(self.canvas, self.date_font, current_x, date_y, self.date_color, char)
+                        current_x += char_width - 1  # Reduce spacing between characters
+                
+                # Draw time with tighter character spacing
+                current_x = time_x
+                for char in full_time_str:
+                    if char == ' ':
+                        current_x += 2  # Reduced space width
+                    else:
+                        char_width = graphics.DrawText(self.canvas, self.font, current_x, time_y, self.time_color, char)
+                        current_x += char_width - 1  # Reduce spacing between characters
                 
                 # Swap buffers
                 self.canvas = self.matrix.SwapOnVSync(self.canvas)
