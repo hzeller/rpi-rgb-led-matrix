@@ -29,7 +29,7 @@ image.thumbnail((32, 32), resample=resample_mode)
 
 # Load fonts for text - bold for song, regular for artist
 song_font = graphics.Font()
-song_font.LoadFont("../../../fonts/5x8.bdf")  # Smaller font
+song_font.LoadFont("../../../fonts/6x13B.bdf")  # Bold version, smaller than 7x13B
 artist_font = graphics.Font()
 artist_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font
 text_color = graphics.Color(255, 255, 255)
@@ -48,8 +48,8 @@ try:
         # Draw song name bold on top right
         graphics.DrawText(canvas, song_font, 34, 12, text_color, song_name)
         
-        # Draw artist name regular beneath song name
-        graphics.DrawText(canvas, artist_font, 34, 22, text_color, artist_name)
+        # Draw artist name regular closer to bottom
+        graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, artist_name)
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.1)
