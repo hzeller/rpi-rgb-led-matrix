@@ -27,11 +27,11 @@ image = Image.open(image_file)
 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
 image.thumbnail((32, 32), resample=resample_mode)
 
-# Load fonts for text - big for song, smaller for artist
-big_font = graphics.Font()
-big_font.LoadFont("../../../fonts/7x13.bdf")
-small_font = graphics.Font()
-small_font.LoadFont("../../../fonts/5x7.bdf")
+# Load fonts for text - bold for song, regular for artist
+song_font = graphics.Font()
+song_font.LoadFont("../../../fonts/7x13B.bdf")  # Bold version
+artist_font = graphics.Font()
+artist_font.LoadFont("../../../fonts/7x13.bdf")  # Regular version
 text_color = graphics.Color(255, 255, 255)
 
 # Create canvas for drawing
@@ -45,11 +45,11 @@ try:
         # Draw image on the left (32x32)
         canvas.SetImage(image.convert('RGB'), 0, 0)
         
-        # Draw song name big on top right
-        graphics.DrawText(canvas, big_font, 34, 12, text_color, song_name)
+        # Draw song name bold on top right
+        graphics.DrawText(canvas, song_font, 34, 12, text_color, song_name)
         
-        # Draw artist name smaller beneath song name
-        graphics.DrawText(canvas, small_font, 34, 22, text_color, artist_name)
+        # Draw artist name regular beneath song name
+        graphics.DrawText(canvas, artist_font, 34, 22, text_color, artist_name)
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.1)
