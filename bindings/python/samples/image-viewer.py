@@ -53,23 +53,15 @@ try:
         
         # Song text scrolling with pixel-perfect clipping
         song_x = song_pos + 34
-        # Create a temporary image to render text and then clip it
-        temp_img = Image.new('RGB', (matrix.width, matrix.height), (0, 0, 0))
-        
-        # Render song text to temporary buffer at actual position
         song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
         
-        # If text extends into image area, we need pixel clipping
+        # If text extends into image area, clear the overlapping pixels
         if song_x < 34 and song_x + song_len > 34:
-            # Clear the song area and redraw with clipping
-            for y in range(16 - song_font.height(), 16 + 5):
+            # Clear the song area that overlaps with image (approximate font height of 13)
+            for y in range(4, 17):  # Song font is ~13 pixels high, baseline at y=16
                 for x in range(max(0, song_x), 34):
                     if 0 <= x < matrix.width and 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)  # Clear pixel
-            
-            # Redraw only the visible portion (x >= 34)
-            if song_x + song_len > 34:
-                graphics.DrawText(canvas, song_font, max(song_x, 34), 16, text_color, song_name)
         
         song_pos -= 1
         if song_pos + song_len < -34:  # Reset when completely scrolled past
@@ -81,15 +73,11 @@ try:
         
         # If text extends into image area, clear the overlapping pixels
         if artist_x < 34 and artist_x + artist_len > 34:
-            # Clear the artist area that overlaps with image
-            for y in range(canvas.height - 4 - artist_font.height(), canvas.height - 4 + 5):
+            # Clear the artist area that overlaps with image (approximate font height of 7)
+            for y in range(canvas.height - 11, canvas.height):  # Artist font is ~7 pixels high
                 for x in range(max(0, artist_x), 34):
                     if 0 <= x < matrix.width and 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)  # Clear pixel
-            
-            # Redraw only the visible portion (x >= 34)
-            if artist_x + artist_len > 34:
-                graphics.DrawText(canvas, artist_font, max(artist_x, 34), canvas.height - 4, text_color, artist_name)
         
         artist_pos -= 1
         if artist_pos + artist_len < -34:  # Reset when completely scrolled past
