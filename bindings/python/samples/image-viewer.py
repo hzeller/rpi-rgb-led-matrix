@@ -51,37 +51,43 @@ try:
         # Draw image on the left (32x32)
         canvas.SetImage(image.convert('RGB'), 0, 0)
         
-        # Song text scrolling - only draw the portion that's visible (x >= 34)
+        # Song text scrolling with character-level clipping
         song_x = song_pos + 34
-        if song_x < matrix.width:  # Only draw if any part is visible
-            # Calculate which part of the text to draw
-            if song_x >= 34:
-                # Text starts in visible area - draw normally
-                song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
+        if song_x < 34:
+            # Calculate how many characters are hidden behind the image
+            char_width = 6  # Approximate width of 6x13B font
+            hidden_chars = max(0, (34 - song_x + char_width - 1) // char_width)
+            if hidden_chars < len(song_name):
+                # Draw only the visible portion of the text
+                visible_text = song_name[hidden_chars:]
+                song_len = graphics.DrawText(canvas, song_font, 34, 16, text_color, visible_text)
+                song_len += hidden_chars * char_width  # Add hidden portion to total length
             else:
-                # Text starts behind image - would need substring drawing
-                # For now, don't draw when behind image
-                song_len = len(song_name) * 6  # Estimate length
+                song_len = len(song_name) * char_width
         else:
-            song_len = len(song_name) * 6  # Estimate when off-screen
+            # Text starts in visible area - draw normally
+            song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
             
         song_pos -= 1
         if song_pos + song_len < -34:  # Reset when completely scrolled past
             song_pos = available_width
         
-        # Artist text scrolling - only draw the portion that's visible (x >= 34)
+        # Artist text scrolling with character-level clipping
         artist_x = artist_pos + 34
-        if artist_x < matrix.width:  # Only draw if any part is visible
-            # Calculate which part of the text to draw
-            if artist_x >= 34:
-                # Text starts in visible area - draw normally
-                artist_len = graphics.DrawText(canvas, artist_font, artist_x, canvas.height - 4, text_color, artist_name)
+        if artist_x < 34:
+            # Calculate how many characters are hidden behind the image
+            char_width = 5  # Approximate width of 5x7 font
+            hidden_chars = max(0, (34 - artist_x + char_width - 1) // char_width)
+            if hidden_chars < len(artist_name):
+                # Draw only the visible portion of the text
+                visible_text = artist_name[hidden_chars:]
+                artist_len = graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, visible_text)
+                artist_len += hidden_chars * char_width  # Add hidden portion to total length
             else:
-                # Text starts behind image - would need substring drawing
-                # For now, don't draw when behind image
-                artist_len = len(artist_name) * 5  # Estimate length
+                artist_len = len(artist_name) * char_width
         else:
-            artist_len = len(artist_name) * 5  # Estimate when off-screen
+            # Text starts in visible area - draw normally
+            artist_len = graphics.DrawText(canvas, artist_font, artist_x, canvas.height - 4, text_color, artist_name)
             
         artist_pos -= 1
         if artist_pos + artist_len < -34:  # Reset when completely scrolled past
