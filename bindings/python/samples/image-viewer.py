@@ -128,7 +128,7 @@ else:
     artist_name = "SPOTIFY"
     album_name = "Album Name"
     # Create a default image
-    image = Image.new('RGB', (24, 24), (50, 50, 50))
+    image = Image.new('RGB', (20, 20), (50, 50, 50))
 
 # Configuration for the matrix
 options = RGBMatrixOptions()
@@ -140,9 +140,9 @@ options.hardware_mapping = 'adafruit-hat-pwm'
 
 matrix = RGBMatrix(options = options)
 
-# Resize image to 24x24 for lower left corner
+# Resize image to 20x20 for lower left corner
 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-image.thumbnail((24, 24), resample=resample_mode)
+image.thumbnail((20, 20), resample=resample_mode)
 
 # Load fonts for different elements
 song_font = graphics.Font()
@@ -159,9 +159,9 @@ album_color = graphics.Color(200, 200, 200)  # Light gray for album name
 
 # Text scrolling variables - new layout
 song_available_width = matrix.width        # Song spans entire width at top
-other_available_width = matrix.width - 26  # Other text after 24px image + margin
-artist_pos = 26                           # Artist starts after image
-album_pos = 26                            # Album starts after image
+other_available_width = matrix.width - 22  # Other text after 20px image + margin
+artist_pos = 22                           # Artist starts after image
+album_pos = 22                            # Album starts after image
 
 # Initialize album name
 album_name = "Album Name"
@@ -191,9 +191,9 @@ try:
                 album_name = current_album if current_album else "Album Name"
                 if current_image:
                     image = current_image
-                    # Resize image to 24x24
+                    # Resize image to 20x20
                     resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-                    image.thumbnail((24, 24), resample=resample_mode)
+                    image.thumbnail((20, 20), resample=resample_mode)
                     image_rgb = image.convert('RGB')
                 print(f"Now playing: {song_name} by {artist_name} from {album_name}")
             else:
@@ -204,13 +204,13 @@ try:
         
         canvas.Clear()
         
-        # Draw album cover in lower left (24x24)
+        # Draw album cover in lower left (20x20)
         image_y = canvas.height - image_rgb.height  # Bottom of screen
         canvas.SetImage(image_rgb, 0, image_y)
         
         # Song title spans entire width at top (static, no scrolling)
         song_x = 0   # Start at left edge
-        song_y = 10  # Top of screen (well above album cover)
+        song_y = 8   # Top of screen with 1px padding above (6x10 font height + 1px = 8px from top)
         song_len = graphics.DrawText(canvas, song_font, song_x, song_y, song_color, song_name)
         
         # If song is too long, truncate it to fit available width
@@ -229,7 +229,7 @@ try:
         # Only scroll artist if it doesn't fit
         if artist_len > other_available_width:
             artist_pos -= 1
-            if artist_pos + artist_len <= 26:  # Reset when fully scrolled past image
+            if artist_pos + artist_len <= 22:  # Reset when fully scrolled past image
                 artist_pos = matrix.width
         
         # Album name in lower right in normal case (light gray)
@@ -240,7 +240,7 @@ try:
         # Only scroll album if it doesn't fit
         if album_len > other_available_width:
             album_pos -= 1
-            if album_pos + album_len <= 26:  # Reset when fully scrolled past image
+            if album_pos + album_len <= 22:  # Reset when fully scrolled past image
                 album_pos = matrix.width
         
         canvas = matrix.SwapOnVSync(canvas)
