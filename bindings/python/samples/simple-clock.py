@@ -64,6 +64,7 @@ class SimpleClock:
                 day_name = now.strftime("%a")  # Short day name (Sat)
                 month_name = now.strftime("%b")  # Short month name (Oct)
                 day_num = now.day
+                # Use smaller spaces between words for tighter packing
                 date_str = f"{day_name} {month_name} {day_num}"
                 
                 # Format time in classic 12-hour format with AM/PM on same line
@@ -78,28 +79,31 @@ class SimpleClock:
                 
                 # Calculate text positions with proper dynamic centering
                 # Use actual text width measurements for perfect centering
+                # Account for negative letter spacing in width calculation
                 
-                # Measure actual date text width
+                # Measure actual date text width with tight spacing
                 date_text_width = 0
                 for char in date_str:
                     date_text_width += self.date_font.CharacterWidth(ord(char))
+                date_text_width -= len(date_str) * 2  # Account for negative letter spacing
                 date_x = (64 - date_text_width) // 2  # Perfect horizontal center
                 
                 # Vertical centering: keep them close together
                 date_y = 11  # Close to original position
                 
-                # Measure actual time text width
+                # Measure actual time text width with tight spacing
                 time_text_width = 0
                 for char in full_time_str:
                     time_text_width += self.font.CharacterWidth(ord(char))
+                time_text_width -= len(full_time_str) * 2  # Account for negative letter spacing
                 time_x = (64 - time_text_width) // 2  # Perfect horizontal center
                 time_y = 25  # Keep close to date
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
                 
-                # Draw the date and time
-                graphics.DrawText(self.canvas, self.date_font, date_x, date_y, self.date_color, date_str)
-                graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, full_time_str)
+                # Draw the date and time with negative letter spacing for tighter characters
+                graphics.DrawText(self.canvas, self.date_font, date_x, date_y, self.date_color, date_str, -2)
+                graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, full_time_str, -2)
                 
                 # Swap buffers
                 self.canvas = self.matrix.SwapOnVSync(self.canvas)
