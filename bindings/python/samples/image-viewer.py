@@ -54,20 +54,24 @@ try:
         
         # Check if song text needs to scroll
         if song_len > available_width:
-            song_len = graphics.DrawText(canvas, song_font, song_pos + 34, 16, text_color, song_name)
+            # Calculate text position but ensure it doesn't go left of x=34
+            text_x = max(song_pos + 34, 34)
+            song_len = graphics.DrawText(canvas, song_font, text_x, 16, text_color, song_name)
             song_pos -= 1
-            # Reset when the right edge of text reaches the left edge of image (x=32)
-            if song_pos + 34 + song_len < 32:
+            # Reset when the right edge of text would reach the image edge
+            if song_pos + 34 + song_len < 34:
                 song_pos = available_width
         else:
             song_len = graphics.DrawText(canvas, song_font, 34, 16, text_color, song_name)
         
         # Check if artist text needs to scroll
         if artist_len > available_width:
-            artist_len = graphics.DrawText(canvas, artist_font, artist_pos + 34, canvas.height - 4, text_color, artist_name)
+            # Calculate text position but ensure it doesn't go left of x=34
+            text_x = max(artist_pos + 34, 34)
+            artist_len = graphics.DrawText(canvas, artist_font, text_x, canvas.height - 4, text_color, artist_name)
             artist_pos -= 1
-            # Reset when the right edge of text reaches the left edge of image (x=32)
-            if artist_pos + 34 + artist_len < 32:
+            # Reset when the right edge of text would reach the image edge
+            if artist_pos + 34 + artist_len < 34:
                 artist_pos = available_width
         else:
             artist_len = graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, artist_name)
