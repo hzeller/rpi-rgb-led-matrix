@@ -228,16 +228,21 @@ try:
         
         # Check if scrolling is needed
         if total_song_width > song_available_width:
-            # Draw complete scrolling text (may extend outside bounds)
-            display_x = song_x - song_scroll_pos
-            current_x = display_x
-            for char in song_display:
-                if char == ' ':
-                    # Space between words - make it smaller
-                    current_x += 2  # Reduced space width (instead of normal space width)
-                else:
-                    char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
-                    current_x += char_width - 1  # Normal character spacing
+            # Draw text with wraparound - draw it twice to create seamless loop
+            for offset in [0, total_song_width + 20]:  # Draw original and wrapped version
+                display_x = song_x - song_scroll_pos + offset
+                current_x = display_x
+                for char in song_display:
+                    if char == ' ':
+                        # Space between words - make it smaller
+                        current_x += 2  # Reduced space width
+                    else:
+                        # Only draw if within visible area (with some buffer)
+                        if current_x > -10 and current_x < matrix.width + 10:
+                            char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
+                            current_x += char_width - 1  # Normal character spacing
+                        else:
+                            current_x += 4  # Estimated width when not drawing
             
             # Clear pixels outside the allowed boundaries (clipping effect)
             # Clear left side (before song area)
@@ -255,7 +260,7 @@ try:
             # Update scroll position at slightly faster speed
             if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
                 song_scroll_pos += 1
-                if song_scroll_pos > total_song_width + 20:  # Reset with some delay
+                if song_scroll_pos >= total_song_width + 20:  # Reset when first copy is off-screen
                     song_scroll_pos = 0
         else:
             # Static display if text fits
@@ -283,16 +288,21 @@ try:
         
         # Check if scrolling is needed
         if total_artist_width > artist_available_width:
-            # Draw complete scrolling text (may extend outside bounds)
-            display_x = artist_x - artist_scroll_pos
-            current_x = display_x
-            for char in artist_name:
-                if char == ' ':
-                    # Space between words - make it smaller
-                    current_x += 2  # Reduced space width
-                else:
-                    char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
-                    current_x += char_width - 1  # Normal character spacing
+            # Draw text with wraparound - draw it twice to create seamless loop
+            for offset in [0, total_artist_width + 20]:  # Draw original and wrapped version
+                display_x = artist_x - artist_scroll_pos + offset
+                current_x = display_x
+                for char in artist_name:
+                    if char == ' ':
+                        # Space between words - make it smaller
+                        current_x += 2  # Reduced space width
+                    else:
+                        # Only draw if within visible area (with some buffer)
+                        if current_x > artist_x - 10 and current_x < matrix.width + 10:
+                            char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
+                            current_x += char_width - 1  # Normal character spacing
+                        else:
+                            current_x += 4  # Estimated width when not drawing
             
             # Clear pixels outside the allowed boundaries (clipping effect)
             # Clear everything to the left of artist area (including album cover area for this text row)
@@ -310,7 +320,7 @@ try:
             # Update scroll position at slightly faster speed
             if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
                 artist_scroll_pos += 1
-                if artist_scroll_pos > total_artist_width + 20:  # Reset with delay
+                if artist_scroll_pos >= total_artist_width + 20:  # Reset when first copy is off-screen
                     artist_scroll_pos = 0
         else:
             # Static display if text fits
@@ -338,16 +348,21 @@ try:
         
         # Check if scrolling is needed
         if total_album_width > album_available_width:
-            # Draw complete scrolling text (may extend outside bounds)
-            display_x = album_x - album_scroll_pos
-            current_x = display_x
-            for char in album_name:
-                if char == ' ':
-                    # Space between words - make it smaller
-                    current_x += 2  # Reduced space width
-                else:
-                    char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
-                    current_x += char_width - 1  # Normal character spacing
+            # Draw text with wraparound - draw it twice to create seamless loop
+            for offset in [0, total_album_width + 20]:  # Draw original and wrapped version
+                display_x = album_x - album_scroll_pos + offset
+                current_x = display_x
+                for char in album_name:
+                    if char == ' ':
+                        # Space between words - make it smaller
+                        current_x += 2  # Reduced space width
+                    else:
+                        # Only draw if within visible area (with some buffer)
+                        if current_x > album_x - 10 and current_x < matrix.width + 10:
+                            char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
+                            current_x += char_width - 1  # Normal character spacing
+                        else:
+                            current_x += 4  # Estimated width when not drawing
             
             # Clear pixels outside the allowed boundaries (clipping effect)
             # Clear everything to the left of album area (including album cover area for this text row)
@@ -365,7 +380,7 @@ try:
             # Update scroll position at slightly faster speed
             if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
                 album_scroll_pos += 1
-                if album_scroll_pos > total_album_width + 20:  # Reset with delay
+                if album_scroll_pos >= total_album_width + 20:  # Reset when first copy is off-screen
                     album_scroll_pos = 0
         else:
             # Static display if text fits
