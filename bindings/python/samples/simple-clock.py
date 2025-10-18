@@ -42,38 +42,36 @@ class SimpleClock:
                 self.canvas.Clear()
                 now = datetime.now()
                 
-                # Format time in classic 12-hour format with AM/PM
+                # Format time in classic 12-hour format with AM/PM on same line
                 time_str = now.strftime("%I:%M")
                 if time_str.startswith("0"):
                     time_str = time_str[1:]  # Remove leading zero (e.g., "01:30" -> "1:30")
                 ampm_str = now.strftime("%p")
+                full_time_str = f"{time_str} {ampm_str}"
                 
-                print(f"Time: {time_str} {ampm_str}")
+                print(f"Time: {full_time_str}")
                 
-                # Calculate text positions for perfect centering
+                # Calculate text positions for perfect centering on one line
                 # 9x18B font is about 9px wide per character
-                time_width = len(time_str) * 9
-                ampm_width = len(ampm_str) * 9
+                full_time_width = len(full_time_str) * 9
                 
-                # Center the time perfectly in the display
-                time_x = (64 - time_width) // 2
-                time_y = 20  # Vertically centered in 32px height
+                # Center the entire time string perfectly in the display
+                time_x = (64 - full_time_width) // 2
+                time_y = 16  # Vertically centered in 32px height (font baseline)
                 
-                # Position AM/PM below and centered
-                ampm_x = (64 - ampm_width) // 2
-                ampm_y = time_y + 10  # Below the time
+                print(f"Position - Full time: ({time_x},{time_y})")
                 
-                print(f"Positions - Time: ({time_x},{time_y}), AM/PM: ({ampm_x},{ampm_y})")
-                
-                # Draw the time and AM/PM in classic white
-                graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, time_str)
-                graphics.DrawText(self.canvas, self.font, ampm_x, ampm_y, self.time_color, ampm_str)
+                # Draw the complete time string in classic white
+                graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, full_time_str)
                 
                 # Swap buffers
                 self.canvas = self.matrix.SwapOnVSync(self.canvas)
                 
-                # Update every second
-                time.sleep(1)
+                # Wait until the next second boundary for accurate timing
+                current_time = time.time()
+                next_second = int(current_time) + 1
+                sleep_time = next_second - current_time
+                time.sleep(sleep_time)
                 
         except KeyboardInterrupt:
             print("\nClock stopped.")
