@@ -99,8 +99,7 @@ options.hardware_mapping = 'adafruit-hat-pwm'
 
 matrix = RGBMatrix(options = options)
 
-# Load the image and resize it to 32x32 for left placement
-image = Image.open(image_file)
+# Resize image to 32x32 for left placement  
 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
 image.thumbnail((32, 32), resample=resample_mode)
 
