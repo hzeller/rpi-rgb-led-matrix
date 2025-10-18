@@ -214,30 +214,36 @@ try:
         song_display = song_name.upper()  # Convert to all caps
         # Draw each character with tighter spacing, respecting right edge padding
         current_x = song_x
+        max_x = canvas.width - padding  # Maximum x position (2px from right edge)
         for char in song_display:
-            if current_x >= canvas.width - padding:  # Stop if we'd draw in right padding area
+            # Estimate character width (5x7 font is roughly 5 pixels wide)
+            if current_x + 5 > max_x:  # Stop if character would extend into padding area
                 break
             char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
             current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
         
         # Artist name in middle right in all caps (white, static, tight spacing)
-        artist_x = padding + 20 + padding  # 2px padding + 20px image + 2px spacing
+        artist_x = padding + 20 + 2  # 2px padding + 20px image + 2px spacing (proper positioning)
         artist_y = canvas.height // 2 + 2  # Middle of screen + 2px down
         # Draw each character with tighter spacing, respecting right edge padding
         current_x = artist_x
+        max_x = canvas.width - padding  # Maximum x position (2px from right edge)
         for char in artist_name:
-            if current_x >= canvas.width - padding:  # Stop if we'd draw in right padding area
+            # Estimate character width (5x7 font is roughly 5 pixels wide)
+            if current_x + 5 > max_x:  # Stop if character would extend into padding area
                 break
             char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
             current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
         
         # Album name in lower right in normal case (light gray, static, tight spacing)
-        album_x = padding + 20 + padding  # 2px padding + 20px image + 2px spacing
+        album_x = padding + 20 + 2  # 2px padding + 20px image + 2px spacing (proper positioning)
         album_y = canvas.height - padding - 2  # 2px from bottom edge (proper padding)
         # Draw each character with tighter spacing, respecting right edge padding
         current_x = album_x
+        max_x = canvas.width - padding  # Maximum x position (2px from right edge)
         for char in album_name:
-            if current_x >= canvas.width - padding:  # Stop if we'd draw in right padding area
+            # Estimate character width (5x7 font is roughly 5 pixels wide)
+            if current_x + 5 > max_x:  # Stop if character would extend into padding area
                 break
             char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
             current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
