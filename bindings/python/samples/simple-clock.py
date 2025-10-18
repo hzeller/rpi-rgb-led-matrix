@@ -79,14 +79,14 @@ class SimpleClock:
                 # Calculate text positions with proper horizontal AND vertical centering
                 # Adjust spacing for bold fonts, keep them close together
                 date_width = len(date_str) * 4  # 6x13B font spacing
-                date_x = (64 - date_width) // 2 - 6  # Center horizontally, maintain left shift
+                date_x = (64 - date_width) // 2 - 10  # Center horizontally, shift more left
                 
                 # Vertical centering: keep them close together
                 date_y = 11  # Close to original position
                 
-                # Time font spacing - bold but keep tight
-                full_time_width = len(full_time_str) * 5  # 9x18B font spacing (tighter than before)
-                time_x = (64 - full_time_width) // 2 - 6  # Center horizontally, maintain left shift
+                # Time font spacing - bold but keep tight, reduce AM/PM gap
+                full_time_width = len(full_time_str) * 4  # Tighter spacing to reduce AM/PM gap
+                time_x = (64 - full_time_width) // 2 - 10  # Center horizontally, shift more left
                 time_y = 25  # Keep close to date
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
