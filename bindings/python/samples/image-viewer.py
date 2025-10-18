@@ -53,22 +53,26 @@ try:
         canvas.SetImage(image.convert('RGB'), 0, 0)
         
         # Check if song text needs to scroll
-        song_len = graphics.DrawText(canvas, song_font, song_pos + 34, 16, text_color, song_name)
         if song_len > available_width:
+            # Only draw if text position is within the text area (x >= 34)
+            if song_pos + 34 >= 34:
+                song_len = graphics.DrawText(canvas, song_font, max(song_pos + 34, 34), 16, text_color, song_name)
             song_pos -= 1
-            if song_pos + song_len < 0:
+            if song_pos + song_len < -34:  # Reset when completely off-screen
                 song_pos = available_width
         else:
-            song_pos = 0  # Static position if fits
+            song_len = graphics.DrawText(canvas, song_font, 34, 16, text_color, song_name)
         
         # Check if artist text needs to scroll
-        artist_len = graphics.DrawText(canvas, artist_font, artist_pos + 34, canvas.height - 4, text_color, artist_name)
         if artist_len > available_width:
+            # Only draw if text position is within the text area (x >= 34)
+            if artist_pos + 34 >= 34:
+                artist_len = graphics.DrawText(canvas, artist_font, max(artist_pos + 34, 34), canvas.height - 4, text_color, artist_name)
             artist_pos -= 1
-            if artist_pos + artist_len < 0:
+            if artist_pos + artist_len < -34:  # Reset when completely off-screen
                 artist_pos = available_width
         else:
-            artist_pos = 0  # Static position if fits
+            artist_len = graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, artist_name)
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
