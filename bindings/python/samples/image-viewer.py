@@ -195,6 +195,12 @@ artist_scroll_pos = 0
 album_scroll_pos = 0
 scroll_counter = 0
 
+# Static delay variables (show static for 1 second before scrolling)
+song_static_delay = 0
+artist_static_delay = 0
+album_static_delay = 0
+static_delay_frames = 20  # 1 second at 20fps
+
 # Global variables for Spotify data (thread-safe)
 current_spotify_data = {
     'song_name': "Loading...",
@@ -253,9 +259,18 @@ try:
         
         # Check if scrolling is needed
         if total_song_width > song_available_width:
+            # Check if we need to start or continue the static delay
+            if song_static_delay < static_delay_frames:
+                # Show static text for 1 second before scrolling
+                song_static_delay += 1
+                scroll_offset = 0  # Static position
+            else:
+                # Start scrolling after delay
+                scroll_offset = song_scroll_pos
+            
             # Draw text with wraparound - draw it twice to create seamless loop
             for offset in [0, total_song_width + 20]:  # Draw original and wrapped version
-                display_x = song_x - song_scroll_pos + offset
+                display_x = song_x - scroll_offset + offset
                 current_x = display_x
                 for char in song_display:
                     if char == ' ':
@@ -282,11 +297,12 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position at slightly faster speed
-            if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
+            # Update scroll position only after static delay
+            if song_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
                 song_scroll_pos += 1
                 if song_scroll_pos >= total_song_width + 20:  # Reset when first copy is off-screen
                     song_scroll_pos = 0
+                    song_static_delay = 0  # Reset static delay for next cycle
         else:
             # Static display if text fits
             current_x = song_x
@@ -313,9 +329,18 @@ try:
         
         # Check if scrolling is needed
         if total_artist_width > artist_available_width:
+            # Check if we need to start or continue the static delay
+            if artist_static_delay < static_delay_frames:
+                # Show static text for 1 second before scrolling
+                artist_static_delay += 1
+                scroll_offset = 0  # Static position
+            else:
+                # Start scrolling after delay
+                scroll_offset = artist_scroll_pos
+            
             # Draw text with wraparound - draw it twice to create seamless loop
             for offset in [0, total_artist_width + 20]:  # Draw original and wrapped version
-                display_x = artist_x - artist_scroll_pos + offset
+                display_x = artist_x - scroll_offset + offset
                 current_x = display_x
                 for char in artist_name:
                     if char == ' ':
@@ -342,11 +367,12 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position at slightly faster speed
-            if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
+            # Update scroll position only after static delay
+            if artist_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
                 artist_scroll_pos += 1
                 if artist_scroll_pos >= total_artist_width + 20:  # Reset when first copy is off-screen
                     artist_scroll_pos = 0
+                    artist_static_delay = 0  # Reset static delay for next cycle
         else:
             # Static display if text fits
             current_x = artist_x
@@ -373,9 +399,18 @@ try:
         
         # Check if scrolling is needed
         if total_album_width > album_available_width:
+            # Check if we need to start or continue the static delay
+            if album_static_delay < static_delay_frames:
+                # Show static text for 1 second before scrolling
+                album_static_delay += 1
+                scroll_offset = 0  # Static position
+            else:
+                # Start scrolling after delay
+                scroll_offset = album_scroll_pos
+            
             # Draw text with wraparound - draw it twice to create seamless loop
             for offset in [0, total_album_width + 20]:  # Draw original and wrapped version
-                display_x = album_x - album_scroll_pos + offset
+                display_x = album_x - scroll_offset + offset
                 current_x = display_x
                 for char in album_name:
                     if char == ' ':
@@ -402,11 +437,12 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position at slightly faster speed
-            if scroll_counter % 4 == 0:  # Scroll every 4 frames for slightly faster movement
+            # Update scroll position only after static delay
+            if album_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
                 album_scroll_pos += 1
                 if album_scroll_pos >= total_album_width + 20:  # Reset when first copy is off-screen
                     album_scroll_pos = 0
+                    album_static_delay = 0  # Reset static delay for next cycle
         else:
             # Static display if text fits
             current_x = album_x
