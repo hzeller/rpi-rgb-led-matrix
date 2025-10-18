@@ -138,7 +138,7 @@ def spotify_update_thread():
         except Exception as e:
             print(f"Spotify update error: {e}")
         
-        time.sleep(3)  # Update every 3 seconds in background
+        time.sleep(1)  # Update every 3 seconds in background
 
 if len(sys.argv) > 1:
     # Use provided image file
