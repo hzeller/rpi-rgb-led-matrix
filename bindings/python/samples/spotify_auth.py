@@ -7,7 +7,6 @@ Run this once to get your refresh token, then add it to your .env file
 import requests
 import base64
 import urllib.parse
-import webbrowser
 import os
 from dotenv import load_dotenv
 
@@ -80,17 +79,28 @@ def main():
     
     # Step 1: Get authorization URL
     auth_url = get_auth_url()
-    print("Step 1: Opening browser for Spotify authorization...")
-    print(f"If browser doesn't open, go to: {auth_url}")
+    print("Step 1: SSH Session Detected - Manual Browser Setup Required")
+    print("=" * 60)
+    print("Since you're in an SSH session, you need to open this URL in a browser")
+    print("on your LOCAL computer (not the SSH server):")
     print()
-    
-    webbrowser.open(auth_url)
+    print(auth_url)
+    print()
+    print("=" * 60)
+    print()
+    print("Instructions:")
+    print("1. Copy the URL above")
+    print("2. Open it in a browser on your LOCAL computer")
+    print("3. Log in to Spotify and authorize the app")
+    print("4. You'll be redirected to a localhost URL that won't load - that's normal!")
+    print("5. Copy the ENTIRE redirect URL from your browser's address bar")
+    print("6. Paste it below")
+    print()
+    print("The redirect URL should look like:")
+    print("http://localhost:8888/callback?code=AQA...&state=...")
+    print()
     
     # Step 2: Get authorization code from user
-    print("Step 2: After authorizing, you'll be redirected to a localhost URL that won't load.")
-    print("Copy the ENTIRE URL from your browser's address bar and paste it here.")
-    print("It should look like: http://localhost:8888/callback?code=...")
-    print()
     
     redirect_url = input("Paste the redirect URL here: ").strip()
     
