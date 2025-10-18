@@ -56,7 +56,7 @@ def get_current_playing():
     access_token = get_spotify_access_token()
     if not access_token:
         print("Failed to get Spotify access token")
-        return None, None, None
+        return None, None, None, None
     
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
@@ -65,16 +65,16 @@ def get_current_playing():
     
     if response.status_code == 401:
         print("Unauthorized - check your Spotify credentials and refresh token")
-        return None, None, None
+        return None, None, None, None
     elif response.status_code == 403:
         print("Forbidden - check your Spotify app permissions")
-        return None, None, None
+        return None, None, None, None
     elif response.status_code == 429:
         print("Rate limited - too many requests to Spotify API")
-        return None, None, None
+        return None, None, None, None
     elif response.status_code == 204:
         print("No content - no music currently playing")
-        return None, None, None
+        return None, None, None, None
     
     if response.status_code == 200 and response.text:
         try:
@@ -86,7 +86,8 @@ def get_current_playing():
                 if track:
                     song_name = track["name"]
                     artist_name = ", ".join([artist["name"] for artist in track["artists"]])
-                    print(f"Found track: {song_name} by {artist_name}")
+                    album_name = track["album"]["name"]
+                    print(f"Found track: {song_name} by {artist_name} from {album_name}")
                     
                     # Get album cover
                     album_images = track["album"]["images"]
@@ -96,9 +97,9 @@ def get_current_playing():
                         img_response = requests.get(image_url)
                         if img_response.status_code == 200:
                             image = Image.open(BytesIO(img_response.content))
-                            return song_name, artist_name, image
+                            return song_name, artist_name, album_name, image
                     
-                    return song_name, artist_name, None
+                    return song_name, artist_name, album_name, None
                 else:
                     print("Track item is None")
             else:
@@ -110,22 +111,24 @@ def get_current_playing():
     else:
         print(f"Unexpected response: status {response.status_code}, content: {response.text[:200] if response.text else 'No content'}")
     
-    return None, None, None
+    return None, None, None, None
 
 if len(sys.argv) > 1:
     # Use provided image file
     image_file = sys.argv[1]
     song_name = sys.argv[2] if len(sys.argv) > 2 else "Song Name"
-    artist_name = sys.argv[3] if len(sys.argv) > 3 else "Artist Name"
+    artist_name = (sys.argv[3] if len(sys.argv) > 3 else "Artist Name").upper()
+    album_name = sys.argv[4] if len(sys.argv) > 4 else "Album Name"
     image = Image.open(image_file)
     use_spotify = False
 else:
     # Use Spotify integration
     use_spotify = True
     song_name = "Loading..."
-    artist_name = "Spotify"
+    artist_name = "SPOTIFY"
+    album_name = "Album Name"
     # Create a default image
-    image = Image.new('RGB', (32, 32), (50, 50, 50))
+    image = Image.new('RGB', (24, 24), (50, 50, 50))
 
 # Configuration for the matrix
 options = RGBMatrixOptions()
@@ -137,27 +140,38 @@ options.hardware_mapping = 'adafruit-hat-pwm'
 
 matrix = RGBMatrix(options = options)
 
-# Resize image to 32x32 for left placement  
+# Resize image to 24x24 for lower left corner
 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-image.thumbnail((32, 32), resample=resample_mode)
+image.thumbnail((24, 24), resample=resample_mode)
 
-# Load fonts for text - bold for song, regular for artist
+# Load fonts for different elements
 song_font = graphics.Font()
-song_font.LoadFont("../../../fonts/6x13B.bdf")  # Bold version, smaller than 7x13B
+song_font.LoadFont("../../../fonts/7x13B.bdf")  # Larger font for song title
 artist_font = graphics.Font()
-artist_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font
+artist_font.LoadFont("../../../fonts/6x10.bdf")  # Medium font for artist
+album_font = graphics.Font()
+album_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for album
 
-# Text scrolling variables
-available_width = matrix.width - 32 - 2  # Width minus image minus small margin
-song_pos = available_width  # Start from right edge
-artist_pos = available_width  # Start from right edge
-text_color = graphics.Color(255, 255, 255)
+# Define colors
+song_color = graphics.Color(0, 255, 0)      # Green for song title
+artist_color = graphics.Color(255, 255, 255) # White for artist name
+album_color = graphics.Color(200, 200, 200)  # Light gray for album name
+
+# Text scrolling variables - new layout
+song_available_width = matrix.width - 2    # Song spans entire width
+other_available_width = matrix.width - 26  # Other text after 24px image + margin
+song_pos = matrix.width                    # Song starts from right edge
+artist_pos = 26                           # Artist starts after image
+album_pos = 26                            # Album starts after image
+
+# Initialize album name
+album_name = "Album Name"
 
 # Create canvas for drawing
 canvas = matrix.CreateFrameCanvas()
 
 try:
-    print(f"Available width: {available_width}")
+    print(f"Song width: {song_available_width}, Other width: {other_available_width}")
     if use_spotify:
         print("Using Spotify integration - fetching current track every 10 seconds")
     print("Press CTRL-C to stop.")
@@ -171,58 +185,58 @@ try:
     while True:
         # Update from Spotify if using integration
         if use_spotify and time.time() - last_spotify_check > spotify_check_interval:
-            current_song, current_artist, current_image = get_current_playing()
+            current_song, current_artist, current_album, current_image = get_current_playing()
             if current_song and current_artist:
                 song_name = current_song
-                artist_name = current_artist
+                artist_name = current_artist.upper()  # Convert artist to all caps
+                album_name = current_album if current_album else "Album Name"
                 if current_image:
                     image = current_image
-                    # Resize image to 32x32
+                    # Resize image to 24x24
                     resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-                    image.thumbnail((32, 32), resample=resample_mode)
+                    image.thumbnail((24, 24), resample=resample_mode)
                     image_rgb = image.convert('RGB')
-                print(f"Now playing: {song_name} by {artist_name}")
+                print(f"Now playing: {song_name} by {artist_name} from {album_name}")
             else:
                 song_name = "No music playing"
-                artist_name = "Spotify"
+                artist_name = "SPOTIFY"
+                album_name = "Album Name"
             last_spotify_check = time.time()
         
         canvas.Clear()
         
-        # Draw image on the left (32x32)
-        canvas.SetImage(image_rgb, 0, 0)
+        # Draw album cover in lower left (24x24)
+        image_y = canvas.height - image_rgb.height  # Bottom of screen
+        canvas.SetImage(image_rgb, 0, image_y)
         
-        # Song text scrolling - draw at actual position
-        song_x = song_pos + 32
-        song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
-        
-        # Restore image pixels where text would overlap (x < 32)
-        if song_x < 32:
-            for y in range(4, 17):  # Song font area
-                for x in range(max(0, song_x), 32):
-                    if x < image_rgb.width and y < image_rgb.height:
-                        pixel = image_rgb.getpixel((x, y))
-                        canvas.SetPixel(x, y, pixel[0], pixel[1], pixel[2])
-        
+        # Song title across entire top in large green font
+        song_x = song_pos
+        song_len = graphics.DrawText(canvas, song_font, song_x, 12, song_color, song_name)
         song_pos -= 1
-        if song_pos + 32 + song_len <= 32:  # Reset when the rightmost text reaches x=32
-            song_pos = 32  # Start from right edge of text area
+        if song_pos + song_len <= 0:  # Reset when song fully scrolls off left
+            song_pos = matrix.width
         
-        # Artist text scrolling - draw at actual position
-        artist_x = artist_pos + 32
-        artist_len = graphics.DrawText(canvas, artist_font, artist_x, canvas.height - 4, text_color, artist_name)
+        # Artist name in middle right in all caps (white)
+        artist_x = artist_pos
+        artist_y = canvas.height // 2  # Middle of screen
+        artist_len = graphics.DrawText(canvas, artist_font, artist_x, artist_y, artist_color, artist_name)
         
-        # Restore image pixels where text would overlap (x < 32)
-        if artist_x < 32:
-            for y in range(canvas.height - 11, canvas.height):  # Artist font area
-                for x in range(max(0, artist_x), 32):
-                    if x < image_rgb.width and y < image_rgb.height:
-                        pixel = image_rgb.getpixel((x, y))
-                        canvas.SetPixel(x, y, pixel[0], pixel[1], pixel[2])
+        # Only scroll artist if it doesn't fit
+        if artist_len > other_available_width:
+            artist_pos -= 1
+            if artist_pos + artist_len <= 26:  # Reset when fully scrolled past image
+                artist_pos = matrix.width
         
-        artist_pos -= 1
-        if artist_pos + 32 + artist_len <= 32:  # Reset when the rightmost text reaches x=32
-            artist_pos = 32  # Start from right edge of text area
+        # Album name in lower right in normal case (light gray)
+        album_x = album_pos
+        album_y = canvas.height - 4  # Bottom of screen
+        album_len = graphics.DrawText(canvas, album_font, album_x, album_y, album_color, album_name)
+        
+        # Only scroll album if it doesn't fit
+        if album_len > other_available_width:
+            album_pos -= 1
+            if album_pos + album_len <= 26:  # Reset when fully scrolled past image
+                album_pos = matrix.width
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
