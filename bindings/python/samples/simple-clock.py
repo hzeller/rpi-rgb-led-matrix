@@ -25,33 +25,9 @@ class SimpleClock:
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
         
-        # Load font
+        # Load font - use same approach as image-viewer.py
         self.font = graphics.Font()
-        # Try multiple font paths
-        font_paths = [
-            os.path.join(os.path.dirname(__file__), '..', '..', '..', 'fonts', '7x13.bdf'),
-            os.path.join(os.path.dirname(__file__), '..', '..', '..', 'fonts', '6x10.bdf'),
-            os.path.join(os.path.dirname(__file__), '..', '..', '..', 'fonts', '5x7.bdf'),
-            'fonts/7x13.bdf',
-            'fonts/6x10.bdf', 
-            'fonts/5x7.bdf',
-            '../../../fonts/7x13.bdf',
-            '../../../fonts/6x10.bdf',
-            '../../../fonts/5x7.bdf'
-        ]
-        
-        font_loaded = False
-        for font_path in font_paths:
-            if self.font.LoadFont(font_path):
-                print(f"Loaded font: {font_path}")
-                font_loaded = True
-                break
-            
-        if not font_loaded:
-            print("Couldn't load any font! Tried paths:")
-            for path in font_paths:
-                print(f"  {path}")
-            sys.exit(1)
+        self.font.LoadFont("../../../fonts/7x13.bdf")
         
         # Colors
         self.time_color = graphics.Color(0, 255, 0)      # Green for time
