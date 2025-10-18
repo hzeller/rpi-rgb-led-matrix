@@ -283,14 +283,8 @@ try:
                 current_x += char_width - 1
             
             # Clear pixels outside the allowed boundaries (clipping effect)
-            # Clear left padding area only (don't touch album cover area)
-            for x in range(0, padding):  # Only clear the left 2px padding
-                for y in range(artist_y - 6, artist_y + 2):
-                    if 0 <= y < matrix.height:
-                        canvas.SetPixel(x, y, 0, 0, 0)
-            
-            # Clear gap between album cover and artist text (x=22 to x=23)
-            for x in range(padding + 20, artist_x):  # Clear the 2px gap after album cover
+            # Clear everything to the left of artist area (including album cover area for this text row)
+            for x in range(0, artist_x):
                 for y in range(artist_y - 6, artist_y + 2):
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
@@ -336,14 +330,8 @@ try:
                 current_x += char_width - 1
             
             # Clear pixels outside the allowed boundaries (clipping effect)
-            # Clear left padding area only (don't touch album cover area)
-            for x in range(0, padding):  # Only clear the left 2px padding
-                for y in range(album_y - 6, album_y + 2):
-                    if 0 <= y < matrix.height:
-                        canvas.SetPixel(x, y, 0, 0, 0)
-            
-            # Clear gap between album cover and album text (x=22 to x=23)
-            for x in range(padding + 20, album_x):  # Clear the 2px gap after album cover
+            # Clear everything to the left of album area (including album cover area for this text row)
+            for x in range(0, album_x):
                 for y in range(album_y - 6, album_y + 2):
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
@@ -367,6 +355,10 @@ try:
                     break
                 char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
                 current_x += char_width - 1
+        
+        # Redraw album cover after text clipping to ensure it's always visible
+        # (Text clipping may have cleared parts of the album cover)
+        canvas.SetImage(image_rgb, image_x, image_y)
         
         # Increment scroll counter for timing
         scroll_counter += 1
