@@ -32,9 +32,9 @@ class SimpleClock:
         self.font = graphics.Font()
         self.font.LoadFont("../../../fonts/9x18B.bdf")  # Bold 9x18 font
         
-        # Load smaller font for date to fit better
+        # Load smallest font for date to fit on 64px screen
         self.date_font = graphics.Font()
-        self.date_font.LoadFont("../../../fonts/4x6.bdf")  # Even smaller font for date
+        self.date_font.LoadFont("../../../fonts/tom-thumb.bdf")  # Smallest available font
         
         # Colors - classic alarm clock style
         self.time_color = graphics.Color(255, 255, 255)  # Bright white for time
@@ -78,10 +78,10 @@ class SimpleClock:
                 print(f"Time: {full_time_str} (Mountain Time)")
                 
                 # Calculate text positions with much tighter character spacing
-                # Very tight spacing for smaller date font
-                date_width = len(date_str) * 2.5  # 4x6 font - very tight spacing
-                date_x = (64 - date_width) // 2
-                date_y = 7  # Top area for date (adjusted for smaller font)
+                # Ultra-tight spacing for tiny font to fit on 64px screen
+                date_width = len(date_str) * 1.8  # tom-thumb font - ultra-tight spacing
+                date_x = max(0, (64 - date_width) // 2)  # Ensure it doesn't go negative
+                date_y = 6  # Top area for date (adjusted for tiny font)
                 
                 # Time font spacing - very tight
                 full_time_width = len(full_time_str) * 4  # 9x18B font - very tight spacing
