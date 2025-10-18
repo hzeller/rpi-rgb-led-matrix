@@ -166,7 +166,6 @@ other_available_width = matrix.width - 22 - (padding * 2)  # Other text after im
 song_scroll_pos = 0
 artist_scroll_pos = 0
 album_scroll_pos = 0
-scroll_speed = 0.1  # Slower scrolling
 scroll_counter = 0
 
 # Initialize album name
@@ -241,8 +240,8 @@ try:
                 else:
                     current_x += 4  # Estimated width when not drawing
             
-            # Update scroll position slowly
-            if scroll_counter % 10 == 0:  # Scroll every 10 frames for slower movement
+            # Update scroll position at medium speed
+            if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
                 song_scroll_pos += 1
                 if song_scroll_pos > total_song_width + 20:  # Reset with some delay
                     song_scroll_pos = 0
@@ -256,7 +255,7 @@ try:
                 current_x += char_width - 1
         
         # Artist name in middle right in all caps (scrolls if cut off)
-        artist_x = padding + 20 + 2  # 2px padding + 20px image + 2px spacing (proper positioning)
+        artist_x = padding + 20 + padding  # 2px padding + 20px image + 2px padding from album
         artist_y = canvas.height // 2 + 2  # Middle of screen + 2px down
         max_x = canvas.width - padding  # Maximum x position (2px from right edge)
         artist_available_width = max_x - artist_x  # Available width for artist text
@@ -280,8 +279,8 @@ try:
                 else:
                     current_x += 4  # Estimated width when not drawing
             
-            # Update scroll position slowly
-            if scroll_counter % 10 == 0:  # Scroll every 10 frames
+            # Update scroll position at medium speed
+            if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
                 artist_scroll_pos += 1
                 if artist_scroll_pos > total_artist_width + 20:  # Reset with delay
                     artist_scroll_pos = 0
@@ -295,7 +294,7 @@ try:
                 current_x += char_width - 1
         
         # Album name in lower right in normal case (scrolls if cut off)
-        album_x = padding + 20 + 2  # 2px padding + 20px image + 2px spacing (proper positioning)
+        album_x = padding + 20 + padding  # 2px padding + 20px image + 2px padding from album
         album_y = canvas.height - padding - 2  # 2px from bottom edge (proper padding)
         max_x = canvas.width - padding  # Maximum x position (2px from right edge)
         album_available_width = max_x - album_x  # Available width for album text
@@ -319,8 +318,8 @@ try:
                 else:
                     current_x += 4  # Estimated width when not drawing
             
-            # Update scroll position slowly
-            if scroll_counter % 10 == 0:  # Scroll every 10 frames
+            # Update scroll position at medium speed
+            if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
                 album_scroll_pos += 1
                 if album_scroll_pos > total_album_width + 20:  # Reset with delay
                     album_scroll_pos = 0
