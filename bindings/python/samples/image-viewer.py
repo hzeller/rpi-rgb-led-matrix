@@ -45,23 +45,43 @@ canvas = matrix.CreateFrameCanvas()
 try:
     print(f"Available width: {available_width}")
     print("Press CTRL-C to stop.")
+    
+    # Convert image to RGB for pixel access
+    image_rgb = image.convert('RGB')
+    
     while True:
         canvas.Clear()
         
         # Draw image on the left (32x32)
-        canvas.SetImage(image.convert('RGB'), 0, 0)
+        canvas.SetImage(image_rgb, 0, 0)
         
-        # Song text scrolling - draw at actual position, let matrix clip naturally
+        # Song text scrolling - draw at actual position
         song_x = song_pos + 32
         song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
+        
+        # Restore image pixels where text would overlap (x < 32)
+        if song_x < 32:
+            for y in range(4, 17):  # Song font area
+                for x in range(max(0, song_x), 32):
+                    if x < image_rgb.width and y < image_rgb.height:
+                        pixel = image_rgb.getpixel((x, y))
+                        canvas.SetPixel(x, y, pixel[0], pixel[1], pixel[2])
         
         song_pos -= 1
         if song_pos + song_len < -32:  # Reset when completely scrolled past
             song_pos = 32  # Start from right edge of text area
         
-        # Artist text scrolling - draw at actual position, let matrix clip naturally  
+        # Artist text scrolling - draw at actual position
         artist_x = artist_pos + 32
         artist_len = graphics.DrawText(canvas, artist_font, artist_x, canvas.height - 4, text_color, artist_name)
+        
+        # Restore image pixels where text would overlap (x < 32)
+        if artist_x < 32:
+            for y in range(canvas.height - 11, canvas.height):  # Artist font area
+                for x in range(max(0, artist_x), 32):
+                    if x < image_rgb.width and y < image_rgb.height:
+                        pixel = image_rgb.getpixel((x, y))
+                        canvas.SetPixel(x, y, pixel[0], pixel[1], pixel[2])
         
         artist_pos -= 1
         if artist_pos + artist_len < -32:  # Reset when completely scrolled past
