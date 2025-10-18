@@ -220,7 +220,7 @@ try:
         
         # Artist name in middle right in all caps (white, static, tight spacing)
         artist_x = padding + 20 + padding  # 2px padding + 20px image + 2px spacing
-        artist_y = canvas.height // 2  # Middle of screen
+        artist_y = canvas.height // 2 + 1  # Middle of screen + 1px down
         # Draw each character with tighter spacing
         current_x = artist_x
         for char in artist_name:
