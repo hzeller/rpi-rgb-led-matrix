@@ -6,6 +6,7 @@ import time
 import sys
 import os
 from datetime import datetime
+import pytz  # For timezone support
 
 # Add the parent directory to Python path to import the rgbmatrix module
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
@@ -23,6 +24,9 @@ class SimpleClock:
         
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
+        
+        # Set up Mountain Time timezone
+        self.mountain_tz = pytz.timezone('America/Denver')
         
         # Load font - use a bigger, bolder font for classic alarm clock look
         self.font = graphics.Font()
@@ -53,7 +57,8 @@ class SimpleClock:
         try:
             while True:
                 self.canvas.Clear()
-                now = datetime.now()
+                # Get current time in Mountain Time
+                now = datetime.now(self.mountain_tz)
                 
                 # Format date in the requested format: "Saturday, October 18th"
                 day_name = now.strftime("%A")
@@ -70,16 +75,16 @@ class SimpleClock:
                 full_time_str = f"{time_str} {ampm_str}"
                 
                 print(f"Date: {date_str}")
-                print(f"Time: {full_time_str}")
+                print(f"Time: {full_time_str} (Mountain Time)")
                 
-                # Calculate text positions for perfect centering
-                # Use tighter character spacing - actual font widths are smaller
-                date_width = len(date_str) * 4  # 5x7 font is about 4px wide per char (tighter)
+                # Calculate text positions with much tighter character spacing
+                # Very tight spacing - characters almost touching
+                date_width = len(date_str) * 3  # 5x7 font - very tight spacing
                 date_x = (64 - date_width) // 2
                 date_y = 8  # Top area for date
                 
-                # Time font spacing - much tighter
-                full_time_width = len(full_time_str) * 6  # 9x18B font is about 6px wide per char (much tighter)
+                # Time font spacing - very tight
+                full_time_width = len(full_time_str) * 4  # 9x18B font - very tight spacing
                 time_x = (64 - full_time_width) // 2
                 time_y = 26  # Below the date
                 
