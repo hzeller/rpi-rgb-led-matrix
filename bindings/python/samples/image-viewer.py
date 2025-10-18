@@ -228,17 +228,28 @@ try:
         
         # Check if scrolling is needed
         if total_song_width > song_available_width:
-            # Scroll within the song area only
+            # Save the current canvas area that will be overwritten
+            saved_pixels = {}
+            for x in range(song_x, max_x):
+                for y in range(song_y - 6, song_y + 2):  # Font height area
+                    if 0 <= x < matrix.width and 0 <= y < matrix.height:
+                        # Save background pixel
+                        saved_pixels[(x, y)] = canvas.GetPixel(x, y)
+            
+            # Draw complete scrolling text (may extend outside bounds)
             display_x = song_x - song_scroll_pos
             current_x = display_x
             for char in song_display:
-                if current_x > max_x:  # Stop if beyond right boundary
-                    break
-                if current_x + 5 > song_x:  # Only draw if within left boundary
-                    char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
-                    current_x += char_width - 1
-                else:
-                    current_x += 4  # Estimated width when not drawing
+                char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
+                current_x += char_width - 1
+            
+            # Restore pixels outside the allowed boundaries (clipping effect)
+            for x in range(matrix.width):
+                for y in range(matrix.height):
+                    if x < song_x or x >= max_x:  # Outside horizontal bounds
+                        if song_y - 6 <= y <= song_y + 1:  # Within vertical text area
+                            # Restore original background (black)
+                            canvas.SetPixel(x, y, 0, 0, 0)
             
             # Update scroll position at medium speed
             if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
@@ -267,17 +278,20 @@ try:
         
         # Check if scrolling is needed
         if total_artist_width > artist_available_width:
-            # Scroll within the artist area only
+            # Draw complete scrolling text (may extend outside bounds)
             display_x = artist_x - artist_scroll_pos
             current_x = display_x
             for char in artist_name:
-                if current_x > max_x:  # Stop if beyond right boundary
-                    break
-                if current_x >= artist_x and current_x + 5 <= max_x:  # Only draw if within boundaries
-                    char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
-                    current_x += char_width - 1
-                else:
-                    current_x += 4  # Estimated width when not drawing
+                char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
+                current_x += char_width - 1
+            
+            # Restore pixels outside the allowed boundaries (clipping effect)
+            for x in range(matrix.width):
+                for y in range(matrix.height):
+                    if x < artist_x or x >= max_x:  # Outside horizontal bounds
+                        if artist_y - 6 <= y <= artist_y + 1:  # Within vertical text area
+                            # Restore original background (black)
+                            canvas.SetPixel(x, y, 0, 0, 0)
             
             # Update scroll position at medium speed
             if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
@@ -306,17 +320,20 @@ try:
         
         # Check if scrolling is needed
         if total_album_width > album_available_width:
-            # Scroll within the album area only
+            # Draw complete scrolling text (may extend outside bounds)
             display_x = album_x - album_scroll_pos
             current_x = display_x
             for char in album_name:
-                if current_x > max_x:  # Stop if beyond right boundary
-                    break
-                if current_x >= album_x and current_x + 5 <= max_x:  # Only draw if within boundaries
-                    char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
-                    current_x += char_width - 1
-                else:
-                    current_x += 4  # Estimated width when not drawing
+                char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
+                current_x += char_width - 1
+            
+            # Restore pixels outside the allowed boundaries (clipping effect)
+            for x in range(matrix.width):
+                for y in range(matrix.height):
+                    if x < album_x or x >= max_x:  # Outside horizontal bounds
+                        if album_y - 6 <= y <= album_y + 1:  # Within vertical text area
+                            # Restore original background (black)
+                            canvas.SetPixel(x, y, 0, 0, 0)
             
             # Update scroll position at medium speed
             if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
