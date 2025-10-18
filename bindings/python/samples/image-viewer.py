@@ -5,7 +5,7 @@ import requests
 import base64
 import json
 import os
-import threading
+# import threading  # Removed threading for better performance
 from io import BytesIO
 from dotenv import load_dotenv
 
@@ -114,31 +114,30 @@ def get_current_playing():
     
     return None, None, None, None
 
-def spotify_update_thread():
-    """Background thread for updating Spotify data"""
+def update_spotify_data():
+    """Direct Spotify data update - no threading"""
     global current_spotify_data
-    while True:
-        try:
-            current_song, current_artist, current_album, current_image = get_current_playing()
-            with spotify_lock:
-                if current_song and current_artist:
-                    current_spotify_data['song_name'] = current_song
-                    current_spotify_data['artist_name'] = current_artist.upper()
-                    current_spotify_data['album_name'] = current_album if current_album else "Album Name"
-                    if current_image:
-                        # Resize image to 20x20 in background thread
-                        resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-                        current_image.thumbnail((20, 20), resample=resample_mode)
-                        current_spotify_data['image'] = current_image.convert('RGB')
-                    print(f"Updated: {current_song} by {current_artist} from {current_album}")
-                else:
-                    current_spotify_data['song_name'] = "No music playing"
-                    current_spotify_data['artist_name'] = "SPOTIFY"
-                    current_spotify_data['album_name'] = "Album Name"
-        except Exception as e:
-            print(f"Spotify update error: {e}")
-        
-        time.sleep(1)  # Update every 3 seconds in background
+    try:
+        current_song, current_artist, current_album, current_image = get_current_playing()
+        if current_song and current_artist:
+            current_spotify_data['song_name'] = current_song
+            current_spotify_data['artist_name'] = current_artist.upper()
+            current_spotify_data['album_name'] = current_album if current_album else "Album Name"
+            if current_image:
+                # Resize image to 20x20
+                resample_mode = getattr(Image, "Resampling", Image).LANCZOS
+                current_image.thumbnail((20, 20), resample=resample_mode)
+                current_spotify_data['image'] = current_image.convert('RGB')
+            print(f"Updated: {current_song} by {current_artist} from {current_album}")
+            return True
+        else:
+            current_spotify_data['song_name'] = "No music playing"
+            current_spotify_data['artist_name'] = "SPOTIFY"
+            current_spotify_data['album_name'] = "Album Name"
+            return False
+    except Exception as e:
+        print(f"Spotify update error: {e}")
+        return False
 
 if len(sys.argv) > 1:
     # Use provided image file
@@ -201,14 +200,14 @@ artist_static_delay = 0
 album_static_delay = 0
 static_delay_frames = 20  # 1 second at 20fps
 
-# Global variables for Spotify data (thread-safe)
+# Global variables for Spotify data
 current_spotify_data = {
     'song_name': "Loading...",
     'artist_name': "SPOTIFY", 
     'album_name': "Album Name",
     'image': None
 }
-spotify_lock = threading.Lock()
+last_spotify_update = 0
 
 # Initialize album name
 album_name = "Album Name"
@@ -219,24 +218,22 @@ canvas = matrix.CreateFrameCanvas()
 try:
     print(f"Song width: {song_available_width}, Other width: {other_available_width}")
     if use_spotify:
-        print("Using Spotify integration - background updates every 3 seconds")
-        # Start background thread for Spotify updates
-        spotify_thread = threading.Thread(target=spotify_update_thread, daemon=True)
-        spotify_thread.start()
+        print("Using Spotify integration - direct updates every few seconds")
     print("Press CTRL-C to stop.")
     
     # Convert image to RGB for pixel access
     image_rgb = image.convert('RGB')
     
+    frame_count = 0
     while True:
-        # Get current Spotify data from background thread (no API calls in main loop)
-        if use_spotify:
-            with spotify_lock:
-                song_name = current_spotify_data['song_name']
-                artist_name = current_spotify_data['artist_name']
-                album_name = current_spotify_data['album_name']
-                if current_spotify_data['image'] is not None:
-                    image_rgb = current_spotify_data['image']
+        # Update Spotify data directly every 150 frames (about 3 seconds at 50fps)
+        if use_spotify and frame_count % 150 == 0:
+            update_spotify_data()
+            song_name = current_spotify_data['song_name']
+            artist_name = current_spotify_data['artist_name']
+            album_name = current_spotify_data['album_name']
+            if current_spotify_data['image'] is not None:
+                image_rgb = current_spotify_data['image']
         
         canvas.Clear()
         
@@ -462,6 +459,7 @@ try:
         
         # Increment scroll counter for timing
         scroll_counter += 1
+        frame_count += 1
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
