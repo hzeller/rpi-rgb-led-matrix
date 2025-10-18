@@ -157,10 +157,17 @@ song_color = graphics.Color(0, 255, 0)      # Green for song title
 artist_color = graphics.Color(255, 255, 255) # White for artist name
 album_color = graphics.Color(200, 200, 200)  # Light gray for album name
 
-# Text layout variables - all static now with 2px padding on all edges
+# Text layout variables with scrolling for cut-off text
 padding = 2
 song_available_width = matrix.width - (padding * 2)  # Song width minus left and right padding
 other_available_width = matrix.width - 22 - (padding * 2)  # Other text after image + padding
+
+# Scrolling variables for each text element
+song_scroll_pos = 0
+artist_scroll_pos = 0
+album_scroll_pos = 0
+scroll_speed = 0.1  # Slower scrolling
+scroll_counter = 0
 
 # Initialize album name
 album_name = "Album Name"
@@ -208,45 +215,126 @@ try:
         image_y = canvas.height - image_rgb.height - padding  # 2px from bottom edge
         canvas.SetImage(image_rgb, image_x, image_y)
         
-        # Song title spans width at top with padding (static, all caps, tight spacing)
+        # Song title spans width at top with padding (scrolls if cut off)
         song_x = padding  # Start 2px from left edge
         song_y = padding + 6   # 2px padding + 6px for font baseline (moved down 1px)
         song_display = song_name.upper()  # Convert to all caps
-        # Draw each character with tighter spacing, respecting right edge padding
-        current_x = song_x
         max_x = canvas.width - padding  # Maximum x position (2px from right edge)
-        for char in song_display:
-            # Estimate character width (5x7 font is roughly 5 pixels wide)
-            if current_x + 5 > max_x:  # Stop if character would extend into padding area
-                break
-            char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
-            current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
         
-        # Artist name in middle right in all caps (white, static, tight spacing)
+        # Calculate total text width
+        total_song_width = 0
+        for char in song_display:
+            char_width = len(char) * 4  # Rough estimate: 4 pixels per char for 5x7 font
+            total_song_width += char_width
+        
+        # Check if scrolling is needed
+        if total_song_width > song_available_width:
+            # Scroll within the song area only
+            display_x = song_x - song_scroll_pos
+            current_x = display_x
+            for char in song_display:
+                if current_x > max_x:  # Stop if beyond right boundary
+                    break
+                if current_x + 5 > song_x:  # Only draw if within left boundary
+                    char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
+                    current_x += char_width - 1
+                else:
+                    current_x += 4  # Estimated width when not drawing
+            
+            # Update scroll position slowly
+            if scroll_counter % 10 == 0:  # Scroll every 10 frames for slower movement
+                song_scroll_pos += 1
+                if song_scroll_pos > total_song_width + 20:  # Reset with some delay
+                    song_scroll_pos = 0
+        else:
+            # Static display if text fits
+            current_x = song_x
+            for char in song_display:
+                if current_x + 5 > max_x:
+                    break
+                char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
+                current_x += char_width - 1
+        
+        # Artist name in middle right in all caps (scrolls if cut off)
         artist_x = padding + 20 + 2  # 2px padding + 20px image + 2px spacing (proper positioning)
         artist_y = canvas.height // 2 + 2  # Middle of screen + 2px down
-        # Draw each character with tighter spacing, respecting right edge padding
-        current_x = artist_x
         max_x = canvas.width - padding  # Maximum x position (2px from right edge)
-        for char in artist_name:
-            # Estimate character width (5x7 font is roughly 5 pixels wide)
-            if current_x + 5 > max_x:  # Stop if character would extend into padding area
-                break
-            char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
-            current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
+        artist_available_width = max_x - artist_x  # Available width for artist text
         
-        # Album name in lower right in normal case (light gray, static, tight spacing)
+        # Calculate total text width
+        total_artist_width = 0
+        for char in artist_name:
+            total_artist_width += 4  # Rough estimate: 4 pixels per char
+        
+        # Check if scrolling is needed
+        if total_artist_width > artist_available_width:
+            # Scroll within the artist area only
+            display_x = artist_x - artist_scroll_pos
+            current_x = display_x
+            for char in artist_name:
+                if current_x > max_x:  # Stop if beyond right boundary
+                    break
+                if current_x + 5 > artist_x:  # Only draw if within left boundary
+                    char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
+                    current_x += char_width - 1
+                else:
+                    current_x += 4  # Estimated width when not drawing
+            
+            # Update scroll position slowly
+            if scroll_counter % 10 == 0:  # Scroll every 10 frames
+                artist_scroll_pos += 1
+                if artist_scroll_pos > total_artist_width + 20:  # Reset with delay
+                    artist_scroll_pos = 0
+        else:
+            # Static display if text fits
+            current_x = artist_x
+            for char in artist_name:
+                if current_x + 5 > max_x:
+                    break
+                char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
+                current_x += char_width - 1
+        
+        # Album name in lower right in normal case (scrolls if cut off)
         album_x = padding + 20 + 2  # 2px padding + 20px image + 2px spacing (proper positioning)
         album_y = canvas.height - padding - 2  # 2px from bottom edge (proper padding)
-        # Draw each character with tighter spacing, respecting right edge padding
-        current_x = album_x
         max_x = canvas.width - padding  # Maximum x position (2px from right edge)
+        album_available_width = max_x - album_x  # Available width for album text
+        
+        # Calculate total text width
+        total_album_width = 0
         for char in album_name:
-            # Estimate character width (5x7 font is roughly 5 pixels wide)
-            if current_x + 5 > max_x:  # Stop if character would extend into padding area
-                break
-            char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
-            current_x += char_width - 1  # Reduce spacing by 1 pixel between characters
+            total_album_width += 4  # Rough estimate: 4 pixels per char
+        
+        # Check if scrolling is needed
+        if total_album_width > album_available_width:
+            # Scroll within the album area only
+            display_x = album_x - album_scroll_pos
+            current_x = display_x
+            for char in album_name:
+                if current_x > max_x:  # Stop if beyond right boundary
+                    break
+                if current_x + 5 > album_x:  # Only draw if within left boundary
+                    char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
+                    current_x += char_width - 1
+                else:
+                    current_x += 4  # Estimated width when not drawing
+            
+            # Update scroll position slowly
+            if scroll_counter % 10 == 0:  # Scroll every 10 frames
+                album_scroll_pos += 1
+                if album_scroll_pos > total_album_width + 20:  # Reset with delay
+                    album_scroll_pos = 0
+        else:
+            # Static display if text fits
+            current_x = album_x
+            for char in album_name:
+                if current_x + 5 > max_x:
+                    break
+                char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
+                current_x += char_width - 1
+        
+        # Increment scroll counter for timing
+        scroll_counter += 1
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
