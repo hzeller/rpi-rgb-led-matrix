@@ -73,13 +73,13 @@ class SimpleClock:
                 print(f"Time: {full_time_str}")
                 
                 # Calculate text positions for perfect centering
-                # Date font is about 5px wide per character
-                date_width = len(date_str) * 5
+                # Use tighter character spacing - actual font widths are smaller
+                date_width = len(date_str) * 4  # 5x7 font is about 4px wide per char (tighter)
                 date_x = (64 - date_width) // 2
                 date_y = 8  # Top area for date
                 
-                # Time font is about 9px wide per character
-                full_time_width = len(full_time_str) * 9
+                # Time font spacing - much tighter
+                full_time_width = len(full_time_str) * 6  # 9x18B font is about 6px wide per char (much tighter)
                 time_x = (64 - full_time_width) // 2
                 time_y = 26  # Below the date
                 
