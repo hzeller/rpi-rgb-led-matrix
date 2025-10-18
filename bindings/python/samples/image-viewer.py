@@ -409,7 +409,7 @@ try:
                 scroll_offset = album_scroll_pos
             
             # Draw text with wraparound - draw it twice to create seamless loop
-            for offset in [0, total_album_width + 20]:  # Draw original and wrapped version
+            for offset in [0, total_album_width + 10]:  # Draw original and wrapped version
                 display_x = album_x - scroll_offset + offset
                 current_x = display_x
                 for char in album_name:
