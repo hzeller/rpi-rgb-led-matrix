@@ -51,58 +51,20 @@ try:
         # Draw image on the left (32x32)
         canvas.SetImage(image.convert('RGB'), 0, 0)
         
-        # Song text scrolling with proper clipping to text area (x=32 to x=63)
+        # Song text scrolling - draw at actual position, let matrix clip naturally
         song_x = song_pos + 32
-        
-        # Calculate which characters are visible in the text area
-        if song_x < 32:
-            # Text is partially or fully off the left edge - calculate visible portion
-            char_width = 6  # Approximate width of 6x13B font
-            chars_off_left = max(0, (32 - song_x + char_width - 1) // char_width)
-            
-            if chars_off_left < len(song_name):
-                # Some characters are still visible - draw the visible portion
-                visible_song = song_name[chars_off_left:]
-                song_len = graphics.DrawText(canvas, song_font, 32, 16, text_color, visible_song)
-                total_song_len = len(song_name) * char_width
-            else:
-                # All text is off-screen
-                total_song_len = len(song_name) * char_width
-                song_len = 0
-        else:
-            # Text starts in visible area - draw normally
-            song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
-            total_song_len = song_len
+        song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
         
         song_pos -= 1
-        if song_pos + total_song_len < -32:  # Reset when completely scrolled past
+        if song_pos + song_len < -32:  # Reset when completely scrolled past
             song_pos = 32  # Start from right edge of text area
         
-        # Artist text scrolling with proper clipping to text area (x=32 to x=63)
+        # Artist text scrolling - draw at actual position, let matrix clip naturally  
         artist_x = artist_pos + 32
-        
-        # Calculate which characters are visible in the text area
-        if artist_x < 32:
-            # Text is partially or fully off the left edge - calculate visible portion
-            char_width = 5  # Approximate width of 5x7 font
-            chars_off_left = max(0, (32 - artist_x + char_width - 1) // char_width)
-            
-            if chars_off_left < len(artist_name):
-                # Some characters are still visible - draw the visible portion
-                visible_artist = artist_name[chars_off_left:]
-                artist_len = graphics.DrawText(canvas, artist_font, 32, canvas.height - 4, text_color, visible_artist)
-                total_artist_len = len(artist_name) * char_width
-            else:
-                # All text is off-screen
-                total_artist_len = len(artist_name) * char_width
-                artist_len = 0
-        else:
-            # Text starts in visible area - draw normally
-            artist_len = graphics.DrawText(canvas, artist_font, artist_x, canvas.height - 4, text_color, artist_name)
-            total_artist_len = artist_len
+        artist_len = graphics.DrawText(canvas, artist_font, artist_x, canvas.height - 4, text_color, artist_name)
         
         artist_pos -= 1
-        if artist_pos + total_artist_len < -32:  # Reset when completely scrolled past
+        if artist_pos + artist_len < -32:  # Reset when completely scrolled past
             artist_pos = 32  # Start from right edge of text area
         
         canvas = matrix.SwapOnVSync(canvas)
