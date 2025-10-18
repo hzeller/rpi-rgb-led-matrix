@@ -71,21 +71,21 @@ class SimpleClock:
                 if time_str.startswith("0"):
                     time_str = time_str[1:]  # Remove leading zero (e.g., "01:30" -> "1:30")
                 ampm_str = now.strftime("%p")
-                full_time_str = f"{time_str} {ampm_str}"
+                full_time_str = f"{time_str}{ampm_str}"
                 
                 print(f"Date: {date_str}")
                 print(f"Time: {full_time_str} (Mountain Time)")
                 
                 # Calculate text positions with proper horizontal AND vertical centering
-                # Adjust spacing for bold fonts, keep them close together
-                date_width = len(date_str) * 4  # 6x13B font spacing
+                # Much tighter character spacing - characters almost touching
+                date_width = len(date_str) * 2.5  # Very tight spacing for date
                 date_x = (64 - date_width) // 2 - 10  # Center horizontally, shift more left
                 
                 # Vertical centering: keep them close together
                 date_y = 11  # Close to original position
                 
-                # Time font spacing - bold but keep tight, reduce AM/PM gap
-                full_time_width = len(full_time_str) * 4  # Tighter spacing to reduce AM/PM gap
+                # Time font spacing - very tight character spacing
+                full_time_width = len(full_time_str) * 2.5  # Much tighter spacing
                 time_x = (64 - full_time_width) // 2 - 10  # Center horizontally, shift more left
                 time_y = 25  # Keep close to date
                 
