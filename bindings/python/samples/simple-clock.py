@@ -13,14 +13,13 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
 class SimpleClock:
     def __init__(self):
-        # Configuration for the matrix
+        # Configuration for the matrix - use same settings as image-viewer.py
         options = RGBMatrixOptions()
         options.rows = 32
         options.cols = 64
         options.chain_length = 1
         options.parallel = 1
-        options.hardware_mapping = 'regular'
-        options.gpio_slowdown = 4
+        options.hardware_mapping = 'adafruit-hat-pwm'  # Same as image-viewer
         
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
@@ -36,6 +35,9 @@ class SimpleClock:
         
     def run(self):
         print("Starting simple clock. Press CTRL-C to stop.")
+        print(f"Matrix size: {self.matrix.width}x{self.matrix.height}")
+        print(f"Font height: {self.font.height}")
+        
         try:
             while True:
                 self.canvas.Clear()
@@ -46,22 +48,27 @@ class SimpleClock:
                 date_str = now.strftime("%m/%d")
                 seconds_str = now.strftime(":%S")
                 
+                print(f"Time: {time_str}{seconds_str}, Date: {date_str}")
+                
                 # Calculate text positions for centering
-                time_width = len(time_str) * 7  # Approximate character width
-                date_width = len(date_str) * 7
-                seconds_width = len(seconds_str) * 7
+                # Use actual font metrics instead of approximation
+                time_width = len(time_str) * 6  # 7x13 font is about 6px wide per char
+                date_width = len(date_str) * 6
+                seconds_width = len(seconds_str) * 6
                 
                 # Center the time on the display
-                time_x = (64 - time_width) // 2
-                time_y = 20
+                time_x = max(2, (64 - time_width) // 2)
+                time_y = self.font.height + 2  # Use font height + margin
                 
                 # Center the date below the time
-                date_x = (64 - date_width) // 2
-                date_y = 30
+                date_x = max(2, (64 - date_width) // 2)
+                date_y = time_y + self.font.height + 2
                 
                 # Position seconds after the time
                 seconds_x = time_x + time_width
                 seconds_y = time_y
+                
+                print(f"Positions - Time: ({time_x},{time_y}), Seconds: ({seconds_x},{seconds_y}), Date: ({date_x},{date_y})")
                 
                 # Draw the time, date, and seconds
                 graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, time_str)
