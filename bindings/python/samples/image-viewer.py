@@ -46,7 +46,7 @@ try:
         canvas.SetImage(image.convert('RGB'), 0, 0)
         
         # Draw song name bold on top right
-        graphics.DrawText(canvas, song_font, 34, 12, text_color, song_name)
+        graphics.DrawText(canvas, song_font, 34, 16, text_color, song_name)
         
         # Draw artist name regular closer to bottom
         graphics.DrawText(canvas, artist_font, 34, canvas.height - 4, text_color, artist_name)
