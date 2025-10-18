@@ -30,11 +30,11 @@ class SimpleClock:
         
         # Load font - use a bigger, bolder font for classic alarm clock look
         self.font = graphics.Font()
-        self.font.LoadFont("../../../fonts/10x20.bdf")  # Bigger bold font
+        self.font.LoadFont("../../../fonts/9x18B.bdf")  # Bold 9x18 font (B = Bold)
         
-        # Load slightly bigger font for date
+        # Load bold font for date
         self.date_font = graphics.Font()
-        self.date_font.LoadFont("../../../fonts/5x7.bdf")  # Slightly bigger font for date
+        self.date_font.LoadFont("../../../fonts/6x13B.bdf")  # Bold font for date
         
         # Colors - classic alarm clock style
         self.time_color = graphics.Color(255, 255, 255)  # Bright white for time
@@ -77,17 +77,17 @@ class SimpleClock:
                 print(f"Time: {full_time_str} (Mountain Time)")
                 
                 # Calculate text positions with proper horizontal AND vertical centering
-                # Adjust spacing for bigger fonts
-                date_width = len(date_str) * 4  # 5x7 font spacing
+                # Adjust spacing for bold fonts, keep them close together
+                date_width = len(date_str) * 4  # 6x13B font spacing
                 date_x = (64 - date_width) // 2 - 6  # Center horizontally, maintain left shift
                 
-                # Vertical centering: adjust for bigger fonts
-                date_y = 10  # Adjust for bigger date font
+                # Vertical centering: keep them close together
+                date_y = 11  # Close to original position
                 
-                # Time font spacing - adjust for bigger font
-                full_time_width = len(full_time_str) * 6  # 10x20 font spacing
+                # Time font spacing - bold but keep tight
+                full_time_width = len(full_time_str) * 5  # 9x18B font spacing (tighter than before)
                 time_x = (64 - full_time_width) // 2 - 6  # Center horizontally, maintain left shift
-                time_y = 28  # Adjust for bigger time font
+                time_y = 25  # Keep close to date
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
                 
