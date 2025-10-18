@@ -24,17 +24,16 @@ class SimpleClock:
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
         
-        # Load font - use same approach as image-viewer.py
+        # Load font - use a bigger, bolder font for classic alarm clock look
         self.font = graphics.Font()
-        self.font.LoadFont("../../../fonts/7x13.bdf")
+        self.font.LoadFont("../../../fonts/9x18B.bdf")  # Bold 9x18 font
         
-        # Colors
-        self.time_color = graphics.Color(0, 255, 0)      # Green for time
-        self.date_color = graphics.Color(255, 255, 0)    # Yellow for date
-        self.seconds_color = graphics.Color(255, 100, 0) # Orange for seconds
+        # Colors - classic alarm clock style
+        self.time_color = graphics.Color(255, 255, 255)  # Bright white for time
+        self.colon_color = graphics.Color(255, 255, 255)  # White for colons too
         
     def run(self):
-        print("Starting simple clock. Press CTRL-C to stop.")
+        print("Starting classic alarm clock. Press CTRL-C to stop.")
         print(f"Matrix size: {self.matrix.width}x{self.matrix.height}")
         print(f"Font height: {self.font.height}")
         
@@ -43,37 +42,32 @@ class SimpleClock:
                 self.canvas.Clear()
                 now = datetime.now()
                 
-                # Format time and date
-                time_str = now.strftime("%H:%M")
-                date_str = now.strftime("%m/%d")
-                seconds_str = now.strftime(":%S")
+                # Format time in classic 12-hour format with AM/PM
+                time_str = now.strftime("%I:%M")
+                if time_str.startswith("0"):
+                    time_str = time_str[1:]  # Remove leading zero (e.g., "01:30" -> "1:30")
+                ampm_str = now.strftime("%p")
                 
-                print(f"Time: {time_str}{seconds_str}, Date: {date_str}")
+                print(f"Time: {time_str} {ampm_str}")
                 
-                # Calculate text positions for centering
-                # Use actual font metrics instead of approximation
-                time_width = len(time_str) * 6  # 7x13 font is about 6px wide per char
-                date_width = len(date_str) * 6
-                seconds_width = len(seconds_str) * 6
+                # Calculate text positions for perfect centering
+                # 9x18B font is about 9px wide per character
+                time_width = len(time_str) * 9
+                ampm_width = len(ampm_str) * 9
                 
-                # Center the time on the display
-                time_x = max(2, (64 - time_width) // 2)
-                time_y = self.font.height + 2  # Use font height + margin
+                # Center the time perfectly in the display
+                time_x = (64 - time_width) // 2
+                time_y = 20  # Vertically centered in 32px height
                 
-                # Center the date below the time
-                date_x = max(2, (64 - date_width) // 2)
-                date_y = time_y + self.font.height + 2
+                # Position AM/PM below and centered
+                ampm_x = (64 - ampm_width) // 2
+                ampm_y = time_y + 10  # Below the time
                 
-                # Position seconds after the time
-                seconds_x = time_x + time_width
-                seconds_y = time_y
+                print(f"Positions - Time: ({time_x},{time_y}), AM/PM: ({ampm_x},{ampm_y})")
                 
-                print(f"Positions - Time: ({time_x},{time_y}), Seconds: ({seconds_x},{seconds_y}), Date: ({date_x},{date_y})")
-                
-                # Draw the time, date, and seconds
+                # Draw the time and AM/PM in classic white
                 graphics.DrawText(self.canvas, self.font, time_x, time_y, self.time_color, time_str)
-                graphics.DrawText(self.canvas, self.font, seconds_x, seconds_y, self.seconds_color, seconds_str)
-                graphics.DrawText(self.canvas, self.font, date_x, date_y, self.date_color, date_str)
+                graphics.DrawText(self.canvas, self.font, ampm_x, ampm_y, self.time_color, ampm_str)
                 
                 # Swap buffers
                 self.canvas = self.matrix.SwapOnVSync(self.canvas)
