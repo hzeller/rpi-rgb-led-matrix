@@ -76,17 +76,23 @@ class SimpleClock:
                 print(f"Date: {date_str}")
                 print(f"Time: {full_time_str} (Mountain Time)")
                 
-                # Calculate text positions with proper horizontal AND vertical centering
-                # Ultra-tight character spacing - characters overlapping
-                date_width = len(date_str) * 1.2  # Ultra-tight spacing for date
-                date_x = (64 - date_width) // 2 - 20  # Center horizontally, shift much further left
+                # Calculate text positions with proper dynamic centering
+                # Use actual text width measurements for perfect centering
+                
+                # Measure actual date text width
+                date_text_width = 0
+                for char in date_str:
+                    date_text_width += self.date_font.CharacterWidth(ord(char))
+                date_x = (64 - date_text_width) // 2  # Perfect horizontal center
                 
                 # Vertical centering: keep them close together
                 date_y = 11  # Close to original position
                 
-                # Time font spacing - ultra-tight character spacing
-                full_time_width = len(full_time_str) * 1.5  # Ultra-tight spacing
-                time_x = (64 - full_time_width) // 2 - 20  # Center horizontally, shift much further left
+                # Measure actual time text width
+                time_text_width = 0
+                for char in full_time_str:
+                    time_text_width += self.font.CharacterWidth(ord(char))
+                time_x = (64 - time_text_width) // 2  # Perfect horizontal center
                 time_y = 25  # Keep close to date
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
