@@ -146,9 +146,9 @@ image.thumbnail((20, 20), resample=resample_mode)
 
 # Load fonts for different elements
 song_font = graphics.Font()
-song_font.LoadFont("../../../fonts/6x10.bdf")  # Medium font for song title (made smaller)
+song_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for song title
 artist_font = graphics.Font()
-artist_font.LoadFont("../../../fonts/6x10.bdf")  # Medium font for artist
+artist_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for artist
 album_font = graphics.Font()
 album_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for album
 
@@ -157,11 +157,10 @@ song_color = graphics.Color(0, 255, 0)      # Green for song title
 artist_color = graphics.Color(255, 255, 255) # White for artist name
 album_color = graphics.Color(200, 200, 200)  # Light gray for album name
 
-# Text scrolling variables - new layout
-song_available_width = matrix.width        # Song spans entire width at top
-other_available_width = matrix.width - 22  # Other text after 20px image + margin
-artist_pos = 22                           # Artist starts after image
-album_pos = 22                            # Album starts after image
+# Text layout variables - all static now with 2px padding on all edges
+padding = 2
+song_available_width = matrix.width - (padding * 2)  # Song width minus left and right padding
+other_available_width = matrix.width - 22 - (padding * 2)  # Other text after image + padding
 
 # Initialize album name
 album_name = "Album Name"
@@ -204,44 +203,26 @@ try:
         
         canvas.Clear()
         
-        # Draw album cover in lower left (20x20)
-        image_y = canvas.height - image_rgb.height  # Bottom of screen
-        canvas.SetImage(image_rgb, 0, image_y)
+        # Draw album cover in lower left (20x20) with 2px padding
+        image_x = padding  # 2px from left edge
+        image_y = canvas.height - image_rgb.height - padding  # 2px from bottom edge
+        canvas.SetImage(image_rgb, image_x, image_y)
         
-        # Song title spans entire width at top (static, no scrolling)
-        song_x = 0   # Start at left edge
-        song_y = 8   # Top of screen with 1px padding above (6x10 font height + 1px = 8px from top)
-        song_len = graphics.DrawText(canvas, song_font, song_x, song_y, song_color, song_name)
+        # Song title spans width at top with padding (static, all caps)
+        song_x = padding  # Start 2px from left edge
+        song_y = padding + 5   # 2px padding + 5px for font baseline
+        song_display = song_name.upper()  # Convert to all caps
+        graphics.DrawText(canvas, song_font, song_x, song_y, song_color, song_display)
         
-        # If song is too long, truncate it to fit available width
-        if song_len > song_available_width:
-            # Calculate how many characters we can fit
-            char_width = 6  # Approximate width of 6x10 font
-            max_chars = song_available_width // char_width
-            truncated_song = song_name[:max_chars-1] + "..." if len(song_name) > max_chars else song_name
-            graphics.DrawText(canvas, song_font, song_x, song_y, song_color, truncated_song)
-        
-        # Artist name in middle right in all caps (white)
-        artist_x = artist_pos
+        # Artist name in middle right in all caps (white, static)
+        artist_x = padding + 20 + padding  # 2px padding + 20px image + 2px spacing
         artist_y = canvas.height // 2  # Middle of screen
-        artist_len = graphics.DrawText(canvas, artist_font, artist_x, artist_y, artist_color, artist_name)
+        graphics.DrawText(canvas, artist_font, artist_x, artist_y, artist_color, artist_name)
         
-        # Only scroll artist if it doesn't fit
-        if artist_len > other_available_width:
-            artist_pos -= 1
-            if artist_pos + artist_len <= 22:  # Reset when fully scrolled past image
-                artist_pos = matrix.width
-        
-        # Album name in lower right in normal case (light gray)
-        album_x = album_pos
-        album_y = canvas.height - 4  # Bottom of screen
-        album_len = graphics.DrawText(canvas, album_font, album_x, album_y, album_color, album_name)
-        
-        # Only scroll album if it doesn't fit
-        if album_len > other_available_width:
-            album_pos -= 1
-            if album_pos + album_len <= 22:  # Reset when fully scrolled past image
-                album_pos = matrix.width
+        # Album name in lower right in normal case (light gray, static)
+        album_x = padding + 20 + padding  # 2px padding + 20px image + 2px spacing
+        album_y = canvas.height - padding - 2  # 2px from bottom edge
+        graphics.DrawText(canvas, album_font, album_x, album_y, album_color, album_name)
         
         canvas = matrix.SwapOnVSync(canvas)
         time.sleep(0.05)  # Faster refresh for smooth scrolling
