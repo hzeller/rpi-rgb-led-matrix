@@ -51,16 +51,38 @@ try:
         # Draw image on the left (32x32)
         canvas.SetImage(image.convert('RGB'), 0, 0)
         
-        # Song text scrolling - clip at x=34 to not overlay image
-        song_x = max(song_pos + 34, 34)
-        song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
+        # Song text scrolling - only draw the portion that's visible (x >= 34)
+        song_x = song_pos + 34
+        if song_x < matrix.width:  # Only draw if any part is visible
+            # Calculate which part of the text to draw
+            if song_x >= 34:
+                # Text starts in visible area - draw normally
+                song_len = graphics.DrawText(canvas, song_font, song_x, 16, text_color, song_name)
+            else:
+                # Text starts behind image - would need substring drawing
+                # For now, don't draw when behind image
+                song_len = len(song_name) * 6  # Estimate length
+        else:
+            song_len = len(song_name) * 6  # Estimate when off-screen
+            
         song_pos -= 1
         if song_pos + song_len < -34:  # Reset when completely scrolled past
             song_pos = available_width
         
-        # Artist text scrolling - clip at x=34 to not overlay image  
-        artist_x = max(artist_pos + 34, 34)
-        artist_len = graphics.DrawText(canvas, artist_font, artist_x, canvas.height - 4, text_color, artist_name)
+        # Artist text scrolling - only draw the portion that's visible (x >= 34)
+        artist_x = artist_pos + 34
+        if artist_x < matrix.width:  # Only draw if any part is visible
+            # Calculate which part of the text to draw
+            if artist_x >= 34:
+                # Text starts in visible area - draw normally
+                artist_len = graphics.DrawText(canvas, artist_font, artist_x, canvas.height - 4, text_color, artist_name)
+            else:
+                # Text starts behind image - would need substring drawing
+                # For now, don't draw when behind image
+                artist_len = len(artist_name) * 5  # Estimate length
+        else:
+            artist_len = len(artist_name) * 5  # Estimate when off-screen
+            
         artist_pos -= 1
         if artist_pos + artist_len < -34:  # Reset when completely scrolled past
             artist_pos = available_width
