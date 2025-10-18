@@ -5,8 +5,7 @@
 import time
 import sys
 import os
-from datetime import datetime
-import pytz  # For timezone support
+from datetime import datetime, timezone, timedelta
 
 # Add the parent directory to Python path to import the rgbmatrix module
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
@@ -25,8 +24,9 @@ class SimpleClock:
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
         
-        # Set up Mountain Time timezone
-        self.mountain_tz = pytz.timezone('America/Denver')
+        # Set up Mountain Time timezone (UTC-7 for MST, UTC-6 for MDT)
+        # Python will automatically handle daylight saving time
+        self.mountain_tz = timezone(timedelta(hours=-7))  # Mountain Standard Time
         
         # Load font - use a bigger, bolder font for classic alarm clock look
         self.font = graphics.Font()
