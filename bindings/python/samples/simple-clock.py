@@ -27,14 +27,31 @@ class SimpleClock:
         
         # Load font
         self.font = graphics.Font()
-        font_path = os.path.join(os.path.dirname(__file__), '../../..', 'fonts', '7x13.bdf')
-        if not self.font.LoadFont(font_path):
-            print(f"Couldn't load font from {font_path}")
-            # Try alternative font
-            font_path = os.path.join(os.path.dirname(__file__), '../../..', 'fonts', '6x10.bdf')
-            if not self.font.LoadFont(font_path):
-                print("Couldn't load any font!")
-                sys.exit(1)
+        # Try multiple font paths
+        font_paths = [
+            os.path.join(os.path.dirname(__file__), '..', '..', '..', 'fonts', '7x13.bdf'),
+            os.path.join(os.path.dirname(__file__), '..', '..', '..', 'fonts', '6x10.bdf'),
+            os.path.join(os.path.dirname(__file__), '..', '..', '..', 'fonts', '5x7.bdf'),
+            'fonts/7x13.bdf',
+            'fonts/6x10.bdf', 
+            'fonts/5x7.bdf',
+            '../../../fonts/7x13.bdf',
+            '../../../fonts/6x10.bdf',
+            '../../../fonts/5x7.bdf'
+        ]
+        
+        font_loaded = False
+        for font_path in font_paths:
+            if self.font.LoadFont(font_path):
+                print(f"Loaded font: {font_path}")
+                font_loaded = True
+                break
+            
+        if not font_loaded:
+            print("Couldn't load any font! Tried paths:")
+            for path in font_paths:
+                print(f"  {path}")
+            sys.exit(1)
         
         # Colors
         self.time_color = graphics.Color(0, 255, 0)      # Green for time
