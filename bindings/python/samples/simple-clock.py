@@ -84,7 +84,7 @@ class SimpleClock:
                 date_text_width = 0
                 for char in date_str:
                     date_text_width += self.date_font.CharacterWidth(ord(char))
-                date_x = (64 - date_text_width) // 2 + 3  # Perfect horizontal center + 3 pixels right
+                date_x = (64 - date_text_width) // 2 + 5  # Perfect horizontal center + 5 pixels right (3 + 2)
                 
                 # Vertical centering: keep them close together
                 date_y = 13  # Close to original position + 2 pixels down
