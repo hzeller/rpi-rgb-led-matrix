@@ -228,14 +228,6 @@ try:
         
         # Check if scrolling is needed
         if total_song_width > song_available_width:
-            # Save the current canvas area that will be overwritten
-            saved_pixels = {}
-            for x in range(song_x, max_x):
-                for y in range(song_y - 6, song_y + 2):  # Font height area
-                    if 0 <= x < matrix.width and 0 <= y < matrix.height:
-                        # Save background pixel
-                        saved_pixels[(x, y)] = canvas.GetPixel(x, y)
-            
             # Draw complete scrolling text (may extend outside bounds)
             display_x = song_x - song_scroll_pos
             current_x = display_x
@@ -243,13 +235,18 @@ try:
                 char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
                 current_x += char_width - 1
             
-            # Restore pixels outside the allowed boundaries (clipping effect)
-            for x in range(matrix.width):
-                for y in range(matrix.height):
-                    if x < song_x or x >= max_x:  # Outside horizontal bounds
-                        if song_y - 6 <= y <= song_y + 1:  # Within vertical text area
-                            # Restore original background (black)
-                            canvas.SetPixel(x, y, 0, 0, 0)
+            # Clear pixels outside the allowed boundaries (clipping effect)
+            # Clear left side (before song area)
+            for x in range(0, song_x):
+                for y in range(song_y - 6, song_y + 2):
+                    if 0 <= y < matrix.height:
+                        canvas.SetPixel(x, y, 0, 0, 0)
+            
+            # Clear right side (after song area)
+            for x in range(max_x, matrix.width):
+                for y in range(song_y - 6, song_y + 2):
+                    if 0 <= y < matrix.height:
+                        canvas.SetPixel(x, y, 0, 0, 0)
             
             # Update scroll position at medium speed
             if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
@@ -285,13 +282,18 @@ try:
                 char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
                 current_x += char_width - 1
             
-            # Restore pixels outside the allowed boundaries (clipping effect)
-            for x in range(matrix.width):
-                for y in range(matrix.height):
-                    if x < artist_x or x >= max_x:  # Outside horizontal bounds
-                        if artist_y - 6 <= y <= artist_y + 1:  # Within vertical text area
-                            # Restore original background (black)
-                            canvas.SetPixel(x, y, 0, 0, 0)
+            # Clear pixels outside the allowed boundaries (clipping effect)
+            # Clear left side (before artist area)
+            for x in range(0, artist_x):
+                for y in range(artist_y - 6, artist_y + 2):
+                    if 0 <= y < matrix.height:
+                        canvas.SetPixel(x, y, 0, 0, 0)
+            
+            # Clear right side (after artist area)
+            for x in range(max_x, matrix.width):
+                for y in range(artist_y - 6, artist_y + 2):
+                    if 0 <= y < matrix.height:
+                        canvas.SetPixel(x, y, 0, 0, 0)
             
             # Update scroll position at medium speed
             if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
@@ -327,13 +329,18 @@ try:
                 char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
                 current_x += char_width - 1
             
-            # Restore pixels outside the allowed boundaries (clipping effect)
-            for x in range(matrix.width):
-                for y in range(matrix.height):
-                    if x < album_x or x >= max_x:  # Outside horizontal bounds
-                        if album_y - 6 <= y <= album_y + 1:  # Within vertical text area
-                            # Restore original background (black)
-                            canvas.SetPixel(x, y, 0, 0, 0)
+            # Clear pixels outside the allowed boundaries (clipping effect)
+            # Clear left side (before album area)
+            for x in range(0, album_x):
+                for y in range(album_y - 6, album_y + 2):
+                    if 0 <= y < matrix.height:
+                        canvas.SetPixel(x, y, 0, 0, 0)
+            
+            # Clear right side (after album area)
+            for x in range(max_x, matrix.width):
+                for y in range(album_y - 6, album_y + 2):
+                    if 0 <= y < matrix.height:
+                        canvas.SetPixel(x, y, 0, 0, 0)
             
             # Update scroll position at medium speed
             if scroll_counter % 6 == 0:  # Scroll every 6 frames for faster movement
