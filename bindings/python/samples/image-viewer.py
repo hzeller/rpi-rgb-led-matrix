@@ -255,7 +255,7 @@ try:
                 current_x += char_width - 1
         
         # Artist name in middle right in all caps (scrolls if cut off)
-        artist_x = padding + 20 + padding  # 2px padding + 20px image + 2px padding from album
+        artist_x = padding + 20 + padding  # 2px + 20px album + 2px spacing = x=24
         artist_y = canvas.height // 2 + 2  # Middle of screen + 2px down
         max_x = canvas.width - padding  # Maximum x position (2px from right edge)
         artist_available_width = max_x - artist_x  # Available width for artist text
@@ -273,7 +273,7 @@ try:
             for char in artist_name:
                 if current_x > max_x:  # Stop if beyond right boundary
                     break
-                if current_x + 5 > artist_x:  # Only draw if within left boundary
+                if current_x >= artist_x and current_x + 5 <= max_x:  # Only draw if within boundaries
                     char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
                     current_x += char_width - 1
                 else:
@@ -294,7 +294,7 @@ try:
                 current_x += char_width - 1
         
         # Album name in lower right in normal case (scrolls if cut off)
-        album_x = padding + 20 + padding  # 2px padding + 20px image + 2px padding from album
+        album_x = padding + 20 + padding  # 2px + 20px album + 2px spacing = x=24
         album_y = canvas.height - padding - 2  # 2px from bottom edge (proper padding)
         max_x = canvas.width - padding  # Maximum x position (2px from right edge)
         album_available_width = max_x - album_x  # Available width for album text
@@ -312,7 +312,7 @@ try:
             for char in album_name:
                 if current_x > max_x:  # Stop if beyond right boundary
                     break
-                if current_x + 5 > album_x:  # Only draw if within left boundary
+                if current_x >= album_x and current_x + 5 <= max_x:  # Only draw if within boundaries
                     char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
                     current_x += char_width - 1
                 else:
