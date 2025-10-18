@@ -60,12 +60,11 @@ class SimpleClock:
                 # Get current time in Mountain Time
                 now = datetime.now(self.mountain_tz)
                 
-                # Format date in the requested format: "Saturday, October 18th"
-                day_name = now.strftime("%A")
-                month_name = now.strftime("%B")
+                # Format date in a shorter format that will fit: "Sat Oct 18"
+                day_name = now.strftime("%a")  # Short day name (Sat)
+                month_name = now.strftime("%b")  # Short month name (Oct)
                 day_num = now.day
-                ordinal_suffix = self.get_ordinal_suffix(day_num)
-                date_str = f"{day_name}, {month_name} {day_num}{ordinal_suffix}"
+                date_str = f"{day_name} {month_name} {day_num}"
                 
                 # Format time in classic 12-hour format with AM/PM on same line
                 time_str = now.strftime("%I:%M")
@@ -77,16 +76,20 @@ class SimpleClock:
                 print(f"Date: {date_str}")
                 print(f"Time: {full_time_str} (Mountain Time)")
                 
-                # Calculate text positions with much tighter character spacing
-                # Ultra-tight spacing for tiny font to fit on 64px screen
-                date_width = len(date_str) * 1.8  # tom-thumb font - ultra-tight spacing
-                date_x = max(0, (64 - date_width) // 2)  # Ensure it doesn't go negative
-                date_y = 6  # Top area for date (adjusted for tiny font)
+                # Calculate text positions with proper horizontal AND vertical centering
+                # Much shorter date string should fit easily
+                date_width = len(date_str) * 3  # More realistic spacing for tom-thumb
+                date_x = (64 - date_width) // 2  # Center horizontally
+                
+                # Vertical centering: distribute date and time evenly in 32px height
+                total_text_height = self.date_font.height + self.font.height + 4  # 4px gap between
+                start_y = (32 - total_text_height) // 2  # Center the block vertically
+                date_y = start_y + self.date_font.height  # Date at top of centered block
                 
                 # Time font spacing - very tight
                 full_time_width = len(full_time_str) * 4  # 9x18B font - very tight spacing
-                time_x = (64 - full_time_width) // 2
-                time_y = 26  # Below the date
+                time_x = (64 - full_time_width) // 2  # Center horizontally
+                time_y = date_y + 4 + self.font.height  # Time below date with gap
                 
                 print(f"Positions - Date: ({date_x},{date_y}), Time: ({time_x},{time_y})")
                 
