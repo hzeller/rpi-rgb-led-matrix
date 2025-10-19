@@ -28,6 +28,70 @@ class RealTattooDisplay(SampleBase):
         self.parser.add_argument("--local-images", help="Use local images instead of downloading", action="store_true")
         self.parser.add_argument("--no-download", help="Skip downloading, use placeholders only", action="store_true")
         
+    def process(self):
+        """Override to set default matrix options"""
+        # Parse arguments first
+        self.args = self.parser.parse_args()
+        
+        # Set default matrix options if not specified
+        if not hasattr(self.args, 'led_rows') or self.args.led_rows == 32:
+            self.args.led_rows = 32
+        if not hasattr(self.args, 'led_cols') or self.args.led_cols == 32:
+            self.args.led_cols = 64
+        if not hasattr(self.args, 'led_chain') or self.args.led_chain == 1:
+            self.args.led_chain = 1
+        if not hasattr(self.args, 'led_parallel') or self.args.led_parallel == 1:
+            self.args.led_parallel = 1
+        if not hasattr(self.args, 'led_gpio_mapping') or self.args.led_gpio_mapping is None:
+            self.args.led_gpio_mapping = 'adafruit-hat-pwm'
+            
+        # Create matrix options
+        options = RGBMatrixOptions()
+        options.rows = self.args.led_rows
+        options.cols = self.args.led_cols
+        options.chain_length = self.args.led_chain
+        options.parallel = self.args.led_parallel
+        options.hardware_mapping = self.args.led_gpio_mapping
+        
+        # Apply other options from parent class
+        if hasattr(self.args, 'led_row_addr_type'):
+            options.row_address_type = self.args.led_row_addr_type
+        if hasattr(self.args, 'led_multiplexing'):
+            options.multiplexing = self.args.led_multiplexing
+        if hasattr(self.args, 'led_pwm_bits'):
+            options.pwm_bits = self.args.led_pwm_bits
+        if hasattr(self.args, 'led_brightness'):
+            options.brightness = self.args.led_brightness
+        if hasattr(self.args, 'led_pwm_lsb_nanoseconds'):
+            options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
+        if hasattr(self.args, 'led_rgb_sequence'):
+            options.led_rgb_sequence = self.args.led_rgb_sequence
+        if hasattr(self.args, 'led_pixel_mapper'):
+            options.pixel_mapper_config = self.args.led_pixel_mapper
+        if hasattr(self.args, 'led_panel_type'):
+            options.panel_type = self.args.led_panel_type
+        if hasattr(self.args, 'led_show_refresh'):
+            options.show_refresh_rate = self.args.led_show_refresh
+        if hasattr(self.args, 'led_slowdown_gpio'):
+            options.gpio_slowdown = self.args.led_slowdown_gpio
+        if hasattr(self.args, 'led_no_hardware_pulse'):
+            options.disable_hardware_pulsing = self.args.led_no_hardware_pulse
+        if hasattr(self.args, 'drop_privileges'):
+            options.drop_privileges = self.args.drop_privileges
+
+        # Create the matrix
+        self.matrix = RGBMatrix(options=options)
+
+        try:
+            # Start loop
+            print("Press CTRL-C to stop tattoo display")
+            self.run()
+        except KeyboardInterrupt:
+            print("Exiting tattoo display\n")
+            sys.exit(0)
+
+        return True
+        
     def get_writable_directory(self):
         """Find a writable directory for storing images"""
         # Try different locations in order of preference
