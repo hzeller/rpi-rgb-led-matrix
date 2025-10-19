@@ -197,8 +197,8 @@ class WeatherDisplay:
             self.timezone = timezone(timedelta(hours=-6))
     
     def draw_clear_day(self, x, y, current_time=None):
-        """Draw a bright sun icon with subtle pulsing effect"""
-        # Sun center (yellow/orange) with brightness pulse
+        """Draw a large, detailed sun icon with pulsing effect"""
+        # Sun center with brightness pulse
         base_brightness = 255
         pulse_brightness = 200
         if current_time:
@@ -208,21 +208,49 @@ class WeatherDisplay:
         else:
             brightness = base_brightness
             
-        sun_color = graphics.Color(brightness, brightness, 0)  # Pulsing yellow
-        ray_color = graphics.Color(brightness - 55, brightness - 55, 0)  # Dimmer rays
+        sun_core = graphics.Color(brightness, brightness, 0)  # Bright yellow core
+        sun_mid = graphics.Color(brightness - 30, brightness - 30, 0)  # Slightly dimmer
+        sun_outer = graphics.Color(brightness - 60, brightness - 60, 0)  # Outer glow
+        ray_color = graphics.Color(brightness - 80, brightness - 50, 0)  # Orange rays
         
-        # Draw sun center (3x3 square)
-        for dx in range(-1, 2):
-            for dy in range(-1, 2):
-                self.canvas.SetPixel(x + dx, y + dy, sun_color.red, sun_color.green, sun_color.blue)
+        # Draw large sun center (7x7 core with gradual falloff)
+        for dx in range(-3, 4):
+            for dy in range(-3, 4):
+                distance = math.sqrt(dx*dx + dy*dy)
+                if distance <= 1.5:  # Inner core
+                    self.canvas.SetPixel(x + dx, y + dy, sun_core.red, sun_core.green, sun_core.blue)
+                elif distance <= 2.5:  # Middle ring
+                    self.canvas.SetPixel(x + dx, y + dy, sun_mid.red, sun_mid.green, sun_mid.blue)
+                elif distance <= 3.2:  # Outer glow
+                    self.canvas.SetPixel(x + dx, y + dy, sun_outer.red, sun_outer.green, sun_outer.blue)
         
-        # Draw sun rays (8 directions)
-        rays = [(-3, 0), (3, 0), (0, -3), (0, 3), (-2, -2), (2, -2), (-2, 2), (2, 2)]
-        for rx, ry in rays:
-            self.canvas.SetPixel(x + rx, y + ry, ray_color.red, ray_color.green, ray_color.blue)
+        # Draw detailed sun rays (12 directions - long and short alternating)
+        long_rays = [(-6, 0), (6, 0), (0, -6), (0, 6), (-4, -4), (4, -4), (-4, 4), (4, 4)]
+        short_rays = [(-5, -2), (5, -2), (-5, 2), (5, 2), (-2, -5), (2, -5), (-2, 5), (2, 5)]
+        
+        # Long rays (3 pixels each)
+        for rx, ry in long_rays:
+            # Draw ray with tapering brightness
+            for i in range(3):
+                ray_x, ray_y = x + rx + (1 if rx > 0 else -1) * i, y + ry + (1 if ry > 0 else -1) * i
+                if 0 <= ray_x < 64 and 0 <= ray_y < 32:
+                    brightness_factor = 1.0 - (i * 0.3)
+                    r = int(ray_color.red * brightness_factor)
+                    g = int(ray_color.green * brightness_factor)
+                    self.canvas.SetPixel(ray_x, ray_y, r, g, 0)
+        
+        # Short rays (2 pixels each)
+        for rx, ry in short_rays:
+            for i in range(2):
+                ray_x, ray_y = x + rx + (1 if rx > 0 else -1) * i, y + ry + (1 if ry > 0 else -1) * i
+                if 0 <= ray_x < 64 and 0 <= ray_y < 32:
+                    brightness_factor = 1.0 - (i * 0.4)
+                    r = int(ray_color.red * brightness_factor)
+                    g = int(ray_color.green * brightness_factor)
+                    self.canvas.SetPixel(ray_x, ray_y, r, g, 0)
     
     def draw_clear_night(self, x, y, current_time=None):
-        """Draw a crescent moon with gentle glow effect"""
+        """Draw a large, detailed crescent moon with stars"""
         # Moon with subtle glow variation
         base_brightness = 220
         if current_time:
@@ -232,252 +260,553 @@ class WeatherDisplay:
         else:
             brightness = base_brightness
             
-        moon_color = graphics.Color(brightness, brightness, 255)  # Pale blue-white with glow
-        dark_color = graphics.Color(30, 30, 50)     # Dark blue
+        moon_bright = graphics.Color(brightness, brightness, 255)  # Bright moon
+        moon_mid = graphics.Color(brightness - 40, brightness - 40, 255)  # Medium moon
+        moon_dim = graphics.Color(brightness - 80, brightness - 80, 255)  # Dim edge
+        dark_color = graphics.Color(30, 30, 60)  # Dark blue sky
+        star_color = graphics.Color(200, 200, 255)  # Stars
         
-        # Draw full moon shape
-        for dx in range(-2, 3):
-            for dy in range(-2, 3):
-                if dx*dx + dy*dy <= 4:  # Circle shape
-                    self.canvas.SetPixel(x + dx, y + dy, moon_color.red, moon_color.green, moon_color.blue)
+        # Draw large moon circle (radius 4)
+        for dx in range(-5, 6):
+            for dy in range(-5, 6):
+                distance = math.sqrt(dx*dx + dy*dy)
+                if distance <= 2.0:  # Bright center
+                    self.canvas.SetPixel(x + dx, y + dy, moon_bright.red, moon_bright.green, moon_bright.blue)
+                elif distance <= 3.5:  # Medium ring
+                    self.canvas.SetPixel(x + dx, y + dy, moon_mid.red, moon_mid.green, moon_mid.blue)
+                elif distance <= 4.5:  # Dim outer edge
+                    self.canvas.SetPixel(x + dx, y + dy, moon_dim.red, moon_dim.green, moon_dim.blue)
         
-        # Draw dark overlay for crescent
-        for dx in range(-1, 3):
-            for dy in range(-2, 3):
-                if (dx-1)*(dx-1) + dy*dy <= 3:  # Offset circle
+        # Draw dark overlay for crescent (offset circle)
+        for dx in range(-4, 6):
+            for dy in range(-5, 6):
+                distance = math.sqrt((dx-2)*(dx-2) + dy*dy)
+                if distance <= 4.0:  # Dark overlay
                     self.canvas.SetPixel(x + dx, y + dy, dark_color.red, dark_color.green, dark_color.blue)
+        
+        # Add some small stars around the moon
+        stars = [(-7, -3), (-6, 2), (7, -4), (6, 3), (-8, 0), (8, -1)]
+        for sx, sy in stars:
+            if 0 <= x + sx < 64 and 0 <= y + sy < 32:
+                self.canvas.SetPixel(x + sx, y + sy, star_color.red, star_color.green, star_color.blue)
     
     def draw_partly_cloudy_day(self, x, y):
-        """Draw sun partially covered by cloud"""
-        # Sun (smaller, upper left)
+        """Draw large sun partially covered by detailed cloud"""
+        # Sun (upper left, smaller but still detailed)
         sun_color = graphics.Color(255, 255, 0)
-        self.canvas.SetPixel(x - 2, y - 2, sun_color.red, sun_color.green, sun_color.blue)
-        self.canvas.SetPixel(x - 1, y - 2, sun_color.red, sun_color.green, sun_color.blue)
-        self.canvas.SetPixel(x - 2, y - 1, sun_color.red, sun_color.green, sun_color.blue)
+        sun_rays = graphics.Color(255, 200, 0)
         
-        # Cloud (white/gray, lower right)
-        cloud_color = graphics.Color(200, 200, 255)
-        cloud_shadow = graphics.Color(150, 150, 200)
+        # Sun center
+        for dx in range(-1, 2):
+            for dy in range(-1, 2):
+                self.canvas.SetPixel(x + dx - 4, y + dy - 3, sun_color.red, sun_color.green, sun_color.blue)
         
-        # Cloud shape
-        cloud_pixels = [(0, 0), (1, 0), (2, 0), (-1, 1), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2)]
+        # Sun rays (shorter)
+        sun_ray_positions = [(-6, -3), (-2, -3), (-4, -5), (-4, -1), (-6, -5), (-2, -5), (-6, -1), (-2, -1)]
+        for rx, ry in sun_ray_positions:
+            if 0 <= x + rx < 64 and 0 <= y + ry < 32:
+                self.canvas.SetPixel(x + rx, y + ry, sun_rays.red, sun_rays.green, sun_rays.blue)
+        
+        # Large detailed cloud (covering lower right)
+        cloud_bright = graphics.Color(240, 240, 255)
+        cloud_mid = graphics.Color(200, 200, 240)
+        cloud_shadow = graphics.Color(160, 160, 200)
+        
+        # Cloud main body - much larger and more detailed
+        cloud_pixels = [
+            # Top row of cloud
+            (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2),
+            # Second row - wider
+            (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1), (4, -1),
+            # Third row - widest
+            (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0),
+            # Fourth row - wide
+            (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1), (3, 1), (4, 1),
+            # Bottom row - smaller
+            (-1, 2), (0, 2), (1, 2), (2, 2), (3, 2),
+            # Extra puffs for realistic cloud shape
+            (-1, 3), (0, 3), (1, 3), (2, 3)
+        ]
+        
         for dx, dy in cloud_pixels:
-            color = cloud_shadow if dy == 2 else cloud_color
-            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                # Add depth with different brightness levels
+                if dy >= 2:  # Bottom shadow
+                    color = cloud_shadow
+                elif dx >= 3:  # Right side highlight
+                    color = cloud_bright
+                else:  # Main body
+                    color = cloud_mid
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
     
     def draw_partly_cloudy_night(self, x, y):
-        """Draw moon partially covered by cloud"""
-        # Moon (smaller, upper left)
+        """Draw large moon partially covered by detailed cloud"""
+        # Moon (upper left, smaller crescent)
         moon_color = graphics.Color(200, 200, 255)
-        self.canvas.SetPixel(x - 2, y - 2, moon_color.red, moon_color.green, moon_color.blue)
-        self.canvas.SetPixel(x - 1, y - 2, moon_color.red, moon_color.green, moon_color.blue)
-        self.canvas.SetPixel(x - 2, y - 1, moon_color.red, moon_color.green, moon_color.blue)
+        dark_moon = graphics.Color(40, 40, 80)
         
-        # Cloud (darker for night)
-        cloud_color = graphics.Color(120, 120, 180)
-        cloud_shadow = graphics.Color(80, 80, 140)
+        # Moon shape
+        moon_pixels = [(-5, -3), (-4, -3), (-5, -2), (-4, -2), (-3, -2), (-5, -1), (-4, -1)]
+        for mx, my in moon_pixels:
+            if 0 <= x + mx < 64 and 0 <= y + my < 32:
+                self.canvas.SetPixel(x + mx, y + my, moon_color.red, moon_color.green, moon_color.blue)
         
-        cloud_pixels = [(0, 0), (1, 0), (2, 0), (-1, 1), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2)]
+        # Dark overlay for crescent
+        dark_pixels = [(-4, -3), (-3, -2), (-4, -2), (-3, -1), (-4, -1)]
+        for mx, my in dark_pixels:
+            if 0 <= x + mx < 64 and 0 <= y + my < 32:
+                self.canvas.SetPixel(x + mx, y + my, dark_moon.red, dark_moon.green, dark_moon.blue)
+        
+        # Large detailed cloud (darker for night)
+        cloud_bright = graphics.Color(140, 140, 180)
+        cloud_mid = graphics.Color(120, 120, 160)
+        cloud_shadow = graphics.Color(80, 80, 120)
+        
+        # Same cloud pattern as day version but darker
+        cloud_pixels = [
+            (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2),
+            (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1), (4, -1),
+            (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0),
+            (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1), (3, 1), (4, 1),
+            (-1, 2), (0, 2), (1, 2), (2, 2), (3, 2),
+            (-1, 3), (0, 3), (1, 3), (2, 3)
+        ]
+        
         for dx, dy in cloud_pixels:
-            color = cloud_shadow if dy == 2 else cloud_color
-            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                if dy >= 2:
+                    color = cloud_shadow
+                elif dx >= 3:
+                    color = cloud_bright
+                else:
+                    color = cloud_mid
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
     
     def draw_scattered_clouds(self, x, y):
-        """Draw scattered cloud formation"""
-        cloud_color = graphics.Color(220, 220, 255)
-        cloud_shadow = graphics.Color(180, 180, 220)
+        """Draw multiple detailed clouds scattered across the icon"""
+        cloud_bright = graphics.Color(220, 220, 255)
+        cloud_mid = graphics.Color(180, 180, 220)
+        cloud_shadow = graphics.Color(140, 140, 180)
         
-        # Multiple small clouds
-        # Cloud 1 (upper left)
-        cloud1_pixels = [(-2, -2), (-1, -2), (-2, -1), (-1, -1)]
+        # Cloud 1 (upper left) - medium size
+        cloud1_pixels = [
+            (-6, -4), (-5, -4), (-4, -4), (-3, -4),
+            (-6, -3), (-5, -3), (-4, -3), (-3, -3), (-2, -3),
+            (-5, -2), (-4, -2), (-3, -2), (-2, -2),
+            (-4, -1), (-3, -1), (-2, -1)
+        ]
         for dx, dy in cloud1_pixels:
-            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = cloud_shadow if dy >= -2 else cloud_bright
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
         
-        # Cloud 2 (center right)
-        cloud2_pixels = [(1, -1), (2, -1), (1, 0), (2, 0), (3, 0)]
+        # Cloud 2 (center right) - large
+        cloud2_pixels = [
+            (2, -2), (3, -2), (4, -2), (5, -2), (6, -2),
+            (1, -1), (2, -1), (3, -1), (4, -1), (5, -1), (6, -1), (7, -1),
+            (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0),
+            (3, 1), (4, 1), (5, 1), (6, 1)
+        ]
         for dx, dy in cloud2_pixels:
-            color = cloud_shadow if dx == 3 else cloud_color
-            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = cloud_shadow if dy >= 0 else cloud_mid
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
         
-        # Cloud 3 (lower center)
-        cloud3_pixels = [(-1, 1), (0, 1), (1, 1), (0, 2)]
+        # Cloud 3 (lower center) - medium
+        cloud3_pixels = [
+            (-2, 2), (-1, 2), (0, 2), (1, 2), (2, 2),
+            (-3, 3), (-2, 3), (-1, 3), (0, 3), (1, 3), (2, 3), (3, 3),
+            (-2, 4), (-1, 4), (0, 4), (1, 4), (2, 4)
+        ]
         for dx, dy in cloud3_pixels:
-            color = cloud_shadow if dy == 2 else cloud_color
-            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = cloud_shadow if dy >= 4 else cloud_bright
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
     
     def draw_broken_clouds(self, x, y):
-        """Draw heavy cloud cover"""
-        cloud_color = graphics.Color(180, 180, 220)
-        cloud_dark = graphics.Color(140, 140, 180)
+        """Draw heavy, detailed cloud cover"""
+        cloud_bright = graphics.Color(180, 180, 220)
+        cloud_mid = graphics.Color(140, 140, 180)
+        cloud_dark = graphics.Color(100, 100, 140)
+        cloud_shadow = graphics.Color(80, 80, 120)
+        
+        # Large overlapping cloud formation covering most of the icon
+        cloud_pixels = [
+            # Top layer
+            (-5, -5), (-4, -5), (-3, -5), (-2, -5), (-1, -5), (0, -5), (1, -5), (2, -5), (3, -5),
+            (-6, -4), (-5, -4), (-4, -4), (-3, -4), (-2, -4), (-1, -4), (0, -4), (1, -4), (2, -4), (3, -4), (4, -4),
+            # Main body
+            (-7, -3), (-6, -3), (-5, -3), (-4, -3), (-3, -3), (-2, -3), (-1, -3), (0, -3), (1, -3), (2, -3), (3, -3), (4, -3), (5, -3),
+            (-7, -2), (-6, -2), (-5, -2), (-4, -2), (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2), (4, -2), (5, -2), (6, -2),
+            (-6, -1), (-5, -1), (-4, -1), (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1), (4, -1), (5, -1), (6, -1),
+            (-6, 0), (-5, 0), (-4, 0), (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0),
+            # Lower section
+            (-5, 1), (-4, 1), (-3, 1), (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1),
+            (-4, 2), (-3, 2), (-2, 2), (-1, 2), (0, 2), (1, 2), (2, 2), (3, 2), (4, 2),
+            (-3, 3), (-2, 3), (-1, 3), (0, 3), (1, 3), (2, 3), (3, 3),
+            (-2, 4), (-1, 4), (0, 4), (1, 4), (2, 4)
+        ]
+        
+        for dx, dy in cloud_pixels:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                # Create depth and variation
+                if dy >= 3:  # Bottom shadow
+                    color = cloud_shadow
+                elif dy >= 1:  # Lower mid section
+                    color = cloud_dark
+                elif abs(dx) >= 5:  # Side edges
+                    color = cloud_mid
+                else:  # Main body
+                    color = cloud_bright
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+    
+    def draw_shower_rain(self, x, y, current_time=None):
+        """Draw large cloud with detailed scattered rain drops that animate"""
+        # Large detailed cloud
+        cloud_color = graphics.Color(120, 120, 160)
+        cloud_shadow = graphics.Color(90, 90, 130)
+        
+        # Big cloud shape
+        cloud_pixels = [
+            (-4, -4), (-3, -4), (-2, -4), (-1, -4), (0, -4), (1, -4), (2, -4),
+            (-5, -3), (-4, -3), (-3, -3), (-2, -3), (-1, -3), (0, -3), (1, -3), (2, -3), (3, -3),
+            (-5, -2), (-4, -2), (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2), (4, -2),
+            (-4, -1), (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1), (4, -1),
+            (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0)
+        ]
+        
+        for dx, dy in cloud_pixels:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = cloud_shadow if dy >= -1 else cloud_color
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+        
+        # Animated rain drops (blue) - different drops appear at different times
+        rain_bright = graphics.Color(0, 180, 255)
+        rain_medium = graphics.Color(0, 150, 220)
+        rain_dim = graphics.Color(0, 120, 180)
+        
+        if current_time:
+            # Rain drops cycle every 3 seconds with 3 different patterns
+            rain_cycle = (current_time * 1.0) % 3.0
+            if rain_cycle < 1.0:  # First second - left side heavy
+                rain_drops = [(-4, 2), (-4, 3), (-3, 4), (-2, 1), (-2, 3), (-1, 5), (0, 2), (1, 4), (2, 3)]
+            elif rain_cycle < 2.0:  # Second second - center heavy
+                rain_drops = [(-3, 1), (-2, 4), (-1, 2), (-1, 6), (0, 3), (0, 5), (1, 1), (1, 6), (2, 4)]
+            else:  # Third second - right side heavy
+                rain_drops = [(-2, 2), (-1, 4), (0, 1), (0, 6), (1, 3), (2, 1), (2, 5), (3, 2), (3, 4)]
+        else:
+            rain_drops = [(-4, 2), (-3, 4), (-2, 1), (-1, 5), (0, 3), (1, 1), (1, 6), (2, 4), (3, 2)]
+            
+        for dx, dy in rain_drops:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                # Vary rain drop brightness for depth
+                if dy <= 2:
+                    color = rain_bright
+                elif dy <= 4:
+                    color = rain_medium
+                else:
+                    color = rain_dim
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+    
+    def draw_rain_day(self, x, y, current_time=None):
+        """Draw large cloud with heavy steady rain that shifts"""
+        # Large dark storm cloud
+        cloud_dark = graphics.Color(100, 100, 140)
+        cloud_shadow = graphics.Color(70, 70, 110)
         
         # Large cloud formation
         cloud_pixels = [
-            (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2),
-            (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1),
-            (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0),
-            (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1),
-            (-1, 2), (0, 2), (1, 2)
+            (-5, -4), (-4, -4), (-3, -4), (-2, -4), (-1, -4), (0, -4), (1, -4), (2, -4), (3, -4),
+            (-6, -3), (-5, -3), (-4, -3), (-3, -3), (-2, -3), (-1, -3), (0, -3), (1, -3), (2, -3), (3, -3), (4, -3),
+            (-6, -2), (-5, -2), (-4, -2), (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2), (4, -2), (5, -2),
+            (-5, -1), (-4, -1), (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1), (4, -1), (5, -1),
+            (-4, 0), (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0), (4, 0)
         ]
         
         for dx, dy in cloud_pixels:
-            # Add some variation in color for depth
-            color = cloud_dark if (dx + dy) % 3 == 0 else cloud_color
-            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
-    
-    def draw_shower_rain(self, x, y, current_time=None):
-        """Draw cloud with scattered rain drops that animate"""
-        # Cloud
-        cloud_color = graphics.Color(120, 120, 160)
-        cloud_pixels = [(-2, -2), (-1, -2), (0, -2), (1, -2), (-1, -1), (0, -1), (1, -1), (2, -1)]
-        for dx, dy in cloud_pixels:
-            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = cloud_shadow if dy >= -1 else cloud_dark
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
         
-        # Animated rain drops (blue) - different drops appear at different times
-        rain_color = graphics.Color(0, 150, 255)
-        if current_time:
-            # Rain drops cycle every 3 seconds
-            rain_cycle = (current_time * 1.0) % 3.0
-            if rain_cycle < 1.0:  # First second - left drops
-                rain_drops = [(-2, 1), (-1, 3)]
-            elif rain_cycle < 2.0:  # Second second - center drops
-                rain_drops = [(0, 0), (1, 1)]
-            else:  # Third second - right drops
-                rain_drops = [(2, 2), (1, 3)]
-        else:
-            rain_drops = [(-2, 1), (0, 0), (2, 2), (-1, 3), (1, 1)]
-            
-        for dx, dy in rain_drops:
-            if 0 <= y + dy < 32:  # Make sure we don't go off screen
-                self.canvas.SetPixel(x + dx, y + dy, rain_color.red, rain_color.green, rain_color.blue)
-    
-    def draw_rain_day(self, x, y, current_time=None):
-        """Draw cloud with steady rain that shifts"""
-        # Dark cloud
-        cloud_color = graphics.Color(100, 100, 140)
-        cloud_pixels = [(-2, -2), (-1, -2), (0, -2), (1, -2), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1)]
-        for dx, dy in cloud_pixels:
-            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
-        
-        # Animated steady rain lines that shift position
+        # Heavy animated steady rain lines that shift position
         rain_color = graphics.Color(0, 120, 255)
+        rain_light = graphics.Color(0, 100, 220)
+        
         if current_time:
             # Rain shifts every 2 seconds
             shift = int(current_time * 0.5) % 2
             if shift == 0:
-                rain_lines = [(-2, 0), (-2, 1), (-1, 1), (-1, 2), (0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 1)]
+                rain_lines = [
+                    (-5, 1), (-5, 2), (-5, 3), (-4, 2), (-4, 3), (-4, 4),
+                    (-3, 1), (-3, 3), (-3, 5), (-2, 2), (-2, 4), (-2, 6),
+                    (-1, 1), (-1, 3), (-1, 5), (0, 2), (0, 4), (0, 6),
+                    (1, 1), (1, 3), (1, 5), (2, 2), (2, 4), (2, 6),
+                    (3, 1), (3, 3), (3, 5), (4, 2), (4, 4), (4, 6)
+                ]
             else:
-                rain_lines = [(-1, 0), (-1, 1), (0, 1), (0, 2), (1, 0), (1, 1), (2, 1), (2, 2)]
+                rain_lines = [
+                    (-4, 1), (-4, 3), (-4, 5), (-3, 2), (-3, 4), (-3, 6),
+                    (-2, 1), (-2, 3), (-2, 5), (-1, 2), (-1, 4), (-1, 6),
+                    (0, 1), (0, 3), (0, 5), (1, 2), (1, 4), (1, 6),
+                    (2, 1), (2, 3), (2, 5), (3, 2), (3, 4), (3, 6),
+                    (4, 1), (4, 3), (4, 5), (5, 2), (5, 4)
+                ]
         else:
-            rain_lines = [(-2, 0), (-2, 1), (-1, 1), (-1, 2), (0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 1)]
+            rain_lines = [
+                (-5, 1), (-5, 3), (-4, 2), (-4, 4), (-3, 1), (-3, 3), (-3, 5),
+                (-2, 2), (-2, 4), (-1, 1), (-1, 3), (-1, 5), (0, 2), (0, 4),
+                (1, 1), (1, 3), (1, 5), (2, 2), (2, 4), (3, 1), (3, 3), (3, 5)
+            ]
             
         for dx, dy in rain_lines:
-            if 0 <= y + dy < 32:
-                self.canvas.SetPixel(x + dx, y + dy, rain_color.red, rain_color.green, rain_color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = rain_light if dy >= 4 else rain_color
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
     
     def draw_rain_night(self, x, y, current_time=None):
-        """Draw cloud with steady rain (darker for night) that shifts"""
-        # Very dark cloud
-        cloud_color = graphics.Color(60, 60, 100)
-        cloud_pixels = [(-2, -2), (-1, -2), (0, -2), (1, -2), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1)]
+        """Draw large cloud with heavy steady rain (darker for night) that shifts"""
+        # Very large dark cloud for night
+        cloud_dark = graphics.Color(60, 60, 100)
+        cloud_shadow = graphics.Color(40, 40, 80)
+        
+        # Same large cloud pattern as day rain but darker
+        cloud_pixels = [
+            (-5, -4), (-4, -4), (-3, -4), (-2, -4), (-1, -4), (0, -4), (1, -4), (2, -4), (3, -4),
+            (-6, -3), (-5, -3), (-4, -3), (-3, -3), (-2, -3), (-1, -3), (0, -3), (1, -3), (2, -3), (3, -3), (4, -3),
+            (-6, -2), (-5, -2), (-4, -2), (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2), (4, -2), (5, -2),
+            (-5, -1), (-4, -1), (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1), (4, -1), (5, -1),
+            (-4, 0), (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0), (4, 0)
+        ]
+        
         for dx, dy in cloud_pixels:
-            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = cloud_shadow if dy >= -1 else cloud_dark
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
         
         # Rain (darker blue for night) with shifting animation
         rain_color = graphics.Color(0, 80, 180)
+        rain_light = graphics.Color(0, 60, 150)
+        
         if current_time:
-            # Rain shifts every 2 seconds
+            # Same rain pattern as day but darker colors
             shift = int(current_time * 0.5) % 2
             if shift == 0:
-                rain_lines = [(-2, 0), (-2, 1), (-1, 1), (-1, 2), (0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 1)]
+                rain_lines = [
+                    (-5, 1), (-5, 2), (-5, 3), (-4, 2), (-4, 3), (-4, 4),
+                    (-3, 1), (-3, 3), (-3, 5), (-2, 2), (-2, 4), (-2, 6),
+                    (-1, 1), (-1, 3), (-1, 5), (0, 2), (0, 4), (0, 6),
+                    (1, 1), (1, 3), (1, 5), (2, 2), (2, 4), (2, 6),
+                    (3, 1), (3, 3), (3, 5), (4, 2), (4, 4), (4, 6)
+                ]
             else:
-                rain_lines = [(-1, 0), (-1, 1), (0, 1), (0, 2), (1, 0), (1, 1), (2, 1), (2, 2)]
+                rain_lines = [
+                    (-4, 1), (-4, 3), (-4, 5), (-3, 2), (-3, 4), (-3, 6),
+                    (-2, 1), (-2, 3), (-2, 5), (-1, 2), (-1, 4), (-1, 6),
+                    (0, 1), (0, 3), (0, 5), (1, 2), (1, 4), (1, 6),
+                    (2, 1), (2, 3), (2, 5), (3, 2), (3, 4), (3, 6),
+                    (4, 1), (4, 3), (4, 5), (5, 2), (5, 4)
+                ]
         else:
-            rain_lines = [(-2, 0), (-2, 1), (-1, 1), (-1, 2), (0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 1)]
+            rain_lines = [
+                (-5, 1), (-5, 3), (-4, 2), (-4, 4), (-3, 1), (-3, 3), (-3, 5),
+                (-2, 2), (-2, 4), (-1, 1), (-1, 3), (-1, 5), (0, 2), (0, 4),
+                (1, 1), (1, 3), (1, 5), (2, 2), (2, 4), (3, 1), (3, 3), (3, 5)
+            ]
             
         for dx, dy in rain_lines:
-            if 0 <= y + dy < 32:
-                self.canvas.SetPixel(x + dx, y + dy, rain_color.red, rain_color.green, rain_color.blue)
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = rain_light if dy >= 4 else rain_color
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
     
     def draw_thunderstorm(self, x, y, current_time=None):
-        """Draw cloud with lightning bolt that flashes"""
-        # Dark storm cloud
-        cloud_color = graphics.Color(60, 60, 80)
-        cloud_pixels = [(-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1)]
-        for dx, dy in cloud_pixels:
-            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+        """Draw large storm cloud with detailed flashing lightning bolt"""
+        # Large, dark, menacing storm cloud
+        cloud_dark = graphics.Color(60, 60, 80)
+        cloud_black = graphics.Color(40, 40, 60)
         
-        # Flashing lightning bolt (bright yellow/white)
+        # Massive storm cloud
+        cloud_pixels = [
+            (-6, -5), (-5, -5), (-4, -5), (-3, -5), (-2, -5), (-1, -5), (0, -5), (1, -5), (2, -5), (3, -5), (4, -5),
+            (-7, -4), (-6, -4), (-5, -4), (-4, -4), (-3, -4), (-2, -4), (-1, -4), (0, -4), (1, -4), (2, -4), (3, -4), (4, -4), (5, -4),
+            (-7, -3), (-6, -3), (-5, -3), (-4, -3), (-3, -3), (-2, -3), (-1, -3), (0, -3), (1, -3), (2, -3), (3, -3), (4, -3), (5, -3), (6, -3),
+            (-6, -2), (-5, -2), (-4, -2), (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2), (4, -2), (5, -2), (6, -2),
+            (-5, -1), (-4, -1), (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1), (4, -1), (5, -1),
+            (-4, 0), (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0), (4, 0)
+        ]
+        
+        for dx, dy in cloud_pixels:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = cloud_black if dy >= -2 else cloud_dark
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+        
+        # Large, detailed flashing lightning bolt
         if current_time:
             # Lightning flashes every 4 seconds for 0.5 seconds
             flash_cycle = current_time % 4.0
-            if flash_cycle < 0.5:  # Flash for half a second
-                lightning_color = graphics.Color(255, 255, 200)  # Bright flash
-            else:
-                lightning_color = graphics.Color(200, 200, 100)  # Dimmer between flashes
+            if flash_cycle < 0.3:  # Bright flash
+                lightning_bright = graphics.Color(255, 255, 220)
+                lightning_core = graphics.Color(255, 255, 180)
+            elif flash_cycle < 0.6:  # Medium flash
+                lightning_bright = graphics.Color(220, 220, 160)
+                lightning_core = graphics.Color(200, 200, 120)
+            else:  # Dim between flashes
+                lightning_bright = graphics.Color(180, 180, 100)
+                lightning_core = graphics.Color(160, 160, 80)
         else:
-            lightning_color = graphics.Color(255, 255, 150)
-            
-        lightning_pixels = [(0, 0), (-1, 1), (0, 1), (1, 2), (0, 3)]
-        for dx, dy in lightning_pixels:
-            if 0 <= y + dy < 32:
-                self.canvas.SetPixel(x + dx, y + dy, lightning_color.red, lightning_color.green, lightning_color.blue)
-    
-    def draw_snow(self, x, y, current_time=None):
-        """Draw cloud with animated snowflakes"""
-        # Gray cloud
-        cloud_color = graphics.Color(160, 160, 180)
-        cloud_pixels = [(-2, -2), (-1, -2), (0, -2), (1, -2), (-1, -1), (0, -1), (1, -1), (2, -1)]
-        for dx, dy in cloud_pixels:
-            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+            lightning_bright = graphics.Color(255, 255, 180)
+            lightning_core = graphics.Color(255, 255, 150)
         
-        # Animated snowflakes (white with cross pattern) that gently fall
-        snow_color = graphics.Color(255, 255, 255)
-        dim_snow = graphics.Color(200, 200, 200)
-        
-        if current_time:
-            # Snowflakes animate every 3 seconds, falling down
-            snow_phase = (current_time * 0.7) % 3.0
-            if snow_phase < 1.0:  # Top positions
-                positions = [(-2, 0), (0, 1), (2, 0)]
-            elif snow_phase < 2.0:  # Middle positions  
-                positions = [(-2, 1), (0, 2), (2, 1)]
-            else:  # Bottom positions
-                positions = [(-2, 2), (0, 3), (2, 2)]
-        else:
-            positions = [(-2, 1), (0, 2), (2, 1)]
-        
-        # Draw snowflakes at calculated positions
-        for sx, sy in positions:
-            if 0 <= y + sy < 32:
-                # Draw cross pattern for each snowflake
-                self.canvas.SetPixel(x + sx, y + sy, snow_color.red, snow_color.green, snow_color.blue)
-                # Add smaller cross arms
-                if 0 <= y + sy - 1 < 32:
-                    self.canvas.SetPixel(x + sx, y + sy - 1, dim_snow.red, dim_snow.green, dim_snow.blue)
-                if 0 <= y + sy + 1 < 32:
-                    self.canvas.SetPixel(x + sx, y + sy + 1, dim_snow.red, dim_snow.green, dim_snow.blue)
-                if 0 <= x + sx - 1 < 64:
-                    self.canvas.SetPixel(x + sx - 1, y + sy, dim_snow.red, dim_snow.green, dim_snow.blue)
-                if 0 <= x + sx + 1 < 64:
-                    self.canvas.SetPixel(x + sx + 1, y + sy, dim_snow.red, dim_snow.green, dim_snow.blue)
-    
-    def draw_mist(self, x, y):
-        """Draw misty/foggy conditions"""
-        mist_color = graphics.Color(150, 150, 150)
-        mist_light = graphics.Color(200, 200, 200)
-        
-        # Horizontal misty lines
-        mist_pixels = [
-            (-3, -1), (-2, -1), (-1, -1), (1, -1), (2, -1),
-            (-2, 0), (-1, 0), (0, 0), (2, 0), (3, 0),
-            (-3, 1), (-1, 1), (0, 1), (1, 1), (3, 1),
-            (-2, 2), (-1, 2), (1, 2), (2, 2)
+        # Detailed zigzag lightning bolt
+        lightning_pixels = [
+            # Main bolt going down and zigzagging
+            (0, 1), (0, 2),  # Straight down from cloud
+            (-1, 3), (-1, 4),  # Zig left
+            (0, 5), (1, 6),  # Zag right
+            (0, 7), (-1, 8),  # Zig left again
+            (0, 9), (0, 10)  # Straight down
         ]
         
-        for dx, dy in mist_pixels:
-            # Alternate between two mist colors for layered effect
-            color = mist_light if (dx + dy) % 2 == 0 else mist_color
-            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+        # Lightning core (brighter)
+        for dx, dy in lightning_pixels:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                self.canvas.SetPixel(x + dx, y + dy, lightning_core.red, lightning_core.green, lightning_core.blue)
+        
+        # Lightning glow (around the core)
+        lightning_glow = [
+            # Glow around main bolt
+            (-1, 1), (1, 1), (-1, 2), (1, 2),  # Around top
+            (-2, 3), (0, 3), (-2, 4), (0, 4),  # Around left zig
+            (-1, 5), (1, 5), (0, 6), (2, 6),   # Around right zag
+            (-1, 7), (1, 7), (-2, 8), (0, 8),  # Around left zig
+            (-1, 9), (1, 9), (-1, 10), (1, 10) # Around bottom
+        ]
+        
+        for dx, dy in lightning_glow:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                self.canvas.SetPixel(x + dx, y + dy, lightning_bright.red, lightning_bright.green, lightning_bright.blue)
+    
+    def draw_snow(self, x, y, current_time=None):
+        """Draw large cloud with detailed animated snowflakes"""
+        # Large gray/white cloud
+        cloud_color = graphics.Color(160, 160, 180)
+        cloud_bright = graphics.Color(200, 200, 220)
+        cloud_shadow = graphics.Color(120, 120, 140)
+        
+        # Large cloud formation
+        cloud_pixels = [
+            (-4, -4), (-3, -4), (-2, -4), (-1, -4), (0, -4), (1, -4), (2, -4), (3, -4),
+            (-5, -3), (-4, -3), (-3, -3), (-2, -3), (-1, -3), (0, -3), (1, -3), (2, -3), (3, -3), (4, -3),
+            (-5, -2), (-4, -2), (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2), (3, -2), (4, -2), (5, -2),
+            (-4, -1), (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1), (4, -1),
+            (-3, 0), (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0)
+        ]
+        
+        for dx, dy in cloud_pixels:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                if dy >= -1:
+                    color = cloud_shadow
+                elif abs(dx) >= 4:
+                    color = cloud_bright
+                else:
+                    color = cloud_color
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+        
+        # Detailed animated snowflakes with cross patterns that gently fall
+        snow_bright = graphics.Color(255, 255, 255)
+        snow_medium = graphics.Color(220, 220, 255)
+        snow_dim = graphics.Color(180, 180, 220)
+        
+        if current_time:
+            # Snowflakes animate every 4 seconds, falling down in 4 phases
+            snow_phase = (current_time * 0.6) % 4.0
+            if snow_phase < 1.0:  # Top positions
+                flake_positions = [(-4, 1), (-1, 2), (2, 1), (4, 2)]
+            elif snow_phase < 2.0:  # Upper-middle positions  
+                flake_positions = [(-4, 3), (-1, 4), (2, 3), (4, 4)]
+            elif snow_phase < 3.0:  # Lower-middle positions
+                flake_positions = [(-4, 5), (-1, 6), (2, 5), (4, 6)]
+            else:  # Bottom positions
+                flake_positions = [(-4, 7), (-1, 8), (2, 7), (4, 8)]
+        else:
+            flake_positions = [(-4, 3), (-1, 4), (2, 3), (4, 6)]
+        
+        # Draw detailed snowflakes at calculated positions
+        for sx, sy in flake_positions:
+            if 0 <= x + sx < 64 and 0 <= y + sy < 32:
+                # Draw large cross pattern for each snowflake
+                # Center pixel (brightest)
+                self.canvas.SetPixel(x + sx, y + sy, snow_bright.red, snow_bright.green, snow_bright.blue)
+                
+                # Main cross arms (medium brightness)
+                cross_arms = [(sx, sy-1), (sx, sy+1), (sx-1, sy), (sx+1, sy)]
+                for cx, cy in cross_arms:
+                    if 0 <= x + cx < 64 and 0 <= y + cy < 32:
+                        self.canvas.SetPixel(x + cx, y + cy, snow_medium.red, snow_medium.green, snow_medium.blue)
+                
+                # Diagonal arms (dimmer)
+                diag_arms = [(sx-1, sy-1), (sx+1, sy-1), (sx-1, sy+1), (sx+1, sy+1)]
+                for dx, dy in diag_arms:
+                    if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                        self.canvas.SetPixel(x + dx, y + dy, snow_dim.red, snow_dim.green, snow_dim.blue)
+        
+        # Add some smaller scattered snow pixels for atmosphere
+        small_snow = [(-6, 4), (-2, 7), (1, 9), (5, 5), (-3, 9), (3, 8)]
+        for sx, sy in small_snow:
+            if 0 <= x + sx < 64 and 0 <= y + sy < 32:
+                self.canvas.SetPixel(x + sx, y + sy, snow_dim.red, snow_dim.green, snow_dim.blue)
+    
+    def draw_mist(self, x, y):
+        """Draw detailed misty/foggy conditions with layered effect"""
+        mist_bright = graphics.Color(180, 180, 180)
+        mist_medium = graphics.Color(150, 150, 150)
+        mist_light = graphics.Color(120, 120, 120)
+        mist_dim = graphics.Color(100, 100, 100)
+        
+        # Multiple horizontal misty layers at different heights and densities
+        # Top layer (lightest)
+        top_layer = [
+            (-6, -4), (-5, -4), (-4, -4), (-2, -4), (-1, -4), (1, -4), (2, -4), (4, -4), (5, -4),
+            (-5, -3), (-3, -3), (-2, -3), (0, -3), (1, -3), (3, -3), (4, -3), (6, -3)
+        ]
+        
+        # Middle layer (medium density)
+        middle_layer = [
+            (-7, -1), (-6, -1), (-4, -1), (-3, -1), (-1, -1), (0, -1), (2, -1), (3, -1), (5, -1), (6, -1),
+            (-6, 0), (-5, 0), (-3, 0), (-2, 0), (-1, 0), (1, 0), (2, 0), (4, 0), (5, 0), (7, 0)
+        ]
+        
+        # Lower layer (denser)
+        lower_layer = [
+            (-7, 2), (-6, 2), (-5, 2), (-3, 2), (-2, 2), (-1, 2), (0, 2), (1, 2), (3, 2), (4, 2), (5, 2), (6, 2),
+            (-6, 3), (-5, 3), (-4, 3), (-2, 3), (-1, 3), (0, 3), (2, 3), (3, 3), (4, 3), (6, 3), (7, 3)
+        ]
+        
+        # Bottom layer (densest)
+        bottom_layer = [
+            (-7, 5), (-6, 5), (-5, 5), (-4, 5), (-3, 5), (-1, 5), (0, 5), (1, 5), (2, 5), (4, 5), (5, 5), (6, 5), (7, 5),
+            (-6, 6), (-5, 6), (-4, 6), (-3, 6), (-2, 6), (-1, 6), (0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6)
+        ]
+        
+        # Draw each layer with appropriate brightness
+        for dx, dy in top_layer:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = mist_light if (dx + dy) % 2 == 0 else mist_medium
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+        
+        for dx, dy in middle_layer:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = mist_medium if (dx + dy) % 2 == 0 else mist_bright
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+        
+        for dx, dy in lower_layer:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = mist_bright if (dx + dy) % 2 == 0 else mist_medium
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+        
+        for dx, dy in bottom_layer:
+            if 0 <= x + dx < 64 and 0 <= y + dy < 32:
+                color = mist_bright if (dx + dy) % 3 == 0 else mist_dim
+                self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
     
     def draw_custom_weather_icon(self, icon_code, x, y):
         """Draw custom weather icon based on condition with time-based effects"""
@@ -625,23 +954,25 @@ class WeatherDisplay:
             low_width += 1  # Add 1 pixel spacing between characters
         low_width -= 1  # Remove trailing spacing
         
-        # Calculate total group width: icon(20) + spacing(-1) + max_temp_width
+        # Calculate total group width: icon(22) + spacing(2) + max_temp_width  
+        # Increased icon width to 22 to accommodate larger detailed icons
         max_temp_width = max(temp_width, low_width)
-        total_group_width = 20 + (-1) + max_temp_width  # Reduced spacing by 2 pixels (from +1 to -1)
+        total_group_width = 22 + 2 + max_temp_width  # Larger icon area with better spacing
         
         # Center the entire group horizontally
         group_start_x = (64 - total_group_width) // 2
         
         # Position icon on the left of the group, centered vertically in bottom area
-        icon_x = group_start_x + 10  # Center of the 20px icon
-        icon_y = 22  # Moved back up 2 pixels from 24 to 22
+        # Adjusted to account for larger icon size (-7 to +7 horizontally, -5 to +10 vertically)
+        icon_x = group_start_x + 11  # Center of the 22px icon area
+        icon_y = 20  # Moved up slightly to center the larger vertical span better
         
         print(f"Weather icon code: {icon_code}")
         print(f"Group layout: total_width={total_group_width}, start_x={group_start_x}")
         self.draw_weather_icon(icon_code, icon_x, icon_y)
         
-        # Position temperatures to the right of icon with -1 pixel spacing (overlapping by 1 pixel)
-        temp_start_x = group_start_x + 20 + (-1)  # After icon - 1 pixel spacing (2 pixels closer)
+        # Position temperatures to the right of icon with proper spacing for larger icons
+        temp_start_x = group_start_x + 22 + 2  # After larger icon area + spacing
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
