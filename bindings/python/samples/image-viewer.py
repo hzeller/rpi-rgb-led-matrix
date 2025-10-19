@@ -198,10 +198,10 @@ def spotify_background_thread():
                 except queue.Full:
                     pass
             
-            time.sleep(1)  # Update every 1 second in background for faster updates
+            time.sleep(0.5)  # Update every 0.5 seconds in background for ultra-fast updates
         except Exception as e:
             print(f"Background thread error: {e}")
-            time.sleep(3)  # Wait shorter on error too
+            time.sleep(2)  # Wait shorter on error
 
 if len(sys.argv) > 1:
     # Use provided image file
@@ -262,7 +262,7 @@ scroll_counter = 0
 song_static_delay = 0
 artist_static_delay = 0
 album_static_delay = 0
-static_delay_frames = 33  # 1 second at 33fps
+static_delay_frames = 50  # 1.5 seconds at 33fps
 
 # Global variables for Spotify data
 current_spotify_data = {
