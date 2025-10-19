@@ -3,6 +3,7 @@ import time
 import sys
 import os
 import argparse
+import warnings
 from samplebase import SampleBase
 from PIL import Image, ImageEnhance, ImageOps
 import cv2
@@ -11,6 +12,9 @@ from dotenv import load_dotenv
 import requests
 from io import BytesIO
 import numpy as np
+
+# Suppress Pillow deprecation warnings for cleaner output
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="PIL")
 
 try:
     import yt_dlp
@@ -81,6 +85,8 @@ class VideoPlayer(SampleBase):
                                help="Number of frames to preload and cache (0=no caching, improves performance but uses more memory)")
         self.parser.add_argument("--verbose", action="store_true",
                                help="Enable verbose output for debugging")
+        self.parser.add_argument("--quiet", action="store_true",
+                               help="Suppress OpenCV and streaming messages for cleaner output")
 
     def validate_video_file(self, video_path):
         """Validate that the file exists and is a valid video."""
@@ -141,6 +147,10 @@ class VideoPlayer(SampleBase):
                 'no_warnings': True,
                 'extractaudio': False,
                 'noplaylist': True,
+                # Add headers to improve streaming compatibility
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+                }
             }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -367,7 +377,7 @@ class VideoPlayer(SampleBase):
         
         cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
         
-        cached_frames = []
+        cached_images = []  # Store PIL images instead of canvas objects
         background_color = self.parse_background_color(self.args.background_color)
         
         frames_to_cache = min(cache_size, end_frame - start_frame)
@@ -385,22 +395,23 @@ class VideoPlayer(SampleBase):
                                     self.args.fit_mode, background_color)
             frame = self.enhance_frame(frame)
             
-            # Convert to PIL Image and create canvas
+            # Convert to PIL Image and store (don't create canvas yet)
             pil_image = Image.fromarray(frame)
-            canvas = self.matrix.CreateFrameCanvas()
-            canvas.SetImage(pil_image)
-            
-            cached_frames.append(canvas)
+            cached_images.append(pil_image)
             
             if self.args.verbose and (i + 1) % 10 == 0:
                 print(f"  Cached {i + 1}/{frames_to_cache} frames")
         
         cap.release()
-        print(f"Successfully cached {len(cached_frames)} frames")
-        return cached_frames
+        print(f"Successfully cached {len(cached_images)} frames")
+        return cached_images
 
     def run(self):
         """Main video playback loop."""
+        # Set OpenCV logging level for quieter output if requested
+        if self.args.quiet:
+            cv2.setLogLevel(0)  # Suppress OpenCV messages
+        
         # Determine video source priority: --url flag > video_source parameter > hardcoded URL
         video_path = None
         temp_file = None
@@ -497,13 +508,18 @@ class VideoPlayer(SampleBase):
             loop_counter = 0
             
             # Preload frames if caching is enabled
-            cached_frames = None
+            cached_images = None
             if self.args.cache_frames > 0:
-                cached_frames = self.preload_frames(video_path, start_frame, end_frame, self.args.cache_frames)
-                if cached_frames:
+                cached_images = self.preload_frames(video_path, start_frame, end_frame, self.args.cache_frames)
+                if cached_images:
                     print(f"Using cached frames for smoother playback")
             
-            use_caching = cached_frames is not None and len(cached_frames) > 0
+            use_caching = cached_images is not None and len(cached_images) > 0
+            
+            # Create reusable canvas objects for double-buffering (fix memory leak)
+            # Only create canvas objects once, then reuse them throughout playback
+            offscreen_canvas = self.matrix.CreateFrameCanvas()  # For cached frames
+            current_canvas = self.matrix.CreateFrameCanvas()    # For real-time frames
             
             try:
                 frame_index = 0  # For cached frames
@@ -511,7 +527,7 @@ class VideoPlayer(SampleBase):
                 while True:
                     if use_caching:
                         # Use cached frames for smoother playback
-                        if frame_index >= len(cached_frames):
+                        if frame_index >= len(cached_images):
                             # End of cached frames, loop if needed
                             loop_counter += 1
                             if self.args.loop_count > 0 and loop_counter >= self.args.loop_count:
@@ -520,9 +536,10 @@ class VideoPlayer(SampleBase):
                             frame_index = 0  # Reset to beginning
                             continue
                         
-                        # Display cached frame
-                        canvas = cached_frames[frame_index]
-                        self.matrix.SwapOnVSync(canvas)
+                        # Display cached frame using reusable canvas
+                        pil_image = cached_images[frame_index]
+                        offscreen_canvas.SetImage(pil_image)
+                        self.matrix.SwapOnVSync(offscreen_canvas)
                         frame_index += 1
                         
                     else:
@@ -567,10 +584,9 @@ class VideoPlayer(SampleBase):
                         # Convert numpy array to PIL Image for the matrix
                         pil_image = Image.fromarray(frame)
                         
-                        # Create canvas and display
-                        canvas = self.matrix.CreateFrameCanvas()
-                        canvas.SetImage(pil_image)
-                        self.matrix.SwapOnVSync(canvas)
+                        # Use reusable canvas for display (fix memory leak)
+                        current_canvas.SetImage(pil_image)
+                        self.matrix.SwapOnVSync(current_canvas)
                     
                     # Wait for next frame
                     time.sleep(frame_delay)

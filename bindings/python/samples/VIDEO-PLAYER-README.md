@@ -189,6 +189,7 @@ python video-player.py "https://www.reddit.com/r/videos/comments/abc123/title/"
 4. **Matrix Size**: Smaller matrices will process frames faster
 5. **Enhancement**: Disable brightness/contrast/saturation adjustments for best performance
 6. **Platform Videos**: YouTube and other platforms automatically select appropriate quality
+7. **Memory Efficiency**: The player uses canvas double-buffering to prevent memory leaks during long playbacks
 
 ## Troubleshooting
 
