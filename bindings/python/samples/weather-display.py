@@ -227,29 +227,29 @@ class WeatherDisplay:
         # Get current time in Mountain Time
         now = datetime.now(self.mountain_tz)
         
-        # Time at top center in 12-hour format like "5:27 PM" - using larger font
+        # Time at top center in 12-hour format like "5:27 PM" - using smaller font
         time_str = now.strftime("%I:%M %p")
         if time_str.startswith("0"):
             time_str = time_str[1:]  # Remove leading zero
         
-        # Calculate width for perfect centering using medium font
+        # Calculate width for perfect centering using small font
         time_width = 0
         for char in time_str:
             if char == ' ':
                 time_width += 2  # Space width
             else:
-                time_width += self.condition_font.CharacterWidth(ord(char))
+                time_width += self.small_font.CharacterWidth(ord(char))
         
         time_x = (64 - time_width) // 2
-        time_y = 12  # Slightly lower to accommodate larger font
+        time_y = 8  # Back to original position for smaller font
         
-        # Draw time with tight spacing using larger font
+        # Draw time with tight spacing using smaller font
         current_x = time_x
         for char in time_str:
             if char == ' ':
                 current_x += 2
             else:
-                char_width = graphics.DrawText(self.canvas, self.condition_font, current_x, time_y, self.temp_color, char)
+                char_width = graphics.DrawText(self.canvas, self.small_font, current_x, time_y, self.temp_color, char)
                 current_x += char_width - 1
         
         # Extract weather info
@@ -269,16 +269,16 @@ class WeatherDisplay:
         for char in low_str:
             low_width += self.small_font.CharacterWidth(ord(char))
         
-        # Calculate total group width: icon(20) + spacing(1) + max_temp_width
+        # Calculate total group width: icon(20) + spacing(-1) + max_temp_width
         max_temp_width = max(temp_width, low_width)
-        total_group_width = 20 + 1 + max_temp_width
+        total_group_width = 20 + (-1) + max_temp_width  # Reduced spacing by 2 pixels (from +1 to -1)
         
         # Center the entire group horizontally
         group_start_x = (64 - total_group_width) // 2
         
         # Position icon on the left of the group, centered vertically in bottom area
         icon_x = group_start_x + 10  # Center of the 20px icon
-        icon_y = 24  # Moved down 2 pixels from 22 to 24
+        icon_y = 22  # Moved back up 2 pixels from 24 to 22
         
         print(f"Weather icon code: {icon_code}")
         print(f"Group layout: total_width={total_group_width}, start_x={group_start_x}")
@@ -286,12 +286,12 @@ class WeatherDisplay:
         print(f"Got icon image: {icon_image is not None}")
         self.draw_weather_icon(icon_image, icon_x, icon_y)
         
-        # Position temperatures to the right of icon with 1 pixel spacing
-        temp_start_x = group_start_x + 20 + 1  # After icon + 1 pixel spacing
+        # Position temperatures to the right of icon with -1 pixel spacing (overlapping by 1 pixel)
+        temp_start_x = group_start_x + 20 + (-1)  # After icon - 1 pixel spacing (2 pixels closer)
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
-        temp_y = 23  # Moved down 3 pixels total (2 for group + 1 additional) from original 20 to 23
+        temp_y = 21  # Moved back up 2 pixels from 23 to 21
         
         # Draw high temp with tight spacing (white)
         current_x = temp_x
@@ -301,7 +301,7 @@ class WeatherDisplay:
         
         # Low temperature (blue) - center it within the temp area
         low_x = temp_start_x + (max_temp_width - low_width) // 2
-        low_y = 30  # Moved down 2 pixels from 28 to 30
+        low_y = 28  # Moved back up 2 pixels from 30 to 28
         
         # Draw low temp with tight spacing (blue)
         current_x = low_x
