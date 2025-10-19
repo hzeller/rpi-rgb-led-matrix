@@ -215,7 +215,7 @@ scroll_counter = 0
 song_static_delay = 0
 artist_static_delay = 0
 album_static_delay = 0
-static_delay_frames = 20  # 1 second at 20fps
+static_delay_frames = 25  # 1 second at 25fps
 
 # Global variables for Spotify data
 current_spotify_data = {
@@ -243,8 +243,8 @@ try:
     
     frame_count = 0
     while True:
-        # Update Spotify data directly every 10 frames (about 0.5 seconds at 20fps)
-        if use_spotify and frame_count % 10 == 0:
+        # Update Spotify data directly every 60 frames (about 3 seconds at 20fps) to reduce hiccups
+        if use_spotify and frame_count % 60 == 0:
             update_spotify_data()
             song_name = current_spotify_data['song_name']
             artist_name = current_spotify_data['artist_name']
@@ -311,8 +311,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position only after static delay
-            if song_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
+            # Update scroll position only after static delay - faster scrolling
+            if song_static_delay >= static_delay_frames and scroll_counter % 2 == 0:
                 song_scroll_pos += 1
                 if song_scroll_pos >= total_song_width + 10:  # Reset when first copy is off-screen
                     song_scroll_pos = 0
@@ -381,8 +381,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position only after static delay
-            if artist_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
+            # Update scroll position only after static delay - faster scrolling
+            if artist_static_delay >= static_delay_frames and scroll_counter % 2 == 0:
                 artist_scroll_pos += 1
                 if artist_scroll_pos >= total_artist_width + 10:  # Reset when first copy is off-screen
                     artist_scroll_pos = 0
@@ -451,8 +451,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position only after static delay
-            if album_static_delay >= static_delay_frames and scroll_counter % 4 == 0:
+            # Update scroll position only after static delay - faster scrolling
+            if album_static_delay >= static_delay_frames and scroll_counter % 2 == 0:
                 album_scroll_pos += 1
                 if album_scroll_pos >= total_album_width + 10:  # Reset when first copy is off-screen
                     album_scroll_pos = 0
@@ -479,7 +479,7 @@ try:
         frame_count += 1
         
         canvas = matrix.SwapOnVSync(canvas)
-        time.sleep(0.05)  # Faster refresh for smooth scrolling
+        time.sleep(0.04)  # Slightly faster refresh for smoother scrolling (25fps)
         
 except KeyboardInterrupt:
     sys.exit(0)
