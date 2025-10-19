@@ -289,11 +289,9 @@ class AdvancedStockTracker(SampleBase):
                         self.stock_history[symbol] = prices
                     self.last_update = datetime.now()
                 
-                print(f"Updated stock data at {self.last_update.strftime('%H:%M:%S')}")
-                print(f"Stock data now contains: {list(self.stock_data.keys())}")
+                print(f"✓ Updated at {self.last_update.strftime('%H:%M:%S')} - {len(self.stock_data)} stocks")
                 
                 # Wait for next update
-                print(f"Waiting {self.args.refresh_rate} minutes for next update...")
                 time.sleep(self.args.refresh_rate * 60)
                 
             except Exception as e:
@@ -442,51 +440,34 @@ class AdvancedStockTracker(SampleBase):
                 last_switch_time = current_time
             
             # Get current stock to display
-            if self.stock_symbols:
+            if self.stock_symbols and len(self.stock_data) > 0:
                 current_symbol = self.stock_symbols[self.current_stock_index]
                 
                 with self.data_lock:
-                    # Debug: Show what's in stock_data
-                    if len(self.stock_data) == 0:
-                        print(f"DEBUG: stock_data is empty")
-                    else:
-                        print(f"DEBUG: stock_data has keys: {list(self.stock_data.keys())}")
-                        print(f"DEBUG: Looking for {current_symbol}")
-                    
                     if current_symbol in self.stock_data:
                         stock_info = self.stock_data[current_symbol]
-                        print(f"DEBUG: Found data for {current_symbol}: {stock_info}")
                         
-                        # Determine colors based on performance
+                        # Determine color based on performance
                         is_positive = stock_info['change'] >= 0
-                        primary_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
+                        text_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
                         
-                        print(f"Drawing {current_symbol} at price ${stock_info['price']:.2f}")
+                        # Draw stock symbol on first line (like your image)
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, text_color, current_symbol)
                         
-                        # Test with simple text first - use exact same coordinates as runtext.py
-                        test_text = f"{current_symbol} ${stock_info['price']:.2f}"
-                        graphics.DrawText(offscreen_canvas, self.font_large, 0, 10, primary_color, test_text)
-                        
-                        # Add a simple pixel test
-                        offscreen_canvas.SetPixel(0, 0, 255, 255, 255)  # White pixel top-left
-                        offscreen_canvas.SetPixel(63, 31, 255, 0, 0)   # Red pixel bottom-right
+                        # Draw price on second line (like your image)
+                        price_text = f"{stock_info['price']:.2f}"
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 22, text_color, price_text)
                         
                     else:
-                        # No data available - draw something visible
-                        print(f"No data for {current_symbol}")
-                        graphics.DrawText(offscreen_canvas, self.font_large, 0, 10, self.colors['neutral'], "NO DATA")
-                        offscreen_canvas.SetPixel(10, 10, 255, 0, 0)  # Red test pixel
+                        # Loading state
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], current_symbol)
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 22, self.colors['neutral'], "Loading...")
             else:
-                print("No stocks configured")
-                graphics.DrawText(offscreen_canvas, self.font_large, 0, 10, self.colors['neutral'], "NO STOCKS")
-                offscreen_canvas.SetPixel(20, 20, 0, 255, 0)  # Green test pixel
-            
-            # Always draw a moving test pixel to verify display is working
-            frame_counter = int(time.time() * 10) % 64  # Moving pixel
-            offscreen_canvas.SetPixel(frame_counter, 15, 0, 0, 255)  # Blue moving pixel
+                # No data yet
+                graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], "Loading...")
             
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
-            time.sleep(0.1)
+            time.sleep(0.5)  # Slower refresh rate
 
 
 # Main function
