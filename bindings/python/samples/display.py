@@ -213,6 +213,7 @@ class StockMatrixDisplay(MatrixDisplay):
     
     def clear_chart_area(self):
         """Clear only the chart area (bottom half) of the display."""
+        print(f"DEBUG: Clearing chart area (y=16 to y={self.height})")
         for x in range(self.width):
             for y in range(16, self.height):  # Bottom half only
                 self.canvas.SetPixel(x, y, 0, 0, 0)

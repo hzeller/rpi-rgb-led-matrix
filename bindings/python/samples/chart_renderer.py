@@ -80,6 +80,7 @@ class TimeSeriesChart(ChartRenderer):
         
         # Chart area clearing is now handled by the caller (stock_tracker)
         # This prevents conflicts and ensures proper clearing timing
+        print(f"DEBUG: TimeSeriesChart.draw_filled_chart called for {len(prices)} prices")
         
         if not prices or len(prices) < 2:
             return self.draw_demo_chart(x_start, y_start, width, height, colors)
@@ -118,6 +119,7 @@ class TimeSeriesChart(ChartRenderer):
         # Store the last symbol for efficient clearing next time
         self.last_symbol = getattr(self, 'current_symbol', None)
         
+        print(f"DEBUG: TimeSeriesChart drew {pixels_drawn} pixels")
         return pixels_drawn > 0
     
     def draw_demo_chart(self, x_start, y_start, width, height, colors=None):

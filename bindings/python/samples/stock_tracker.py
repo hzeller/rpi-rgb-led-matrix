@@ -208,6 +208,9 @@ class StockTracker:
             chart_area = self.display.get_chart_area()
             prices = self.historical_data[current_symbol]
             
+            print(f"DEBUG: Drawing chart for {current_symbol} with {len(prices)} prices")
+            print(f"DEBUG: Chart area: {chart_area}")
+            
             # Always clear chart area before drawing to ensure visibility
             self.display.clear_chart_area()
             
@@ -218,6 +221,9 @@ class StockTracker:
                 chart_type='filled',
                 is_demo=self.demo_mode
             )
+            print(f"DEBUG: Finished drawing chart for {current_symbol}")
+        else:
+            print(f"DEBUG: No historical data for {current_symbol}, available: {list(self.historical_data.keys())}")
     
     def _main_loop(self):
         """Main display loop."""
