@@ -198,10 +198,10 @@ def spotify_background_thread():
                 except queue.Full:
                     pass
             
-            time.sleep(2)  # Update every 2 seconds in background
+            time.sleep(1)  # Update every 1 second in background for faster updates
         except Exception as e:
             print(f"Background thread error: {e}")
-            time.sleep(5)  # Wait longer on error
+            time.sleep(3)  # Wait shorter on error too
 
 if len(sys.argv) > 1:
     # Use provided image file
@@ -370,8 +370,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position only after static delay - faster scrolling
-            if song_static_delay >= static_delay_frames and scroll_counter % 2 == 0:
+            # Update scroll position only after static delay - slightly slower scrolling
+            if song_static_delay >= static_delay_frames and scroll_counter % 3 == 0:
                 song_scroll_pos += 1
                 if song_scroll_pos >= total_song_width + 10:  # Reset when first copy is off-screen
                     song_scroll_pos = 0
@@ -440,8 +440,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position only after static delay - faster scrolling
-            if artist_static_delay >= static_delay_frames and scroll_counter % 2 == 0:
+            # Update scroll position only after static delay - slightly slower scrolling
+            if artist_static_delay >= static_delay_frames and scroll_counter % 3 == 0:
                 artist_scroll_pos += 1
                 if artist_scroll_pos >= total_artist_width + 10:  # Reset when first copy is off-screen
                     artist_scroll_pos = 0
@@ -510,8 +510,8 @@ try:
                     if 0 <= y < matrix.height:
                         canvas.SetPixel(x, y, 0, 0, 0)
             
-            # Update scroll position only after static delay - faster scrolling
-            if album_static_delay >= static_delay_frames and scroll_counter % 2 == 0:
+            # Update scroll position only after static delay - slightly slower scrolling
+            if album_static_delay >= static_delay_frames and scroll_counter % 3 == 0:
                 album_scroll_pos += 1
                 if album_scroll_pos >= total_album_width + 10:  # Reset when first copy is off-screen
                     album_scroll_pos = 0
