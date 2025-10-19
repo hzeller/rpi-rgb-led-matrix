@@ -206,6 +206,7 @@ class AdvancedStockTracker(SampleBase):
                 # Generate realistic historical data based on current price
                 base_price = current_data[symbol]['price']
                 change_percent = current_data[symbol]['change_percent']
+                print(f"DEBUG: Generating history for {symbol}: base_price={base_price:.2f}, change%={change_percent:.2f}")
                 
                 history_data[symbol] = []
                 for i in range(50, 0, -1):  # 50 data points
@@ -219,6 +220,8 @@ class AdvancedStockTracker(SampleBase):
                         start_price = max(history_data[symbol][-1] + price_change, base_price * 0.5)
                     
                     history_data[symbol].append(round(start_price, 2))
+                
+                print(f"DEBUG: Generated {len(history_data[symbol])} historical prices for {symbol}: {history_data[symbol][:5]}...{history_data[symbol][-5:]}")
         
         # Fallback to Alpha Vantage if available
         elif self.api_key:
@@ -303,19 +306,28 @@ class AdvancedStockTracker(SampleBase):
     def draw_stock_chart(self, canvas, symbol, x_start, y_start, width, height):
         """Draw a simple, safe time series chart for the given symbol"""
         try:
+            print(f"DEBUG: Drawing chart for {symbol} at ({x_start},{y_start}) size {width}x{height}")
+            
             # Safety bounds check
             if x_start < 0 or y_start < 0 or width <= 0 or height <= 0:
+                print(f"DEBUG: Invalid bounds: x_start={x_start}, y_start={y_start}, width={width}, height={height}")
                 return
             if x_start + width > 64 or y_start + height > 32:
+                print(f"DEBUG: Chart exceeds display bounds")
                 return
                 
             # Get historical data safely
             prices = None
             with self.data_lock:
+                print(f"DEBUG: Available symbols in history: {list(self.stock_history.keys())}")
                 if symbol in self.stock_history and self.stock_history[symbol]:
                     prices = self.stock_history[symbol][-width:]  # Last 'width' data points
+                    print(f"DEBUG: Got {len(prices)} prices for {symbol}: {prices[:5]}..." if len(prices) > 5 else f"DEBUG: Got {len(prices)} prices for {symbol}: {prices}")
+                else:
+                    print(f"DEBUG: No historical data for {symbol}")
             
             if not prices or len(prices) < 2:
+                print(f"DEBUG: Not enough price data, calling demo chart")
                 # Draw simple demo pattern if no real data
                 self.draw_demo_chart(canvas, x_start, y_start, width, height)
                 return
@@ -324,13 +336,16 @@ class AdvancedStockTracker(SampleBase):
             min_price = min(prices)
             max_price = max(prices)
             price_range = max_price - min_price
+            print(f"DEBUG: Price range: {min_price:.2f} to {max_price:.2f} (range: {price_range:.2f})")
             
             if price_range <= 0:
+                print(f"DEBUG: No price variation, skipping chart")
                 return  # Skip if no price variation
                 
             # Draw simple line chart (safer than filled area)
             prev_x = None
             prev_y = None
+            pixels_drawn = 0
             
             for i, price in enumerate(prices):
                 if i >= width:
@@ -345,6 +360,7 @@ class AdvancedStockTracker(SampleBase):
                 # Bounds check each pixel
                 if 0 <= x < 64 and 0 <= y < 32:
                     canvas.SetPixel(x, y, 0, 120, 0)  # Green dot
+                    pixels_drawn += 1
                     
                     # Draw line to previous point if available
                     if prev_x is not None and prev_y is not None:
@@ -353,21 +369,29 @@ class AdvancedStockTracker(SampleBase):
                             canvas.SetPixel(prev_x, prev_y, 0, 80, 0)  # Dimmer line
                 
                 prev_x, prev_y = x, y
+            
+            print(f"DEBUG: Drew {pixels_drawn} pixels for {symbol} chart")
                 
-        except:
-            # Completely silent failure - don't break text display
-            pass
+        except Exception as e:
+            print(f"DEBUG: Chart drawing error: {e}")
+            import traceback
+            traceback.print_exc()
     
     def draw_demo_chart(self, canvas, x_start, y_start, width, height):
         """Draw a simple, safe demo chart pattern when no real data is available"""
         try:
+            print(f"DEBUG: Drawing demo chart at ({x_start},{y_start}) size {width}x{height}")
+            
             # Safety bounds check
             if x_start < 0 or y_start < 0 or width <= 0 or height <= 0:
+                print(f"DEBUG: Demo chart invalid bounds")
                 return
             if x_start + width > 64 or y_start + height > 32:
+                print(f"DEBUG: Demo chart exceeds display bounds")
                 return
                 
             import math
+            pixels_drawn = 0
             # Draw simple dots in a wave pattern
             for x in range(min(width, 64)):
                 if x_start + x >= 64:
@@ -381,9 +405,14 @@ class AdvancedStockTracker(SampleBase):
                 # Double check bounds
                 if 0 <= x_start + x < 64 and 0 <= pixel_y < 32:
                     canvas.SetPixel(x_start + x, pixel_y, 0, 60, 0)  # Dim green
+                    pixels_drawn += 1
+            
+            print(f"DEBUG: Drew {pixels_drawn} demo chart pixels")
                     
-        except:
-            pass  # Completely silent failure
+        except Exception as e:
+            print(f"DEBUG: Demo chart error: {e}")
+            import traceback
+            traceback.print_exc()
 
     def draw_line(self, canvas, x0, y0, x1, y1, color):
         """Draw a line between two points using Bresenham's algorithm"""
