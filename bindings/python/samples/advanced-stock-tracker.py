@@ -322,47 +322,32 @@ class AdvancedStockTracker(SampleBase):
     def draw_stock_chart(self, canvas, symbol, x_start, y_start, width, height):
         """Draw a simple, safe time series chart for the given symbol"""
         try:
-            print(f"DEBUG: Drawing chart for {symbol} at ({x_start},{y_start}) size {width}x{height}")
-            
             # Safety bounds check
             if x_start < 0 or y_start < 0 or width <= 0 or height <= 0:
-                print(f"DEBUG: Invalid bounds")
                 return
             if x_start + width > 64 or y_start + height > 32:
-                print(f"DEBUG: Chart exceeds display bounds")
                 return
-            
-            print(f"DEBUG: Bounds check passed")
                 
             # Get historical data from display-safe copy (no locking needed!)
             prices = None
-            print(f"DEBUG: Accessing display-safe data for {symbol}")
             
             # Use display-safe data that doesn't require locking
             if symbol in self.display_stock_history and self.display_stock_history[symbol]:
                 prices = self.display_stock_history[symbol][-width:]  # Last 'width' data points (should be 64)
-                print(f"DEBUG: Got {len(prices)} prices from display data for {width}px width")
             else:
-                print(f"DEBUG: No display data for {symbol}, available: {list(self.display_stock_history.keys())}")
+                prices = None
             
             if not prices or len(prices) < 2:
-                print(f"DEBUG: Not enough price data ({len(prices) if prices else 0} prices), calling demo chart")
                 self.draw_demo_chart(canvas, x_start, y_start, width, height)
                 return
                 
-            print(f"DEBUG: About to calculate price range")
-            
             # Simple safety checks
             min_price = min(prices)
             max_price = max(prices)
             price_range = max_price - min_price
-            print(f"DEBUG: Price range: {min_price:.2f} to {max_price:.2f} (range: {price_range:.2f})")
             
             if price_range <= 0:
-                print(f"DEBUG: No price variation, skipping chart")
                 return
-                
-            print(f"DEBUG: About to draw pixels")
                 
             # Draw filled area chart with lighter top line
             pixels_drawn = 0
@@ -382,7 +367,7 @@ class AdvancedStockTracker(SampleBase):
                             canvas.SetPixel(x, fill_y, 0, 100, 0)  # Darker green for fill
                         pixels_drawn += 1
             
-            print(f"DEBUG: Drew {pixels_drawn} pixels for {symbol} chart")
+            # Chart drawn successfully
                 
         except Exception as e:
             print(f"DEBUG: Chart drawing error: {e}")
@@ -392,14 +377,10 @@ class AdvancedStockTracker(SampleBase):
     def draw_demo_chart(self, canvas, x_start, y_start, width, height):
         """Draw a simple, safe demo chart pattern when no real data is available"""
         try:
-            print(f"DEBUG: Drawing demo chart at ({x_start},{y_start}) size {width}x{height}")
-            
             # Safety bounds check
             if x_start < 0 or y_start < 0 or width <= 0 or height <= 0:
-                print(f"DEBUG: Demo chart invalid bounds")
                 return
             if x_start + width > 64 or y_start + height > 32:
-                print(f"DEBUG: Demo chart exceeds display bounds")
                 return
                 
             import math
@@ -423,7 +404,7 @@ class AdvancedStockTracker(SampleBase):
                             canvas.SetPixel(x_start + x, fill_y, 0, 60, 0)   # Darker green for demo fill
                         pixels_drawn += 1
             
-            print(f"DEBUG: Drew {pixels_drawn} demo chart pixels")
+            # Demo chart drawn
                     
         except Exception as e:
             print(f"DEBUG: Demo chart error: {e}")
@@ -511,20 +492,21 @@ class AdvancedStockTracker(SampleBase):
         loop_count = 0
         while True:
             loop_count += 1
-            if loop_count % 10 == 1:  # Print every 10th loop to avoid spam
-                print(f"DEBUG: Display loop iteration {loop_count}")
+            # Reduce debug spam - only print important events
             
             offscreen_canvas.Clear()
             
             # Check if we need to switch to the next stock
             current_time = time.time()
             if current_time - last_switch_time >= self.args.display_time:
+                old_index = self.current_stock_index
                 self.current_stock_index = (self.current_stock_index + 1) % len(self.stock_symbols)
                 last_switch_time = current_time
-                print(f"DEBUG: Switched to stock index {self.current_stock_index}")
+                print(f"DEBUG: Switched from stock index {old_index} to {self.current_stock_index} (cycling through {len(self.stock_symbols)} stocks)")
             
-            # Get current stock to display
+            # Get current stock to display  
             if self.stock_symbols and len(self.display_stock_data) > 0:
+                print(f"DEBUG: Current stock index {self.current_stock_index} of {len(self.stock_symbols)} stocks")
                 current_symbol = self.stock_symbols[self.current_stock_index]
                 
                 # Use display-safe data (no locking needed)
