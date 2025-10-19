@@ -171,9 +171,6 @@ class StockTracker:
             chart_area = self.display.get_chart_area()
             prices = self.historical_data[current_symbol]
             
-            # Update chart renderer with current canvas before drawing
-            self.chart_renderer.canvas = self.display.canvas
-            
             self.chart_renderer.draw_stock_chart(
                 current_symbol, prices,
                 chart_area['x'], chart_area['y'],
@@ -213,9 +210,6 @@ class StockTracker:
             
             print(f"DEBUG: Drawing chart for {current_symbol} with {len(prices)} prices")
             print(f"DEBUG: Chart area: {chart_area}")
-            
-            # Update chart renderer with current canvas before drawing
-            self.chart_renderer.canvas = self.display.canvas
             
             self.chart_renderer.draw_stock_chart(
                 current_symbol, prices,
