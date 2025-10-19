@@ -205,6 +205,27 @@ class StockMatrixDisplay(MatrixDisplay):
         for name, rgb in StockConfig.STOCK_COLORS.items():
             self.stock_colors[name] = graphics.Color(*rgb)
     
+    def clear_text_area(self):
+        """Clear only the text area (top half) of the display."""
+        for x in range(self.width):
+            for y in range(16):  # Top half only
+                self.canvas.SetPixel(x, y, 0, 0, 0)
+    
+    def clear_chart_area(self):
+        """Clear only the chart area (bottom half) of the display."""
+        for x in range(self.width):
+            for y in range(16, self.height):  # Bottom half only
+                self.canvas.SetPixel(x, y, 0, 0, 0)
+    
+    def get_chart_area(self):
+        """Get the chart drawing area coordinates."""
+        return {
+            'x': 0,
+            'y': 16,  # Bottom half of 32px display
+            'width': self.width,
+            'height': 16
+        }
+    
     def draw_stock_info(self, symbol, price, change, change_percent):
         """Draw stock symbol, price, and change information."""
         # Determine color based on change
@@ -242,12 +263,3 @@ class StockMatrixDisplay(MatrixDisplay):
                             self.stock_colors['neutral'], symbol)
         graphics.DrawText(self.canvas, self.font_large, 1, 22, 
                         self.stock_colors['neutral'], "Loading...")
-    
-    def get_chart_area(self):
-        """Get the chart drawing area coordinates."""
-        return {
-            'x': 0,
-            'y': 16,  # Bottom half of 32px display
-            'width': self.width,
-            'height': 16
-        }

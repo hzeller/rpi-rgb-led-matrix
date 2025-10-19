@@ -78,10 +78,19 @@ class TimeSeriesChart(ChartRenderer):
             x_start + width > 64 or y_start + height > 32):
             return False
         
-        # Clear the chart area first to prevent flickering
-        for clear_x in range(x_start, min(x_start + width, 64)):
-            for clear_y in range(y_start, min(y_start + height, 32)):
-                self.draw_pixel_safe(clear_x, clear_y, (0, 0, 0))
+        # Use selective clearing only when necessary
+        symbol_changed = (hasattr(self, 'last_symbol') and 
+                         hasattr(self, 'current_symbol') and
+                         self.last_symbol != self.current_symbol)
+        
+        if symbol_changed or not hasattr(self, 'last_symbol'):
+            if hasattr(self, 'display_instance') and hasattr(self.display_instance, 'clear_chart_area'):
+                self.display_instance.clear_chart_area()
+            else:
+                # Fallback: clear the chart area only when symbol changes
+                for clear_x in range(x_start, min(x_start + width, 64)):
+                    for clear_y in range(y_start, min(y_start + height, 32)):
+                        self.draw_pixel_safe(clear_x, clear_y, (0, 0, 0))
         
         if not prices or len(prices) < 2:
             return self.draw_demo_chart(x_start, y_start, width, height, colors)
@@ -116,6 +125,9 @@ class TimeSeriesChart(ChartRenderer):
                 else:
                     self.draw_pixel_safe(x, fill_y, fill_color)
                 pixels_drawn += 1
+        
+        # Store the last symbol for efficient clearing next time
+        self.last_symbol = getattr(self, 'current_symbol', None)
         
         return pixels_drawn > 0
     
@@ -222,8 +234,13 @@ class StockChartRenderer:
             chart_type: 'filled' or 'line'
             is_demo: Whether this is demo data
         """
+        # Track symbol changes for efficient clearing
+        self.current_symbol = symbol
+        
         try:
             if chart_type == 'filled':
+                # Pass symbol information to time series chart
+                self.time_series.current_symbol = symbol
                 success = self.time_series.draw_filled_chart(
                     prices, x_start, y_start, width, height, is_demo=is_demo
                 )
@@ -237,6 +254,8 @@ class StockChartRenderer:
             
             if success:
                 print(f"✓ Drew {chart_type} chart for {symbol}")
+                # Store symbol for next comparison
+                self.last_symbol = symbol
             else:
                 print(f"✗ Failed to draw chart for {symbol}")
             
