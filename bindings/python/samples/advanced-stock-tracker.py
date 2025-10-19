@@ -218,9 +218,12 @@ class AdvancedStockTracker(SampleBase):
 
     def update_stock_data(self):
         """Background thread to update stock data periodically"""
+        print("Data update thread started")
         while True:
             try:
+                print("Fetching stock data...")
                 current_data, history_data = self.fetch_stock_data()
+                print(f"Fetched data for symbols: {list(current_data.keys())}")
                 
                 with self.data_lock:
                     self.stock_data = current_data
@@ -230,12 +233,16 @@ class AdvancedStockTracker(SampleBase):
                     self.last_update = datetime.now()
                 
                 print(f"Updated stock data at {self.last_update.strftime('%H:%M:%S')}")
+                print(f"Stock data now contains: {list(self.stock_data.keys())}")
                 
                 # Wait for next update
+                print(f"Waiting {self.args.refresh_rate} minutes for next update...")
                 time.sleep(self.args.refresh_rate * 60)
                 
             except Exception as e:
                 print(f"Error in update thread: {e}")
+                import traceback
+                traceback.print_exc()
                 time.sleep(30)
 
     def draw_stock_chart(self, canvas, symbol, x_start, y_start, width, height):
@@ -304,37 +311,60 @@ class AdvancedStockTracker(SampleBase):
                 y += sy
 
     def run(self):
+        print("Starting advanced stock tracker...")
+        
         # Load fonts
         self.font_large = graphics.Font()
-        self.font_large.LoadFont("../../../fonts/7x13.bdf")  # For symbol and price
+        font_loaded = self.font_large.LoadFont("../../../fonts/7x13.bdf")
+        print(f"Large font loaded: {font_loaded}")
+        
         self.font_small = graphics.Font() 
-        self.font_small.LoadFont("../../../fonts/5x7.bdf")   # For change info
+        small_font_loaded = self.font_small.LoadFont("../../../fonts/5x7.bdf")
+        print(f"Small font loaded: {small_font_loaded}")
         
         # Get API key (already loaded from environment in argument defaults)
         self.api_key = self.args.api_key
+        print(f"API key configured: {bool(self.api_key)}")
+        print(f"Demo mode: {self.args.demo_mode}")
         
         # Initialize stock symbols list
         self.stock_symbols = [s.strip().upper() for s in self.args.stocks.split(',')]
+        print(f"Stock symbols: {self.stock_symbols}")
         
         # Start background data update thread
+        print("Starting background data update thread...")
         update_thread = threading.Thread(target=self.update_stock_data, daemon=True)
         update_thread.start()
         
         # Wait for initial data
-        time.sleep(2)
+        print("Waiting for initial data...")
+        time.sleep(3)
         
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         
         last_switch_time = time.time()
         
+        frame_count = 0
         while True:
             offscreen_canvas.Clear()
+            
+            # Debug output every 50 frames (about 5 seconds)
+            if frame_count % 50 == 0:
+                with self.data_lock:
+                    print(f"Frame {frame_count}: Stock data keys: {list(self.stock_data.keys())}")
+                    print(f"Current stock index: {self.current_stock_index}/{len(self.stock_symbols)}")
+                    if self.stock_symbols:
+                        current_symbol = self.stock_symbols[self.current_stock_index]
+                        print(f"Current symbol: {current_symbol}")
+                        if current_symbol in self.stock_data:
+                            print(f"Stock data: {self.stock_data[current_symbol]}")
             
             # Check if we need to switch to the next stock
             current_time = time.time()
             if current_time - last_switch_time >= self.args.display_time:
                 self.current_stock_index = (self.current_stock_index + 1) % len(self.stock_symbols)
                 last_switch_time = current_time
+                print(f"Switched to stock index: {self.current_stock_index}")
             
             # Get current stock to display
             if self.stock_symbols:
@@ -347,6 +377,8 @@ class AdvancedStockTracker(SampleBase):
                         # Determine colors based on performance
                         is_positive = stock_info['change'] >= 0
                         primary_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
+                        
+                        print(f"Drawing {current_symbol}: ${stock_info['price']:.2f} ({'positive' if is_positive else 'negative'})")
                         
                         # Display layout matching your image:
                         # Top left: Stock symbol (AAPL)
@@ -376,12 +408,21 @@ class AdvancedStockTracker(SampleBase):
                         
                     else:
                         # No data available for this stock
+                        print(f"No data for {current_symbol}, showing loading...")
                         graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], current_symbol)
                         graphics.DrawText(offscreen_canvas, self.font_small, 1, 20, self.colors['neutral'], "Loading...")
             else:
+                print("No stocks configured!")
                 graphics.DrawText(offscreen_canvas, self.font_small, 1, 10, self.colors['neutral'], "No stocks configured")
             
+            # Always draw something simple for testing
+            if frame_count < 10:
+                # Draw a test pixel to verify display is working
+                offscreen_canvas.SetPixel(0, 0, 255, 0, 0)  # Red pixel in top-left corner
+                offscreen_canvas.SetPixel(63, 31, 0, 255, 0)  # Green pixel in bottom-right corner
+            
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
+            frame_count += 1
             time.sleep(0.1)  # Smooth refresh
 
 
