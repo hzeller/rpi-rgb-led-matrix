@@ -185,3 +185,69 @@ class MatrixDisplay:
     def swap_canvas(self):
         """Swap the canvas to display the updated content."""
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
+
+
+class StockMatrixDisplay(MatrixDisplay):
+    """Extended matrix display class for stock-specific functionality."""
+    
+    def __init__(self, options=None):
+        super().__init__(options)
+        
+        # Load stock-specific fonts
+        self.font_large = graphics.Font()
+        self.font_large.LoadFont("../../../fonts/5x7.bdf")
+        self.font_small = graphics.Font()
+        self.font_small.LoadFont("../../../fonts/4x6.bdf")
+        
+        # Stock-specific colors
+        from stock_config import StockConfig
+        self.stock_colors = {}
+        for name, rgb in StockConfig.STOCK_COLORS.items():
+            self.stock_colors[name] = graphics.Color(*rgb)
+    
+    def draw_stock_info(self, symbol, price, change, change_percent):
+        """Draw stock symbol, price, and change information."""
+        # Determine color based on change
+        is_positive = change >= 0
+        left_color = self.stock_colors['neutral']  # White for symbol/price
+        right_color = (self.stock_colors['gain_bright'] if is_positive 
+                      else self.stock_colors['loss_bright'])
+        
+        # Left side - Stock symbol and price (white)
+        graphics.DrawText(self.canvas, self.font_large, 2, 8, left_color, symbol)
+        price_text = f"{price:.2f}"
+        graphics.DrawText(self.canvas, self.font_large, 2, 15, left_color, price_text)
+        
+        # Right side - Change amount and percentage (colored)
+        # Right-aligned text
+        change_text = f"{change:+.2f}"
+        change_width = self._measure_text_width(change_text, self.font_large)
+        change_x = self.width - change_width - 2
+        graphics.DrawText(self.canvas, self.font_large, change_x, 8, right_color, change_text)
+        
+        pct_text = f"{change_percent:+.1f}%"
+        pct_width = self._measure_text_width(pct_text, self.font_large)
+        pct_x = self.width - pct_width - 2
+        graphics.DrawText(self.canvas, self.font_large, pct_x, 15, right_color, pct_text)
+    
+    def _measure_text_width(self, text, font):
+        """Measure text width by drawing off-screen."""
+        return graphics.DrawText(self.canvas, font, 1000, 8, 
+                               self.stock_colors['neutral'], text)
+    
+    def draw_loading_message(self, symbol=None):
+        """Draw a loading message."""
+        if symbol:
+            graphics.DrawText(self.canvas, self.font_large, 1, 10, 
+                            self.stock_colors['neutral'], symbol)
+        graphics.DrawText(self.canvas, self.font_large, 1, 22, 
+                        self.stock_colors['neutral'], "Loading...")
+    
+    def get_chart_area(self):
+        """Get the chart drawing area coordinates."""
+        return {
+            'x': 0,
+            'y': 16,  # Bottom half of 32px display
+            'width': self.width,
+            'height': 16
+        }
