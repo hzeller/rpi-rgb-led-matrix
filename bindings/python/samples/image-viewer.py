@@ -6,6 +6,7 @@ import base64
 import json
 import os
 import threading  # Re-enabling threading for seamless updates
+import queue  # For thread-safe communication
 from io import BytesIO
 from dotenv import load_dotenv
 
@@ -158,11 +159,45 @@ def update_spotify_data():
 
 def spotify_background_thread():
     """Background thread that continuously updates Spotify data without blocking display"""
-    global spotify_thread_running
+    global spotify_thread_running, spotify_update_queue
     
     while spotify_thread_running:
         try:
-            update_spotify_data()
+            current_song, current_artist, current_album, current_image = get_current_playing()
+            if current_song and current_artist:
+                # Prepare the update data
+                update_data = {
+                    'song_name': current_song,
+                    'artist_name': current_artist.upper(),
+                    'album_name': current_album if current_album else "Album Name",
+                    'image': None
+                }
+                
+                if current_image:
+                    # Resize image to 20x20
+                    resample_mode = getattr(Image, "Resampling", Image).LANCZOS
+                    current_image.thumbnail((20, 20), resample=resample_mode)
+                    update_data['image'] = current_image.convert('RGB')
+                
+                # Put update in queue (non-blocking)
+                try:
+                    spotify_update_queue.put_nowait(update_data)
+                    print(f"Queued update: {current_song} by {current_artist} from {current_album}")
+                except queue.Full:
+                    pass  # Skip if queue is full
+            else:
+                # Put default data in queue
+                default_data = {
+                    'song_name': "No music playing",
+                    'artist_name': "SPOTIFY",
+                    'album_name': "Album Name",
+                    'image': None
+                }
+                try:
+                    spotify_update_queue.put_nowait(default_data)
+                except queue.Full:
+                    pass
+            
             time.sleep(2)  # Update every 2 seconds in background
         except Exception as e:
             print(f"Background thread error: {e}")
@@ -227,7 +262,7 @@ scroll_counter = 0
 song_static_delay = 0
 artist_static_delay = 0
 album_static_delay = 0
-static_delay_frames = 25  # 1 second at 25fps
+static_delay_frames = 33  # 1 second at 33fps
 
 # Global variables for Spotify data
 current_spotify_data = {
@@ -238,6 +273,7 @@ current_spotify_data = {
 }
 last_spotify_update = 0
 spotify_thread_running = True
+spotify_update_queue = queue.Queue(maxsize=1)  # Small queue for latest update only
 
 # Initialize album name
 album_name = "Album Name"
@@ -259,8 +295,16 @@ try:
     
     frame_count = 0
     while True:
-        # Get current Spotify data from global variables (updated by background thread)
+        # Check for Spotify updates without blocking (non-blocking queue read)
         if use_spotify:
+            try:
+                # Try to get latest update from queue without blocking
+                update_data = spotify_update_queue.get_nowait()
+                current_spotify_data.update(update_data)
+                spotify_update_queue.task_done()
+            except queue.Empty:
+                pass  # No update available, continue with current data
+            
             song_name = current_spotify_data['song_name']
             artist_name = current_spotify_data['artist_name']
             album_name = current_spotify_data['album_name']
@@ -494,7 +538,7 @@ try:
         frame_count += 1
         
         canvas = matrix.SwapOnVSync(canvas)
-        time.sleep(0.04)  # Slightly faster refresh for smoother scrolling (25fps)
+        time.sleep(0.03)  # Even faster refresh for ultra-smooth scrolling (33fps)
         
 except KeyboardInterrupt:
     print("\nShutting down...")
