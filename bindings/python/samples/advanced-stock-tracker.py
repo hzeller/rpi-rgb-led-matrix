@@ -214,8 +214,8 @@ class AdvancedStockTracker(SampleBase):
                 
                 history_data[symbol] = []
                 
-                # Generate 50 historical data points
-                for i in range(50):
+                # Generate 64 historical data points (one for each pixel width)
+                for i in range(64):
                     if i == 0:
                         # Starting price (oldest data point)
                         start_price = base_price - (current_data[symbol]['change'] * 2)  # Simpler calculation
@@ -340,8 +340,8 @@ class AdvancedStockTracker(SampleBase):
             
             # Use display-safe data that doesn't require locking
             if symbol in self.display_stock_history and self.display_stock_history[symbol]:
-                prices = self.display_stock_history[symbol][-min(width, 50):]  # Last data points
-                print(f"DEBUG: Got {len(prices)} prices from display data")
+                prices = self.display_stock_history[symbol][-width:]  # Last 'width' data points (should be 64)
+                print(f"DEBUG: Got {len(prices)} prices from display data for {width}px width")
             else:
                 print(f"DEBUG: No display data for {symbol}, available: {list(self.display_stock_history.keys())}")
             
