@@ -104,12 +104,12 @@ class WeatherDisplay:
             
             response = requests.get(icon_url, timeout=10)
             if response.status_code == 200:
-                # Load image and resize to fit display
+                # Load image and resize to fit display - make it taller to span both temp lines
                 icon_image = Image.open(BytesIO(response.content))
                 
-                # Resize to about 16x16 pixels for the display
+                # Resize to about 20x20 pixels to span both temperature lines
                 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-                icon_image = icon_image.resize((16, 16), resample=resample_mode)
+                icon_image = icon_image.resize((20, 20), resample=resample_mode)
                 
                 # Convert to RGB
                 self.weather_icon = icon_image.convert('RGB')
@@ -128,18 +128,20 @@ class WeatherDisplay:
     def draw_weather_icon(self, icon_image, x, y):
         """Draw the weather icon image on the display"""
         if icon_image is not None:
-            # Calculate position to center the 16x16 icon
-            icon_x = x - 8  # Center horizontally
-            icon_y = y - 8  # Center vertically
+            # Calculate position to center the 20x20 icon
+            icon_x = x - 10  # Center horizontally
+            icon_y = y - 10  # Center vertically
             
             # Draw the icon
             self.canvas.SetImage(icon_image, icon_x, icon_y)
         else:
             # Fallback - simple colored square
-            self.canvas.SetPixel(x, y, 200, 200, 255)
+            for dx in range(-8, 8):
+                for dy in range(-8, 8):
+                    self.canvas.SetPixel(x+dx, y+dy, 200, 200, 255)
 
     def draw_weather(self):
-        """Draw weather information exactly like the reference image"""
+        """Draw weather information like the reference image: time top, icon left, temps right"""
         weather = self.get_weather_data()
         
         if weather is None:
@@ -184,37 +186,39 @@ class WeatherDisplay:
         condition = weather['weather'][0]['main']
         icon_code = weather['weather'][0]['icon']
         
-        # Get and draw weather icon in center
-        icon_x = 32
-        icon_y = 16
+        # Weather icon on left side, centered vertically in bottom area
+        icon_x = 16  # Left side center of left half
+        icon_y = 22  # Center vertically in lower area (32-8=24 pixels, middle at ~22)
         icon_image = self.get_weather_icon(icon_code)
         self.draw_weather_icon(icon_image, icon_x, icon_y)
         
-        # High temperature below icon (large number)
-        temp_str = str(temp)
+        # High temperature on right side (white)
+        temp_str = f"{temp}°"
         temp_width = 0
         for char in temp_str:
-            temp_width += self.temp_font.CharacterWidth(ord(char))
+            temp_width += self.small_font.CharacterWidth(ord(char))
         
-        temp_x = (64 - temp_width) // 2
-        temp_y = 24
+        # Position in right half, above center
+        temp_x = 48 - temp_width // 2  # Center in right half (48 is center of right 32 pixels)
+        temp_y = 18
         
-        # Draw high temp with tight spacing
+        # Draw high temp with tight spacing (white)
         current_x = temp_x
         for char in temp_str:
-            char_width = graphics.DrawText(self.canvas, self.temp_font, current_x, temp_y, self.temp_color, char)
+            char_width = graphics.DrawText(self.canvas, self.small_font, current_x, temp_y, self.temp_color, char)
             current_x += char_width - 1
         
-        # Low temperature with degree symbol below (smaller)
+        # Low temperature below high temp (blue)
         low_str = f"{temp_low}°"
         low_width = 0
         for char in low_str:
             low_width += self.small_font.CharacterWidth(ord(char))
         
-        low_x = (64 - low_width) // 2  
-        low_y = 32
+        # Position in right half, below high temp
+        low_x = 48 - low_width // 2  # Center in right half
+        low_y = 28
         
-        # Draw low temp with tight spacing
+        # Draw low temp with tight spacing (blue)
         current_x = low_x
         for char in low_str:
             char_width = graphics.DrawText(self.canvas, self.small_font, current_x, low_y, self.detail_color, char)
