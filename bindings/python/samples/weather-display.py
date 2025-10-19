@@ -88,65 +88,74 @@ class WeatherDisplay:
             print(f"Weather fetch error: {e}")
             return None
     
+    def draw_weather_icon(self, condition, x, y):
+        """Draw a simple weather icon using ASCII-style graphics"""
+        # Simple weather icons using basic shapes
+        if "clear" in condition.lower() or "sun" in condition.lower():
+            # Sun icon - circle with rays
+            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(255, 255, 0), "☀")
+        elif "cloud" in condition.lower():
+            # Cloud icon  
+            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(200, 200, 200), "☁")
+        elif "rain" in condition.lower() or "drizzle" in condition.lower():
+            # Rain icon
+            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(100, 150, 255), "🌧")
+        elif "snow" in condition.lower():
+            # Snow icon
+            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(255, 255, 255), "❄")
+        elif "storm" in condition.lower() or "thunder" in condition.lower():
+            # Storm icon
+            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(255, 255, 100), "⚡")
+        else:
+            # Default - simple dot
+            graphics.DrawText(self.canvas, self.condition_font, x, y, self.condition_color, "●")
+
     def draw_weather(self):
-        """Draw weather information on the display"""
+        """Draw weather information in the layout style shown in image"""
         weather = self.get_weather_data()
         
         if weather is None:
             # Show error message
             error_text = "No Weather Data"
-            text_width = len(error_text) * 4
+            text_width = len(error_text) * 3
             x = (64 - text_width) // 2
             graphics.DrawText(self.canvas, self.small_font, x, 16, self.detail_color, error_text)
             return
         
+        # Get current time in Mountain Time
+        now = datetime.now(self.mountain_tz)
+        
+        # Day abbreviation at top left
+        day_str = now.strftime("%a").upper()  # "FRI", "SAT", etc.
+        graphics.DrawText(self.canvas, self.condition_font, 2, 10, self.condition_color, day_str)
+        
+        # Time at top right (24-hour format like image)
+        time_str = now.strftime("%H:%M")
+        time_width = len(time_str) * 4
+        time_x = 64 - time_width - 2  # Right aligned with padding
+        graphics.DrawText(self.canvas, self.small_font, time_x, 10, self.detail_color, time_str)
+        
         # Extract weather info
         temp = int(weather['main']['temp'])
         condition = weather['weather'][0]['main']
-        description = weather['weather'][0]['description'].title()
-        humidity = weather['main']['humidity']
-        feels_like = int(weather['main']['feels_like'])
         
-        # Temperature (large, centered)
+        # Temperature at bottom left (large)
         temp_str = f"{temp}°F"
         temp_width = 0
         for char in temp_str:
             temp_width += self.temp_font.CharacterWidth(ord(char))
-        temp_x = (64 - temp_width) // 2
-        temp_y = 18
         
-        # Draw temperature with tight spacing
-        current_x = temp_x
+        # Draw temperature with tight spacing at bottom left
+        current_x = 2
+        temp_y = 28
         for char in temp_str:
             char_width = graphics.DrawText(self.canvas, self.temp_font, current_x, temp_y, self.temp_color, char)
             current_x += char_width - 1
         
-        # Condition (top line)
-        condition_width = 0
-        for char in condition:
-            condition_width += self.condition_font.CharacterWidth(ord(char))
-        condition_x = (64 - condition_width) // 2
-        condition_y = 8
-        
-        # Draw condition with tight spacing
-        current_x = condition_x
-        for char in condition:
-            char_width = graphics.DrawText(self.canvas, self.condition_font, current_x, condition_y, self.condition_color, char)
-            current_x += char_width - 1
-        
-        # Feels like (bottom line)
-        feels_str = f"Feels {feels_like}°"
-        feels_width = len(feels_str) * 4
-        feels_x = (64 - feels_width) // 2
-        feels_y = 30
-        
-        current_x = feels_x
-        for char in feels_str:
-            if char == ' ':
-                current_x += 2
-            else:
-                char_width = graphics.DrawText(self.canvas, self.small_font, current_x, feels_y, self.detail_color, char)
-                current_x += char_width - 1
+        # Weather icon in center
+        icon_x = 32  # Center of 64-pixel display
+        icon_y = 20
+        self.draw_weather_icon(condition, icon_x, icon_y)
 
     def run(self):
         print("Starting Denver weather display. Press CTRL-C to stop.")
