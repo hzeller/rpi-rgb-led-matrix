@@ -455,9 +455,9 @@ class AdvancedStockTracker(SampleBase):
                         graphics.DrawText(offscreen_canvas, self.font_large, 2, 8, text_color, current_symbol)
                         
                         # Draw price on second line - fits within 16px total height
-                        # 4x6 font needs Y coordinate of about 15 for proper baseline 
+                        # 5x7 font needs Y coordinate of about 15 for proper baseline 
                         price_text = f"{stock_info['price']:.2f}"
-                        graphics.DrawText(offscreen_canvas, self.font_small, 2, 15, text_color, price_text)
+                        graphics.DrawText(offscreen_canvas, self.font_large, 2, 15, text_color, price_text)
                         
                     else:
                         # Loading state
