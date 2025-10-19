@@ -118,9 +118,9 @@ def update_spotify_data():
     """Direct Spotify data update with better error handling"""
     global current_spotify_data, last_spotify_update
     
-    # Skip update if we recently tried and failed (wait 30 seconds after errors)
+    # Skip update if we recently tried and failed (wait 5 seconds after errors)
     current_time = time.time()
-    if current_time - last_spotify_update < 30:
+    if current_time - last_spotify_update < 5:
         return False
     
     try:
@@ -239,8 +239,8 @@ try:
     
     frame_count = 0
     while True:
-        # Update Spotify data directly every 150 frames (about 3 seconds at 50fps)
-        if use_spotify and frame_count % 150 == 0:
+        # Update Spotify data directly every 40 frames (about 2 seconds at 20fps)
+        if use_spotify and frame_count % 40 == 0:
             update_spotify_data()
             song_name = current_spotify_data['song_name']
             artist_name = current_spotify_data['artist_name']
