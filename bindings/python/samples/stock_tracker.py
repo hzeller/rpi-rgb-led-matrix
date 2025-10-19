@@ -208,6 +208,7 @@ class StockTracker:
             chart_area = self.display.get_chart_area()
             prices = self.historical_data[current_symbol]
             
+            print(f"Drawing chart for {current_symbol} with {len(prices)} price points")
             self.chart_renderer.draw_stock_chart(
                 current_symbol, prices,
                 chart_area['x'], chart_area['y'],
@@ -215,6 +216,9 @@ class StockTracker:
                 chart_type='filled',
                 is_demo=self.demo_mode
             )
+        else:
+            print(f"No historical data available for {current_symbol}")
+            print(f"Available symbols in historical_data: {list(self.historical_data.keys())}")
     
     def _main_loop(self):
         """Main display loop."""
@@ -233,8 +237,11 @@ class StockTracker:
             # Check if we need to switch stocks
             stock_switched = False
             if self._should_switch_stock():
+                old_symbol = self.current_symbols[self.current_stock_index] if self.current_symbols else None
                 self._switch_to_next_stock()
+                new_symbol = self.current_symbols[self.current_stock_index] if self.current_symbols else None
                 stock_switched = True
+                print(f"Stock switched from {old_symbol} to {new_symbol}")
             
             # Get current symbol
             current_symbol = None
@@ -243,6 +250,9 @@ class StockTracker:
             
             # Check if symbol changed
             symbol_changed = current_symbol != last_symbol
+            
+            print(f"Loop: data_updated={data_updated}, stock_switched={stock_switched}, "
+                  f"symbol_changed={symbol_changed}, current_symbol={current_symbol}")
             
             # Only redraw if something actually changed or it's been more than 30 seconds
             current_time = time.time()
