@@ -301,10 +301,10 @@ class AdvancedStockTracker(SampleBase):
                 time.sleep(30)
 
     def draw_stock_chart(self, canvas, symbol, x_start, y_start, width, height):
-        """Draw a mini stock chart for the given symbol"""
+        """Draw a time series chart for the given symbol"""
         with self.data_lock:
             if symbol not in self.stock_history or not self.stock_history[symbol]:
-                # If no historical data, create a simple demo chart
+                # If no historical data, create a demo chart
                 self.draw_demo_chart(canvas, x_start, y_start, width, height)
                 return
             
@@ -321,26 +321,38 @@ class AdvancedStockTracker(SampleBase):
             if price_range == 0:  # All prices the same
                 y = y_start + height // 2
                 for x in range(width):
-                    canvas.SetPixel(x_start + x, y, 0, 255, 0)  # Green line
+                    canvas.SetPixel(x_start + x, y, 0, 200, 0)  # Green horizontal line
                 return
             
-            # Draw filled area chart like in your image
+            # Determine overall trend for color
+            is_trending_up = prices[-1] > prices[0]
+            chart_color = (0, 200, 0) if is_trending_up else (200, 0, 0)  # Green or red
+            
+            # Draw filled area chart (time series from left to right)
             for x in range(width):
-                # Get price for this x position
-                price_index = int((x / width) * (len(prices) - 1))
+                # Get price for this x position (map x to price array index)
+                price_index = int((x / (width - 1)) * (len(prices) - 1))
                 price = prices[price_index]
                 
                 # Calculate height for this price
-                price_ratio = (price - min_price) / price_range
-                chart_height = int(price_ratio * height)
+                price_ratio = (price - min_price) / price_range if price_range > 0 else 0.5
+                chart_point_height = int(price_ratio * (height - 1))  # Leave 1px border
                 
-                # Draw vertical line from bottom to price level (filled area effect)
-                for y in range(chart_height):
-                    pixel_y = y_start + height - 1 - y  # Flip Y coordinate
+                # Draw filled area from bottom up to price level
+                for y in range(chart_point_height + 1):
+                    pixel_y = y_start + height - 1 - y  # Start from bottom
                     if pixel_y >= y_start and pixel_y < y_start + height:
-                        # Gradient effect - brighter at top, dimmer at bottom
-                        intensity = int(255 * (y + 1) / chart_height) if chart_height > 0 else 255
-                        canvas.SetPixel(x_start + x, pixel_y, 0, intensity, 0)
+                        # Create gradient effect - dimmer at bottom, brighter at top
+                        if chart_point_height > 0:
+                            intensity_ratio = (y + 1) / (chart_point_height + 1)
+                            intensity = int(100 + (intensity_ratio * 155))  # 100-255 range
+                        else:
+                            intensity = 150
+                        
+                        if is_trending_up:
+                            canvas.SetPixel(x_start + x, pixel_y, 0, intensity, 0)  # Green gradient
+                        else:
+                            canvas.SetPixel(x_start + x, pixel_y, intensity, 0, 0)  # Red gradient
     
     def draw_demo_chart(self, canvas, x_start, y_start, width, height):
         """Draw a demo chart pattern when no real data is available"""
@@ -473,6 +485,14 @@ class AdvancedStockTracker(SampleBase):
                         pct_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 15, right_color, pct_text)  # Measure width off-screen
                         pct_x = 64 - pct_width - 2  # True right align with 2px buffer from right edge
                         graphics.DrawText(offscreen_canvas, self.font_large, pct_x, 15, right_color, pct_text)
+                        
+                        # Draw time series chart below the text (starting at y=18)
+                        chart_x = 0
+                        chart_y = 18  # Start below text area (16px + 2px buffer)
+                        chart_width = 64
+                        chart_height = 32 - 18  # Use remaining height (14 pixels)
+                        
+                        self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
                         
                     else:
                         # Loading state
