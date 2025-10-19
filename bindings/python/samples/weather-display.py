@@ -230,37 +230,32 @@ class WeatherDisplay:
         # Get current time in Mountain Time
         now = datetime.now(self.mountain_tz)
         
-        # Time at top center in 12-hour format like "5:27 PM" - using regular medium font
+        # Time at top center in 12-hour format like "5:27 PM" - using small font with proper spacing
         time_str = now.strftime("%I:%M %p")
         if time_str.startswith("0"):
             time_str = time_str[1:]  # Remove leading zero
         
-        # Calculate width for perfect centering using regular medium font with precise spacing
+        # Calculate width for perfect centering using small font with normal spacing
         time_width = 0
-        for i, char in enumerate(time_str):
+        for char in time_str:
             if char == ' ':
-                time_width += 3  # Slightly wider space for better readability
+                time_width += 4  # Larger space between time and AM/PM
             else:
-                char_width = self.medium_font.CharacterWidth(ord(char))
-                time_width += char_width
-                # Add tight spacing between characters (except for the last character)
-                if i < len(time_str) - 1 and time_str[i + 1] != ' ':
-                    time_width -= 1  # Tight spacing
+                time_width += self.small_font.CharacterWidth(ord(char))
+                time_width += 1  # Add 1 pixel spacing between all characters
+        time_width -= 1  # Remove trailing spacing
         
         time_x = (64 - time_width) // 2
-        time_y = 11  # Adjusted for medium font
+        time_y = 8  # Back to small font position
         
-        # Draw time with precise spacing using regular medium font
+        # Draw time with 1 pixel spacing between characters using small font
         current_x = time_x
-        for i, char in enumerate(time_str):
+        for char in time_str:
             if char == ' ':
-                current_x += 3  # Match the space width used in calculation
+                current_x += 4  # Larger space between time and AM/PM
             else:
-                char_width = graphics.DrawText(self.canvas, self.medium_font, current_x, time_y, self.temp_color, char)
-                current_x += char_width
-                # Apply tight spacing between characters (except for the last character)
-                if i < len(time_str) - 1 and time_str[i + 1] != ' ':
-                    current_x -= 1  # Tight spacing
+                char_width = graphics.DrawText(self.canvas, self.small_font, current_x, time_y, self.temp_color, char)
+                current_x += char_width + 1  # Add 1 pixel spacing after each character
         
         # Extract weather info
         temp = int(weather['main']['temp'])
@@ -268,16 +263,20 @@ class WeatherDisplay:
         condition = weather['weather'][0]['main']
         icon_code = weather['weather'][0]['icon']
         
-        # Calculate temperature text widths for layout
+        # Calculate temperature text widths for layout with 1 pixel spacing
         temp_str = f"{temp}°"
         temp_width = 0
         for char in temp_str:
             temp_width += self.small_font.CharacterWidth(ord(char))
+            temp_width += 1  # Add 1 pixel spacing between characters
+        temp_width -= 1  # Remove trailing spacing
             
         low_str = f"{temp_low}°"
         low_width = 0
         for char in low_str:
             low_width += self.small_font.CharacterWidth(ord(char))
+            low_width += 1  # Add 1 pixel spacing between characters
+        low_width -= 1  # Remove trailing spacing
         
         # Calculate total group width: icon(20) + spacing(-1) + max_temp_width
         max_temp_width = max(temp_width, low_width)
@@ -303,21 +302,21 @@ class WeatherDisplay:
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
         temp_y = 21  # Moved back up 2 pixels from 23 to 21
         
-        # Draw high temp with tight spacing (white)
+        # Draw high temp with 1 pixel spacing (white)
         current_x = temp_x
         for char in temp_str:
             char_width = graphics.DrawText(self.canvas, self.small_font, current_x, temp_y, self.temp_color, char)
-            current_x += char_width - 1
+            current_x += char_width + 1  # Add 1 pixel spacing between characters
         
         # Low temperature (blue) - center it within the temp area
         low_x = temp_start_x + (max_temp_width - low_width) // 2
         low_y = 28  # Moved back up 2 pixels from 30 to 28
         
-        # Draw low temp with tight spacing (blue)
+        # Draw low temp with 1 pixel spacing (blue)
         current_x = low_x
         for char in low_str:
             char_width = graphics.DrawText(self.canvas, self.small_font, current_x, low_y, self.detail_color, char)
-            current_x += char_width - 1
+            current_x += char_width + 1  # Add 1 pixel spacing between characters
 
     def run(self):
         print("Starting Denver weather display. Press CTRL-C to stop.")
