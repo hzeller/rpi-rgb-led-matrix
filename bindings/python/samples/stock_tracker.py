@@ -211,8 +211,8 @@ class StockTracker:
             print(f"DEBUG: Drawing chart for {current_symbol} with {len(prices)} prices")
             print(f"DEBUG: Chart area: {chart_area}")
             
-            # Always clear chart area before drawing to ensure visibility
-            self.display.clear_chart_area()
+            # Only clear chart area if we haven't already cleared the entire display
+            # (clearing is handled differently for stock switches vs data updates)
             
             self.chart_renderer.draw_stock_chart(
                 current_symbol, prices,

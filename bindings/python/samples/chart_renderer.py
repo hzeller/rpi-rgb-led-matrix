@@ -25,10 +25,12 @@ class ChartRenderer:
     def draw_pixel_safe(self, x, y, color, max_width=64, max_height=32):
         """Draw a pixel with bounds checking."""
         if self.is_valid_position(x, y, max_width, max_height):
+            # Get current canvas instance (important for double buffering)
+            canvas = getattr(self, 'display_instance', self).canvas if hasattr(self, 'display_instance') else self.canvas
             if isinstance(color, tuple):
-                self.canvas.SetPixel(x, y, *color)
+                canvas.SetPixel(x, y, *color)
             else:
-                self.canvas.SetPixel(x, y, color.red, color.green, color.blue)
+                canvas.SetPixel(x, y, color.red, color.green, color.blue)
     
     def draw_line(self, x0, y0, x1, y1, color):
         """Draw a line between two points using Bresenham's algorithm."""
@@ -78,9 +80,22 @@ class TimeSeriesChart(ChartRenderer):
             x_start + width > 64 or y_start + height > 32):
             return False
         
-        # Chart area clearing is now handled by the caller (stock_tracker)
-        # This prevents conflicts and ensures proper clearing timing
+        # Clear chart area before drawing (simple approach)
         print(f"DEBUG: TimeSeriesChart.draw_filled_chart called for {len(prices)} prices")
+        print(f"DEBUG: Clearing area from ({x_start},{y_start}) to ({x_start+width},{y_start+height})")
+        
+        # Clear the chart area
+        for clear_x in range(x_start, min(x_start + width, 64)):
+            for clear_y in range(y_start, min(y_start + height, 32)):
+                self.draw_pixel_safe(clear_x, clear_y, (0, 0, 0))
+        
+        # Draw a test border to verify the chart area is working
+        # Top border
+        for x in range(x_start, min(x_start + width, 64)):
+            self.draw_pixel_safe(x, y_start, (255, 255, 255))  # White top border
+        # Bottom border  
+        for x in range(x_start, min(x_start + width, 64)):
+            self.draw_pixel_safe(x, min(y_start + height - 1, 31), (255, 255, 255))  # White bottom border
         
         if not prices or len(prices) < 2:
             return self.draw_demo_chart(x_start, y_start, width, height, colors)
