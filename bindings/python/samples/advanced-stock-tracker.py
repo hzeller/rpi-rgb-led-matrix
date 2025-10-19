@@ -526,9 +526,9 @@ class AdvancedStockTracker(SampleBase):
         print(f"API key configured: {bool(self.api_key)}")
         print(f"Demo mode: {self.args.demo_mode}")
         
-        # Initialize stock symbols list
+        # Initialize with hardcoded stock symbols initially
         self.stock_symbols = [s.strip().upper() for s in self.args.stocks.split(',')]
-        print(f"Stock symbols: {self.stock_symbols}")
+        print(f"Initial stock symbols: {self.stock_symbols}")
         
         # Start background data update thread
         print("Starting background data update thread...")
@@ -548,6 +548,9 @@ class AdvancedStockTracker(SampleBase):
         
         if len(self.stock_data) > 0:
             print(f"✓ Stock data ready! Loaded {len(self.stock_data)} stocks")
+            # Update stock symbols to include all fetched stocks (hardcoded + trending)
+            self.stock_symbols = list(self.stock_data.keys())
+            print(f"✓ Display will cycle through: {self.stock_symbols}")
         else:
             print("⚠ No stock data loaded, using demo mode")
             # Force demo data if nothing loaded
@@ -555,7 +558,10 @@ class AdvancedStockTracker(SampleBase):
             with self.data_lock:
                 self.stock_data = demo_current
                 self.stock_history = demo_history
+                # Update symbols for demo data too
+                self.stock_symbols = list(demo_current.keys())
                 print(f"✓ Demo data loaded for {len(self.stock_data)} stocks")
+                print(f"✓ Demo display will cycle through: {self.stock_symbols}")
         
         print("Creating offscreen canvas...")
         offscreen_canvas = self.matrix.CreateFrameCanvas()
