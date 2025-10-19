@@ -34,16 +34,17 @@ class AdvancedStockTracker(SampleBase):
             led_gpio_mapping='adafruit-hat-pwm'
         )
         
-        self.parser.add_argument("--api-key", help="Alpha Vantage API key (get free at alphavantage.co)", type=str)
+        self.parser.add_argument("--api-key", help="Alpha Vantage API key (get free at alphavantage.co)", 
+                               default=os.environ.get('ALPHA_VANTAGE_API_KEY'), type=str)
         self.parser.add_argument("--stocks", help="Comma-separated stock symbols (e.g., AAPL,GOOGL,MSFT)", 
                                default=os.environ.get('DEFAULT_STOCKS', "AAPL,GOOGL,MSFT,TSLA"), type=str)
         self.parser.add_argument("--refresh-rate", help="Data refresh rate in minutes", 
                                default=int(os.environ.get('REFRESH_RATE', '5')), type=int)
         self.parser.add_argument("--display-time", help="Time to show each stock in seconds", 
-                               default=10, type=int)
+                               default=int(os.environ.get('DISPLAY_TIME', '10')), type=int)
         self.parser.add_argument("--demo-mode", help="Use demo data instead of API", action="store_true")
         self.parser.add_argument("--chart-days", help="Number of days of historical data for chart", 
-                               default=30, type=int)
+                               default=int(os.environ.get('CHART_DAYS', '30')), type=int)
         
         # Stock data storage
         self.stock_data = {}
@@ -309,8 +310,8 @@ class AdvancedStockTracker(SampleBase):
         self.font_small = graphics.Font() 
         self.font_small.LoadFont("../../../fonts/5x7.bdf")   # For change info
         
-        # Get API key
-        self.api_key = self.args.api_key or os.environ.get('ALPHA_VANTAGE_API_KEY')
+        # Get API key (already loaded from environment in argument defaults)
+        self.api_key = self.args.api_key
         
         # Initialize stock symbols list
         self.stock_symbols = [s.strip().upper() for s in self.args.stocks.split(',')]
