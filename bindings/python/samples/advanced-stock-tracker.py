@@ -209,15 +209,19 @@ class AdvancedStockTracker(SampleBase):
                 print(f"DEBUG: Generating history for {symbol}: base_price={base_price:.2f}, change%={change_percent:.2f}")
                 
                 history_data[symbol] = []
-                for i in range(50, 0, -1):  # 50 data points
-                    if i == 50:
-                        # Starting price (30 days ago)
-                        start_price = base_price - (current_data[symbol]['change'] * 5)
+                
+                # Generate 50 historical data points
+                for i in range(50):
+                    if i == 0:
+                        # Starting price (oldest data point)
+                        start_price = base_price - (current_data[symbol]['change'] * 2)  # Simpler calculation
+                        start_price = max(start_price, base_price * 0.3)  # Don't go too low
                     else:
                         # Random walk towards current price
-                        trend = 0.02 if change_percent > 0 else -0.02
-                        price_change = (random.uniform(-1, 1) + trend) * base_price * 0.01
-                        start_price = max(history_data[symbol][-1] + price_change, base_price * 0.5)
+                        prev_price = history_data[symbol][-1]
+                        trend = 0.01 if change_percent > 0 else -0.01
+                        price_change = (random.uniform(-0.5, 0.5) + trend) * prev_price * 0.02
+                        start_price = max(prev_price + price_change, base_price * 0.3)
                     
                     history_data[symbol].append(round(start_price, 2))
                 
@@ -290,7 +294,9 @@ class AdvancedStockTracker(SampleBase):
                     # Update historical data
                     for symbol, prices in history_data.items():
                         self.stock_history[symbol] = prices
+                        print(f"DEBUG: Stored {len(prices)} historical prices for {symbol}")
                     self.last_update = datetime.now()
+                    print(f"DEBUG: Historical data now available for: {list(self.stock_history.keys())}")
                 
                 print(f"✓ Updated at {self.last_update.strftime('%H:%M:%S')} - {len(self.stock_data)} stocks")
                 
@@ -442,10 +448,18 @@ class AdvancedStockTracker(SampleBase):
         print("Starting advanced stock tracker...")
         
         # Load smaller fonts to fit in compact 16px height with 2px margins
+        print("Loading fonts...")
         self.font_large = graphics.Font()
-        self.font_large.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for symbol
+        if not self.font_large.LoadFont("../../../fonts/5x7.bdf"):
+            print("ERROR: Could not load 5x7.bdf font")
+            return
+        print("✓ Loaded 5x7.bdf font")
+        
         self.font_small = graphics.Font()
-        self.font_small.LoadFont("../../../fonts/4x6.bdf")  # Even smaller for price
+        if not self.font_small.LoadFont("../../../fonts/4x6.bdf"):
+            print("ERROR: Could not load 4x6.bdf font")
+            return  
+        print("✓ Loaded 4x6.bdf font")
         
         # Get API key (already loaded from environment in argument defaults)
         self.api_key = self.args.api_key
@@ -483,11 +497,19 @@ class AdvancedStockTracker(SampleBase):
                 self.stock_history = demo_history
                 print(f"✓ Demo data loaded for {len(self.stock_data)} stocks")
         
+        print("Creating offscreen canvas...")
         offscreen_canvas = self.matrix.CreateFrameCanvas()
+        print("✓ Offscreen canvas created")
         
         last_switch_time = time.time()
+        print("Starting main display loop...")
         
+        loop_count = 0
         while True:
+            loop_count += 1
+            if loop_count % 10 == 1:  # Print every 10th loop to avoid spam
+                print(f"DEBUG: Display loop iteration {loop_count}")
+            
             offscreen_canvas.Clear()
             
             # Check if we need to switch to the next stock
@@ -495,6 +517,7 @@ class AdvancedStockTracker(SampleBase):
             if current_time - last_switch_time >= self.args.display_time:
                 self.current_stock_index = (self.current_stock_index + 1) % len(self.stock_symbols)
                 last_switch_time = current_time
+                print(f"DEBUG: Switched to stock index {self.current_stock_index}")
             
             # Get current stock to display
             if self.stock_symbols and len(self.stock_data) > 0:
