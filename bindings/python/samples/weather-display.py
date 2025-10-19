@@ -291,7 +291,7 @@ class WeatherDisplay:
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
-        temp_y = 18
+        temp_y = 20  # Moved down 2 pixels from 18 to 20
         
         # Draw high temp with tight spacing (white)
         current_x = temp_x
