@@ -23,6 +23,16 @@ except ImportError:
 class StockTracker(SampleBase):
     def __init__(self, *args, **kwargs):
         super(StockTracker, self).__init__(*args, **kwargs)
+        
+        # Override default matrix settings to match your hardware configuration
+        self.parser.set_defaults(
+            led_rows=32,
+            led_cols=64,
+            led_chain=1,
+            led_parallel=1,
+            led_gpio_mapping='adafruit-hat-pwm'
+        )
+        
         self.parser.add_argument("--api-key", help="Alpha Vantage API key (get free at alphavantage.co)", type=str)
         self.parser.add_argument("--stocks", help="Comma-separated stock symbols (e.g., AAPL,GOOGL,MSFT)", 
                                default=os.environ.get('DEFAULT_STOCKS', "AAPL,GOOGL,MSFT,TSLA,AMZN"), type=str)
