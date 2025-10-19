@@ -78,12 +78,13 @@ class TimeSeriesChart(ChartRenderer):
             x_start + width > 64 or y_start + height > 32):
             return False
         
-        # Use selective clearing only when necessary
+        # Skip all clearing for data updates to prevent blinking
         symbol_changed = (hasattr(self, 'last_symbol') and 
                          hasattr(self, 'current_symbol') and
                          self.last_symbol != self.current_symbol)
         
-        if symbol_changed or not hasattr(self, 'last_symbol'):
+        # Only clear when symbol actually changes, not on data updates
+        if symbol_changed and not hasattr(self, 'no_clear_mode'):
             if hasattr(self, 'display_instance') and hasattr(self.display_instance, 'clear_chart_area'):
                 self.display_instance.clear_chart_area()
             else:

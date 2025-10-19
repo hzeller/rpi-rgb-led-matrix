@@ -159,6 +159,26 @@ class StockTracker:
             print(f"Switched from stock {old_index} to {self.current_stock_index} "
                   f"(cycling through {len(self.current_symbols)} stocks)")
     
+    def _draw_current_stock_minimal(self):
+        """Draw only the chart area for data updates (no text redraw)."""
+        if not self.current_symbols or len(self.current_data) == 0:
+            return
+            
+        current_symbol = self.current_symbols[self.current_stock_index]
+        
+        # Only draw chart if historical data is available
+        if current_symbol in self.historical_data:
+            chart_area = self.display.get_chart_area()
+            prices = self.historical_data[current_symbol]
+            
+            self.chart_renderer.draw_stock_chart(
+                current_symbol, prices,
+                chart_area['x'], chart_area['y'],
+                chart_area['width'], chart_area['height'],
+                chart_type='filled',
+                is_demo=self.demo_mode
+            )
+    
     def _draw_current_stock(self):
         """Draw the current stock information and chart."""
         if not self.current_symbols or not self.current_data:
@@ -200,6 +220,7 @@ class StockTracker:
         """Main display loop."""
         last_symbol = None
         last_redraw_time = time.time()
+        last_data_redraw_time = time.time()  # Separate timer for data redraws
         
         while self.running:
             # Check for data updates
@@ -227,16 +248,30 @@ class StockTracker:
             current_time = time.time()
             force_redraw = current_time - last_redraw_time > 30  # Force redraw every 30 seconds
             
-            should_redraw = (data_updated or stock_switched or symbol_changed or 
-                           self.chart_needs_redraw or force_redraw)
+            # Throttle data updates to prevent excessive blinking
+            data_redraw_allowed = current_time - last_data_redraw_time > 5.0  # Only allow data redraws every 5 seconds
+            
+            should_redraw = ((data_updated and data_redraw_allowed) or stock_switched or symbol_changed or 
+                           (self.chart_needs_redraw and data_redraw_allowed) or force_redraw)
             
             if should_redraw:
-                # Only clear when switching stocks or symbol changes
+                # Try to minimize visual disruption
                 if stock_switched or symbol_changed:
+                    # Only clear when absolutely necessary
                     self.display.clear()
-                    
-                self._draw_current_stock()
-                self.display.swap_canvas()
+                    self._draw_current_stock()
+                    self.display.swap_canvas()  # Full swap for major changes
+                elif (data_updated or self.chart_needs_redraw) and data_redraw_allowed:
+                    # For data updates, enable no-clear mode and minimal redraw
+                    self.chart_renderer.no_clear_mode = True
+                    self._draw_current_stock_minimal()
+                    self.chart_renderer.no_clear_mode = False
+                    self.display.swap_canvas()
+                    last_data_redraw_time = current_time  # Update data redraw timer
+                else:
+                    # Force redraw case - full redraw but no clear
+                    self._draw_current_stock()
+                    self.display.swap_canvas()
                 
                 # Mark chart as drawn and update tracking
                 if self.chart_needs_redraw:
@@ -247,7 +282,7 @@ class StockTracker:
                       f"symbol_changed={symbol_changed}, force={force_redraw}")
             
             # Wait for next frame - even longer delay since we're not redrawing often
-            time.sleep(0.5)  # 2fps check rate
+            time.sleep(2.0)  # 0.5fps check rate - much slower to reduce blinking
 
 
 def create_argument_parser():
