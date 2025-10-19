@@ -116,11 +116,12 @@ def get_current_playing():
 
 def update_spotify_data():
     """Direct Spotify data update with better error handling"""
-    global current_spotify_data, last_spotify_update
+    global current_spotify_data, last_spotify_update, last_error_time
     
-    # Skip update if we recently tried and failed (wait 5 seconds after errors)
     current_time = time.time()
-    if current_time - last_spotify_update < 5:
+    
+    # Only skip update if we recently had a network error (wait 3 seconds after network errors)
+    if hasattr(update_spotify_data, 'last_error_time') and current_time - update_spotify_data.last_error_time < 3:
         return False
     
     try:
@@ -136,6 +137,9 @@ def update_spotify_data():
                 current_spotify_data['image'] = current_image.convert('RGB')
             print(f"Updated: {current_song} by {current_artist} from {current_album}")
             last_spotify_update = current_time
+            # Clear any previous error time since this succeeded
+            if hasattr(update_spotify_data, 'last_error_time'):
+                delattr(update_spotify_data, 'last_error_time')
             return True
         else:
             current_spotify_data['song_name'] = "No music playing"
@@ -144,12 +148,12 @@ def update_spotify_data():
             last_spotify_update = current_time
             return False
     except (requests.exceptions.SSLError, requests.exceptions.ConnectionError) as e:
-        print(f"Network/SSL error (will retry in 30s): {type(e).__name__}")
-        last_spotify_update = current_time
+        print(f"Network/SSL error (will retry in 3s): {type(e).__name__}")
+        update_spotify_data.last_error_time = current_time
         return False
     except Exception as e:
         print(f"Spotify update error: {e}")
-        last_spotify_update = current_time
+        update_spotify_data.last_error_time = current_time
         return False
 
 if len(sys.argv) > 1:
@@ -239,8 +243,8 @@ try:
     
     frame_count = 0
     while True:
-        # Update Spotify data directly every 40 frames (about 2 seconds at 20fps)
-        if use_spotify and frame_count % 40 == 0:
+        # Update Spotify data directly every 10 frames (about 0.5 seconds at 20fps)
+        if use_spotify and frame_count % 10 == 0:
             update_spotify_data()
             song_name = current_spotify_data['song_name']
             artist_name = current_spotify_data['artist_name']
