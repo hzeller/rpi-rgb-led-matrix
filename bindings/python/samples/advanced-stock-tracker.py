@@ -316,28 +316,43 @@ class AdvancedStockTracker(SampleBase):
             
             # Safety bounds check
             if x_start < 0 or y_start < 0 or width <= 0 or height <= 0:
-                print(f"DEBUG: Invalid bounds: x_start={x_start}, y_start={y_start}, width={width}, height={height}")
+                print(f"DEBUG: Invalid bounds")
                 return
             if x_start + width > 64 or y_start + height > 32:
                 print(f"DEBUG: Chart exceeds display bounds")
                 return
+            
+            print(f"DEBUG: Bounds check passed")
                 
-            # Get historical data safely
+            # Get historical data safely - simplified
             prices = None
-            with self.data_lock:
-                print(f"DEBUG: Available symbols in history: {list(self.stock_history.keys())}")
-                if symbol in self.stock_history and self.stock_history[symbol]:
-                    prices = self.stock_history[symbol][-width:]  # Last 'width' data points
-                    print(f"DEBUG: Got {len(prices)} prices for {symbol}: {prices[:5]}..." if len(prices) > 5 else f"DEBUG: Got {len(prices)} prices for {symbol}: {prices}")
-                else:
-                    print(f"DEBUG: No historical data for {symbol}")
+            print(f"DEBUG: About to acquire data lock")
+            
+            try:
+                with self.data_lock:
+                    print(f"DEBUG: Got data lock, checking for {symbol}")
+                    if symbol in self.stock_history:
+                        print(f"DEBUG: Found {symbol} in history")
+                        if self.stock_history[symbol]:
+                            prices = self.stock_history[symbol][-min(width, 50):]  # Last 'width' data points, max 50
+                            print(f"DEBUG: Got {len(prices)} prices")
+                        else:
+                            print(f"DEBUG: Empty price list for {symbol}")
+                    else:
+                        print(f"DEBUG: {symbol} not in history keys: {list(self.stock_history.keys())}")
+            except Exception as lock_e:
+                print(f"DEBUG: Data lock error: {lock_e}")
+                return
+            
+            print(f"DEBUG: Data lock released")
             
             if not prices or len(prices) < 2:
-                print(f"DEBUG: Not enough price data, calling demo chart")
-                # Draw simple demo pattern if no real data
+                print(f"DEBUG: Not enough price data ({len(prices) if prices else 0} prices), calling demo chart")
                 self.draw_demo_chart(canvas, x_start, y_start, width, height)
                 return
                 
+            print(f"DEBUG: About to calculate price range")
+            
             # Simple safety checks
             min_price = min(prices)
             max_price = max(prices)
@@ -346,35 +361,23 @@ class AdvancedStockTracker(SampleBase):
             
             if price_range <= 0:
                 print(f"DEBUG: No price variation, skipping chart")
-                return  # Skip if no price variation
+                return
                 
-            # Draw simple line chart (safer than filled area)
-            prev_x = None
-            prev_y = None
+            print(f"DEBUG: About to draw pixels")
+                
+            # Draw very simple dots only
             pixels_drawn = 0
-            
-            for i, price in enumerate(prices):
-                if i >= width:
-                    break
-                    
+            for i in range(min(len(prices), width)):
                 # Calculate position
                 x = x_start + i
-                price_ratio = (price - min_price) / price_range
-                chart_height = max(1, int(price_ratio * (height - 2)))  # Leave 1px top/bottom margin
+                price_ratio = (prices[i] - min_price) / price_range
+                chart_height = max(1, int(price_ratio * (height - 2)))
                 y = y_start + height - 1 - chart_height
                 
-                # Bounds check each pixel
+                # Bounds check and draw
                 if 0 <= x < 64 and 0 <= y < 32:
-                    canvas.SetPixel(x, y, 0, 120, 0)  # Green dot
+                    canvas.SetPixel(x, y, 0, 120, 0)
                     pixels_drawn += 1
-                    
-                    # Draw line to previous point if available
-                    if prev_x is not None and prev_y is not None:
-                        # Simple line drawing between adjacent points
-                        if abs(y - prev_y) <= 1:  # Only if close vertically
-                            canvas.SetPixel(prev_x, prev_y, 0, 80, 0)  # Dimmer line
-                
-                prev_x, prev_y = x, y
             
             print(f"DEBUG: Drew {pixels_drawn} pixels for {symbol} chart")
                 
