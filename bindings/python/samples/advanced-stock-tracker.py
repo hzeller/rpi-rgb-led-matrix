@@ -460,18 +460,18 @@ class AdvancedStockTracker(SampleBase):
                         graphics.DrawText(offscreen_canvas, self.font_large, 2, 15, left_color, price_text)
                         
                         # Right side - Change amount and percentage (green/red based on value)
-                        # Calculate positions for right alignment (64px width, minus 2px margin)
+                        # True right alignment: measure actual text width and position accordingly
                         
-                        # Top right: Change amount (colored)
+                        # Top right: Change amount (colored) - properly right aligned
                         change_text = f"{stock_info['change']:+.2f}"  # Include +/- sign
-                        change_width = len(change_text) * 6  # Rough width for 5x7 font
-                        change_x = 64 - change_width - 2  # Right align with 2px margin
+                        change_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 8, right_color, change_text)  # Measure width off-screen
+                        change_x = 64 - change_width - 2  # True right align with 2px buffer from right edge
                         graphics.DrawText(offscreen_canvas, self.font_large, change_x, 8, right_color, change_text)
                         
-                        # Bottom right: Percentage (colored)
+                        # Bottom right: Percentage (colored) - properly right aligned  
                         pct_text = f"{stock_info['change_percent']:+.1f}%"  # Include +/- sign
-                        pct_width = len(pct_text) * 6  # Rough width for 5x7 font  
-                        pct_x = 64 - pct_width - 2  # Right align with 2px margin
+                        pct_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 15, right_color, pct_text)  # Measure width off-screen
+                        pct_x = 64 - pct_width - 2  # True right align with 2px buffer from right edge
                         graphics.DrawText(offscreen_canvas, self.font_large, pct_x, 15, right_color, pct_text)
                         
                     else:
