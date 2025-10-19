@@ -278,7 +278,7 @@ class WeatherDisplay:
         
         # Position icon on the left of the group, centered vertically in bottom area
         icon_x = group_start_x + 10  # Center of the 20px icon
-        icon_y = 22  # Center vertically in lower area
+        icon_y = 24  # Moved down 2 pixels from 22 to 24
         
         print(f"Weather icon code: {icon_code}")
         print(f"Group layout: total_width={total_group_width}, start_x={group_start_x}")
@@ -291,7 +291,7 @@ class WeatherDisplay:
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
-        temp_y = 20  # Moved down 2 pixels from 18 to 20
+        temp_y = 23  # Moved down 3 pixels total (2 for group + 1 additional) from original 20 to 23
         
         # Draw high temp with tight spacing (white)
         current_x = temp_x
@@ -301,7 +301,7 @@ class WeatherDisplay:
         
         # Low temperature (blue) - center it within the temp area
         low_x = temp_start_x + (max_temp_width - low_width) // 2
-        low_y = 28
+        low_y = 30  # Moved down 2 pixels from 28 to 30
         
         # Draw low temp with tight spacing (blue)
         current_x = low_x
