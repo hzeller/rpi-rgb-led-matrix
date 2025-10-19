@@ -313,34 +313,11 @@ class AdvancedStockTracker(SampleBase):
     def run(self):
         print("Starting advanced stock tracker...")
         
-        # Load fonts - use exact same method as runtext.py and image-viewer.py
-        print("Loading fonts...")
-        
+        # Load fonts - exact same method as image-viewer.py (no error checking)
         self.font_large = graphics.Font()
-        try:
-            if not self.font_large.LoadFont("../../../fonts/7x13.bdf"):
-                print("Failed to load 7x13 font, trying 5x7...")
-                if not self.font_large.LoadFont("../../../fonts/5x7.bdf"):
-                    print("ERROR: Could not load any large font!")
-                    self.font_large = None
-                else:
-                    print("✓ Loaded 5x7 font for large text")
-            else:
-                print("✓ Loaded 7x13 font for large text")
-        except Exception as e:
-            print(f"Exception loading large font: {e}")
-            self.font_large = None
-        
-        self.font_small = graphics.Font()  
-        try:
-            if not self.font_small.LoadFont("../../../fonts/5x7.bdf"):
-                print("ERROR: Could not load small font!")
-                self.font_small = None
-            else:
-                print("✓ Loaded 5x7 font for small text")
-        except Exception as e:
-            print(f"Exception loading small font: {e}")
-            self.font_small = None
+        self.font_large.LoadFont("../../../fonts/7x13.bdf")
+        self.font_small = graphics.Font()
+        self.font_small.LoadFont("../../../fonts/5x7.bdf")
         
         # Get API key (already loaded from environment in argument defaults)
         self.api_key = self.args.api_key
@@ -401,29 +378,22 @@ class AdvancedStockTracker(SampleBase):
                         print(f"Drawing {current_symbol}: ${stock_info['price']:.2f} ({'positive' if is_positive else 'negative'})")
                         
                         # Display layout matching your image:
-                        if self.font_large:
-                            # Top left: Stock symbol (AAPL)
-                            graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, primary_color, current_symbol)
-                            
-                            # Bottom left: Stock price (174.30)
-                            price_text = f"{stock_info['price']:.2f}"
-                            graphics.DrawText(offscreen_canvas, self.font_large, 1, 24, primary_color, price_text)
-                        else:
-                            # Fallback: draw pixels manually if no font
-                            for x in range(10):
-                                for y in range(3):
-                                    offscreen_canvas.SetPixel(x, y + 5, primary_color.red, primary_color.green, primary_color.blue)
+                        # Top left: Stock symbol (AAPL)
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, primary_color, current_symbol)
                         
-                        if self.font_small:
-                            # Top right: Change amount (0.87)  
-                            change_text = f"{abs(stock_info['change']):.2f}"
-                            change_x = 64 - len(change_text) * 4 - 2  # Right align
-                            graphics.DrawText(offscreen_canvas, self.font_small, change_x, 8, primary_color, change_text)
-                            
-                            # Below change: Percentage (0.50%)
-                            pct_text = f"{abs(stock_info['change_percent']):.1f}%"
-                            pct_x = 64 - len(pct_text) * 4 - 2  # Right align
-                            graphics.DrawText(offscreen_canvas, self.font_small, pct_x, 16, primary_color, pct_text)
+                        # Bottom left: Stock price (174.30)
+                        price_text = f"{stock_info['price']:.2f}"
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 24, primary_color, price_text)
+                        
+                        # Top right: Change amount (0.87)  
+                        change_text = f"{abs(stock_info['change']):.2f}"
+                        change_x = 64 - len(change_text) * 4 - 2  # Right align
+                        graphics.DrawText(offscreen_canvas, self.font_small, change_x, 8, primary_color, change_text)
+                        
+                        # Below change: Percentage (0.50%)
+                        pct_text = f"{abs(stock_info['change_percent']):.1f}%"
+                        pct_x = 64 - len(pct_text) * 4 - 2  # Right align
+                        graphics.DrawText(offscreen_canvas, self.font_small, pct_x, 16, primary_color, pct_text)
                         
                         # Draw stock chart in the bottom area
                         chart_x = 0
