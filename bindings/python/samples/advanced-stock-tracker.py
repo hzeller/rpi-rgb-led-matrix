@@ -447,17 +447,32 @@ class AdvancedStockTracker(SampleBase):
                     if current_symbol in self.stock_data:
                         stock_info = self.stock_data[current_symbol]
                         
-                        # Use white color for clean appearance
-                        text_color = self.colors['neutral']  # White color
+                        # Left side uses white color for symbol and price
+                        left_color = self.colors['neutral']  # White color
                         
-                        # Draw stock symbol on first line - 2px from top, 2px from left
-                        # 5x7 font needs Y coordinate of about 8 for proper baseline
-                        graphics.DrawText(offscreen_canvas, self.font_large, 2, 8, text_color, current_symbol)
+                        # Right side uses green/red based on performance
+                        is_positive = stock_info['change'] >= 0
+                        right_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
                         
-                        # Draw price on second line - fits within 16px total height
-                        # 5x7 font needs Y coordinate of about 15 for proper baseline 
+                        # Left side - Stock symbol and price (white)
+                        graphics.DrawText(offscreen_canvas, self.font_large, 2, 8, left_color, current_symbol)
                         price_text = f"{stock_info['price']:.2f}"
-                        graphics.DrawText(offscreen_canvas, self.font_large, 2, 15, text_color, price_text)
+                        graphics.DrawText(offscreen_canvas, self.font_large, 2, 15, left_color, price_text)
+                        
+                        # Right side - Change amount and percentage (green/red based on value)
+                        # Calculate positions for right alignment (64px width, minus 2px margin)
+                        
+                        # Top right: Change amount (colored)
+                        change_text = f"{stock_info['change']:+.2f}"  # Include +/- sign
+                        change_width = len(change_text) * 6  # Rough width for 5x7 font
+                        change_x = 64 - change_width - 2  # Right align with 2px margin
+                        graphics.DrawText(offscreen_canvas, self.font_large, change_x, 8, right_color, change_text)
+                        
+                        # Bottom right: Percentage (colored)
+                        pct_text = f"{stock_info['change_percent']:+.1f}%"  # Include +/- sign
+                        pct_width = len(pct_text) * 6  # Rough width for 5x7 font  
+                        pct_x = 64 - pct_width - 2  # Right align with 2px margin
+                        graphics.DrawText(offscreen_canvas, self.font_large, pct_x, 15, right_color, pct_text)
                         
                     else:
                         # Loading state
