@@ -101,9 +101,9 @@ class AdvancedStockTracker(SampleBase):
             
             # Generate historical data for chart
             history_data[symbol] = []
-            for i in range(50, 0, -1):  # Last 50 data points
+            for i in range(64, 0, -1):  # Last 64 data points
                 # Create realistic price movement
-                if i == 50:
+                if i == 64:
                     price = base_price - (change_amount * 2)  # Starting price
                 else:
                     # Random walk with slight upward trend if current change is positive
@@ -130,9 +130,9 @@ class AdvancedStockTracker(SampleBase):
                 time_series = data["Time Series (Daily)"]
                 prices = []
                 
-                # Get last 50 closing prices (or fewer if not available)
+                # Get last 64 closing prices (or fewer if not available)
                 sorted_dates = sorted(time_series.keys(), reverse=True)
-                for date in sorted_dates[:50]:
+                for date in sorted_dates[:64]:
                     close_price = float(time_series[date]["4. close"])
                     prices.append(close_price)
                 
