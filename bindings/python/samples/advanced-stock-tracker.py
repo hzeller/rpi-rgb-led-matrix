@@ -364,19 +364,23 @@ class AdvancedStockTracker(SampleBase):
                 
             print(f"DEBUG: About to draw pixels")
                 
-            # Draw very simple dots only
+            # Draw filled area chart with lighter top line
             pixels_drawn = 0
             for i in range(min(len(prices), width)):
                 # Calculate position
                 x = x_start + i
                 price_ratio = (prices[i] - min_price) / price_range
                 chart_height = max(1, int(price_ratio * (height - 2)))
-                y = y_start + height - 1 - chart_height
+                top_y = y_start + height - 1 - chart_height
                 
-                # Bounds check and draw
-                if 0 <= x < 64 and 0 <= y < 32:
-                    canvas.SetPixel(x, y, 0, 120, 0)
-                    pixels_drawn += 1
+                # Fill all pixels from bottom up to the chart line
+                for fill_y in range(y_start + height - 1, top_y - 1, -1):  # From bottom to top_y
+                    if 0 <= x < 64 and 0 <= fill_y < 32:
+                        if fill_y <= top_y + 1:  # Top 2 pixels get lighter green
+                            canvas.SetPixel(x, fill_y, 0, 180, 0)  # Lighter green for top line
+                        else:
+                            canvas.SetPixel(x, fill_y, 0, 100, 0)  # Darker green for fill
+                        pixels_drawn += 1
             
             print(f"DEBUG: Drew {pixels_drawn} pixels for {symbol} chart")
                 
@@ -400,20 +404,24 @@ class AdvancedStockTracker(SampleBase):
                 
             import math
             pixels_drawn = 0
-            # Draw simple dots in a wave pattern
+            # Draw filled wave pattern
             for x in range(min(width, 64)):
                 if x_start + x >= 64:
                     break
                     
                 # Create a gentle sine wave
                 wave = math.sin(x * 0.15) * 0.3 + 0.5  # Normalize to 0.2-0.8
-                chart_y = max(1, min(height - 2, int(wave * (height - 2))))
-                pixel_y = y_start + height - 1 - chart_y
+                chart_height = max(1, min(height - 2, int(wave * (height - 2))))
+                top_y = y_start + height - 1 - chart_height
                 
-                # Double check bounds
-                if 0 <= x_start + x < 64 and 0 <= pixel_y < 32:
-                    canvas.SetPixel(x_start + x, pixel_y, 0, 60, 0)  # Dim green
-                    pixels_drawn += 1
+                # Fill from bottom up to the wave line
+                for fill_y in range(y_start + height - 1, top_y - 1, -1):
+                    if 0 <= x_start + x < 64 and 0 <= fill_y < 32:
+                        if fill_y <= top_y + 1:  # Top 2 pixels get lighter green
+                            canvas.SetPixel(x_start + x, fill_y, 0, 120, 0)  # Lighter green for demo top
+                        else:
+                            canvas.SetPixel(x_start + x, fill_y, 0, 60, 0)   # Darker green for demo fill
+                        pixels_drawn += 1
             
             print(f"DEBUG: Drew {pixels_drawn} demo chart pixels")
                     
