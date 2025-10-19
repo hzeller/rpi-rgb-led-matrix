@@ -461,45 +461,32 @@ class AdvancedStockTracker(SampleBase):
                         is_positive = stock_info['change'] >= 0
                         primary_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
                         
-                        # Layout matching your reference image:
+                        print(f"Drawing {current_symbol} at price ${stock_info['price']:.2f}")
                         
-                        # Top left: Stock symbol (AAPL)
-                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, primary_color, current_symbol)
+                        # Test with simple text first - use exact same coordinates as runtext.py
+                        test_text = f"{current_symbol} ${stock_info['price']:.2f}"
+                        graphics.DrawText(offscreen_canvas, self.font_large, 0, 10, primary_color, test_text)
                         
-                        # Bottom left: Stock price (174.30)
-                        price_text = f"{stock_info['price']:.2f}"
-                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 22, primary_color, price_text)
-                        
-                        # Top right: Change amount (0.87)
-                        change_text = f"{abs(stock_info['change']):.2f}"
-                        # Right align - calculate position based on text width
-                        text_width = len(change_text) * 3  # Rough width estimation
-                        change_x = 64 - text_width - 1
-                        graphics.DrawText(offscreen_canvas, self.font_small, change_x, 8, primary_color, change_text)
-                        
-                        # Middle right: Percentage (0.50%)
-                        pct_text = f"{abs(stock_info['change_percent']):.1f}%"
-                        text_width = len(pct_text) * 3
-                        pct_x = 64 - text_width - 1
-                        graphics.DrawText(offscreen_canvas, self.font_small, pct_x, 18, primary_color, pct_text)
-                        
-                        # Draw stock chart in the bottom area (like your image)
-                        chart_x = 0
-                        chart_y = 24  # Start below the price text
-                        chart_width = 64
-                        chart_height = 8  # Bottom portion of display
-                        
-                        self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
+                        # Add a simple pixel test
+                        offscreen_canvas.SetPixel(0, 0, 255, 255, 255)  # White pixel top-left
+                        offscreen_canvas.SetPixel(63, 31, 255, 0, 0)   # Red pixel bottom-right
                         
                     else:
-                        # No data available
-                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], current_symbol)
-                        graphics.DrawText(offscreen_canvas, self.font_small, 1, 20, self.colors['neutral'], "Loading...")
+                        # No data available - draw something visible
+                        print(f"No data for {current_symbol}")
+                        graphics.DrawText(offscreen_canvas, self.font_large, 0, 10, self.colors['neutral'], "NO DATA")
+                        offscreen_canvas.SetPixel(10, 10, 255, 0, 0)  # Red test pixel
             else:
-                graphics.DrawText(offscreen_canvas, self.font_small, 1, 10, self.colors['neutral'], "No stocks")
+                print("No stocks configured")
+                graphics.DrawText(offscreen_canvas, self.font_large, 0, 10, self.colors['neutral'], "NO STOCKS")
+                offscreen_canvas.SetPixel(20, 20, 0, 255, 0)  # Green test pixel
             
-            time.sleep(0.1)
+            # Always draw a moving test pixel to verify display is working
+            frame_counter = int(time.time() * 10) % 64  # Moving pixel
+            offscreen_canvas.SetPixel(frame_counter, 15, 0, 0, 255)  # Blue moving pixel
+            
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
+            time.sleep(0.1)
 
 
 # Main function
