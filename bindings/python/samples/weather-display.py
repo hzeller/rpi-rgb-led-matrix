@@ -8,6 +8,7 @@ import os
 import requests
 import json
 import argparse
+import math
 from datetime import datetime, timezone, timedelta
 
 # Load environment variables
@@ -64,6 +65,45 @@ class WeatherDisplay:
         self.last_update = 0
         self.weather_icon = None
         self.last_icon_update = 0
+        
+        # Custom weather icon mapping - maps OpenWeatherMap icon codes to our custom drawing functions
+        self.icon_mapping = {
+            # Clear sky
+            '01d': 'clear_day',        # clear sky day
+            '01n': 'clear_night',      # clear sky night
+            
+            # Few clouds
+            '02d': 'partly_cloudy_day',   # few clouds day
+            '02n': 'partly_cloudy_night', # few clouds night
+            
+            # Scattered clouds
+            '03d': 'scattered_clouds',    # scattered clouds day
+            '03n': 'scattered_clouds',    # scattered clouds night
+            
+            # Broken clouds
+            '04d': 'broken_clouds',       # broken clouds day
+            '04n': 'broken_clouds',       # broken clouds night
+            
+            # Shower rain
+            '09d': 'shower_rain',         # shower rain day
+            '09n': 'shower_rain',         # shower rain night
+            
+            # Rain
+            '10d': 'rain_day',            # rain day
+            '10n': 'rain_night',          # rain night
+            
+            # Thunderstorm
+            '11d': 'thunderstorm',        # thunderstorm day
+            '11n': 'thunderstorm',        # thunderstorm night
+            
+            # Snow
+            '13d': 'snow',                # snow day
+            '13n': 'snow',                # snow night
+            
+            # Mist/fog
+            '50d': 'mist',                # mist day
+            '50n': 'mist',                # mist night
+        }
         
         # OpenWeatherMap API setup - get API key from environment variable
         self.api_key = os.getenv('OPENWEATHER_API_KEY')
@@ -155,6 +195,330 @@ class WeatherDisplay:
         except Exception as e:
             print(f"Timezone estimation error: {e}. Using Mountain Time.")
             self.timezone = timezone(timedelta(hours=-6))
+    
+    def draw_clear_day(self, x, y, current_time=None):
+        """Draw a bright sun icon with subtle pulsing effect"""
+        # Sun center (yellow/orange) with brightness pulse
+        base_brightness = 255
+        pulse_brightness = 200
+        if current_time:
+            # Gentle pulse every 4 seconds
+            pulse = (math.sin(current_time * 0.5) + 1) / 2  # 0 to 1
+            brightness = int(pulse_brightness + (base_brightness - pulse_brightness) * pulse)
+        else:
+            brightness = base_brightness
+            
+        sun_color = graphics.Color(brightness, brightness, 0)  # Pulsing yellow
+        ray_color = graphics.Color(brightness - 55, brightness - 55, 0)  # Dimmer rays
+        
+        # Draw sun center (3x3 square)
+        for dx in range(-1, 2):
+            for dy in range(-1, 2):
+                self.canvas.SetPixel(x + dx, y + dy, sun_color.red, sun_color.green, sun_color.blue)
+        
+        # Draw sun rays (8 directions)
+        rays = [(-3, 0), (3, 0), (0, -3), (0, 3), (-2, -2), (2, -2), (-2, 2), (2, 2)]
+        for rx, ry in rays:
+            self.canvas.SetPixel(x + rx, y + ry, ray_color.red, ray_color.green, ray_color.blue)
+    
+    def draw_clear_night(self, x, y, current_time=None):
+        """Draw a crescent moon with gentle glow effect"""
+        # Moon with subtle glow variation
+        base_brightness = 220
+        if current_time:
+            # Very gentle glow every 6 seconds
+            glow = (math.sin(current_time * 0.33) + 1) / 2  # 0 to 1
+            brightness = int(base_brightness - 30 + 30 * glow)
+        else:
+            brightness = base_brightness
+            
+        moon_color = graphics.Color(brightness, brightness, 255)  # Pale blue-white with glow
+        dark_color = graphics.Color(30, 30, 50)     # Dark blue
+        
+        # Draw full moon shape
+        for dx in range(-2, 3):
+            for dy in range(-2, 3):
+                if dx*dx + dy*dy <= 4:  # Circle shape
+                    self.canvas.SetPixel(x + dx, y + dy, moon_color.red, moon_color.green, moon_color.blue)
+        
+        # Draw dark overlay for crescent
+        for dx in range(-1, 3):
+            for dy in range(-2, 3):
+                if (dx-1)*(dx-1) + dy*dy <= 3:  # Offset circle
+                    self.canvas.SetPixel(x + dx, y + dy, dark_color.red, dark_color.green, dark_color.blue)
+    
+    def draw_partly_cloudy_day(self, x, y):
+        """Draw sun partially covered by cloud"""
+        # Sun (smaller, upper left)
+        sun_color = graphics.Color(255, 255, 0)
+        self.canvas.SetPixel(x - 2, y - 2, sun_color.red, sun_color.green, sun_color.blue)
+        self.canvas.SetPixel(x - 1, y - 2, sun_color.red, sun_color.green, sun_color.blue)
+        self.canvas.SetPixel(x - 2, y - 1, sun_color.red, sun_color.green, sun_color.blue)
+        
+        # Cloud (white/gray, lower right)
+        cloud_color = graphics.Color(200, 200, 255)
+        cloud_shadow = graphics.Color(150, 150, 200)
+        
+        # Cloud shape
+        cloud_pixels = [(0, 0), (1, 0), (2, 0), (-1, 1), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2)]
+        for dx, dy in cloud_pixels:
+            color = cloud_shadow if dy == 2 else cloud_color
+            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+    
+    def draw_partly_cloudy_night(self, x, y):
+        """Draw moon partially covered by cloud"""
+        # Moon (smaller, upper left)
+        moon_color = graphics.Color(200, 200, 255)
+        self.canvas.SetPixel(x - 2, y - 2, moon_color.red, moon_color.green, moon_color.blue)
+        self.canvas.SetPixel(x - 1, y - 2, moon_color.red, moon_color.green, moon_color.blue)
+        self.canvas.SetPixel(x - 2, y - 1, moon_color.red, moon_color.green, moon_color.blue)
+        
+        # Cloud (darker for night)
+        cloud_color = graphics.Color(120, 120, 180)
+        cloud_shadow = graphics.Color(80, 80, 140)
+        
+        cloud_pixels = [(0, 0), (1, 0), (2, 0), (-1, 1), (0, 1), (1, 1), (2, 1), (0, 2), (1, 2)]
+        for dx, dy in cloud_pixels:
+            color = cloud_shadow if dy == 2 else cloud_color
+            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+    
+    def draw_scattered_clouds(self, x, y):
+        """Draw scattered cloud formation"""
+        cloud_color = graphics.Color(220, 220, 255)
+        cloud_shadow = graphics.Color(180, 180, 220)
+        
+        # Multiple small clouds
+        # Cloud 1 (upper left)
+        cloud1_pixels = [(-2, -2), (-1, -2), (-2, -1), (-1, -1)]
+        for dx, dy in cloud1_pixels:
+            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+        
+        # Cloud 2 (center right)
+        cloud2_pixels = [(1, -1), (2, -1), (1, 0), (2, 0), (3, 0)]
+        for dx, dy in cloud2_pixels:
+            color = cloud_shadow if dx == 3 else cloud_color
+            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+        
+        # Cloud 3 (lower center)
+        cloud3_pixels = [(-1, 1), (0, 1), (1, 1), (0, 2)]
+        for dx, dy in cloud3_pixels:
+            color = cloud_shadow if dy == 2 else cloud_color
+            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+    
+    def draw_broken_clouds(self, x, y):
+        """Draw heavy cloud cover"""
+        cloud_color = graphics.Color(180, 180, 220)
+        cloud_dark = graphics.Color(140, 140, 180)
+        
+        # Large cloud formation
+        cloud_pixels = [
+            (-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2),
+            (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1),
+            (-2, 0), (-1, 0), (0, 0), (1, 0), (2, 0), (3, 0),
+            (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1),
+            (-1, 2), (0, 2), (1, 2)
+        ]
+        
+        for dx, dy in cloud_pixels:
+            # Add some variation in color for depth
+            color = cloud_dark if (dx + dy) % 3 == 0 else cloud_color
+            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+    
+    def draw_shower_rain(self, x, y, current_time=None):
+        """Draw cloud with scattered rain drops that animate"""
+        # Cloud
+        cloud_color = graphics.Color(120, 120, 160)
+        cloud_pixels = [(-2, -2), (-1, -2), (0, -2), (1, -2), (-1, -1), (0, -1), (1, -1), (2, -1)]
+        for dx, dy in cloud_pixels:
+            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+        
+        # Animated rain drops (blue) - different drops appear at different times
+        rain_color = graphics.Color(0, 150, 255)
+        if current_time:
+            # Rain drops cycle every 3 seconds
+            rain_cycle = (current_time * 1.0) % 3.0
+            if rain_cycle < 1.0:  # First second - left drops
+                rain_drops = [(-2, 1), (-1, 3)]
+            elif rain_cycle < 2.0:  # Second second - center drops
+                rain_drops = [(0, 0), (1, 1)]
+            else:  # Third second - right drops
+                rain_drops = [(2, 2), (1, 3)]
+        else:
+            rain_drops = [(-2, 1), (0, 0), (2, 2), (-1, 3), (1, 1)]
+            
+        for dx, dy in rain_drops:
+            if 0 <= y + dy < 32:  # Make sure we don't go off screen
+                self.canvas.SetPixel(x + dx, y + dy, rain_color.red, rain_color.green, rain_color.blue)
+    
+    def draw_rain_day(self, x, y, current_time=None):
+        """Draw cloud with steady rain that shifts"""
+        # Dark cloud
+        cloud_color = graphics.Color(100, 100, 140)
+        cloud_pixels = [(-2, -2), (-1, -2), (0, -2), (1, -2), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1)]
+        for dx, dy in cloud_pixels:
+            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+        
+        # Animated steady rain lines that shift position
+        rain_color = graphics.Color(0, 120, 255)
+        if current_time:
+            # Rain shifts every 2 seconds
+            shift = int(current_time * 0.5) % 2
+            if shift == 0:
+                rain_lines = [(-2, 0), (-2, 1), (-1, 1), (-1, 2), (0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 1)]
+            else:
+                rain_lines = [(-1, 0), (-1, 1), (0, 1), (0, 2), (1, 0), (1, 1), (2, 1), (2, 2)]
+        else:
+            rain_lines = [(-2, 0), (-2, 1), (-1, 1), (-1, 2), (0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 1)]
+            
+        for dx, dy in rain_lines:
+            if 0 <= y + dy < 32:
+                self.canvas.SetPixel(x + dx, y + dy, rain_color.red, rain_color.green, rain_color.blue)
+    
+    def draw_rain_night(self, x, y, current_time=None):
+        """Draw cloud with steady rain (darker for night) that shifts"""
+        # Very dark cloud
+        cloud_color = graphics.Color(60, 60, 100)
+        cloud_pixels = [(-2, -2), (-1, -2), (0, -2), (1, -2), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1)]
+        for dx, dy in cloud_pixels:
+            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+        
+        # Rain (darker blue for night) with shifting animation
+        rain_color = graphics.Color(0, 80, 180)
+        if current_time:
+            # Rain shifts every 2 seconds
+            shift = int(current_time * 0.5) % 2
+            if shift == 0:
+                rain_lines = [(-2, 0), (-2, 1), (-1, 1), (-1, 2), (0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 1)]
+            else:
+                rain_lines = [(-1, 0), (-1, 1), (0, 1), (0, 2), (1, 0), (1, 1), (2, 1), (2, 2)]
+        else:
+            rain_lines = [(-2, 0), (-2, 1), (-1, 1), (-1, 2), (0, 0), (0, 1), (1, 1), (1, 2), (2, 0), (2, 1)]
+            
+        for dx, dy in rain_lines:
+            if 0 <= y + dy < 32:
+                self.canvas.SetPixel(x + dx, y + dy, rain_color.red, rain_color.green, rain_color.blue)
+    
+    def draw_thunderstorm(self, x, y, current_time=None):
+        """Draw cloud with lightning bolt that flashes"""
+        # Dark storm cloud
+        cloud_color = graphics.Color(60, 60, 80)
+        cloud_pixels = [(-3, -2), (-2, -2), (-1, -2), (0, -2), (1, -2), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1)]
+        for dx, dy in cloud_pixels:
+            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+        
+        # Flashing lightning bolt (bright yellow/white)
+        if current_time:
+            # Lightning flashes every 4 seconds for 0.5 seconds
+            flash_cycle = current_time % 4.0
+            if flash_cycle < 0.5:  # Flash for half a second
+                lightning_color = graphics.Color(255, 255, 200)  # Bright flash
+            else:
+                lightning_color = graphics.Color(200, 200, 100)  # Dimmer between flashes
+        else:
+            lightning_color = graphics.Color(255, 255, 150)
+            
+        lightning_pixels = [(0, 0), (-1, 1), (0, 1), (1, 2), (0, 3)]
+        for dx, dy in lightning_pixels:
+            if 0 <= y + dy < 32:
+                self.canvas.SetPixel(x + dx, y + dy, lightning_color.red, lightning_color.green, lightning_color.blue)
+    
+    def draw_snow(self, x, y, current_time=None):
+        """Draw cloud with animated snowflakes"""
+        # Gray cloud
+        cloud_color = graphics.Color(160, 160, 180)
+        cloud_pixels = [(-2, -2), (-1, -2), (0, -2), (1, -2), (-1, -1), (0, -1), (1, -1), (2, -1)]
+        for dx, dy in cloud_pixels:
+            self.canvas.SetPixel(x + dx, y + dy, cloud_color.red, cloud_color.green, cloud_color.blue)
+        
+        # Animated snowflakes (white with cross pattern) that gently fall
+        snow_color = graphics.Color(255, 255, 255)
+        dim_snow = graphics.Color(200, 200, 200)
+        
+        if current_time:
+            # Snowflakes animate every 3 seconds, falling down
+            snow_phase = (current_time * 0.7) % 3.0
+            if snow_phase < 1.0:  # Top positions
+                positions = [(-2, 0), (0, 1), (2, 0)]
+            elif snow_phase < 2.0:  # Middle positions  
+                positions = [(-2, 1), (0, 2), (2, 1)]
+            else:  # Bottom positions
+                positions = [(-2, 2), (0, 3), (2, 2)]
+        else:
+            positions = [(-2, 1), (0, 2), (2, 1)]
+        
+        # Draw snowflakes at calculated positions
+        for sx, sy in positions:
+            if 0 <= y + sy < 32:
+                # Draw cross pattern for each snowflake
+                self.canvas.SetPixel(x + sx, y + sy, snow_color.red, snow_color.green, snow_color.blue)
+                # Add smaller cross arms
+                if 0 <= y + sy - 1 < 32:
+                    self.canvas.SetPixel(x + sx, y + sy - 1, dim_snow.red, dim_snow.green, dim_snow.blue)
+                if 0 <= y + sy + 1 < 32:
+                    self.canvas.SetPixel(x + sx, y + sy + 1, dim_snow.red, dim_snow.green, dim_snow.blue)
+                if 0 <= x + sx - 1 < 64:
+                    self.canvas.SetPixel(x + sx - 1, y + sy, dim_snow.red, dim_snow.green, dim_snow.blue)
+                if 0 <= x + sx + 1 < 64:
+                    self.canvas.SetPixel(x + sx + 1, y + sy, dim_snow.red, dim_snow.green, dim_snow.blue)
+    
+    def draw_mist(self, x, y):
+        """Draw misty/foggy conditions"""
+        mist_color = graphics.Color(150, 150, 150)
+        mist_light = graphics.Color(200, 200, 200)
+        
+        # Horizontal misty lines
+        mist_pixels = [
+            (-3, -1), (-2, -1), (-1, -1), (1, -1), (2, -1),
+            (-2, 0), (-1, 0), (0, 0), (2, 0), (3, 0),
+            (-3, 1), (-1, 1), (0, 1), (1, 1), (3, 1),
+            (-2, 2), (-1, 2), (1, 2), (2, 2)
+        ]
+        
+        for dx, dy in mist_pixels:
+            # Alternate between two mist colors for layered effect
+            color = mist_light if (dx + dy) % 2 == 0 else mist_color
+            self.canvas.SetPixel(x + dx, y + dy, color.red, color.green, color.blue)
+    
+    def draw_custom_weather_icon(self, icon_code, x, y):
+        """Draw custom weather icon based on condition with time-based effects"""
+        if icon_code not in self.icon_mapping:
+            # Fallback to a question mark or generic icon
+            self.draw_scattered_clouds(x, y)
+            return
+        
+        icon_type = self.icon_mapping[icon_code]
+        
+        # Get current time for animation effects
+        current_time = time.time()
+        
+        # Call the appropriate drawing function with time parameter
+        if icon_type == 'clear_day':
+            self.draw_clear_day(x, y, current_time)
+        elif icon_type == 'clear_night':
+            self.draw_clear_night(x, y, current_time)
+        elif icon_type == 'partly_cloudy_day':
+            self.draw_partly_cloudy_day(x, y)
+        elif icon_type == 'partly_cloudy_night':
+            self.draw_partly_cloudy_night(x, y)
+        elif icon_type == 'scattered_clouds':
+            self.draw_scattered_clouds(x, y)
+        elif icon_type == 'broken_clouds':
+            self.draw_broken_clouds(x, y)
+        elif icon_type == 'shower_rain':
+            self.draw_shower_rain(x, y, current_time)
+        elif icon_type == 'rain_day':
+            self.draw_rain_day(x, y, current_time)
+        elif icon_type == 'rain_night':
+            self.draw_rain_night(x, y, current_time)
+        elif icon_type == 'thunderstorm':
+            self.draw_thunderstorm(x, y, current_time)
+        elif icon_type == 'snow':
+            self.draw_snow(x, y, current_time)
+        elif icon_type == 'mist':
+            self.draw_mist(x, y)
+        else:
+            # Unknown icon type, draw default
+            self.draw_scattered_clouds(x, y)
         
     def get_weather_data(self):
         """Fetch weather data from OpenWeatherMap API"""
@@ -186,124 +550,17 @@ class WeatherDisplay:
             return None
     
     def get_weather_icon(self, icon_code):
-        """Download and cache weather icon from OpenWeatherMap"""
-        try:
-            # Only update icon every 10 minutes to avoid excessive downloads
-            if time.time() - self.last_icon_update < 600 and self.weather_icon is not None:
-                print(f"Using cached icon: {icon_code}, size: {self.weather_icon.size}, mode: {self.weather_icon.mode}")
-                return self.weather_icon
-                
-            print(f"Downloading new weather icon: {icon_code}")
-            
-            # OpenWeatherMap icon URL
-            icon_url = f"https://openweathermap.org/img/wn/{icon_code}@2x.png"
-            print(f"Icon URL: {icon_url}")
-            
-            response = requests.get(icon_url, timeout=10)
-            if response.status_code == 200:
-                print(f"Download successful, content length: {len(response.content)} bytes")
-                
-                # Load image and resize to fit display - make it taller to span both temp lines
-                icon_image = Image.open(BytesIO(response.content))
-                print(f"Original icon size: {icon_image.size}, mode: {icon_image.mode}")
-                
-                # Handle transparency properly - create white background first
-                if icon_image.mode in ('RGBA', 'LA') or 'transparency' in icon_image.info:
-                    # Create a black background for better visibility on LED matrix
-                    background = Image.new('RGB', icon_image.size, (0, 0, 0))
-                    if icon_image.mode == 'RGBA':
-                        background.paste(icon_image, mask=icon_image.split()[3])  # Use alpha channel as mask
-                    else:
-                        background.paste(icon_image, mask=icon_image.convert('RGBA').split()[3])
-                    icon_image = background
-                    print("Applied transparency with black background")
-                
-                # Resize to about 20x20 pixels to span both temperature lines
-                resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-                icon_image = icon_image.resize((20, 20), resample=resample_mode)
-                print(f"Resized icon to: {icon_image.size}")
-                
-                # Convert to RGB and enhance brightness for LED matrix
-                self.weather_icon = icon_image.convert('RGB')
-                
-                # Enhance brightness since LED matrices can be dim
-                pixels = self.weather_icon.load()
-                for y in range(self.weather_icon.height):
-                    for x in range(self.weather_icon.width):
-                        r, g, b = pixels[x, y]
-                        # Boost brightness but cap at 255
-                        r = min(255, int(r * 1.5))
-                        g = min(255, int(g * 1.5))
-                        b = min(255, int(b * 1.5))
-                        pixels[x, y] = (r, g, b)
-                
-                print(f"Enhanced brightness and converted to RGB: {self.weather_icon.size}, mode: {self.weather_icon.mode}")
-                
-                # Debug: Print some pixel values to see if image has content
-                pixel_samples = []
-                for y in range(0, 20, 5):
-                    for x in range(0, 20, 5):
-                        pixel = self.weather_icon.getpixel((x, y))
-                        pixel_samples.append(f"({x},{y}):{pixel}")
-                print(f"Sample pixels: {', '.join(pixel_samples[:6])}")
-                
-                self.last_icon_update = time.time()
-                
-                print(f"Successfully processed weather icon: {icon_code}")
-                return self.weather_icon
-            else:
-                print(f"Icon download failed: {response.status_code}, response: {response.text[:100]}")
-                return None
-                
-        except Exception as e:
-            print(f"Icon download error: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
+        """Download and cache weather icon from OpenWeatherMap - NO LONGER USED, replaced with custom drawing"""
+        # This method is now unused since we draw custom icons directly
+        # Keeping it for potential future use or fallback
+        return None
 
-    def draw_weather_icon(self, icon_image, x, y):
-        """Draw the weather icon image on the display"""
-        if icon_image is not None:
-            # Calculate position to center the 20x20 icon
-            icon_x = max(0, x - 10)  # Center horizontally but don't go negative
-            icon_y = max(0, y - 10)  # Center vertically but don't go negative
-            
-            # Make sure icon doesn't go off the right/bottom edge
-            if icon_x + icon_image.width > 64:
-                icon_x = 64 - icon_image.width
-            if icon_y + icon_image.height > 32:
-                icon_y = 32 - icon_image.height
-            
-            print(f"Drawing icon at position: icon_x={icon_x}, icon_y={icon_y}")
-            print(f"Icon size: {icon_image.size}, mode: {icon_image.mode}")
-            
-            # Check if icon has any non-black pixels
-            pixel_count = 0
-            non_black_count = 0
-            brightness_sum = 0
-            
-            for py in range(icon_image.height):
-                for px in range(icon_image.width):
-                    pixel = icon_image.getpixel((px, py))
-                    pixel_count += 1
-                    brightness = sum(pixel) / 3  # Average RGB
-                    brightness_sum += brightness
-                    if brightness > 10:  # Not nearly black
-                        non_black_count += 1
-            
-            avg_brightness = brightness_sum / pixel_count if pixel_count > 0 else 0
-            print(f"Icon analysis: {non_black_count}/{pixel_count} non-black pixels, avg brightness: {avg_brightness:.1f}")
-            
-            # Draw the icon
-            self.canvas.SetImage(icon_image, icon_x, icon_y)
-            print(f"Icon drawn successfully at ({icon_x},{icon_y})")
-        else:
-            print(f"No icon image provided, drawing fallback at x={x}, y={y}")
-            # Fallback - simple colored square
-            for dx in range(-8, 8):
-                for dy in range(-8, 8):
-                    if 0 <= x+dx < 64 and 0 <= y+dy < 32:
-                        self.canvas.SetPixel(x+dx, y+dy, 200, 200, 255)
+    def draw_weather_icon(self, icon_code, x, y):
+        """Draw custom weather icon based on OpenWeatherMap icon code"""
+        print(f"Drawing custom weather icon: {icon_code} at position ({x}, {y})")
+        
+        # Use our custom drawing system
+        self.draw_custom_weather_icon(icon_code, x, y)
 
     def draw_weather(self):
         """Draw weather information like the reference image: time top, icon left, temps right"""
@@ -381,9 +638,7 @@ class WeatherDisplay:
         
         print(f"Weather icon code: {icon_code}")
         print(f"Group layout: total_width={total_group_width}, start_x={group_start_x}")
-        icon_image = self.get_weather_icon(icon_code)
-        print(f"Got icon image: {icon_image is not None}")
-        self.draw_weather_icon(icon_image, icon_x, icon_y)
+        self.draw_weather_icon(icon_code, icon_x, icon_y)
         
         # Position temperatures to the right of icon with -1 pixel spacing (overlapping by 1 pixel)
         temp_start_x = group_start_x + 20 + (-1)  # After icon - 1 pixel spacing (2 pixels closer)
