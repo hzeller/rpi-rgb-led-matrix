@@ -7,11 +7,16 @@ from samplebase import SampleBase
 from PIL import Image, ImageEnhance, ImageOps
 import threading
 from dotenv import load_dotenv
+import requests
+from io import BytesIO
 
 
 class GifViewer(SampleBase):
     def __init__(self, *args, **kwargs):
         super(GifViewer, self).__init__(*args, **kwargs)
+        
+        # Hardcoded GIF URL
+        self.gif_url = "https://www.thisiscolossal.com/wp-content/uploads/2014/03/120430.gif"
         
         # Override default matrix settings from environment variables
         self.parser.set_defaults(
@@ -25,8 +30,8 @@ class GifViewer(SampleBase):
             led_slowdown_gpio=int(os.environ.get('MATRIX_SLOWDOWN_GPIO', '1'))
         )
         
-        # Add gif-specific arguments with environment variable defaults
-        self.parser.add_argument("gif_file", help="Path to the GIF file to display")
+        # Add gif-specific arguments with environment variable defaults (gif_file is now optional)
+        self.parser.add_argument("gif_file", nargs='?', help="Path to the GIF file to display (optional - will use hardcoded URL if not provided)")
         self.parser.add_argument("--fit-mode", choices=['stretch', 'fit', 'fill', 'center'], 
                                default=os.environ.get('GIF_FIT_MODE', 'fit'),
                                help="How to fit the gif to matrix: stretch=ignore aspect ratio, fit=maintain aspect ratio with letterbox, fill=maintain aspect ratio and crop, center=no scaling, just center")
@@ -51,6 +56,8 @@ class GifViewer(SampleBase):
         self.parser.add_argument("--config-file", 
                                default=os.environ.get('GIF_CONFIG_FILE', '.env'),
                                help="Path to environment configuration file")
+        self.parser.add_argument("--use-url", action="store_true",
+                               help="Force use of hardcoded URL even if gif_file is provided")
 
     def validate_gif_file(self, gif_path):
         """Validate that the file exists and is a valid gif."""
@@ -89,6 +96,27 @@ class GifViewer(SampleBase):
         else:
             print(f"Warning: Unknown color '{color_str}', using black")
             return (0, 0, 0)
+
+    def download_gif_from_url(self, url):
+        """Download GIF from URL and return as PIL Image object."""
+        print(f"Downloading GIF from: {url}")
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            
+            # Load image from downloaded content
+            gif_data = BytesIO(response.content)
+            gif = Image.open(gif_data)
+            
+            print(f"Successfully downloaded GIF ({len(response.content)} bytes)")
+            return gif, gif_data
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading GIF: {e}")
+            return None, None
+        except Exception as e:
+            print(f"Error loading downloaded GIF: {e}")
+            return None, None
 
     def resize_frame(self, frame, target_width, target_height, fit_mode, background_color):
         """Resize frame according to the specified fit mode."""
@@ -168,11 +196,24 @@ class GifViewer(SampleBase):
         
         return frame
 
-    def preprocess_gif(self, gif_path):
+    def preprocess_gif(self, gif_source):
         """Preprocess all gif frames for optimized playback."""
         print("Loading and preprocessing GIF frames...")
         
-        gif = Image.open(gif_path)
+        # Determine if we're using URL or local file
+        if gif_source == "URL" or self.args.use_url:
+            gif, gif_data = self.download_gif_from_url(self.gif_url)
+            if gif is None:
+                return None, None, None
+            source_name = "Downloaded GIF"
+        else:
+            try:
+                gif = Image.open(gif_source)
+                gif_data = None
+                source_name = os.path.basename(gif_source)
+            except Exception as e:
+                print(f"Error opening GIF file: {e}")
+                return None, None, None
         
         try:
             num_frames = gif.n_frames
@@ -217,21 +258,31 @@ class GifViewer(SampleBase):
             canvases.append(canvas)
         
         gif.close()
+        if gif_data:
+            gif_data.close()
         print("Preprocessing complete!")
-        return canvases, frame_durations, num_frames
+        return canvases, frame_durations, num_frames, source_name
 
     def run(self):
         """Main display loop."""
-        # Validate gif file
-        if not self.validate_gif_file(self.args.gif_file):
-            return False
+        # Determine gif source
+        if self.args.use_url or not self.args.gif_file:
+            print(f"Using hardcoded URL: {self.gif_url}")
+            gif_source = "URL"
+        else:
+            # Validate gif file
+            if not self.validate_gif_file(self.args.gif_file):
+                return False
+            gif_source = self.args.gif_file
         
         # Preprocess gif
-        canvases, frame_durations, num_frames = self.preprocess_gif(self.args.gif_file)
-        if canvases is None:
+        result = self.preprocess_gif(gif_source)
+        if result[0] is None:
             return False
         
-        print(f"Displaying GIF: {os.path.basename(self.args.gif_file)}")
+        canvases, frame_durations, num_frames, source_name = result
+        
+        print(f"Displaying GIF: {source_name}")
         print(f"Matrix size: {self.matrix.width}x{self.matrix.height}")
         print(f"GPIO mapping: {getattr(self.args, 'led_gpio_mapping', 'default')}")
         print(f"Brightness: {getattr(self.args, 'led_brightness', 100)}%")
