@@ -31,7 +31,8 @@ class GifViewer(SampleBase):
         )
         
         # Add gif-specific arguments with environment variable defaults (gif_file is now optional)
-        self.parser.add_argument("gif_file", nargs='?', help="Path to the GIF file to display (optional - will use hardcoded URL if not provided)")
+        self.parser.add_argument("gif_source", nargs='?', help="Path to GIF file or URL to display (optional - will use hardcoded URL if not provided)")
+        self.parser.add_argument("--url", type=str, help="URL of GIF to download and display")
         self.parser.add_argument("--fit-mode", choices=['stretch', 'fit', 'fill', 'center'], 
                                default=os.environ.get('GIF_FIT_MODE', 'fit'),
                                help="How to fit the gif to matrix: stretch=ignore aspect ratio, fit=maintain aspect ratio with letterbox, fill=maintain aspect ratio and crop, center=no scaling, just center")
@@ -56,8 +57,6 @@ class GifViewer(SampleBase):
         self.parser.add_argument("--config-file", 
                                default=os.environ.get('GIF_CONFIG_FILE', '.env'),
                                help="Path to environment configuration file")
-        self.parser.add_argument("--use-url", action="store_true",
-                               help="Force use of hardcoded URL even if gif_file is provided")
 
     def validate_gif_file(self, gif_path):
         """Validate that the file exists and is a valid gif."""
@@ -79,6 +78,10 @@ class GifViewer(SampleBase):
         except Exception as e:
             print(f"Error: Cannot open '{gif_path}' as an image: {e}")
             return False
+
+    def is_url(self, source):
+        """Check if the source is a URL."""
+        return source and (source.startswith('http://') or source.startswith('https://'))
 
     def parse_background_color(self, color_str):
         """Parse background color string to RGB tuple."""
@@ -196,16 +199,22 @@ class GifViewer(SampleBase):
         
         return frame
 
-    def preprocess_gif(self, gif_source):
+    def preprocess_gif(self, gif_source, url=None):
         """Preprocess all gif frames for optimized playback."""
         print("Loading and preprocessing GIF frames...")
         
         # Determine if we're using URL or local file
-        if gif_source == "URL" or self.args.use_url:
+        if url or self.is_url(gif_source):
+            download_url = url or gif_source
+            gif, gif_data = self.download_gif_from_url(download_url)
+            if gif is None:
+                return None, None, None, None
+            source_name = f"Downloaded GIF ({download_url})"
+        elif gif_source == "HARDCODED":
             gif, gif_data = self.download_gif_from_url(self.gif_url)
             if gif is None:
-                return None, None, None
-            source_name = "Downloaded GIF"
+                return None, None, None, None
+            source_name = "Hardcoded GIF"
         else:
             try:
                 gif = Image.open(gif_source)
@@ -213,13 +222,13 @@ class GifViewer(SampleBase):
                 source_name = os.path.basename(gif_source)
             except Exception as e:
                 print(f"Error opening GIF file: {e}")
-                return None, None, None
+                return None, None, None, None
         
         try:
             num_frames = gif.n_frames
         except Exception:
             print("Error: Provided image is not an animated GIF")
-            return None, None, None
+            return None, None, None, None
         
         # Get frame durations for proper timing
         frame_durations = []
@@ -265,18 +274,25 @@ class GifViewer(SampleBase):
 
     def run(self):
         """Main display loop."""
-        # Determine gif source
-        if self.args.use_url or not self.args.gif_file:
-            print(f"Using hardcoded URL: {self.gif_url}")
-            gif_source = "URL"
+        # Determine gif source priority: --url flag > gif_source parameter > hardcoded URL
+        if self.args.url:
+            print(f"Using URL parameter: {self.args.url}")
+            result = self.preprocess_gif(None, self.args.url)
+        elif self.args.gif_source:
+            if self.is_url(self.args.gif_source):
+                print(f"Using URL from parameter: {self.args.gif_source}")
+                result = self.preprocess_gif(self.args.gif_source)
+            else:
+                # Validate local gif file
+                if not self.validate_gif_file(self.args.gif_source):
+                    return False
+                print(f"Using local file: {self.args.gif_source}")
+                result = self.preprocess_gif(self.args.gif_source)
         else:
-            # Validate gif file
-            if not self.validate_gif_file(self.args.gif_file):
-                return False
-            gif_source = self.args.gif_file
+            print(f"Using hardcoded URL: {self.gif_url}")
+            result = self.preprocess_gif("HARDCODED")
         
-        # Preprocess gif
-        result = self.preprocess_gif(gif_source)
+        # Check preprocessing result
         if result[0] is None:
             return False
         
