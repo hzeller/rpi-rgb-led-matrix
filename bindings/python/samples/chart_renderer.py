@@ -69,6 +69,64 @@ class TimeSeriesChart(ChartRenderer):
             'demo_line': (0, 120, 0)    # Demo bright green
         }
     
+    def draw_filled_chart_direct(self, canvas, prices, x_start, y_start, width, height, 
+                         colors=None, is_demo=False):
+        """Draw a filled area chart directly to the provided canvas."""
+        if colors is None:
+            colors = self.default_colors
+        
+        # Safety bounds check
+        if (x_start < 0 or y_start < 0 or width <= 0 or height <= 0 or
+            x_start + width > 64 or y_start + height > 32):
+            return False
+        
+        # Clear chart area first
+        print(f"DEBUG: TimeSeriesChart.draw_filled_chart_direct called for {len(prices)} prices")
+        print(f"DEBUG: Clearing area from ({x_start},{y_start}) to ({x_start+width},{y_start+height})")
+        
+        for clear_x in range(x_start, min(x_start + width, 64)):
+            for clear_y in range(y_start, min(y_start + height, 32)):
+                if 0 <= clear_x < 64 and 0 <= clear_y < 32:
+                    canvas.SetPixel(clear_x, clear_y, 0, 0, 0)
+        
+        if not prices or len(prices) < 2:
+            return self.draw_demo_chart_direct(canvas, x_start, y_start, width, height, colors)
+        
+        # Calculate price range
+        min_price = min(prices)
+        max_price = max(prices)
+        price_range = max_price - min_price
+        
+        if price_range <= 0:
+            return False
+        
+        # Use appropriate data (limit to width)
+        chart_prices = prices[-width:] if len(prices) >= width else prices
+        
+        # Choose colors based on demo mode
+        line_color = colors['line'] if not is_demo else colors['demo_line']
+        fill_color = colors['fill'] if not is_demo else colors['demo_fill']
+        
+        # Draw filled chart
+        pixels_drawn = 0
+        for i in range(min(len(chart_prices), width)):
+            x = x_start + i
+            price_ratio = (chart_prices[i] - min_price) / price_range
+            chart_height = max(1, int(price_ratio * (height - 2)))
+            top_y = y_start + height - 1 - chart_height
+            
+            # Fill from bottom up to the chart line
+            for fill_y in range(y_start + height - 1, top_y - 1, -1):
+                if 0 <= x < 64 and 0 <= fill_y < 32:
+                    if fill_y <= top_y + 1:  # Top 2 pixels get line color
+                        canvas.SetPixel(x, fill_y, *line_color)
+                    else:
+                        canvas.SetPixel(x, fill_y, *fill_color)
+                    pixels_drawn += 1
+        
+        print(f"DEBUG: TimeSeriesChart drew {pixels_drawn} pixels directly")
+        return pixels_drawn > 0
+
     def draw_filled_chart(self, prices, x_start, y_start, width, height, 
                          colors=None, is_demo=False):
         """Draw a filled area chart from price data."""
@@ -137,6 +195,40 @@ class TimeSeriesChart(ChartRenderer):
         print(f"DEBUG: TimeSeriesChart drew {pixels_drawn} pixels")
         return pixels_drawn > 0
     
+    def draw_demo_chart_direct(self, canvas, x_start, y_start, width, height, colors=None):
+        """Draw a demo sine wave chart directly to the provided canvas."""
+        if colors is None:
+            colors = self.default_colors
+        
+        # Safety bounds check
+        if (x_start < 0 or y_start < 0 or width <= 0 or height <= 0 or
+            x_start + width > 64 or y_start + height > 32):
+            return False
+        
+        import math
+        pixels_drawn = 0
+        
+        # Draw demo wave pattern
+        for x in range(min(width, 64)):
+            if x_start + x >= 64:
+                break
+                
+            # Create a gentle sine wave
+            wave = math.sin(x * 0.15) * 0.3 + 0.5  # Normalize to 0.2-0.8
+            chart_height = max(1, min(height - 2, int(wave * (height - 2))))
+            top_y = y_start + height - 1 - chart_height
+            
+            # Fill from bottom up to the wave line
+            for fill_y in range(y_start + height - 1, top_y - 1, -1):
+                if 0 <= x_start + x < 64 and 0 <= fill_y < 32:
+                    if fill_y <= top_y + 1:  # Top 2 pixels get demo line color
+                        canvas.SetPixel(x_start + x, fill_y, *colors['demo_line'])
+                    else:
+                        canvas.SetPixel(x_start + x, fill_y, *colors['demo_fill'])
+                    pixels_drawn += 1
+        
+        return pixels_drawn > 0
+
     def draw_demo_chart(self, x_start, y_start, width, height, colors=None):
         """Draw a demo sine wave chart when no data is available."""
         if colors is None:
@@ -227,6 +319,50 @@ class StockChartRenderer:
         self.time_series = TimeSeriesChart(canvas)
         self.line_chart = LineChart(canvas)
     
+    def draw_stock_chart_direct(self, canvas, symbol, prices, x_start, y_start, width, height, 
+                        chart_type='filled', is_demo=False):
+        """
+        Draw a stock chart directly to the provided canvas (like original code).
+        
+        Args:
+            canvas: The canvas to draw on (passed directly)
+            symbol: Stock symbol (for logging)
+            prices: List of price data
+            x_start, y_start: Top-left corner of chart area
+            width, height: Chart dimensions
+            chart_type: 'filled' or 'line'
+            is_demo: Whether this is demo data
+        """
+        # Store current symbol for tracking
+        self.current_symbol = symbol
+        
+        try:
+            if chart_type == 'filled':
+                # Use direct canvas instead of stored reference
+                success = self.time_series.draw_filled_chart_direct(
+                    canvas, prices, x_start, y_start, width, height, is_demo=is_demo
+                )
+            elif chart_type == 'line':
+                success = self.line_chart.draw_line_chart(
+                    prices, x_start, y_start, width, height
+                )
+            else:
+                print(f"Unknown chart type: {chart_type}")
+                success = False
+            
+            if success:
+                print(f"✓ Drew {chart_type} chart for {symbol}")
+                # Store symbol for next comparison
+                self.last_symbol = symbol
+            else:
+                print(f"✗ Failed to draw chart for {symbol}")
+            
+            return success
+            
+        except Exception as e:
+            print(f"Chart rendering error for {symbol}: {e}")
+            return False
+
     def draw_stock_chart(self, symbol, prices, x_start, y_start, width, height, 
                         chart_type='filled', is_demo=False):
         """

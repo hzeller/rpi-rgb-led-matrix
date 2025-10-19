@@ -211,8 +211,9 @@ class StockTracker:
             print(f"DEBUG: Drawing chart for {current_symbol} with {len(prices)} prices")
             print(f"DEBUG: Chart area: {chart_area}")
             
-            self.chart_renderer.draw_stock_chart(
-                current_symbol, prices,
+            # Pass the canvas directly to the chart renderer - like the original
+            self.chart_renderer.draw_stock_chart_direct(
+                self.display.canvas, current_symbol, prices,
                 chart_area['x'], chart_area['y'],
                 chart_area['width'], chart_area['height'],
                 chart_type='filled',
