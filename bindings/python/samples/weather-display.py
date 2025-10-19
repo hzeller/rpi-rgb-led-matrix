@@ -24,7 +24,7 @@ from PIL import Image
 from io import BytesIO
 
 class WeatherDisplay:
-    def __init__(self, city="Denver", lat=39.7392, lon=-104.9903, timezone_offset=-6):
+    def __init__(self, city="Denver, CO", timezone_offset=-6):
         # Configuration for the matrix - use same settings as other displays
         options = RGBMatrixOptions()
         options.rows = 32
@@ -38,7 +38,7 @@ class WeatherDisplay:
         
         # Set up location and timezone
         self.city = city
-        self.coords = {"lat": lat, "lon": lon}
+        self.coords = None  # Will be set by geocoding
         self.timezone = timezone(timedelta(hours=timezone_offset))
         
         # Load fonts
@@ -67,6 +67,48 @@ class WeatherDisplay:
         
         # OpenWeatherMap API setup - get API key from environment variable
         self.api_key = os.getenv('OPENWEATHER_API_KEY')
+        
+        # Get coordinates for the city
+        self.get_city_coordinates()
+        
+    def get_city_coordinates(self):
+        """Get latitude and longitude for a city using OpenWeatherMap Geocoding API"""
+        try:
+            if not self.api_key:
+                print("Warning: No API key found. Using default Denver coordinates.")
+                self.coords = {"lat": 39.7392, "lon": -104.9903}
+                return
+                
+            url = "http://api.openweathermap.org/geo/1.0/direct"
+            params = {
+                "q": self.city,
+                "limit": 1,
+                "appid": self.api_key
+            }
+            
+            response = requests.get(url, params=params, timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                if data:
+                    self.coords = {"lat": data[0]["lat"], "lon": data[0]["lon"]}
+                    country = data[0].get("country", "")
+                    state = data[0].get("state", "")
+                    location_info = f"{data[0]['name']}"
+                    if state:
+                        location_info += f", {state}"
+                    if country:
+                        location_info += f", {country}"
+                    print(f"Found coordinates for {location_info}: {self.coords['lat']:.4f}, {self.coords['lon']:.4f}")
+                else:
+                    print(f"City '{self.city}' not found. Using default Denver coordinates.")
+                    self.coords = {"lat": 39.7392, "lon": -104.9903}
+            else:
+                print(f"Geocoding API error: {response.status_code}. Using default Denver coordinates.")
+                self.coords = {"lat": 39.7392, "lon": -104.9903}
+                
+        except Exception as e:
+            print(f"Geocoding error: {e}. Using default Denver coordinates.")
+            self.coords = {"lat": 39.7392, "lon": -104.9903}
         
     def get_weather_data(self):
         """Fetch weather data from OpenWeatherMap API"""
@@ -352,14 +394,10 @@ class WeatherDisplay:
             self.matrix.Clear()
 
 def parse_arguments():
-    """Parse command line arguments for location and timezone"""
+    """Parse command line arguments for city and timezone"""
     parser = argparse.ArgumentParser(description='Weather display for RGB LED matrix')
-    parser.add_argument('--city', '-c', default='Denver', 
-                        help='City name for display (default: Denver)')
-    parser.add_argument('--lat', type=float, default=39.7392,
-                        help='Latitude coordinate (default: 39.7392 for Denver)')
-    parser.add_argument('--lon', type=float, default=-104.9903,
-                        help='Longitude coordinate (default: -104.9903 for Denver)')
+    parser.add_argument('--city', '-c', default='Denver, CO', 
+                        help='City name (e.g., "New York", "London", "Tokyo") (default: Denver, CO)')
     parser.add_argument('--timezone', '-t', type=int, default=-6,
                         help='Timezone offset from UTC in hours (default: -6 for Mountain Time)')
     
@@ -370,14 +408,11 @@ if __name__ == "__main__":
     
     print(f"Weather Display Configuration:")
     print(f"  City: {args.city}")
-    print(f"  Coordinates: {args.lat}, {args.lon}")
     print(f"  Timezone: UTC{args.timezone:+d}")
     print()
     
     weather = WeatherDisplay(
         city=args.city,
-        lat=args.lat, 
-        lon=args.lon,
         timezone_offset=args.timezone
     )
     weather.run()
