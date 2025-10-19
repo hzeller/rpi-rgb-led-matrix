@@ -54,6 +54,10 @@ class AdvancedStockTracker(SampleBase):
         self.stock_history = {}  # Historical data for charts
         self.last_update = None
         self.data_lock = threading.Lock()
+        
+        # Display-safe copies (no locking required)
+        self.display_stock_data = {}
+        self.display_stock_history = {}
         self.api_key = None
         
         # Display settings
@@ -289,18 +293,20 @@ class AdvancedStockTracker(SampleBase):
                 current_data, history_data = self.fetch_stock_data()
                 print(f"Fetched data for symbols: {list(current_data.keys())}")
                 
-                # Update data in smaller chunks to avoid holding lock too long
+                # Update both locked and display-safe data
                 with self.data_lock:
                     self.stock_data = current_data
+                    self.stock_history.update(history_data)  
                     self.last_update = datetime.now()
                 
-                # Update historical data one symbol at a time (shorter lock periods)
+                # Update display-safe copies (no lock needed for reading)
+                self.display_stock_data = dict(current_data)  # Make a copy
+                self.display_stock_history = {}
                 for symbol, prices in history_data.items():
-                    with self.data_lock:
-                        self.stock_history[symbol] = prices
-                        print(f"DEBUG: Stored {len(prices)} historical prices for {symbol}")
+                    self.display_stock_history[symbol] = list(prices)  # Make a copy
+                    print(f"DEBUG: Stored {len(prices)} historical prices for {symbol}")
                 
-                print(f"DEBUG: Historical data now available for: {list(self.stock_history.keys())}")
+                print(f"DEBUG: Historical data now available for: {list(self.display_stock_history.keys())}")
                 
                 print(f"✓ Updated at {self.last_update.strftime('%H:%M:%S')} - {len(self.stock_data)} stocks")
                 
@@ -328,31 +334,16 @@ class AdvancedStockTracker(SampleBase):
             
             print(f"DEBUG: Bounds check passed")
                 
-            # Get historical data safely - use try_lock approach
+            # Get historical data from display-safe copy (no locking needed!)
             prices = None
-            print(f"DEBUG: About to acquire data lock")
+            print(f"DEBUG: Accessing display-safe data for {symbol}")
             
-            # Try to get data without blocking indefinitely
-            lock_acquired = False
-            try:
-                # Quick non-blocking attempt first  
-                lock_acquired = self.data_lock.acquire(timeout=0.5)  # Wait max 0.5 seconds
-                if lock_acquired:
-                    print(f"DEBUG: Got data lock, checking for {symbol}")
-                    if symbol in self.stock_history and self.stock_history[symbol]:
-                        # Make a copy to avoid holding the lock too long
-                        prices = list(self.stock_history[symbol][-min(width, 50):])
-                        print(f"DEBUG: Got {len(prices)} prices")
-                    else:
-                        print(f"DEBUG: No data for {symbol}")
-                else:
-                    print(f"DEBUG: Could not acquire data lock, using demo chart")
-            except Exception as lock_e:
-                print(f"DEBUG: Data lock error: {lock_e}")
-            finally:
-                if lock_acquired:
-                    self.data_lock.release()
-                    print(f"DEBUG: Data lock released")
+            # Use display-safe data that doesn't require locking
+            if symbol in self.display_stock_history and self.display_stock_history[symbol]:
+                prices = self.display_stock_history[symbol][-min(width, 50):]  # Last data points
+                print(f"DEBUG: Got {len(prices)} prices from display data")
+            else:
+                print(f"DEBUG: No display data for {symbol}, available: {list(self.display_stock_history.keys())}")
             
             if not prices or len(prices) < 2:
                 print(f"DEBUG: Not enough price data ({len(prices) if prices else 0} prices), calling demo chart")
@@ -525,52 +516,52 @@ class AdvancedStockTracker(SampleBase):
                 print(f"DEBUG: Switched to stock index {self.current_stock_index}")
             
             # Get current stock to display
-            if self.stock_symbols and len(self.stock_data) > 0:
+            if self.stock_symbols and len(self.display_stock_data) > 0:
                 current_symbol = self.stock_symbols[self.current_stock_index]
                 
-                with self.data_lock:
-                    if current_symbol in self.stock_data:
-                        stock_info = self.stock_data[current_symbol]
-                        
-                        # Left side uses white color for symbol and price
-                        left_color = self.colors['neutral']  # White color
-                        
-                        # Right side uses green/red based on performance
-                        is_positive = stock_info['change'] >= 0
-                        right_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
-                        
-                        # Left side - Stock symbol and price (white)
-                        graphics.DrawText(offscreen_canvas, self.font_large, 2, 8, left_color, current_symbol)
-                        price_text = f"{stock_info['price']:.2f}"
-                        graphics.DrawText(offscreen_canvas, self.font_large, 2, 15, left_color, price_text)
-                        
-                        # Right side - Change amount and percentage (green/red based on value)
-                        # True right alignment: measure actual text width and position accordingly
-                        
-                        # Top right: Change amount (colored) - properly right aligned
-                        change_text = f"{stock_info['change']:+.2f}"  # Include +/- sign
-                        change_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 8, right_color, change_text)  # Measure width off-screen
-                        change_x = 64 - change_width - 2  # True right align with 2px buffer from right edge
-                        graphics.DrawText(offscreen_canvas, self.font_large, change_x, 8, right_color, change_text)
-                        
-                        # Bottom right: Percentage (colored) - properly right aligned  
-                        pct_text = f"{stock_info['change_percent']:+.1f}%"  # Include +/- sign
-                        pct_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 15, right_color, pct_text)  # Measure width off-screen
-                        pct_x = 64 - pct_width - 2  # True right align with 2px buffer from right edge
-                        graphics.DrawText(offscreen_canvas, self.font_large, pct_x, 15, right_color, pct_text)
-                        
-                        # Draw safe time series chart in bottom half (y=16 to y=31, so 16 pixels tall)
-                        chart_x = 0
-                        chart_y = 16  # Start at bottom half of 32px display  
-                        chart_width = 64
-                        chart_height = 16  # Bottom 16 pixels
-                        
-                        self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
-                        
-                    else:
-                        # Loading state
-                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], current_symbol)
-                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 22, self.colors['neutral'], "Loading...")
+                # Use display-safe data (no locking needed)
+                if current_symbol in self.display_stock_data:
+                    stock_info = self.display_stock_data[current_symbol]
+                    
+                    # Left side uses white color for symbol and price
+                    left_color = self.colors['neutral']  # White color
+                    
+                    # Right side uses green/red based on performance
+                    is_positive = stock_info['change'] >= 0
+                    right_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
+                    
+                    # Left side - Stock symbol and price (white)
+                    graphics.DrawText(offscreen_canvas, self.font_large, 2, 8, left_color, current_symbol)
+                    price_text = f"{stock_info['price']:.2f}"
+                    graphics.DrawText(offscreen_canvas, self.font_large, 2, 15, left_color, price_text)
+                    
+                    # Right side - Change amount and percentage (green/red based on value)
+                    # True right alignment: measure actual text width and position accordingly
+                    
+                    # Top right: Change amount (colored) - properly right aligned
+                    change_text = f"{stock_info['change']:+.2f}"  # Include +/- sign
+                    change_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 8, right_color, change_text)  # Measure width off-screen
+                    change_x = 64 - change_width - 2  # True right align with 2px buffer from right edge
+                    graphics.DrawText(offscreen_canvas, self.font_large, change_x, 8, right_color, change_text)
+                    
+                    # Bottom right: Percentage (colored) - properly right aligned  
+                    pct_text = f"{stock_info['change_percent']:+.1f}%"  # Include +/- sign
+                    pct_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 15, right_color, pct_text)  # Measure width off-screen
+                    pct_x = 64 - pct_width - 2  # True right align with 2px buffer from right edge
+                    graphics.DrawText(offscreen_canvas, self.font_large, pct_x, 15, right_color, pct_text)
+                    
+                    # Draw safe time series chart in bottom half (y=16 to y=31, so 16 pixels tall)
+                    chart_x = 0
+                    chart_y = 16  # Start at bottom half of 32px display  
+                    chart_width = 64
+                    chart_height = 16  # Bottom 16 pixels
+                    
+                    self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
+                    
+                else:
+                    # Loading state
+                    graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], current_symbol)
+                    graphics.DrawText(offscreen_canvas, self.font_large, 1, 22, self.colors['neutral'], "Loading...")
             else:
                 # No data yet
                 graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], "Loading...")
