@@ -301,73 +301,66 @@ class AdvancedStockTracker(SampleBase):
                 time.sleep(30)
 
     def draw_stock_chart(self, canvas, symbol, x_start, y_start, width, height):
-        """Draw a time series chart for the given symbol"""
-        with self.data_lock:
-            if symbol not in self.stock_history or not self.stock_history[symbol]:
-                # If no historical data, create a demo chart
-                self.draw_demo_chart(canvas, x_start, y_start, width, height)
-                return
-            
-            prices = self.stock_history[symbol]
-            if len(prices) < 2:
-                self.draw_demo_chart(canvas, x_start, y_start, width, height)
-                return
-            
-            # Normalize prices to fit in the chart area
-            min_price = min(prices)
-            max_price = max(prices)
-            price_range = max_price - min_price
-            
-            if price_range == 0:  # All prices the same
-                y = y_start + height // 2
+        """Draw a simple time series chart for the given symbol"""
+        try:
+            with self.data_lock:
+                if symbol not in self.stock_history or not self.stock_history[symbol]:
+                    # If no historical data, create a simple demo chart
+                    self.draw_demo_chart(canvas, x_start, y_start, width, height)
+                    return
+                
+                prices = self.stock_history[symbol]
+                if len(prices) < 2:
+                    self.draw_demo_chart(canvas, x_start, y_start, width, height)
+                    return
+                
+                # Normalize prices to fit in the chart area
+                min_price = min(prices)
+                max_price = max(prices)
+                price_range = max_price - min_price
+                
+                if price_range == 0:  # All prices the same
+                    return  # Skip drawing if no variation
+                
+                # Simple filled area chart
                 for x in range(width):
-                    canvas.SetPixel(x_start + x, y, 0, 200, 0)  # Green horizontal line
-                return
-            
-            # Determine overall trend for color
-            is_trending_up = prices[-1] > prices[0]
-            chart_color = (0, 200, 0) if is_trending_up else (200, 0, 0)  # Green or red
-            
-            # Draw filled area chart (time series from left to right)
-            for x in range(width):
-                # Get price for this x position (map x to price array index)
-                price_index = int((x / (width - 1)) * (len(prices) - 1))
-                price = prices[price_index]
-                
-                # Calculate height for this price
-                price_ratio = (price - min_price) / price_range if price_range > 0 else 0.5
-                chart_point_height = int(price_ratio * (height - 1))  # Leave 1px border
-                
-                # Draw filled area from bottom up to price level
-                for y in range(chart_point_height + 1):
-                    pixel_y = y_start + height - 1 - y  # Start from bottom
-                    if pixel_y >= y_start and pixel_y < y_start + height:
-                        # Create gradient effect - dimmer at bottom, brighter at top
-                        if chart_point_height > 0:
-                            intensity_ratio = (y + 1) / (chart_point_height + 1)
-                            intensity = int(100 + (intensity_ratio * 155))  # 100-255 range
-                        else:
-                            intensity = 150
+                    if x >= len(prices):
+                        break
                         
-                        if is_trending_up:
-                            canvas.SetPixel(x_start + x, pixel_y, 0, intensity, 0)  # Green gradient
-                        else:
-                            canvas.SetPixel(x_start + x, pixel_y, intensity, 0, 0)  # Red gradient
+                    # Get price for this x position
+                    price_index = min(x, len(prices) - 1)
+                    price = prices[price_index]
+                    
+                    # Calculate height for this price (0 to height-1)
+                    price_ratio = (price - min_price) / price_range
+                    chart_point_height = int(price_ratio * (height - 1))
+                    
+                    # Draw filled column from bottom up
+                    for y in range(chart_point_height):
+                        pixel_y = y_start + height - 1 - y  # Bottom to top
+                        if pixel_y >= y_start and pixel_y < y_start + height:
+                            canvas.SetPixel(x_start + x, pixel_y, 0, 150, 0)  # Green
+                            
+        except Exception as e:
+            # If chart fails, just skip it silently
+            pass
     
     def draw_demo_chart(self, canvas, x_start, y_start, width, height):
-        """Draw a demo chart pattern when no real data is available"""
-        import math
-        for x in range(width):
-            # Create a sine wave pattern
-            wave = math.sin(x * 0.2) * 0.5 + 0.5  # Normalize to 0-1
-            chart_height = int(wave * height)
-            
-            # Draw filled area
-            for y in range(chart_height):
-                pixel_y = y_start + height - 1 - y
-                if pixel_y >= y_start and pixel_y < y_start + height:
-                    intensity = int(255 * (y + 1) / chart_height) if chart_height > 0 else 255
-                    canvas.SetPixel(x_start + x, pixel_y, 0, intensity, 0)
+        """Draw a simple demo chart pattern when no real data is available"""
+        try:
+            import math
+            for x in range(min(width, 64)):  # Safety limit
+                # Create a simple sine wave pattern
+                wave = math.sin(x * 0.1) * 0.4 + 0.5  # Normalize to 0.1-0.9
+                chart_height = max(1, int(wave * (height - 2)))  # Leave some border
+                
+                # Draw simple filled area
+                for y in range(chart_height):
+                    pixel_y = y_start + height - 1 - y
+                    if pixel_y >= y_start and pixel_y < y_start + height and pixel_y < 32:
+                        canvas.SetPixel(x_start + x, pixel_y, 0, 100, 0)  # Dim green
+        except:
+            pass  # Skip chart if anything fails
 
     def draw_line(self, canvas, x0, y0, x1, y1, color):
         """Draw a line between two points using Bresenham's algorithm"""
@@ -486,11 +479,11 @@ class AdvancedStockTracker(SampleBase):
                         pct_x = 64 - pct_width - 2  # True right align with 2px buffer from right edge
                         graphics.DrawText(offscreen_canvas, self.font_large, pct_x, 15, right_color, pct_text)
                         
-                        # Draw time series chart below the text (starting at y=18)
+                        # Draw time series chart in bottom half (y=16 to y=31, so 16 pixels tall)
                         chart_x = 0
-                        chart_y = 18  # Start below text area (16px + 2px buffer)
+                        chart_y = 16  # Start at bottom half of 32px display
                         chart_width = 64
-                        chart_height = 32 - 18  # Use remaining height (14 pixels)
+                        chart_height = 16  # Bottom 16 pixels
                         
                         self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
                         
