@@ -78,6 +78,11 @@ class TimeSeriesChart(ChartRenderer):
             x_start + width > 64 or y_start + height > 32):
             return False
         
+        # Clear the chart area first to prevent flickering
+        for clear_x in range(x_start, min(x_start + width, 64)):
+            for clear_y in range(y_start, min(y_start + height, 32)):
+                self.draw_pixel_safe(clear_x, clear_y, (0, 0, 0))
+        
         if not prices or len(prices) < 2:
             return self.draw_demo_chart(x_start, y_start, width, height, colors)
         
@@ -123,6 +128,11 @@ class TimeSeriesChart(ChartRenderer):
         if (x_start < 0 or y_start < 0 or width <= 0 or height <= 0 or
             x_start + width > 64 or y_start + height > 32):
             return False
+        
+        # Clear the chart area first to prevent flickering
+        for clear_x in range(x_start, min(x_start + width, 64)):
+            for clear_y in range(y_start, min(y_start + height, 32)):
+                self.draw_pixel_safe(clear_x, clear_y, (0, 0, 0))
         
         pixels_drawn = 0
         

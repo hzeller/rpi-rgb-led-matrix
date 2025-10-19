@@ -72,6 +72,8 @@ class StockTracker:
         self.current_symbols = self.stocks.copy()
         self.current_stock_index = 0
         self.last_switch_time = time.time()
+        self.last_data_update = None
+        self.chart_needs_redraw = True
         self.running = True
     
     def start(self):
@@ -130,6 +132,8 @@ class StockTracker:
             self.current_data = update_data['current']
             self.historical_data = update_data['history']
             self.current_symbols = update_data['symbols']
+            self.last_data_update = update_data['timestamp']
+            self.chart_needs_redraw = True  # New data means chart needs redraw
             self.update_queue.task_done()
             
             # Reset stock index if symbol list changed
@@ -150,6 +154,7 @@ class StockTracker:
             old_index = self.current_stock_index
             self.current_stock_index = (self.current_stock_index + 1) % len(self.current_symbols)
             self.last_switch_time = time.time()
+            self.chart_needs_redraw = True  # New stock means chart needs redraw
             print(f"Switched from stock {old_index} to {self.current_stock_index} "
                   f"(cycling through {len(self.current_symbols)} stocks)")
     
@@ -192,21 +197,39 @@ class StockTracker:
     
     def _main_loop(self):
         """Main display loop."""
+        frame_count = 0
         while self.running:
+            frame_count += 1
+            
             # Check for data updates
+            data_updated = False
+            old_chart_redraw = self.chart_needs_redraw
             self._check_for_updates()
+            if self.chart_needs_redraw and not old_chart_redraw:
+                data_updated = True
             
             # Check if we need to switch stocks
+            stock_switched = False
             if self._should_switch_stock():
                 self._switch_to_next_stock()
+                stock_switched = True
             
-            # Clear and draw
-            self.display.clear()
-            self._draw_current_stock()
-            self.display.swap_canvas()
+            # Only redraw if something changed or every 10 frames (to prevent stale display)
+            should_redraw = (data_updated or stock_switched or 
+                           self.chart_needs_redraw or frame_count % 10 == 0)
             
-            # Wait for next frame
-            time.sleep(StockConfig.DISPLAY_REFRESH_RATE)
+            if should_redraw:
+                # Clear and draw
+                self.display.clear()
+                self._draw_current_stock()
+                self.display.swap_canvas()
+                
+                # Mark chart as drawn
+                if self.chart_needs_redraw:
+                    self.chart_needs_redraw = False
+            
+            # Wait for next frame - longer delay to reduce flickering
+            time.sleep(0.1)  # 10fps instead of 20fps
 
 
 def create_argument_parser():

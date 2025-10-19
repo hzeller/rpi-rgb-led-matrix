@@ -61,7 +61,7 @@ class StockConfig(DisplayConfig):
     RIGHT_MARGIN = 2  # Pixels from right edge
     
     # Update intervals
-    DISPLAY_REFRESH_RATE = 0.5  # seconds between display updates
+    DISPLAY_REFRESH_RATE = 0.1  # seconds between display updates (10fps to reduce flicker)
     API_RATE_LIMIT_DELAY = 0.2  # seconds between API calls
     
     # Demo mode settings
