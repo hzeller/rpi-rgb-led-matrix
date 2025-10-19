@@ -258,22 +258,39 @@ class WeatherDisplay:
         condition = weather['weather'][0]['main']
         icon_code = weather['weather'][0]['icon']
         
-        # Weather icon on left side, centered vertically in bottom area
-        icon_x = 16  # Left side center of left half
-        icon_y = 22  # Center vertically in lower area (32-8=24 pixels, middle at ~22)
-        print(f"Weather icon code: {icon_code}")
-        icon_image = self.get_weather_icon(icon_code)
-        print(f"Got icon image: {icon_image is not None}")
-        self.draw_weather_icon(icon_image, icon_x, icon_y)
-        
-        # High temperature on right side (white)
+        # Calculate temperature text widths for layout
         temp_str = f"{temp}°"
         temp_width = 0
         for char in temp_str:
             temp_width += self.small_font.CharacterWidth(ord(char))
+            
+        low_str = f"{temp_low}°"
+        low_width = 0
+        for char in low_str:
+            low_width += self.small_font.CharacterWidth(ord(char))
         
-        # Position in right half, above center
-        temp_x = 48 - temp_width // 2  # Center in right half (48 is center of right 32 pixels)
+        # Calculate total group width: icon(20) + spacing(1) + max_temp_width
+        max_temp_width = max(temp_width, low_width)
+        total_group_width = 20 + 1 + max_temp_width
+        
+        # Center the entire group horizontally
+        group_start_x = (64 - total_group_width) // 2
+        
+        # Position icon on the left of the group, centered vertically in bottom area
+        icon_x = group_start_x + 10  # Center of the 20px icon
+        icon_y = 22  # Center vertically in lower area
+        
+        print(f"Weather icon code: {icon_code}")
+        print(f"Group layout: total_width={total_group_width}, start_x={group_start_x}")
+        icon_image = self.get_weather_icon(icon_code)
+        print(f"Got icon image: {icon_image is not None}")
+        self.draw_weather_icon(icon_image, icon_x, icon_y)
+        
+        # Position temperatures to the right of icon with 1 pixel spacing
+        temp_start_x = group_start_x + 20 + 1  # After icon + 1 pixel spacing
+        
+        # High temperature (white) - center it within the temp area
+        temp_x = temp_start_x + (max_temp_width - temp_width) // 2
         temp_y = 18
         
         # Draw high temp with tight spacing (white)
@@ -282,14 +299,8 @@ class WeatherDisplay:
             char_width = graphics.DrawText(self.canvas, self.small_font, current_x, temp_y, self.temp_color, char)
             current_x += char_width - 1
         
-        # Low temperature below high temp (blue)
-        low_str = f"{temp_low}°"
-        low_width = 0
-        for char in low_str:
-            low_width += self.small_font.CharacterWidth(ord(char))
-        
-        # Position in right half, below high temp
-        low_x = 48 - low_width // 2  # Center in right half
+        # Low temperature (blue) - center it within the temp area
+        low_x = temp_start_x + (max_temp_width - low_width) // 2
         low_y = 28
         
         # Draw low temp with tight spacing (blue)
