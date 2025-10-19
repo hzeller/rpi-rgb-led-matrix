@@ -384,11 +384,11 @@ class AdvancedStockTracker(SampleBase):
     def run(self):
         print("Starting advanced stock tracker...")
         
-        # Load fonts - exact same method as image-viewer.py (no error checking)
+        # Load smaller fonts to fit in compact 16px height with 2px margins
         self.font_large = graphics.Font()
-        self.font_large.LoadFont("../../../fonts/7x13.bdf")
+        self.font_large.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for symbol
         self.font_small = graphics.Font()
-        self.font_small.LoadFont("../../../fonts/5x7.bdf")
+        self.font_small.LoadFont("../../../fonts/4x6.bdf")  # Even smaller for price
         
         # Get API key (already loaded from environment in argument defaults)
         self.api_key = self.args.api_key
@@ -447,16 +447,17 @@ class AdvancedStockTracker(SampleBase):
                     if current_symbol in self.stock_data:
                         stock_info = self.stock_data[current_symbol]
                         
-                        # Determine color based on performance
-                        is_positive = stock_info['change'] >= 0
-                        text_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
+                        # Use white color for clean appearance
+                        text_color = self.colors['neutral']  # White color
                         
-                        # Draw stock symbol on first line (like your image)
-                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, text_color, current_symbol)
+                        # Draw stock symbol on first line - 2px from top, 2px from left
+                        # 5x7 font needs Y coordinate of about 8 for proper baseline
+                        graphics.DrawText(offscreen_canvas, self.font_large, 2, 8, text_color, current_symbol)
                         
-                        # Draw price on second line (like your image)
+                        # Draw price on second line - fits within 16px total height
+                        # 4x6 font needs Y coordinate of about 15 for proper baseline 
                         price_text = f"{stock_info['price']:.2f}"
-                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 22, text_color, price_text)
+                        graphics.DrawText(offscreen_canvas, self.font_small, 2, 15, text_color, price_text)
                         
                     else:
                         # Loading state
