@@ -13,6 +13,7 @@ import threading
 from datetime import datetime, timedelta
 import os
 import math
+import random
 try:
     from dotenv import load_dotenv
     load_dotenv('stock-tracker.env')
@@ -45,6 +46,8 @@ class AdvancedStockTracker(SampleBase):
         self.parser.add_argument("--demo-mode", help="Use demo data instead of API", action="store_true")
         self.parser.add_argument("--chart-days", help="Number of days of historical data for chart", 
                                default=int(os.environ.get('CHART_DAYS', '30')), type=int)
+        self.parser.add_argument("--api-source", help="API source to use", 
+                               choices=['yahoo', 'alphavantage', 'auto'], default='auto', type=str)
         
         # Stock data storage
         self.stock_data = {}
@@ -139,13 +142,43 @@ class AdvancedStockTracker(SampleBase):
             print(f"Error fetching historical data for {symbol}: {e}")
             return None
 
+    def fetch_yahoo_finance_data(self, symbol):
+        """Fetch stock data from Yahoo Finance (free, no API key required)"""
+        try:
+            # Yahoo Finance API endpoint
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+            
+            if 'chart' in data and 'result' in data['chart'] and data['chart']['result']:
+                result = data['chart']['result'][0]
+                meta = result['meta']
+                
+                current_price = meta.get('regularMarketPrice', 0)
+                prev_close = meta.get('previousClose', current_price)
+                change = current_price - prev_close
+                change_percent = (change / prev_close * 100) if prev_close != 0 else 0
+                
+                return {
+                    'price': round(current_price, 2),
+                    'change': round(change, 2),
+                    'change_percent': round(change_percent, 2),
+                    'timestamp': datetime.now().strftime('%H:%M')
+                }
+            
+        except Exception as e:
+            print(f"Yahoo Finance error for {symbol}: {e}")
+            return None
+    
     def fetch_stock_data(self):
-        """Fetch real stock data from Alpha Vantage API"""
+        """Fetch real stock data from multiple free APIs"""
         if self.args.demo_mode:
-            return self.get_demo_data()
-        
-        if not self.api_key:
-            print("No API key provided. Use --demo-mode or get a free key at alphavantage.co")
             return self.get_demo_data()
         
         stocks = [s.strip().upper() for s in self.args.stocks.split(',')]
@@ -153,28 +186,73 @@ class AdvancedStockTracker(SampleBase):
         history_data = {}
         successful_fetches = 0
         
+        # Try Yahoo Finance first (free, no API key needed)
+        print("Fetching data from Yahoo Finance (free API)...")
+        for symbol in stocks:
+            yahoo_data = self.fetch_yahoo_finance_data(symbol)
+            if yahoo_data:
+                current_data[symbol] = yahoo_data
+                successful_fetches += 1
+                print(f"✓ Got {symbol}: ${yahoo_data['price']:.2f}")
+            else:
+                print(f"✗ Failed to get {symbol}")
+            
+            time.sleep(0.2)  # Small delay to be respectful
+        
+        # If Yahoo Finance worked, generate demo historical data
+        if successful_fetches > 0:
+            print("Generating demo historical data for charts...")
+            for symbol in current_data:
+                # Generate realistic historical data based on current price
+                base_price = current_data[symbol]['price']
+                change_percent = current_data[symbol]['change_percent']
+                
+                history_data[symbol] = []
+                for i in range(50, 0, -1):  # 50 data points
+                    if i == 50:
+                        # Starting price (30 days ago)
+                        start_price = base_price - (current_data[symbol]['change'] * 5)
+                    else:
+                        # Random walk towards current price
+                        trend = 0.02 if change_percent > 0 else -0.02
+                        price_change = (random.uniform(-1, 1) + trend) * base_price * 0.01
+                        start_price = max(history_data[symbol][-1] + price_change, base_price * 0.5)
+                    
+                    history_data[symbol].append(round(start_price, 2))
+        
+        # Fallback to Alpha Vantage if available
+        elif self.api_key:
+            print("Yahoo Finance failed, trying Alpha Vantage...")
+            return self.fetch_alpha_vantage_data()
+        
+        # Final fallback to demo data
+        if not current_data:
+            print("All APIs failed, using demo data")
+            return self.get_demo_data()
+        
+        print(f"Successfully fetched data for {successful_fetches}/{len(stocks)} stocks")
+        return current_data, history_data
+
+    def fetch_alpha_vantage_data(self):
+        """Fallback to Alpha Vantage API if available"""
+        stocks = [s.strip().upper() for s in self.args.stocks.split(',')]
+        current_data = {}
+        history_data = {}
+        successful_fetches = 0
+        
         for symbol in stocks:
             try:
-                # Fetch current quote
                 url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={self.api_key}"
                 response = requests.get(url, timeout=15)
                 response.raise_for_status()
                 json_data = response.json()
                 
-                if "Error Message" in json_data:
-                    print(f"API Error for {symbol}: {json_data['Error Message']}")
-                    continue
-                elif "Note" in json_data:
-                    print(f"API Rate limit reached: {json_data['Note']}")
+                if "Note" in json_data:
+                    print(f"Alpha Vantage rate limit reached")
                     break
                 elif "Global Quote" in json_data:
                     quote = json_data["Global Quote"]
-                    
-                    if not quote or quote.get("05. price") == "0.0000":
-                        print(f"No data available for {symbol}")
-                        continue
-                    
-                    try:
+                    if quote and quote.get("05. price") != "0.0000":
                         price = float(quote["05. price"])
                         change = float(quote["09. change"])
                         change_percent = float(quote["10. change percent"].replace('%', ''))
@@ -185,34 +263,13 @@ class AdvancedStockTracker(SampleBase):
                             'change_percent': round(change_percent, 2),
                             'timestamp': datetime.now().strftime('%H:%M')
                         }
-                        
-                        # Fetch historical data if not already cached
-                        if symbol not in self.stock_history:
-                            historical_prices = self.fetch_historical_data(symbol)
-                            if historical_prices:
-                                history_data[symbol] = historical_prices
-                        
                         successful_fetches += 1
-                        
-                    except (KeyError, ValueError) as e:
-                        print(f"Error parsing data for {symbol}: {e}")
-                        continue
-                        
-                # Add delay to respect API rate limits
-                time.sleep(1)  # Longer delay for historical data calls
                 
-            except requests.exceptions.RequestException as e:
-                print(f"Network error fetching {symbol}: {e}")
-                continue
+                time.sleep(0.5)
+                
             except Exception as e:
-                print(f"Unexpected error fetching {symbol}: {e}")
+                print(f"Alpha Vantage error for {symbol}: {e}")
                 continue
-        
-        print(f"Successfully fetched data for {successful_fetches}/{len(stocks)} stocks")
-        
-        if not current_data and not self.args.demo_mode:
-            print("No stock data available, using demo data")
-            return self.get_demo_data()
         
         return current_data, history_data
 
