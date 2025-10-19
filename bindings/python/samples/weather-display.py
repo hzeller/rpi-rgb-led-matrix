@@ -24,7 +24,7 @@ from PIL import Image
 from io import BytesIO
 
 class WeatherDisplay:
-    def __init__(self, city="Denver, CO", timezone_offset=-6):
+    def __init__(self, city="Denver, CO"):
         # Configuration for the matrix - use same settings as other displays
         options = RGBMatrixOptions()
         options.rows = 32
@@ -36,10 +36,10 @@ class WeatherDisplay:
         self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
         
-        # Set up location and timezone
+        # Set up location
         self.city = city
         self.coords = None  # Will be set by geocoding
-        self.timezone = timezone(timedelta(hours=timezone_offset))
+        self.timezone = None  # Will be set by timezone lookup
         
         # Load fonts
         self.temp_font = graphics.Font()
@@ -70,6 +70,9 @@ class WeatherDisplay:
         
         # Get coordinates for the city
         self.get_city_coordinates()
+        
+        # Get timezone for the coordinates
+        self.get_timezone()
         
     def get_city_coordinates(self):
         """Get latitude and longitude for a city using OpenWeatherMap Geocoding API"""
@@ -109,6 +112,49 @@ class WeatherDisplay:
         except Exception as e:
             print(f"Geocoding error: {e}. Using default Denver coordinates.")
             self.coords = {"lat": 39.7392, "lon": -104.9903}
+    
+    def get_timezone(self):
+        """Get timezone for coordinates using TimeZoneDB API or fallback to simple estimation"""
+        try:
+            if not self.coords:
+                print("No coordinates available. Using Mountain Time.")
+                self.timezone = timezone(timedelta(hours=-6))
+                return
+            
+            # Simple timezone estimation based on longitude
+            # This is a basic approximation - for more accuracy, you'd use a timezone API
+            lng = self.coords["lon"]
+            
+            # Very rough timezone estimation (UTC offset = longitude / 15)
+            estimated_offset = round(lng / 15)
+            
+            # Apply some common timezone corrections for major regions
+            if -125 <= lng <= -60:  # North America
+                if lng >= -75:  # Eastern time zone area
+                    estimated_offset = -5
+                elif lng >= -90:  # Central time zone area
+                    estimated_offset = -6
+                elif lng >= -105:  # Mountain time zone area
+                    estimated_offset = -7
+                else:  # Pacific time zone area
+                    estimated_offset = -8
+            elif -10 <= lng <= 40:  # Europe/Africa
+                if lng <= 15:
+                    estimated_offset = 1  # Central European Time
+                else:
+                    estimated_offset = 2  # Eastern European Time
+            elif lng >= 100 and lng <= 150:  # Asia-Pacific
+                if lng <= 120:
+                    estimated_offset = 8  # China Standard Time
+                else:
+                    estimated_offset = 9  # Japan Standard Time
+            
+            self.timezone = timezone(timedelta(hours=estimated_offset))
+            print(f"Estimated timezone: UTC{estimated_offset:+d}")
+            
+        except Exception as e:
+            print(f"Timezone estimation error: {e}. Using Mountain Time.")
+            self.timezone = timezone(timedelta(hours=-6))
         
     def get_weather_data(self):
         """Fetch weather data from OpenWeatherMap API"""
@@ -394,12 +440,10 @@ class WeatherDisplay:
             self.matrix.Clear()
 
 def parse_arguments():
-    """Parse command line arguments for city and timezone"""
+    """Parse command line arguments for city"""
     parser = argparse.ArgumentParser(description='Weather display for RGB LED matrix')
     parser.add_argument('--city', '-c', default='Denver, CO', 
                         help='City name (e.g., "New York", "London", "Tokyo") (default: Denver, CO)')
-    parser.add_argument('--timezone', '-t', type=int, default=-6,
-                        help='Timezone offset from UTC in hours (default: -6 for Mountain Time)')
     
     return parser.parse_args()
 
@@ -408,11 +452,7 @@ if __name__ == "__main__":
     
     print(f"Weather Display Configuration:")
     print(f"  City: {args.city}")
-    print(f"  Timezone: UTC{args.timezone:+d}")
     print()
     
-    weather = WeatherDisplay(
-        city=args.city,
-        timezone_offset=args.timezone
-    )
+    weather = WeatherDisplay(city=args.city)
     weather.run()
