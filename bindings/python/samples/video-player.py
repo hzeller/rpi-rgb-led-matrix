@@ -12,6 +12,14 @@ import requests
 from io import BytesIO
 import numpy as np
 
+try:
+    import yt_dlp
+    YT_DLP_AVAILABLE = True
+except ImportError:
+    YT_DLP_AVAILABLE = False
+    print("Warning: yt-dlp not available. YouTube and other platform URLs may not work.")
+    print("Install with: pip install yt-dlp")
+
 
 class VideoPlayer(SampleBase):
     def __init__(self, *args, **kwargs):
@@ -103,6 +111,61 @@ class VideoPlayer(SampleBase):
         """Check if the source is a URL."""
         return source and (source.startswith('http://') or source.startswith('https://'))
 
+    def is_video_platform_url(self, url):
+        """Check if URL is from a video platform like YouTube, Vimeo, etc."""
+        if not url:
+            return False
+        
+        video_platforms = [
+            'youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com',
+            'twitch.tv', 'tiktok.com', 'instagram.com', 'twitter.com',
+            'facebook.com', 'reddit.com'
+        ]
+        
+        return any(platform in url.lower() for platform in video_platforms)
+
+    def extract_video_url_with_ytdlp(self, url):
+        """Extract direct video URL using yt-dlp for video platforms."""
+        if not YT_DLP_AVAILABLE:
+            print("Error: yt-dlp is required for video platform URLs")
+            print("Install with: pip install yt-dlp")
+            return None
+        
+        print(f"Extracting video stream from: {url}")
+        
+        try:
+            # Configure yt-dlp options for best quality that works with OpenCV
+            ydl_opts = {
+                'format': 'best[height<=720]/best[height<=480]/best',  # Prefer lower resolution for better performance
+                'quiet': True,
+                'no_warnings': True,
+                'extractaudio': False,
+                'noplaylist': True,
+            }
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                # Extract video info
+                info = ydl.extract_info(url, download=False)
+                
+                if 'url' in info:
+                    video_url = info['url']
+                    title = info.get('title', 'Unknown')
+                    duration = info.get('duration', 0)
+                    
+                    print(f"Found video: {title}")
+                    if duration:
+                        print(f"Duration: {duration//60}:{duration%60:02d}")
+                    
+                    return video_url
+                else:
+                    print("Error: Could not extract video URL")
+                    return None
+                    
+        except Exception as e:
+            print(f"Error extracting video from platform: {e}")
+            print("This might be due to platform restrictions or unsupported URL format")
+            return None
+
     def parse_background_color(self, color_str):
         """Parse background color string to RGB tuple."""
         color_str = color_str.lower()
@@ -122,6 +185,18 @@ class VideoPlayer(SampleBase):
 
     def download_video_from_url(self, url):
         """Download video from URL and save to temporary file."""
+        # Check if this is a video platform URL that needs special handling
+        if self.is_video_platform_url(url):
+            # Extract direct video URL using yt-dlp
+            direct_url = self.extract_video_url_with_ytdlp(url)
+            if not direct_url:
+                return None
+            
+            # For some platforms, we can use the direct URL with OpenCV without downloading
+            print(f"Using direct stream URL from platform")
+            return direct_url
+        
+        # Regular direct video URL download
         print(f"Downloading video from: {url}")
         try:
             response = requests.get(url, timeout=30, stream=True)
@@ -329,17 +404,30 @@ class VideoPlayer(SampleBase):
         # Determine video source priority: --url flag > video_source parameter > hardcoded URL
         video_path = None
         temp_file = None
+        is_stream_url = False  # Track if we're using a stream URL instead of a file
         
         try:
             if self.args.url:
                 print(f"Using URL parameter: {self.args.url}")
-                temp_file = self.download_video_from_url(self.args.url)
-                video_path = temp_file
+                result = self.download_video_from_url(self.args.url)
+                if result and not os.path.exists(str(result)):
+                    # This is a stream URL, not a downloaded file
+                    video_path = result
+                    is_stream_url = True
+                else:
+                    temp_file = result
+                    video_path = temp_file
             elif self.args.video_source:
                 if self.is_url(self.args.video_source):
                     print(f"Using URL from parameter: {self.args.video_source}")
-                    temp_file = self.download_video_from_url(self.args.video_source)
-                    video_path = temp_file
+                    result = self.download_video_from_url(self.args.video_source)
+                    if result and not os.path.exists(str(result)):
+                        # This is a stream URL, not a downloaded file
+                        video_path = result
+                        is_stream_url = True
+                    else:
+                        temp_file = result
+                        video_path = temp_file
                 else:
                     # Validate local video file
                     if not self.validate_video_file(self.args.video_source):
@@ -348,8 +436,14 @@ class VideoPlayer(SampleBase):
                     video_path = self.args.video_source
             else:
                 print(f"Using hardcoded URL: {self.video_url}")
-                temp_file = self.download_video_from_url(self.video_url)
-                video_path = temp_file
+                result = self.download_video_from_url(self.video_url)
+                if result and not os.path.exists(str(result)):
+                    # This is a stream URL, not a downloaded file
+                    video_path = result
+                    is_stream_url = True
+                else:
+                    temp_file = result
+                    video_path = temp_file
             
             if not video_path:
                 print("Error: No valid video source available")
@@ -493,8 +587,8 @@ class VideoPlayer(SampleBase):
                 cap.release()
                 
         finally:
-            # Clean up temporary file if it was downloaded
-            if temp_file and os.path.exists(temp_file):
+            # Clean up temporary file if it was downloaded (not for stream URLs)
+            if temp_file and not is_stream_url and os.path.exists(temp_file):
                 try:
                     os.unlink(temp_file)
                     print(f"Cleaned up temporary file: {temp_file}")

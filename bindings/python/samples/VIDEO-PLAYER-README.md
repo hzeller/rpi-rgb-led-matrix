@@ -5,6 +5,7 @@ A Python-based video player that displays video content on RGB LED matrices usin
 ## Features
 
 - **Multiple Video Sources**: Play from local files, URLs, or hardcoded video
+- **Platform Support**: YouTube, Vimeo, Reddit, and other video platforms via yt-dlp
 - **Flexible Scaling**: Multiple fit modes (stretch, fit, fill, center)
 - **Video Controls**: Speed adjustment, looping, start/end time selection
 - **Image Enhancement**: Brightness, contrast, and saturation adjustments
@@ -31,10 +32,16 @@ python video-player.py
 # Play local video file
 python video-player.py /path/to/video.mp4
 
-# Play video from URL
+# Play video from direct URL
 python video-player.py https://example.com/video.mp4
+
+# Play YouTube video
+python video-player.py https://youtu.be/VIDEO_ID
 # or
-python video-player.py --url https://example.com/video.mp4
+python video-player.py --url https://www.youtube.com/watch?v=VIDEO_ID
+
+# Play from other platforms (Vimeo, Reddit, etc.)
+python video-player.py --url https://vimeo.com/VIDEO_ID
 ```
 
 ### Advanced Options
@@ -144,6 +151,36 @@ python video-player.py action.mp4 \
     --fit-mode center
 ```
 
+## Platform Support
+
+The video player supports multiple video platforms through yt-dlp:
+
+### Supported Platforms
+- **YouTube** (youtube.com, youtu.be)
+- **Vimeo** (vimeo.com)
+- **Reddit** (reddit.com) - MP4 format posts
+- **Twitter/X** (twitter.com)
+- **Instagram** (instagram.com)
+- **TikTok** (tiktok.com)
+- **Facebook** (facebook.com)
+- **Dailymotion** (dailymotion.com)
+- **Twitch** (twitch.tv)
+
+### Platform Usage Examples
+```bash
+# YouTube videos
+python video-player.py "https://youtu.be/dQw4w9WgXcQ"
+python video-player.py "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+# Vimeo videos
+python video-player.py "https://vimeo.com/123456789"
+
+# Reddit MP4 posts
+python video-player.py "https://www.reddit.com/r/videos/comments/abc123/title/"
+```
+
+**Note**: Platform support requires yt-dlp. Install with `pip install yt-dlp`
+
 ## Performance Tips
 
 1. **Video Resolution**: Lower resolution videos will process faster
@@ -151,6 +188,7 @@ python video-player.py action.mp4 \
 3. **Fit Mode**: `stretch` mode is fastest as it doesn't maintain aspect ratio
 4. **Matrix Size**: Smaller matrices will process frames faster
 5. **Enhancement**: Disable brightness/contrast/saturation adjustments for best performance
+6. **Platform Videos**: YouTube and other platforms automatically select appropriate quality
 
 ## Troubleshooting
 
@@ -160,6 +198,12 @@ python video-player.py action.mp4 \
 - Check that OpenCV is properly installed
 - Verify the video file is not corrupted
 - Ensure the video format is supported by OpenCV
+
+**YouTube/Platform videos fail:**
+- Install yt-dlp: `pip install yt-dlp`
+- Check if the video is available in your region
+- Some platforms may have age restrictions or require login
+- Try a different video URL format (youtu.be vs youtube.com)
 
 **Slow/choppy playback:**
 - Try reducing the video resolution
