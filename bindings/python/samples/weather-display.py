@@ -45,6 +45,9 @@ class WeatherDisplay:
         self.condition_font = graphics.Font()
         self.condition_font.LoadFont("../../../fonts/6x13B.bdf")  # Bold font for conditions
         
+        self.medium_font = graphics.Font()
+        self.medium_font.LoadFont("../../../fonts/6x13.bdf")  # Regular (non-bold) medium font for time
+        
         self.small_font = graphics.Font()
         self.small_font.LoadFont("../../../fonts/5x7.bdf")  # Small font for details
         
@@ -227,18 +230,18 @@ class WeatherDisplay:
         # Get current time in Mountain Time
         now = datetime.now(self.mountain_tz)
         
-        # Time at top center in 12-hour format like "5:27 PM" - using medium font
+        # Time at top center in 12-hour format like "5:27 PM" - using regular medium font
         time_str = now.strftime("%I:%M %p")
         if time_str.startswith("0"):
             time_str = time_str[1:]  # Remove leading zero
         
-        # Calculate width for perfect centering using medium font with precise spacing
+        # Calculate width for perfect centering using regular medium font with precise spacing
         time_width = 0
         for i, char in enumerate(time_str):
             if char == ' ':
                 time_width += 3  # Slightly wider space for better readability
             else:
-                char_width = self.condition_font.CharacterWidth(ord(char))
+                char_width = self.medium_font.CharacterWidth(ord(char))
                 time_width += char_width
                 # Add tight spacing between characters (except for the last character)
                 if i < len(time_str) - 1 and time_str[i + 1] != ' ':
@@ -247,13 +250,13 @@ class WeatherDisplay:
         time_x = (64 - time_width) // 2
         time_y = 11  # Adjusted for medium font
         
-        # Draw time with precise spacing using medium font
+        # Draw time with precise spacing using regular medium font
         current_x = time_x
         for i, char in enumerate(time_str):
             if char == ' ':
                 current_x += 3  # Match the space width used in calculation
             else:
-                char_width = graphics.DrawText(self.canvas, self.condition_font, current_x, time_y, self.temp_color, char)
+                char_width = graphics.DrawText(self.canvas, self.medium_font, current_x, time_y, self.temp_color, char)
                 current_x += char_width
                 # Apply tight spacing between characters (except for the last character)
                 if i < len(time_str) - 1 and time_str[i + 1] != ' ':
