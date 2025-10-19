@@ -205,6 +205,10 @@ class StockTracker:
         
         # Draw chart if historical data is available
         if current_symbol in self.historical_data:
+            # Explicitly clear chart area if not in no_clear_mode
+            if not (hasattr(self.chart_renderer, 'no_clear_mode') and self.chart_renderer.no_clear_mode):
+                self.display.clear_chart_area()
+            
             chart_area = self.display.get_chart_area()
             prices = self.historical_data[current_symbol]
             
