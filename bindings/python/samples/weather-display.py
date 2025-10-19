@@ -19,6 +19,8 @@ except ImportError:
 # Add the parent directory to Python path to import the rgbmatrix module
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from PIL import Image
+from io import BytesIO
 
 class WeatherDisplay:
     def __init__(self):
@@ -54,6 +56,8 @@ class WeatherDisplay:
         # Weather data
         self.weather_data = None
         self.last_update = 0
+        self.weather_icon = None
+        self.last_icon_update = 0
         
         # OpenWeatherMap API setup - get API key from environment variable
         self.api_key = os.getenv('OPENWEATHER_API_KEY')
@@ -88,30 +92,54 @@ class WeatherDisplay:
             print(f"Weather fetch error: {e}")
             return None
     
-    def draw_weather_icon(self, condition, x, y):
-        """Draw a simple weather icon using ASCII-style graphics"""
-        # Simple weather icons using basic shapes
-        if "clear" in condition.lower() or "sun" in condition.lower():
-            # Sun icon - circle with rays
-            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(255, 255, 0), "☀")
-        elif "cloud" in condition.lower():
-            # Cloud icon  
-            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(200, 200, 200), "☁")
-        elif "rain" in condition.lower() or "drizzle" in condition.lower():
-            # Rain icon
-            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(100, 150, 255), "🌧")
-        elif "snow" in condition.lower():
-            # Snow icon
-            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(255, 255, 255), "❄")
-        elif "storm" in condition.lower() or "thunder" in condition.lower():
-            # Storm icon
-            graphics.DrawText(self.canvas, self.condition_font, x, y, graphics.Color(255, 255, 100), "⚡")
+    def get_weather_icon(self, icon_code):
+        """Download and cache weather icon from OpenWeatherMap"""
+        try:
+            # Only update icon every 10 minutes to avoid excessive downloads
+            if time.time() - self.last_icon_update < 600 and self.weather_icon is not None:
+                return self.weather_icon
+                
+            # OpenWeatherMap icon URL
+            icon_url = f"https://openweathermap.org/img/wn/{icon_code}@2x.png"
+            
+            response = requests.get(icon_url, timeout=10)
+            if response.status_code == 200:
+                # Load image and resize to fit display
+                icon_image = Image.open(BytesIO(response.content))
+                
+                # Resize to about 16x16 pixels for the display
+                resample_mode = getattr(Image, "Resampling", Image).LANCZOS
+                icon_image = icon_image.resize((16, 16), resample=resample_mode)
+                
+                # Convert to RGB
+                self.weather_icon = icon_image.convert('RGB')
+                self.last_icon_update = time.time()
+                
+                print(f"Downloaded weather icon: {icon_code}")
+                return self.weather_icon
+            else:
+                print(f"Icon download failed: {response.status_code}")
+                return None
+                
+        except Exception as e:
+            print(f"Icon download error: {e}")
+            return None
+
+    def draw_weather_icon(self, icon_image, x, y):
+        """Draw the weather icon image on the display"""
+        if icon_image is not None:
+            # Calculate position to center the 16x16 icon
+            icon_x = x - 8  # Center horizontally
+            icon_y = y - 8  # Center vertically
+            
+            # Draw the icon
+            self.canvas.SetImage(icon_image, icon_x, icon_y)
         else:
-            # Default - simple dot
-            graphics.DrawText(self.canvas, self.condition_font, x, y, self.condition_color, "●")
+            # Fallback - simple colored square
+            self.canvas.SetPixel(x, y, 200, 200, 255)
 
     def draw_weather(self):
-        """Draw weather information in the layout style shown in image"""
+        """Draw weather information exactly like the reference image"""
         weather = self.get_weather_data()
         
         if weather is None:
@@ -125,37 +153,72 @@ class WeatherDisplay:
         # Get current time in Mountain Time
         now = datetime.now(self.mountain_tz)
         
-        # Day abbreviation at top left
-        day_str = now.strftime("%a").upper()  # "FRI", "SAT", etc.
-        graphics.DrawText(self.canvas, self.condition_font, 2, 10, self.condition_color, day_str)
+        # Time at top center in 12-hour format like "5:27 PM"
+        time_str = now.strftime("%I:%M %p")
+        if time_str.startswith("0"):
+            time_str = time_str[1:]  # Remove leading zero
         
-        # Time at top right (24-hour format like image)
-        time_str = now.strftime("%H:%M")
-        time_width = len(time_str) * 4
-        time_x = 64 - time_width - 2  # Right aligned with padding
-        graphics.DrawText(self.canvas, self.small_font, time_x, 10, self.detail_color, time_str)
+        # Calculate width for centering
+        time_width = 0
+        for char in time_str:
+            if char == ' ':
+                time_width += 2
+            else:
+                time_width += self.small_font.CharacterWidth(ord(char))
+        
+        time_x = (64 - time_width) // 2
+        time_y = 8
+        
+        # Draw time with tight spacing
+        current_x = time_x
+        for char in time_str:
+            if char == ' ':
+                current_x += 2
+            else:
+                char_width = graphics.DrawText(self.canvas, self.small_font, current_x, time_y, self.temp_color, char)
+                current_x += char_width - 1
         
         # Extract weather info
         temp = int(weather['main']['temp'])
+        temp_low = int(weather['main']['temp_min'])
         condition = weather['weather'][0]['main']
+        icon_code = weather['weather'][0]['icon']
         
-        # Temperature at bottom left (large)
-        temp_str = f"{temp}°F"
+        # Get and draw weather icon in center
+        icon_x = 32
+        icon_y = 16
+        icon_image = self.get_weather_icon(icon_code)
+        self.draw_weather_icon(icon_image, icon_x, icon_y)
+        
+        # High temperature below icon (large number)
+        temp_str = str(temp)
         temp_width = 0
         for char in temp_str:
             temp_width += self.temp_font.CharacterWidth(ord(char))
         
-        # Draw temperature with tight spacing at bottom left
-        current_x = 2
-        temp_y = 28
+        temp_x = (64 - temp_width) // 2
+        temp_y = 24
+        
+        # Draw high temp with tight spacing
+        current_x = temp_x
         for char in temp_str:
             char_width = graphics.DrawText(self.canvas, self.temp_font, current_x, temp_y, self.temp_color, char)
             current_x += char_width - 1
         
-        # Weather icon in center
-        icon_x = 32  # Center of 64-pixel display
-        icon_y = 20
-        self.draw_weather_icon(condition, icon_x, icon_y)
+        # Low temperature with degree symbol below (smaller)
+        low_str = f"{temp_low}°"
+        low_width = 0
+        for char in low_str:
+            low_width += self.small_font.CharacterWidth(ord(char))
+        
+        low_x = (64 - low_width) // 2  
+        low_y = 32
+        
+        # Draw low temp with tight spacing
+        current_x = low_x
+        for char in low_str:
+            char_width = graphics.DrawText(self.canvas, self.small_font, current_x, low_y, self.detail_color, char)
+            current_x += char_width - 1
 
     def run(self):
         print("Starting Denver weather display. Press CTRL-C to stop.")
