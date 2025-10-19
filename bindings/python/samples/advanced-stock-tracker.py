@@ -406,9 +406,27 @@ class AdvancedStockTracker(SampleBase):
         update_thread = threading.Thread(target=self.update_stock_data, daemon=True)
         update_thread.start()
         
-        # Wait for initial data
-        print("Waiting for initial data...")
-        time.sleep(3)
+        # Wait for initial data to be loaded
+        print("Waiting for stock data to load...")
+        max_wait_time = 15  # Wait up to 15 seconds
+        wait_start = time.time()
+        
+        while len(self.stock_data) == 0 and (time.time() - wait_start) < max_wait_time:
+            print(".", end="", flush=True)
+            time.sleep(0.5)
+        
+        print()  # New line after dots
+        
+        if len(self.stock_data) > 0:
+            print(f"✓ Stock data ready! Loaded {len(self.stock_data)} stocks")
+        else:
+            print("⚠ No stock data loaded, using demo mode")
+            # Force demo data if nothing loaded
+            demo_current, demo_history = self.get_demo_data()
+            with self.data_lock:
+                self.stock_data = demo_current
+                self.stock_history = demo_history
+                print(f"✓ Demo data loaded for {len(self.stock_data)} stocks")
         
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         
@@ -428,8 +446,16 @@ class AdvancedStockTracker(SampleBase):
                 current_symbol = self.stock_symbols[self.current_stock_index]
                 
                 with self.data_lock:
+                    # Debug: Show what's in stock_data
+                    if len(self.stock_data) == 0:
+                        print(f"DEBUG: stock_data is empty")
+                    else:
+                        print(f"DEBUG: stock_data has keys: {list(self.stock_data.keys())}")
+                        print(f"DEBUG: Looking for {current_symbol}")
+                    
                     if current_symbol in self.stock_data:
                         stock_info = self.stock_data[current_symbol]
+                        print(f"DEBUG: Found data for {current_symbol}: {stock_info}")
                         
                         # Determine colors based on performance
                         is_positive = stock_info['change'] >= 0
