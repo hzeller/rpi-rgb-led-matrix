@@ -25,12 +25,10 @@ class ChartRenderer:
     def draw_pixel_safe(self, x, y, color, max_width=64, max_height=32):
         """Draw a pixel with bounds checking."""
         if self.is_valid_position(x, y, max_width, max_height):
-            # Get current canvas instance (important for double buffering)
-            canvas = getattr(self, 'display_instance', self).canvas if hasattr(self, 'display_instance') else self.canvas
             if isinstance(color, tuple):
-                canvas.SetPixel(x, y, *color)
+                self.canvas.SetPixel(x, y, *color)
             else:
-                canvas.SetPixel(x, y, color.red, color.green, color.blue)
+                self.canvas.SetPixel(x, y, color.red, color.green, color.blue)
     
     def draw_line(self, x0, y0, x1, y1, color):
         """Draw a line between two points using Bresenham's algorithm."""
