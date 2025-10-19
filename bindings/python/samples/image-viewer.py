@@ -5,7 +5,7 @@ import requests
 import base64
 import json
 import os
-# import threading  # Removed threading for better performance
+import threading  # Re-enabling threading for seamless updates
 from io import BytesIO
 from dotenv import load_dotenv
 
@@ -156,6 +156,18 @@ def update_spotify_data():
         update_spotify_data.last_error_time = current_time
         return False
 
+def spotify_background_thread():
+    """Background thread that continuously updates Spotify data without blocking display"""
+    global spotify_thread_running
+    
+    while spotify_thread_running:
+        try:
+            update_spotify_data()
+            time.sleep(2)  # Update every 2 seconds in background
+        except Exception as e:
+            print(f"Background thread error: {e}")
+            time.sleep(5)  # Wait longer on error
+
 if len(sys.argv) > 1:
     # Use provided image file
     image_file = sys.argv[1]
@@ -225,6 +237,7 @@ current_spotify_data = {
     'image': None
 }
 last_spotify_update = 0
+spotify_thread_running = True
 
 # Initialize album name
 album_name = "Album Name"
@@ -235,7 +248,10 @@ canvas = matrix.CreateFrameCanvas()
 try:
     print(f"Song width: {song_available_width}, Other width: {other_available_width}")
     if use_spotify:
-        print("Using Spotify integration - direct updates every few seconds")
+        print("Using Spotify integration - starting background update thread")
+        # Start background thread for Spotify updates
+        spotify_thread = threading.Thread(target=spotify_background_thread, daemon=True)
+        spotify_thread.start()
     print("Press CTRL-C to stop.")
     
     # Convert image to RGB for pixel access
@@ -243,9 +259,8 @@ try:
     
     frame_count = 0
     while True:
-        # Update Spotify data directly every 60 frames (about 3 seconds at 20fps) to reduce hiccups
-        if use_spotify and frame_count % 60 == 0:
-            update_spotify_data()
+        # Get current Spotify data from global variables (updated by background thread)
+        if use_spotify:
             song_name = current_spotify_data['song_name']
             artist_name = current_spotify_data['artist_name']
             album_name = current_spotify_data['album_name']
@@ -482,4 +497,9 @@ try:
         time.sleep(0.04)  # Slightly faster refresh for smoother scrolling (25fps)
         
 except KeyboardInterrupt:
+    print("\nShutting down...")
+    if use_spotify:
+        spotify_thread_running = False
+        print("Stopping background thread...")
+        time.sleep(0.1)  # Give thread time to stop
     sys.exit(0)
