@@ -324,27 +324,31 @@ class AdvancedStockTracker(SampleBase):
             
             print(f"DEBUG: Bounds check passed")
                 
-            # Get historical data safely - simplified
+            # Get historical data safely - use try_lock approach
             prices = None
             print(f"DEBUG: About to acquire data lock")
             
+            # Try to get data without blocking indefinitely
+            lock_acquired = False
             try:
-                with self.data_lock:
+                # Quick non-blocking attempt first
+                lock_acquired = self.data_lock.acquire(timeout=0.1)  # Wait max 0.1 seconds
+                if lock_acquired:
                     print(f"DEBUG: Got data lock, checking for {symbol}")
-                    if symbol in self.stock_history:
-                        print(f"DEBUG: Found {symbol} in history")
-                        if self.stock_history[symbol]:
-                            prices = self.stock_history[symbol][-min(width, 50):]  # Last 'width' data points, max 50
-                            print(f"DEBUG: Got {len(prices)} prices")
-                        else:
-                            print(f"DEBUG: Empty price list for {symbol}")
+                    if symbol in self.stock_history and self.stock_history[symbol]:
+                        # Make a copy to avoid holding the lock too long
+                        prices = list(self.stock_history[symbol][-min(width, 50):])
+                        print(f"DEBUG: Got {len(prices)} prices")
                     else:
-                        print(f"DEBUG: {symbol} not in history keys: {list(self.stock_history.keys())}")
+                        print(f"DEBUG: No data for {symbol}")
+                else:
+                    print(f"DEBUG: Could not acquire data lock, using demo chart")
             except Exception as lock_e:
                 print(f"DEBUG: Data lock error: {lock_e}")
-                return
-            
-            print(f"DEBUG: Data lock released")
+            finally:
+                if lock_acquired:
+                    self.data_lock.release()
+                    print(f"DEBUG: Data lock released")
             
             if not prices or len(prices) < 2:
                 print(f"DEBUG: Not enough price data ({len(prices) if prices else 0} prices), calling demo chart")
