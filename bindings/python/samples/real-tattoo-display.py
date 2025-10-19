@@ -23,13 +23,43 @@ class RealTattooDisplay(SampleBase):
         self.parser.add_argument("-s", "--speed", help="Animation speed (seconds between images). Default: 5", default=5, type=float)
         self.parser.add_argument("--enhance", help="Enhance contrast for better LED display", action="store_true")
         self.parser.add_argument("--local-images", help="Use local images instead of downloading", action="store_true")
+        self.parser.add_argument("--no-download", help="Skip downloading, use placeholders only", action="store_true")
+        
+    def get_writable_directory(self):
+        """Find a writable directory for storing images"""
+        # Try different locations in order of preference
+        possible_dirs = [
+            "tattoo_images",  # Current directory
+            os.path.expanduser("~/tattoo_images"),  # Home directory
+            "/tmp/tattoo_images",  # Temp directory (Linux/Mac)
+            os.path.join(os.getenv('TEMP', '/tmp'), 'tattoo_images')  # Windows temp
+        ]
+        
+        for directory in possible_dirs:
+            try:
+                # Test if we can create the directory
+                test_dir = directory + "_test"
+                os.makedirs(test_dir, exist_ok=True)
+                os.rmdir(test_dir)
+                return directory
+            except (PermissionError, OSError):
+                continue
+        
+        print("Warning: No writable directory found. Images will be temporary only.")
+        return None
         
     def setup(self):
         """Initialize and download tattoo images"""
-        # Create images directory
-        self.images_dir = "tattoo_images"
-        if not os.path.exists(self.images_dir):
-            os.makedirs(self.images_dir)
+        # Create images directory with proper error handling
+        self.images_dir = self.get_writable_directory()
+        
+        if self.images_dir and not os.path.exists(self.images_dir):
+            try:
+                os.makedirs(self.images_dir)
+                print(f"Created images directory: {self.images_dir}")
+            except PermissionError:
+                print(f"Warning: Cannot create directory {self.images_dir}. Using temporary images only.")
+                self.images_dir = None
         
         # Traditional tattoo image URLs mapped to designs
         self.tattoo_urls = {
@@ -59,7 +89,10 @@ class RealTattooDisplay(SampleBase):
         
         # Download or load images
         self.tattoo_images = {}
-        if self.args.local_images:
+        if self.args.no_download:
+            print("Using placeholder images only (no download)")
+            self.create_all_placeholders()
+        elif self.args.local_images:
             self.load_local_images()
         else:
             self.download_images()
@@ -71,12 +104,17 @@ class RealTattooDisplay(SampleBase):
             response = requests.get(url, timeout=10)
             response.raise_for_status()
             
-            # Save locally for future use
-            filename = os.path.join(self.images_dir, f"{name}_tattoo.jpg")
-            with open(filename, 'wb') as f:
-                f.write(response.content)
+            # Try to save locally for future use (if we have a writable directory)
+            if self.images_dir:
+                try:
+                    filename = os.path.join(self.images_dir, f"{name}_tattoo.jpg")
+                    with open(filename, 'wb') as f:
+                        f.write(response.content)
+                    print(f"✓ {name.capitalize()} tattoo saved to {filename}")
+                except (PermissionError, OSError) as e:
+                    print(f"Warning: Could not save {name} tattoo locally: {e}")
             
-            # Load and process the image
+            # Load and process the image (always from memory)
             image = Image.open(BytesIO(response.content))
             self.tattoo_images[name] = self.process_image(image, name)
             print(f"✓ {name.capitalize()} tattoo loaded successfully")
@@ -103,8 +141,20 @@ class RealTattooDisplay(SampleBase):
             
         print(f"Download complete! Loaded {len(self.tattoo_images)} tattoo images.")
         
+    def create_all_placeholders(self):
+        """Create placeholder images for all tattoos"""
+        for name in self.tattoo_urls.keys():
+            self.tattoo_images[name] = self.create_placeholder(name)
+            print(f"✓ Created placeholder for {name.capitalize()} tattoo")
+        
     def load_local_images(self):
         """Load images from local directory"""
+        if not self.images_dir:
+            print("No local directory available, will create placeholders")
+            for name in self.tattoo_urls.keys():
+                self.tattoo_images[name] = self.create_placeholder(name)
+            return
+            
         print("Loading local tattoo images...")
         for name in self.tattoo_urls.keys():
             filename = os.path.join(self.images_dir, f"{name}_tattoo.jpg")
@@ -175,7 +225,7 @@ class RealTattooDisplay(SampleBase):
         matrix_width = self.args.led_cols
         matrix_height = self.args.led_rows
         
-        # Create simple colored placeholder
+        # Create more interesting colored placeholders with patterns
         colors = {
             'anchor': (0, 100, 150),    # Navy blue
             'heart': (150, 0, 50),      # Deep red
@@ -187,6 +237,21 @@ class RealTattooDisplay(SampleBase):
         
         color = colors.get(name, (100, 100, 100))
         image = Image.new('RGB', (matrix_width, matrix_height), color)
+        
+        # Add a simple pattern to make placeholders more interesting
+        from PIL import ImageDraw
+        draw = ImageDraw.Draw(image)
+        
+        # Create a simple border
+        border_color = tuple(min(255, c + 50) for c in color)
+        draw.rectangle([0, 0, matrix_width-1, matrix_height-1], outline=border_color, width=2)
+        
+        # Add a center rectangle
+        center_x, center_y = matrix_width // 2, matrix_height // 2
+        rect_size = min(matrix_width, matrix_height) // 3
+        draw.rectangle([center_x - rect_size//2, center_y - rect_size//2,
+                       center_x + rect_size//2, center_y + rect_size//2],
+                      fill=border_color)
         
         return image
         
@@ -224,10 +289,16 @@ class RealTattooDisplay(SampleBase):
     def run(self):
         """Main display loop"""
         print("Setting up Real Traditional Tattoo Display...")
-        self.setup()
+        
+        try:
+            self.setup()
+        except Exception as e:
+            print(f"Setup failed: {e}")
+            print("Try running with --no-download flag to skip image downloading")
+            return
         
         if not self.tattoo_images:
-            print("No tattoo images loaded! Exiting.")
+            print("No tattoo images loaded! Try running with --no-download to use placeholders.")
             return
         
         canvas = self.matrix.CreateFrameCanvas()
@@ -267,5 +338,19 @@ class RealTattooDisplay(SampleBase):
 # Main execution
 if __name__ == "__main__":
     tattoo_display = RealTattooDisplay()
-    if not tattoo_display.process():
-        tattoo_display.print_help()
+    try:
+        if not tattoo_display.process():
+            tattoo_display.print_help()
+    except KeyboardInterrupt:
+        print("\nExiting tattoo display...")
+    except Exception as e:
+        print(f"\nError: {e}")
+        print("\nTroubleshooting tips:")
+        print("1. Try running with --no-download to skip image downloading")
+        print("2. Check your internet connection if downloading images")
+        print("3. Run with sudo if you get permission errors")
+        print("4. Verify your LED matrix configuration")
+        print("\nExample usage:")
+        print("  python real-tattoo-display.py --no-download --led-cols=64 --led-rows=32")
+        print("  python real-tattoo-display.py --local-images -t anchor")
+        print("  sudo python real-tattoo-display.py --enhance -t all")
