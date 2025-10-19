@@ -289,14 +289,18 @@ class AdvancedStockTracker(SampleBase):
                 current_data, history_data = self.fetch_stock_data()
                 print(f"Fetched data for symbols: {list(current_data.keys())}")
                 
+                # Update data in smaller chunks to avoid holding lock too long
                 with self.data_lock:
                     self.stock_data = current_data
-                    # Update historical data
-                    for symbol, prices in history_data.items():
+                    self.last_update = datetime.now()
+                
+                # Update historical data one symbol at a time (shorter lock periods)
+                for symbol, prices in history_data.items():
+                    with self.data_lock:
                         self.stock_history[symbol] = prices
                         print(f"DEBUG: Stored {len(prices)} historical prices for {symbol}")
-                    self.last_update = datetime.now()
-                    print(f"DEBUG: Historical data now available for: {list(self.stock_history.keys())}")
+                
+                print(f"DEBUG: Historical data now available for: {list(self.stock_history.keys())}")
                 
                 print(f"✓ Updated at {self.last_update.strftime('%H:%M:%S')} - {len(self.stock_data)} stocks")
                 
@@ -331,8 +335,8 @@ class AdvancedStockTracker(SampleBase):
             # Try to get data without blocking indefinitely
             lock_acquired = False
             try:
-                # Quick non-blocking attempt first
-                lock_acquired = self.data_lock.acquire(timeout=0.1)  # Wait max 0.1 seconds
+                # Quick non-blocking attempt first  
+                lock_acquired = self.data_lock.acquire(timeout=0.5)  # Wait max 0.5 seconds
                 if lock_acquired:
                     print(f"DEBUG: Got data lock, checking for {symbol}")
                     if symbol in self.stock_history and self.stock_history[symbol]:
