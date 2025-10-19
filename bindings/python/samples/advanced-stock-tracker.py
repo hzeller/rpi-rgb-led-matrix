@@ -48,6 +48,10 @@ class AdvancedStockTracker(SampleBase):
                                default=int(os.environ.get('CHART_DAYS', '30')), type=int)
         self.parser.add_argument("--api-source", help="API source to use", 
                                choices=['yahoo', 'alphavantage', 'auto'], default='auto', type=str)
+        self.parser.add_argument("--include-trending", help="Include trending stocks (gainers/losers)", 
+                               action="store_true", default=False)
+        self.parser.add_argument("--trending-count", help="Number of trending stocks to include", 
+                               default=int(os.environ.get('TRENDING_COUNT', '3')), type=int)
         
         # Stock data storage
         self.stock_data = {}
@@ -146,6 +150,61 @@ class AdvancedStockTracker(SampleBase):
             print(f"Error fetching historical data for {symbol}: {e}")
             return None
 
+    def fetch_trending_stocks(self):
+        """Fetch trending stocks (biggest gainers and losers) from Yahoo Finance"""
+        trending_symbols = []
+        
+        try:
+            # Try Yahoo Finance screener for gainers/losers
+            # This endpoint gives us the biggest movers
+            screener_urls = [
+                "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?formatted=true&lang=en-US&region=US&scrIds=day_gainers&count=10",
+                "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?formatted=true&lang=en-US&region=US&scrIds=day_losers&count=10"
+            ]
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            
+            for url in screener_urls:
+                try:
+                    response = requests.get(url, headers=headers, timeout=10)
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    if 'finance' in data and 'result' in data['finance'] and data['finance']['result']:
+                        quotes = data['finance']['result'][0].get('quotes', [])
+                        
+                        # Get top movers
+                        for quote in quotes[:self.args.trending_count]:
+                            symbol = quote.get('symbol', '').upper()
+                            change_percent = quote.get('regularMarketChangePercent', {}).get('raw', 0)
+                            
+                            if symbol and symbol not in trending_symbols:
+                                trending_symbols.append(symbol)
+                                print(f"✓ Found trending stock: {symbol} ({change_percent:+.1f}%)")
+                                
+                                if len(trending_symbols) >= self.args.trending_count:
+                                    break
+                    
+                    if len(trending_symbols) >= self.args.trending_count:
+                        break
+                        
+                except Exception as inner_e:
+                    print(f"Screener API failed: {inner_e}")
+                    continue
+                    
+        except Exception as e:
+            print(f"Could not fetch trending stocks: {e}")
+        
+        # Fallback: use some popular volatile stocks if API fails
+        if not trending_symbols:
+            fallback_trending = ['GME', 'AMC', 'PLTR', 'RIVN', 'LCID', 'SOFI']
+            trending_symbols = fallback_trending[:self.args.trending_count]
+            print(f"Using fallback trending stocks: {trending_symbols}")
+            
+        return trending_symbols[:self.args.trending_count]
+
     def fetch_yahoo_finance_data(self, symbol):
         """Fetch stock data from Yahoo Finance (free, no API key required)"""
         try:
@@ -185,7 +244,23 @@ class AdvancedStockTracker(SampleBase):
         if self.args.demo_mode:
             return self.get_demo_data()
         
+        # Start with hardcoded stocks
         stocks = [s.strip().upper() for s in self.args.stocks.split(',')]
+        
+        # Add trending stocks if requested
+        if self.args.include_trending:
+            print("Fetching trending stocks...")
+            trending_stocks = self.fetch_trending_stocks()
+            if trending_stocks:
+                # Add trending stocks, avoid duplicates
+                for symbol in trending_stocks:
+                    if symbol not in stocks:
+                        stocks.append(symbol)
+                        print(f"+ Added trending stock: {symbol}")
+            else:
+                print("No trending stocks found, using hardcoded list only")
+        
+        print(f"Final stock list: {stocks}")
         current_data = {}
         history_data = {}
         successful_fetches = 0
