@@ -479,13 +479,13 @@ class AdvancedStockTracker(SampleBase):
                         pct_x = 64 - pct_width - 2  # True right align with 2px buffer from right edge
                         graphics.DrawText(offscreen_canvas, self.font_large, pct_x, 15, right_color, pct_text)
                         
-                        # Draw time series chart in bottom half (y=16 to y=31, so 16 pixels tall)
-                        chart_x = 0
-                        chart_y = 16  # Start at bottom half of 32px display
-                        chart_width = 64
-                        chart_height = 16  # Bottom 16 pixels
-                        
-                        self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
+                        # Chart temporarily disabled for debugging
+                        # TODO: Re-enable chart once text display is confirmed working
+                        # chart_x = 0
+                        # chart_y = 16  # Start at bottom half of 32px display
+                        # chart_width = 64
+                        # chart_height = 16  # Bottom 16 pixels
+                        # self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
                         
                     else:
                         # Loading state
