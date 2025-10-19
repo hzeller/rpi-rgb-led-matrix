@@ -227,29 +227,29 @@ class WeatherDisplay:
         # Get current time in Mountain Time
         now = datetime.now(self.mountain_tz)
         
-        # Time at top center in 12-hour format like "5:27 PM"
+        # Time at top center in 12-hour format like "5:27 PM" - using larger font
         time_str = now.strftime("%I:%M %p")
         if time_str.startswith("0"):
             time_str = time_str[1:]  # Remove leading zero
         
-        # Calculate width for centering
+        # Calculate width for perfect centering using medium font
         time_width = 0
         for char in time_str:
             if char == ' ':
-                time_width += 2
+                time_width += 2  # Space width
             else:
-                time_width += self.small_font.CharacterWidth(ord(char))
+                time_width += self.condition_font.CharacterWidth(ord(char))
         
         time_x = (64 - time_width) // 2
-        time_y = 8
+        time_y = 12  # Slightly lower to accommodate larger font
         
-        # Draw time with tight spacing
+        # Draw time with tight spacing using larger font
         current_x = time_x
         for char in time_str:
             if char == ' ':
                 current_x += 2
             else:
-                char_width = graphics.DrawText(self.canvas, self.small_font, current_x, time_y, self.temp_color, char)
+                char_width = graphics.DrawText(self.canvas, self.condition_font, current_x, time_y, self.temp_color, char)
                 current_x += char_width - 1
         
         # Extract weather info
