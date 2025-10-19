@@ -205,12 +205,11 @@ class StockTracker:
         
         # Draw chart if historical data is available
         if current_symbol in self.historical_data:
-            # Explicitly clear chart area if not in no_clear_mode
-            if not (hasattr(self.chart_renderer, 'no_clear_mode') and self.chart_renderer.no_clear_mode):
-                self.display.clear_chart_area()
-            
             chart_area = self.display.get_chart_area()
             prices = self.historical_data[current_symbol]
+            
+            # Always clear chart area before drawing to ensure visibility
+            self.display.clear_chart_area()
             
             self.chart_renderer.draw_stock_chart(
                 current_symbol, prices,
@@ -264,17 +263,12 @@ class StockTracker:
                 if stock_switched or symbol_changed:
                     # Full redraw for stock switches - ensure chart appears
                     self.display.clear()
-                    # Disable no-clear mode to ensure proper chart clearing
-                    if hasattr(self.chart_renderer, 'no_clear_mode'):
-                        delattr(self.chart_renderer, 'no_clear_mode')
                     self._draw_current_stock()  # This includes both text and chart
                     self.display.swap_canvas()
                     last_data_redraw_time = current_time  # Reset data timer on stock switch
                 elif (data_updated or self.chart_needs_redraw) and data_redraw_allowed:
-                    # For data updates only, enable no-clear mode and minimal redraw
-                    self.chart_renderer.no_clear_mode = True
+                    # For data updates only, minimal redraw
                     self._draw_current_stock_minimal()
-                    self.chart_renderer.no_clear_mode = False
                     self.display.swap_canvas()
                     last_data_redraw_time = current_time  # Update data redraw timer
                 else:
