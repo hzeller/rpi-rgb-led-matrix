@@ -280,11 +280,6 @@ class RealTattooDisplay(SampleBase):
             
             self.draw_text_with_shadow(canvas, self.title_font, x_pos, 7, 
                                      self.text_color, self.shadow_color, title_text)
-        
-        # Add timestamp in corner
-        current_time = time.strftime("%H:%M")
-        self.draw_text_with_shadow(canvas, self.subtitle_font, 2, self.args.led_rows - 2,
-                                 self.text_color, self.shadow_color, current_time)
 
     def run(self):
         """Main display loop"""
