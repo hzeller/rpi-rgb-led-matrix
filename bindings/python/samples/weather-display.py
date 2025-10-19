@@ -97,32 +97,52 @@ class WeatherDisplay:
         try:
             # Only update icon every 10 minutes to avoid excessive downloads
             if time.time() - self.last_icon_update < 600 and self.weather_icon is not None:
+                print(f"Using cached icon: {icon_code}, size: {self.weather_icon.size}, mode: {self.weather_icon.mode}")
                 return self.weather_icon
                 
+            print(f"Downloading new weather icon: {icon_code}")
+            
             # OpenWeatherMap icon URL
             icon_url = f"https://openweathermap.org/img/wn/{icon_code}@2x.png"
+            print(f"Icon URL: {icon_url}")
             
             response = requests.get(icon_url, timeout=10)
             if response.status_code == 200:
+                print(f"Download successful, content length: {len(response.content)} bytes")
+                
                 # Load image and resize to fit display - make it taller to span both temp lines
                 icon_image = Image.open(BytesIO(response.content))
+                print(f"Original icon size: {icon_image.size}, mode: {icon_image.mode}")
                 
                 # Resize to about 20x20 pixels to span both temperature lines
                 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
                 icon_image = icon_image.resize((20, 20), resample=resample_mode)
+                print(f"Resized icon to: {icon_image.size}")
                 
                 # Convert to RGB
                 self.weather_icon = icon_image.convert('RGB')
+                print(f"Converted to RGB: {self.weather_icon.size}, mode: {self.weather_icon.mode}")
+                
+                # Debug: Print some pixel values to see if image has content
+                pixel_samples = []
+                for y in range(0, 20, 5):
+                    for x in range(0, 20, 5):
+                        pixel = self.weather_icon.getpixel((x, y))
+                        pixel_samples.append(f"({x},{y}):{pixel}")
+                print(f"Sample pixels: {', '.join(pixel_samples[:6])}")
+                
                 self.last_icon_update = time.time()
                 
-                print(f"Downloaded weather icon: {icon_code}")
+                print(f"Successfully processed weather icon: {icon_code}")
                 return self.weather_icon
             else:
-                print(f"Icon download failed: {response.status_code}")
+                print(f"Icon download failed: {response.status_code}, response: {response.text[:100]}")
                 return None
                 
         except Exception as e:
             print(f"Icon download error: {e}")
+            import traceback
+            traceback.print_exc()
             return None
 
     def draw_weather_icon(self, icon_image, x, y):
@@ -132,9 +152,31 @@ class WeatherDisplay:
             icon_x = x - 10  # Center horizontally
             icon_y = y - 10  # Center vertically
             
+            print(f"Drawing icon at position: icon_x={icon_x}, icon_y={icon_y}")
+            print(f"Icon size: {icon_image.size}, mode: {icon_image.mode}")
+            
+            # Check if icon has any non-black pixels
+            pixel_count = 0
+            non_black_count = 0
+            brightness_sum = 0
+            
+            for py in range(icon_image.height):
+                for px in range(icon_image.width):
+                    pixel = icon_image.getpixel((px, py))
+                    pixel_count += 1
+                    brightness = sum(pixel) / 3  # Average RGB
+                    brightness_sum += brightness
+                    if brightness > 10:  # Not nearly black
+                        non_black_count += 1
+            
+            avg_brightness = brightness_sum / pixel_count if pixel_count > 0 else 0
+            print(f"Icon analysis: {non_black_count}/{pixel_count} non-black pixels, avg brightness: {avg_brightness:.1f}")
+            
             # Draw the icon
             self.canvas.SetImage(icon_image, icon_x, icon_y)
+            print(f"Icon drawn successfully")
         else:
+            print(f"No icon image provided, drawing fallback at x={x}, y={y}")
             # Fallback - simple colored square
             for dx in range(-8, 8):
                 for dy in range(-8, 8):
@@ -189,7 +231,9 @@ class WeatherDisplay:
         # Weather icon on left side, centered vertically in bottom area
         icon_x = 16  # Left side center of left half
         icon_y = 22  # Center vertically in lower area (32-8=24 pixels, middle at ~22)
+        print(f"Weather icon code: {icon_code}")
         icon_image = self.get_weather_icon(icon_code)
+        print(f"Got icon image: {icon_image is not None}")
         self.draw_weather_icon(icon_image, icon_x, icon_y)
         
         # High temperature on right side (white)
