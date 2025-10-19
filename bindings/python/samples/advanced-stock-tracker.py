@@ -313,14 +313,57 @@ class AdvancedStockTracker(SampleBase):
     def run(self):
         print("Starting advanced stock tracker...")
         
-        # Load fonts
+        # Load fonts with multiple path attempts
         self.font_large = graphics.Font()
-        font_loaded = self.font_large.LoadFont("../../../fonts/7x13.bdf")
-        print(f"Large font loaded: {font_loaded}")
+        self.font_small = graphics.Font()
         
-        self.font_small = graphics.Font() 
-        small_font_loaded = self.font_small.LoadFont("../../../fonts/5x7.bdf")
-        print(f"Small font loaded: {small_font_loaded}")
+        # Try multiple font paths
+        font_paths = [
+            "../../../fonts/7x13.bdf",
+            "../../fonts/7x13.bdf", 
+            "../fonts/7x13.bdf",
+            "fonts/7x13.bdf"
+        ]
+        
+        large_font_loaded = False
+        for path in font_paths:
+            try:
+                print(f"Trying large font path: {path}")
+                if self.font_large.LoadFont(path):
+                    print(f"✓ Large font loaded from: {path}")
+                    large_font_loaded = True
+                    break
+                else:
+                    print(f"✗ Failed to load large font from: {path}")
+            except Exception as e:
+                print(f"✗ Exception loading large font from {path}: {e}")
+                continue
+        
+        small_font_paths = [
+            "../../../fonts/5x7.bdf",
+            "../../fonts/5x7.bdf",
+            "../fonts/5x7.bdf", 
+            "fonts/5x7.bdf"
+        ]
+        
+        small_font_loaded = False
+        for path in small_font_paths:
+            try:
+                print(f"Trying small font path: {path}")
+                if self.font_small.LoadFont(path):
+                    print(f"✓ Small font loaded from: {path}")
+                    small_font_loaded = True
+                    break
+                else:
+                    print(f"✗ Failed to load small font from: {path}")
+            except Exception as e:
+                print(f"✗ Exception loading small font from {path}: {e}")
+                continue
+        
+        if not large_font_loaded:
+            print("ERROR: Could not load large font from any path!")
+        if not small_font_loaded:
+            print("ERROR: Could not load small font from any path!")
         
         # Get API key (already loaded from environment in argument defaults)
         self.api_key = self.args.api_key
