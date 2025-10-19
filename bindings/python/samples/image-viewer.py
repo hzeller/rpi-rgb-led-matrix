@@ -13,72 +13,178 @@ from dotenv import load_dotenv
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from PIL import Image, ImageDraw, ImageFont
 
-# Load environment variables from .env file
-load_dotenv()
 
-# Spotify API credentials from environment variables
-SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-SPOTIFY_REFRESH_TOKEN = os.getenv("SPOTIFY_REFRESH_TOKEN")
-
-def get_spotify_access_token():
-    """Get access token using refresh token"""
-    if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET or not SPOTIFY_REFRESH_TOKEN:
-        print("Error: Spotify credentials not found. Please check your .env file.")
-        print(f"CLIENT_ID present: {bool(SPOTIFY_CLIENT_ID)}")
-        print(f"CLIENT_SECRET present: {bool(SPOTIFY_CLIENT_SECRET)}")
-        print(f"REFRESH_TOKEN present: {bool(SPOTIFY_REFRESH_TOKEN)}")
-        return None
+class ScrollableText:
+    """Handles scrolling text display with smooth animations and configurable styling."""
+    
+    def __init__(self, font, color, static_delay_frames=50):
+        self.font = font
+        self.color = color
+        self.static_delay_frames = static_delay_frames
+        self.scroll_pos = 0
+        self.static_delay = 0
         
-    auth_str = f"{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}"
-    auth_bytes = auth_str.encode("ascii")
-    auth_b64 = base64.b64encode(auth_bytes).decode("ascii")
+    def reset_scroll(self):
+        """Reset scrolling position and delay."""
+        self.scroll_pos = 0
+        self.static_delay = 0
     
-    headers = {
-        "Authorization": f"Basic {auth_b64}",
-        "Content-Type": "application/x-www-form-urlencoded"
-    }
+    def _calculate_text_width(self, text):
+        """Calculate approximate text width."""
+        return len(text) * 4  # Rough estimate: 4 pixels per char for 5x7 font
     
-    data = {
-        "grant_type": "refresh_token",
-        "refresh_token": SPOTIFY_REFRESH_TOKEN
-    }
+    def _draw_character(self, canvas, char, x, y):
+        """Draw a single character and return its width."""
+        if char == ' ':
+            return 2  # Reduced space width
+        else:
+            char_width = graphics.DrawText(canvas, self.font, x, y, self.color, char)
+            return char_width - 1  # Normal character spacing
     
-    response = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data)
-    print(f"Token request status: {response.status_code}")
+    def _clear_boundaries(self, canvas, start_x, end_x, y, matrix_height, matrix_width):
+        """Clear pixels outside the allowed text boundaries."""
+        # Clear left side
+        for x in range(0, start_x):
+            for clear_y in range(y - 6, y + 2):
+                if 0 <= clear_y < matrix_height:
+                    canvas.SetPixel(x, clear_y, 0, 0, 0)
+        
+        # Clear right side
+        for x in range(end_x, matrix_width):
+            for clear_y in range(y - 6, y + 2):
+                if 0 <= clear_y < matrix_height:
+                    canvas.SetPixel(x, clear_y, 0, 0, 0)
     
-    if response.status_code == 200:
-        return response.json()["access_token"]
-    else:
-        print(f"Token request failed: {response.text}")
-        return None
+    def draw(self, canvas, text, x, y, max_x, scroll_counter, matrix_width, matrix_height):
+        """Draw text with scrolling if needed."""
+        available_width = max_x - x
+        total_text_width = self._calculate_text_width(text)
+        
+        if total_text_width > available_width:
+            # Scrolling needed
+            if self.static_delay < self.static_delay_frames:
+                self.static_delay += 1
+                scroll_offset = 0
+            else:
+                scroll_offset = self.scroll_pos
+            
+            # Draw text with wraparound
+            for offset in [0, total_text_width + 10]:
+                display_x = x - scroll_offset + offset
+                current_x = display_x
+                for char in text:
+                    if current_x > x - 8 and current_x < matrix_width + 8:
+                        char_width = self._draw_character(canvas, char, current_x, y)
+                        current_x += char_width
+                    else:
+                        current_x += 4 if char != ' ' else 2
+            
+            # Clear boundaries
+            self._clear_boundaries(canvas, x, max_x, y, matrix_height, matrix_width)
+            
+            # Update scroll position
+            if self.static_delay >= self.static_delay_frames and scroll_counter % 3 == 0:
+                self.scroll_pos += 1
+                if self.scroll_pos >= total_text_width + 10:
+                    self.scroll_pos = 0
+                    self.static_delay = 0
+        else:
+            # Static display
+            current_x = x
+            for char in text:
+                if current_x + 5 > max_x:
+                    break
+                char_width = self._draw_character(canvas, char, current_x, y)
+                current_x += char_width
 
-def get_current_playing():
-    """Get currently playing track from Spotify"""
-    access_token = get_spotify_access_token()
-    if not access_token:
-        print("Failed to get Spotify access token")
+class SpotifyClient:
+    """Handles Spotify API authentication and track information retrieval."""
+    
+    def __init__(self):
+        self.client_id = os.getenv("SPOTIFY_CLIENT_ID")
+        self.client_secret = os.getenv("SPOTIFY_CLIENT_SECRET")
+        self.refresh_token = os.getenv("SPOTIFY_REFRESH_TOKEN")
+        self.last_error_time = None
+        
+    def _validate_credentials(self):
+        """Check if all required Spotify credentials are available."""
+        if not all([self.client_id, self.client_secret, self.refresh_token]):
+            print("Error: Spotify credentials not found. Please check your .env file.")
+            print(f"CLIENT_ID present: {bool(self.client_id)}")
+            print(f"CLIENT_SECRET present: {bool(self.client_secret)}")
+            print(f"REFRESH_TOKEN present: {bool(self.refresh_token)}")
+            return False
+        return True
+    
+    def get_access_token(self):
+        """Get access token using refresh token."""
+        if not self._validate_credentials():
+            return None
+            
+        auth_str = f"{self.client_id}:{self.client_secret}"
+        auth_bytes = auth_str.encode("ascii")
+        auth_b64 = base64.b64encode(auth_bytes).decode("ascii")
+        
+        headers = {
+            "Authorization": f"Basic {auth_b64}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+        
+        data = {
+            "grant_type": "refresh_token",
+            "refresh_token": self.refresh_token
+        }
+        
+        try:
+            response = requests.post("https://accounts.spotify.com/api/token", headers=headers, data=data)
+            print(f"Token request status: {response.status_code}")
+            
+            if response.status_code == 200:
+                return response.json()["access_token"]
+            else:
+                print(f"Token request failed: {response.text}")
+                return None
+        except requests.RequestException as e:
+            print(f"Network error getting access token: {e}")
+            return None
+    
+    def get_current_playing(self):
+        """Get currently playing track from Spotify."""
+        access_token = self.get_access_token()
+        if not access_token:
+            print("Failed to get Spotify access token")
+            return None, None, None, None
+        
+        headers = {"Authorization": f"Bearer {access_token}"}
+        
+        try:
+            response = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
+            print(f"Spotify API response status: {response.status_code}")
+            
+            if response.status_code == 401:
+                print("Unauthorized - check your Spotify credentials and refresh token")
+                return None, None, None, None
+            elif response.status_code == 403:
+                print("Forbidden - check your Spotify app permissions")
+                return None, None, None, None
+            elif response.status_code == 429:
+                print("Rate limited - too many requests to Spotify API")
+                return None, None, None, None
+            elif response.status_code == 204:
+                print("No content - no music currently playing")
+                return None, None, None, None
+            
+            if response.status_code == 200 and response.text:
+                return self._parse_track_response(response)
+                
+        except requests.RequestException as e:
+            print(f"Network error getting current playing: {e}")
+            return None, None, None, None
+        
         return None, None, None, None
     
-    headers = {"Authorization": f"Bearer {access_token}"}
-    response = requests.get("https://api.spotify.com/v1/me/player/currently-playing", headers=headers)
-    
-    print(f"Spotify API response status: {response.status_code}")
-    
-    if response.status_code == 401:
-        print("Unauthorized - check your Spotify credentials and refresh token")
-        return None, None, None, None
-    elif response.status_code == 403:
-        print("Forbidden - check your Spotify app permissions")
-        return None, None, None, None
-    elif response.status_code == 429:
-        print("Rate limited - too many requests to Spotify API")
-        return None, None, None, None
-    elif response.status_code == 204:
-        print("No content - no music currently playing")
-        return None, None, None, None
-    
-    if response.status_code == 200 and response.text:
+    def _parse_track_response(self, response):
+        """Parse the Spotify API response for track information."""
         try:
             data = response.json()
             print(f"Spotify response data keys: {data.keys() if data else 'No data'}")
@@ -94,12 +200,9 @@ def get_current_playing():
                     # Get album cover
                     album_images = track["album"]["images"]
                     if album_images:
-                        # Get the smallest image (usually 64x64)
-                        image_url = album_images[-1]["url"]
-                        img_response = requests.get(image_url)
-                        if img_response.status_code == 200:
-                            image = Image.open(BytesIO(img_response.content))
-                            return song_name, artist_name, album_name, image
+                        image_url = album_images[-1]["url"]  # Get the smallest image
+                        image = self._fetch_album_image(image_url)
+                        return song_name, artist_name, album_name, image
                     
                     return song_name, artist_name, album_name, None
                 else:
@@ -110,440 +213,354 @@ def get_current_playing():
             print(f"JSON decode error: {e}")
         except Exception as e:
             print(f"Error parsing Spotify response: {e}")
-    else:
-        print(f"Unexpected response: status {response.status_code}, content: {response.text[:200] if response.text else 'No content'}")
+        
+        return None, None, None, None
     
-    return None, None, None, None
-
-def update_spotify_data():
-    """Direct Spotify data update with better error handling"""
-    global current_spotify_data, last_spotify_update, last_error_time
-    
-    current_time = time.time()
-    
-    # Only skip update if we recently had a network error (wait 3 seconds after network errors)
-    if hasattr(update_spotify_data, 'last_error_time') and current_time - update_spotify_data.last_error_time < 3:
-        return False
-    
-    try:
-        current_song, current_artist, current_album, current_image = get_current_playing()
-        if current_song and current_artist:
-            current_spotify_data['song_name'] = current_song
-            current_spotify_data['artist_name'] = current_artist.upper()
-            current_spotify_data['album_name'] = current_album if current_album else "Album Name"
-            if current_image:
-                # Resize image to 20x20
-                resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-                current_image.thumbnail((20, 20), resample=resample_mode)
-                current_spotify_data['image'] = current_image.convert('RGB')
-            print(f"Updated: {current_song} by {current_artist} from {current_album}")
-            last_spotify_update = current_time
-            # Clear any previous error time since this succeeded
-            if hasattr(update_spotify_data, 'last_error_time'):
-                delattr(update_spotify_data, 'last_error_time')
-            return True
-        else:
-            current_spotify_data['song_name'] = "No music playing"
-            current_spotify_data['artist_name'] = "SPOTIFY"
-            current_spotify_data['album_name'] = "Album Name"
-            last_spotify_update = current_time
-            return False
-    except (requests.exceptions.SSLError, requests.exceptions.ConnectionError) as e:
-        print(f"Network/SSL error (will retry in 3s): {type(e).__name__}")
-        update_spotify_data.last_error_time = current_time
-        return False
-    except Exception as e:
-        print(f"Spotify update error: {e}")
-        update_spotify_data.last_error_time = current_time
-        return False
-
-def spotify_background_thread():
-    """Background thread that continuously updates Spotify data without blocking display"""
-    global spotify_thread_running, spotify_update_queue
-    
-    while spotify_thread_running:
+    def _fetch_album_image(self, image_url):
+        """Fetch and return album cover image."""
         try:
-            current_song, current_artist, current_album, current_image = get_current_playing()
-            if current_song and current_artist:
-                # Prepare the update data
-                update_data = {
-                    'song_name': current_song,
-                    'artist_name': current_artist.upper(),
-                    'album_name': current_album if current_album else "Album Name",
-                    'image': None
-                }
-                
-                if current_image:
-                    # Resize image to 20x20
-                    resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-                    current_image.thumbnail((20, 20), resample=resample_mode)
-                    update_data['image'] = current_image.convert('RGB')
-                
-                # Put update in queue (non-blocking)
-                try:
-                    spotify_update_queue.put_nowait(update_data)
-                    print(f"Queued update: {current_song} by {current_artist} from {current_album}")
-                except queue.Full:
-                    pass  # Skip if queue is full
-            else:
-                # Put default data in queue
-                default_data = {
-                    'song_name': "No music playing",
-                    'artist_name': "SPOTIFY",
-                    'album_name': "Album Name",
-                    'image': None
-                }
-                try:
-                    spotify_update_queue.put_nowait(default_data)
-                except queue.Full:
-                    pass
-            
-            time.sleep(0.5)  # Update every 0.5 seconds in background for ultra-fast updates
-        except Exception as e:
-            print(f"Background thread error: {e}")
-            time.sleep(2)  # Wait shorter on error
-
-if len(sys.argv) > 1:
-    # Use provided image file
-    image_file = sys.argv[1]
-    song_name = sys.argv[2] if len(sys.argv) > 2 else "Song Name"
-    artist_name = (sys.argv[3] if len(sys.argv) > 3 else "Artist Name").upper()
-    album_name = sys.argv[4] if len(sys.argv) > 4 else "Album Name"
-    image = Image.open(image_file)
-    use_spotify = False
-else:
-    # Use Spotify integration
-    use_spotify = True
-    song_name = "Loading..."
-    artist_name = "SPOTIFY"
-    album_name = "Album Name"
-    # Create a default image
-    image = Image.new('RGB', (20, 20), (50, 50, 50))
-
-# Configuration for the matrix
-options = RGBMatrixOptions()
-options.rows = 32
-options.cols = 64
-options.chain_length = 1
-options.parallel = 1
-options.hardware_mapping = 'adafruit-hat-pwm'
-
-matrix = RGBMatrix(options = options)
-
-# Resize image to 20x20 for lower left corner
-resample_mode = getattr(Image, "Resampling", Image).LANCZOS
-image.thumbnail((20, 20), resample=resample_mode)
-
-# Load fonts for different elements
-song_font = graphics.Font()
-song_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for song title
-artist_font = graphics.Font()
-artist_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for artist
-album_font = graphics.Font()
-album_font.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for album
-
-# Define colors
-song_color = graphics.Color(0, 255, 0)      # Green for song title
-artist_color = graphics.Color(255, 255, 255) # White for artist name
-album_color = graphics.Color(200, 200, 200)  # Light gray for album name
-
-# Text layout variables with scrolling for cut-off text
-padding = 2
-song_available_width = matrix.width - (padding * 2)  # Song width minus left and right padding
-other_available_width = matrix.width - 22 - (padding * 2)  # Other text after image + padding
-
-# Scrolling variables for each text element
-song_scroll_pos = 0
-artist_scroll_pos = 0
-album_scroll_pos = 0
-scroll_counter = 0
-
-# Static delay variables (show static for 1 second before scrolling)
-song_static_delay = 0
-artist_static_delay = 0
-album_static_delay = 0
-static_delay_frames = 50  # 1.5 seconds at 33fps
-
-# Global variables for Spotify data
-current_spotify_data = {
-    'song_name': "Loading...",
-    'artist_name': "SPOTIFY", 
-    'album_name': "Album Name",
-    'image': None
-}
-last_spotify_update = 0
-spotify_thread_running = True
-spotify_update_queue = queue.Queue(maxsize=1)  # Small queue for latest update only
-
-# Initialize album name
-album_name = "Album Name"
-
-# Create canvas for drawing
-canvas = matrix.CreateFrameCanvas()
-
-try:
-    print(f"Song width: {song_available_width}, Other width: {other_available_width}")
-    if use_spotify:
-        print("Using Spotify integration - starting background update thread")
-        # Start background thread for Spotify updates
-        spotify_thread = threading.Thread(target=spotify_background_thread, daemon=True)
-        spotify_thread.start()
-    print("Press CTRL-C to stop.")
+            img_response = requests.get(image_url)
+            if img_response.status_code == 200:
+                return Image.open(BytesIO(img_response.content))
+        except requests.RequestException as e:
+            print(f"Error fetching album image: {e}")
+        return None
     
-    # Convert image to RGB for pixel access
-    image_rgb = image.convert('RGB')
+    def should_skip_update(self):
+        """Check if we should skip update due to recent network error."""
+        current_time = time.time()
+        return (self.last_error_time and 
+                current_time - self.last_error_time < 3)
     
-    frame_count = 0
-    while True:
-        # Check for Spotify updates without blocking (non-blocking queue read)
-        if use_spotify:
+    def mark_network_error(self):
+        """Mark that a network error occurred."""
+        self.last_error_time = time.time()
+
+
+# Load environment variables from .env file
+load_dotenv()
+
+
+class SpotifyUpdateThread:
+    """Handles background Spotify updates using a separate thread."""
+    
+    def __init__(self, spotify_client, update_queue):
+        self.spotify_client = spotify_client
+        self.update_queue = update_queue
+        self.running = True
+    
+    def stop(self):
+        """Stop the background thread."""
+        self.running = False
+    
+    def run(self):
+        """Background thread that continuously updates Spotify data."""
+        while self.running:
             try:
-                # Try to get latest update from queue without blocking
-                update_data = spotify_update_queue.get_nowait()
-                current_spotify_data.update(update_data)
-                spotify_update_queue.task_done()
-            except queue.Empty:
-                pass  # No update available, continue with current data
-            
-            song_name = current_spotify_data['song_name']
-            artist_name = current_spotify_data['artist_name']
-            album_name = current_spotify_data['album_name']
-            if current_spotify_data['image'] is not None:
-                image_rgb = current_spotify_data['image']
-        
-        canvas.Clear()
-        
-        # Draw album cover in lower left (20x20) with 2px padding
-        image_x = padding  # 2px from left edge
-        image_y = canvas.height - image_rgb.height - padding  # 2px from bottom edge
-        canvas.SetImage(image_rgb, image_x, image_y)
-        
-        # Song title spans width at top with padding (scrolls if cut off)
-        song_x = padding  # Start 2px from left edge
-        song_y = padding + 6   # 2px padding + 6px for font baseline (moved down 1px)
-        song_display = song_name.upper()  # Convert to all caps
-        max_x = canvas.width - padding  # Maximum x position (2px from right edge)
-        
-        # Calculate total text width
-        total_song_width = 0
-        for char in song_display:
-            char_width = len(char) * 4  # Rough estimate: 4 pixels per char for 5x7 font
-            total_song_width += char_width
-        
-        # Check if scrolling is needed
-        if total_song_width > song_available_width:
-            # Check if we need to start or continue the static delay
-            if song_static_delay < static_delay_frames:
-                # Show static text for 1 second before scrolling
-                song_static_delay += 1
-                scroll_offset = 0  # Static position
-            else:
-                # Start scrolling after delay
-                scroll_offset = song_scroll_pos
-            
-            # Draw text with wraparound - draw it twice to create seamless loop
-            for offset in [0, total_song_width + 10]:  # Draw original and wrapped version
-                display_x = song_x - scroll_offset + offset
-                current_x = display_x
-                for char in song_display:
-                    if char == ' ':
-                        # Space between words - make it smaller
-                        current_x += 2  # Reduced space width
-                    else:
-                        # Only draw if within visible area (with some buffer)
-                        if current_x > -8 and current_x < matrix.width + 8:
-                            char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
-                            current_x += char_width - 1  # Normal character spacing
-                        else:
-                            current_x += 4  # Estimated width when not drawing
-            
-            # Clear pixels outside the allowed boundaries (clipping effect)
-            # Clear left side (before song area)
-            for x in range(0, song_x):
-                for y in range(song_y - 6, song_y + 2):
-                    if 0 <= y < matrix.height:
-                        canvas.SetPixel(x, y, 0, 0, 0)
-            
-            # Clear right side (after song area)
-            for x in range(max_x, matrix.width):
-                for y in range(song_y - 6, song_y + 2):
-                    if 0 <= y < matrix.height:
-                        canvas.SetPixel(x, y, 0, 0, 0)
-            
-            # Update scroll position only after static delay - slightly slower scrolling
-            if song_static_delay >= static_delay_frames and scroll_counter % 3 == 0:
-                song_scroll_pos += 1
-                if song_scroll_pos >= total_song_width + 10:  # Reset when first copy is off-screen
-                    song_scroll_pos = 0
-                    song_static_delay = 0  # Reset static delay for next cycle
-        else:
-            # Static display if text fits
-            current_x = song_x
-            for char in song_display:
-                if current_x + 5 > max_x:
-                    break
-                if char == ' ':
-                    # Space between words - make it smaller
-                    current_x += 2  # Reduced space width
+                current_song, current_artist, current_album, current_image = self.spotify_client.get_current_playing()
+                if current_song and current_artist:
+                    # Prepare the update data
+                    update_data = {
+                        'song_name': current_song,
+                        'artist_name': current_artist.upper(),
+                        'album_name': current_album if current_album else "Album Name",
+                        'image': None
+                    }
+                    
+                    if current_image:
+                        # Resize image to 20x20
+                        resample_mode = getattr(Image, "Resampling", Image).LANCZOS
+                        current_image.thumbnail((20, 20), resample=resample_mode)
+                        update_data['image'] = current_image.convert('RGB')
+                    
+                    # Put update in queue (non-blocking)
+                    try:
+                        self.update_queue.put_nowait(update_data)
+                        print(f"Queued update: {current_song} by {current_artist} from {current_album}")
+                    except queue.Full:
+                        pass  # Skip if queue is full
                 else:
-                    char_width = graphics.DrawText(canvas, song_font, current_x, song_y, song_color, char)
-                    current_x += char_width - 1  # Normal character spacing
+                    # Put default data in queue
+                    default_data = {
+                        'song_name': "No music playing",
+                        'artist_name': "SPOTIFY",
+                        'album_name': "Album Name",
+                        'image': None
+                    }
+                    try:
+                        self.update_queue.put_nowait(default_data)
+                    except queue.Full:
+                        pass
+                
+                time.sleep(0.5)  # Update every 0.5 seconds
+            except Exception as e:
+                print(f"Background thread error: {e}")
+                time.sleep(2)  # Wait on error
+
+
+class MatrixDisplay:
+    """Manages the LED matrix display operations."""
+    
+    def __init__(self, options=None):
+        if options is None:
+            options = RGBMatrixOptions()
+            options.rows = 32
+            options.cols = 64
+            options.chain_length = 1
+            options.parallel = 1
+            options.hardware_mapping = 'adafruit-hat-pwm'
         
-        # Artist name in middle right in all caps (scrolls if cut off)
-        artist_x = padding + 20 + padding  # 2px + 20px album + 2px spacing = x=24
-        artist_y = canvas.height // 2 + 2  # Middle of screen + 2px down
-        max_x = canvas.width - padding  # Maximum x position (2px from right edge)
-        artist_available_width = max_x - artist_x  # Available width for artist text
+        self.matrix = RGBMatrix(options=options)
+        self.canvas = self.matrix.CreateFrameCanvas()
+        self.width = self.matrix.width
+        self.height = self.matrix.height
         
-        # Calculate total text width
-        total_artist_width = 0
-        for char in artist_name:
-            total_artist_width += 4  # Rough estimate: 4 pixels per char
+        # Load fonts
+        self._load_fonts()
         
-        # Check if scrolling is needed
-        if total_artist_width > artist_available_width:
-            # Check if we need to start or continue the static delay
-            if artist_static_delay < static_delay_frames:
-                # Show static text for 1 second before scrolling
-                artist_static_delay += 1
-                scroll_offset = 0  # Static position
-            else:
-                # Start scrolling after delay
-                scroll_offset = artist_scroll_pos
-            
-            # Draw text with wraparound - draw it twice to create seamless loop
-            for offset in [0, total_artist_width + 10]:  # Draw original and wrapped version
-                display_x = artist_x - scroll_offset + offset
-                current_x = display_x
-                for char in artist_name:
-                    if char == ' ':
-                        # Space between words - make it smaller
-                        current_x += 2  # Reduced space width
-                    else:
-                        # Only draw if within visible area (with some buffer)
-                        if current_x > artist_x - 8 and current_x < matrix.width + 8:
-                            char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
-                            current_x += char_width - 1  # Normal character spacing
-                        else:
-                            current_x += 4  # Estimated width when not drawing
-            
-            # Clear pixels outside the allowed boundaries (clipping effect)
-            # Clear everything to the left of artist area (including album cover area for this text row)
-            for x in range(0, artist_x):
-                for y in range(artist_y - 6, artist_y + 2):
-                    if 0 <= y < matrix.height:
-                        canvas.SetPixel(x, y, 0, 0, 0)
-            
-            # Clear right side (after artist area)
-            for x in range(max_x, matrix.width):
-                for y in range(artist_y - 6, artist_y + 2):
-                    if 0 <= y < matrix.height:
-                        canvas.SetPixel(x, y, 0, 0, 0)
-            
-            # Update scroll position only after static delay - slightly slower scrolling
-            if artist_static_delay >= static_delay_frames and scroll_counter % 3 == 0:
-                artist_scroll_pos += 1
-                if artist_scroll_pos >= total_artist_width + 10:  # Reset when first copy is off-screen
-                    artist_scroll_pos = 0
-                    artist_static_delay = 0  # Reset static delay for next cycle
+        # Define colors
+        self.song_color = graphics.Color(0, 255, 0)      # Green for song title
+        self.artist_color = graphics.Color(255, 255, 255) # White for artist name
+        self.album_color = graphics.Color(200, 200, 200)  # Light gray for album name
+        
+        # Create scrollable text instances
+        self.song_font = graphics.Font()
+        self.song_font.LoadFont("../../../fonts/5x7.bdf")
+        self.artist_font = graphics.Font()
+        self.artist_font.LoadFont("../../../fonts/5x7.bdf")
+        self.album_font = graphics.Font()
+        self.album_font.LoadFont("../../../fonts/5x7.bdf")
+        
+        self.song_text = ScrollableText(self.song_font, self.song_color)
+        self.artist_text = ScrollableText(self.artist_font, self.artist_color)
+        self.album_text = ScrollableText(self.album_font, self.album_color)
+        
+        # Layout constants
+        self.padding = 2
+        self.image_size = 20
+    
+    def _load_fonts(self):
+        """Load fonts for text display."""
+        pass  # Fonts are loaded in __init__ for now
+    
+    def clear(self):
+        """Clear the display canvas."""
+        self.canvas.Clear()
+    
+    def draw_image(self, image, x=None, y=None):
+        """Draw an image on the canvas."""
+        if x is None:
+            x = self.padding
+        if y is None:
+            y = self.height - image.height - self.padding
+        
+        self.canvas.SetImage(image, x, y)
+        return x, y
+    
+    def draw_song_title(self, song_name, scroll_counter):
+        """Draw the song title with scrolling if needed."""
+        song_x = self.padding
+        song_y = self.padding + 6
+        max_x = self.width - self.padding
+        
+        self.song_text.draw(self.canvas, song_name.upper(), song_x, song_y, 
+                           max_x, scroll_counter, self.width, self.height)
+    
+    def draw_artist_name(self, artist_name, scroll_counter):
+        """Draw the artist name with scrolling if needed."""
+        artist_x = self.padding + self.image_size + self.padding
+        artist_y = self.height // 2 + 2
+        max_x = self.width - self.padding
+        
+        self.artist_text.draw(self.canvas, artist_name, artist_x, artist_y,
+                             max_x, scroll_counter, self.width, self.height)
+    
+    def draw_album_name(self, album_name, scroll_counter):
+        """Draw the album name with scrolling if needed."""
+        album_x = self.padding + self.image_size + self.padding
+        album_y = self.height - self.padding - 2
+        max_x = self.width - self.padding
+        
+        self.album_text.draw(self.canvas, album_name, album_x, album_y,
+                            max_x, scroll_counter, self.width, self.height)
+    
+    def swap_canvas(self):
+        """Swap the canvas to display the updated content."""
+        self.canvas = self.matrix.SwapOnVSync(self.canvas)
+
+
+class DisplayConfig:
+    """Configuration constants for the display application."""
+    
+    # Matrix configuration
+    MATRIX_ROWS = 32
+    MATRIX_COLS = 64
+    CHAIN_LENGTH = 1
+    PARALLEL = 1
+    HARDWARE_MAPPING = 'adafruit-hat-pwm'
+    
+    # Display settings
+    PADDING = 2
+    IMAGE_SIZE = 20
+    REFRESH_RATE = 0.03  # 33fps
+    
+    # Font paths
+    FONT_PATH = "../../../fonts/5x7.bdf"
+    
+    # Spotify update settings
+    SPOTIFY_UPDATE_INTERVAL = 0.5
+    SPOTIFY_ERROR_RETRY_DELAY = 2
+    SPOTIFY_NETWORK_ERROR_DELAY = 3
+    
+    # Scrolling settings
+    STATIC_DELAY_FRAMES = 50  # 1.5 seconds at 33fps
+    SCROLL_SPEED_DIVIDER = 3  # Every 3rd frame
+
+
+class ImageViewer:
+    """Main application class that orchestrates the image viewer functionality."""
+    
+    def __init__(self, use_spotify=True, image_file=None, song_name=None, 
+                 artist_name=None, album_name=None):
+        self.use_spotify = use_spotify
+        self.running = True
+        self.scroll_counter = 0
+        
+        # Initialize display
+        self.display = MatrixDisplay()
+        
+        # Initialize Spotify if needed
+        if self.use_spotify:
+            self.spotify_client = SpotifyClient()
+            self.spotify_update_queue = queue.Queue(maxsize=1)
+            self.spotify_update_thread = SpotifyUpdateThread(
+                self.spotify_client, self.spotify_update_queue
+            )
+            self.current_spotify_data = {
+                'song_name': "Loading...",
+                'artist_name': "SPOTIFY", 
+                'album_name': "Album Name",
+                'image': None
+            }
         else:
-            # Static display if text fits
-            current_x = artist_x
-            for char in artist_name:
-                if current_x + 5 > max_x:
-                    break
-                if char == ' ':
-                    # Space between words - make it smaller
-                    current_x += 2  # Reduced space width
-                else:
-                    char_width = graphics.DrawText(canvas, artist_font, current_x, artist_y, artist_color, char)
-                    current_x += char_width - 1  # Normal character spacing
-        
-        # Album name in lower right in normal case (scrolls if cut off)
-        album_x = padding + 20 + padding  # 2px + 20px album + 2px spacing = x=24
-        album_y = canvas.height - padding - 2  # 2px from bottom edge (proper padding)
-        max_x = canvas.width - padding  # Maximum x position (2px from right edge)
-        album_available_width = max_x - album_x  # Available width for album text
-        
-        # Calculate total text width
-        total_album_width = 0
-        for char in album_name:
-            total_album_width += 4  # Rough estimate: 4 pixels per char
-        
-        # Check if scrolling is needed
-        if total_album_width > album_available_width:
-            # Check if we need to start or continue the static delay
-            if album_static_delay < static_delay_frames:
-                # Show static text for 1 second before scrolling
-                album_static_delay += 1
-                scroll_offset = 0  # Static position
-            else:
-                # Start scrolling after delay
-                scroll_offset = album_scroll_pos
+            # Use provided data
+            self.current_spotify_data = {
+                'song_name': song_name or "Song Name",
+                'artist_name': (artist_name or "Artist Name").upper(),
+                'album_name': album_name or "Album Name",
+                'image': self._load_image(image_file) if image_file else None
+            }
+    
+    def _load_image(self, image_file):
+        """Load and resize an image file."""
+        try:
+            image = Image.open(image_file)
+            resample_mode = getattr(Image, "Resampling", Image).LANCZOS
+            image.thumbnail((DisplayConfig.IMAGE_SIZE, DisplayConfig.IMAGE_SIZE), 
+                           resample=resample_mode)
+            return image.convert('RGB')
+        except Exception as e:
+            print(f"Error loading image {image_file}: {e}")
+            return Image.new('RGB', (DisplayConfig.IMAGE_SIZE, DisplayConfig.IMAGE_SIZE), (50, 50, 50))
+    
+    def start(self):
+        """Start the image viewer application."""
+        try:
+            if self.use_spotify:
+                print("Using Spotify integration - starting background update thread")
+                thread = threading.Thread(target=self.spotify_update_thread.run, daemon=True)
+                thread.start()
             
-            # Draw text with wraparound - draw it twice to create seamless loop
-            for offset in [0, total_album_width + 10]:  # Draw original and wrapped version
-                display_x = album_x - scroll_offset + offset
-                current_x = display_x
-                for char in album_name:
-                    if char == ' ':
-                        # Space between words - make it smaller
-                        current_x += 2  # Reduced space width
-                    else:
-                        # Only draw if within visible area (with some buffer)
-                        if current_x > album_x - 8 and current_x < matrix.width + 8:
-                            char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
-                            current_x += char_width - 1  # Normal character spacing
-                        else:
-                            current_x += 4  # Estimated width when not drawing
+            print("Press CTRL-C to stop.")
+            self._main_loop()
             
-            # Clear pixels outside the allowed boundaries (clipping effect)
-            # Clear everything to the left of album area (including album cover area for this text row)
-            for x in range(0, album_x):
-                for y in range(album_y - 6, album_y + 2):
-                    if 0 <= y < matrix.height:
-                        canvas.SetPixel(x, y, 0, 0, 0)
+        except KeyboardInterrupt:
+            print("\nShutting down...")
+            self.stop()
+    
+    def stop(self):
+        """Stop the application and cleanup resources."""
+        self.running = False
+        if self.use_spotify:
+            self.spotify_update_thread.stop()
+            print("Stopping background thread...")
+            time.sleep(0.1)
+    
+    def _update_spotify_data(self):
+        """Update Spotify data from the queue if available."""
+        if not self.use_spotify:
+            return
+        
+        try:
+            update_data = self.spotify_update_queue.get_nowait()
+            self.current_spotify_data.update(update_data)
+            self.spotify_update_queue.task_done()
+        except queue.Empty:
+            pass  # No update available
+    
+    def _main_loop(self):
+        """Main display loop."""
+        # Prepare initial image
+        current_image = (self.current_spotify_data['image'] or 
+                        Image.new('RGB', (DisplayConfig.IMAGE_SIZE, DisplayConfig.IMAGE_SIZE), (50, 50, 50)))
+        
+        while self.running:
+            # Check for Spotify updates
+            self._update_spotify_data()
             
-            # Clear right side (after album area)
-            for x in range(max_x, matrix.width):
-                for y in range(album_y - 6, album_y + 2):
-                    if 0 <= y < matrix.height:
-                        canvas.SetPixel(x, y, 0, 0, 0)
+            # Get current data
+            song_name = self.current_spotify_data['song_name']
+            artist_name = self.current_spotify_data['artist_name']
+            album_name = self.current_spotify_data['album_name']
             
-            # Update scroll position only after static delay - slightly slower scrolling
-            if album_static_delay >= static_delay_frames and scroll_counter % 3 == 0:
-                album_scroll_pos += 1
-                if album_scroll_pos >= total_album_width + 10:  # Reset when first copy is off-screen
-                    album_scroll_pos = 0
-                    album_static_delay = 0  # Reset static delay for next cycle
-        else:
-            # Static display if text fits
-            current_x = album_x
-            for char in album_name:
-                if current_x + 5 > max_x:
-                    break
-                if char == ' ':
-                    # Space between words - make it smaller
-                    current_x += 2  # Reduced space width
-                else:
-                    char_width = graphics.DrawText(canvas, album_font, current_x, album_y, album_color, char)
-                    current_x += char_width - 1  # Normal character spacing
+            if self.current_spotify_data['image'] is not None:
+                current_image = self.current_spotify_data['image']
+            
+            # Clear and draw
+            self.display.clear()
+            
+            # Draw album cover
+            image_x, image_y = self.display.draw_image(current_image)
+            
+            # Draw text elements
+            self.display.draw_song_title(song_name, self.scroll_counter)
+            self.display.draw_artist_name(artist_name, self.scroll_counter)
+            self.display.draw_album_name(album_name, self.scroll_counter)
+            
+            # Redraw album cover to ensure it's always visible
+            self.display.draw_image(current_image, image_x, image_y)
+            
+            # Update display
+            self.display.swap_canvas()
+            
+            # Increment scroll counter and sleep
+            self.scroll_counter += 1
+            time.sleep(DisplayConfig.REFRESH_RATE)
+
+
+
+def main():
+    """Main entry point for the application."""
+    if len(sys.argv) > 1:
+        # Use provided image file
+        image_file = sys.argv[1]
+        song_name = sys.argv[2] if len(sys.argv) > 2 else "Song Name"
+        artist_name = sys.argv[3] if len(sys.argv) > 3 else "Artist Name"
+        album_name = sys.argv[4] if len(sys.argv) > 4 else "Album Name"
         
-        # Redraw album cover after text clipping to ensure it's always visible
-        # (Text clipping may have cleared parts of the album cover)
-        canvas.SetImage(image_rgb, image_x, image_y)
-        
-        # Increment scroll counter for timing
-        scroll_counter += 1
-        frame_count += 1
-        
-        canvas = matrix.SwapOnVSync(canvas)
-        time.sleep(0.03)  # Even faster refresh for ultra-smooth scrolling (33fps)
-        
-except KeyboardInterrupt:
-    print("\nShutting down...")
-    if use_spotify:
-        spotify_thread_running = False
-        print("Stopping background thread...")
-        time.sleep(0.1)  # Give thread time to stop
-    sys.exit(0)
+        viewer = ImageViewer(
+            use_spotify=False,
+            image_file=image_file,
+            song_name=song_name,
+            artist_name=artist_name,
+            album_name=album_name
+        )
+    else:
+        # Use Spotify integration
+        viewer = ImageViewer(use_spotify=True)
+    
+    viewer.start()
+
+
+if __name__ == "__main__":
+    main()
