@@ -249,10 +249,13 @@ class AdvancedStockTracker(SampleBase):
         """Draw a mini stock chart for the given symbol"""
         with self.data_lock:
             if symbol not in self.stock_history or not self.stock_history[symbol]:
+                # If no historical data, create a simple demo chart
+                self.draw_demo_chart(canvas, x_start, y_start, width, height)
                 return
             
             prices = self.stock_history[symbol]
             if len(prices) < 2:
+                self.draw_demo_chart(canvas, x_start, y_start, width, height)
                 return
             
             # Normalize prices to fit in the chart area
@@ -263,28 +266,41 @@ class AdvancedStockTracker(SampleBase):
             if price_range == 0:  # All prices the same
                 y = y_start + height // 2
                 for x in range(width):
-                    canvas.SetPixel(x_start + x, y, *self.colors['chart_line'])
+                    canvas.SetPixel(x_start + x, y, 0, 255, 0)  # Green line
                 return
             
-            # Determine chart color based on overall trend
-            trend_color = self.colors['gain_dim'] if prices[-1] > prices[0] else self.colors['loss_dim']
-            
-            # Draw the price line
-            prev_x = None
-            prev_y = None
-            
-            for i, price in enumerate(prices[-width:]):  # Only use last 'width' data points
-                x = x_start + (i * width) // len(prices[-width:])
-                # Invert Y because screen coordinates are flipped
-                y = y_start + height - int(((price - min_price) / price_range) * height)
-                y = max(y_start, min(y_start + height - 1, y))  # Clamp to bounds
+            # Draw filled area chart like in your image
+            for x in range(width):
+                # Get price for this x position
+                price_index = int((x / width) * (len(prices) - 1))
+                price = prices[price_index]
                 
-                if prev_x is not None:
-                    # Draw line between points
-                    self.draw_line(canvas, prev_x, prev_y, x, y, trend_color)
+                # Calculate height for this price
+                price_ratio = (price - min_price) / price_range
+                chart_height = int(price_ratio * height)
                 
-                prev_x = x
-                prev_y = y
+                # Draw vertical line from bottom to price level (filled area effect)
+                for y in range(chart_height):
+                    pixel_y = y_start + height - 1 - y  # Flip Y coordinate
+                    if pixel_y >= y_start and pixel_y < y_start + height:
+                        # Gradient effect - brighter at top, dimmer at bottom
+                        intensity = int(255 * (y + 1) / chart_height) if chart_height > 0 else 255
+                        canvas.SetPixel(x_start + x, pixel_y, 0, intensity, 0)
+    
+    def draw_demo_chart(self, canvas, x_start, y_start, width, height):
+        """Draw a demo chart pattern when no real data is available"""
+        import math
+        for x in range(width):
+            # Create a sine wave pattern
+            wave = math.sin(x * 0.2) * 0.5 + 0.5  # Normalize to 0-1
+            chart_height = int(wave * height)
+            
+            # Draw filled area
+            for y in range(chart_height):
+                pixel_y = y_start + height - 1 - y
+                if pixel_y >= y_start and pixel_y < y_start + height:
+                    intensity = int(255 * (y + 1) / chart_height) if chart_height > 0 else 255
+                    canvas.SetPixel(x_start + x, pixel_y, 0, intensity, 0)
 
     def draw_line(self, canvas, x0, y0, x1, y1, color):
         """Draw a line between two points using Bresenham's algorithm"""
@@ -339,21 +355,67 @@ class AdvancedStockTracker(SampleBase):
         
         offscreen_canvas = self.matrix.CreateFrameCanvas()
         
-        # Simple test first - just like runtext.py
-        textColor = graphics.Color(255, 255, 0)
-        pos = 0
+        last_switch_time = time.time()
         
         while True:
             offscreen_canvas.Clear()
             
-            # Simple scrolling text test first
-            text = "AAPL $150.25 +2.15 (+1.4%)"
-            len_text = graphics.DrawText(offscreen_canvas, self.font_large, pos, 15, textColor, text)
-            pos -= 1
-            if (pos + len_text < 0):
-                pos = offscreen_canvas.width
+            # Check if we need to switch to the next stock
+            current_time = time.time()
+            if current_time - last_switch_time >= self.args.display_time:
+                self.current_stock_index = (self.current_stock_index + 1) % len(self.stock_symbols)
+                last_switch_time = current_time
             
-            time.sleep(0.05)
+            # Get current stock to display
+            if self.stock_symbols:
+                current_symbol = self.stock_symbols[self.current_stock_index]
+                
+                with self.data_lock:
+                    if current_symbol in self.stock_data:
+                        stock_info = self.stock_data[current_symbol]
+                        
+                        # Determine colors based on performance
+                        is_positive = stock_info['change'] >= 0
+                        primary_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
+                        
+                        # Layout matching your reference image:
+                        
+                        # Top left: Stock symbol (AAPL)
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, primary_color, current_symbol)
+                        
+                        # Bottom left: Stock price (174.30)
+                        price_text = f"{stock_info['price']:.2f}"
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 22, primary_color, price_text)
+                        
+                        # Top right: Change amount (0.87)
+                        change_text = f"{abs(stock_info['change']):.2f}"
+                        # Right align - calculate position based on text width
+                        text_width = len(change_text) * 3  # Rough width estimation
+                        change_x = 64 - text_width - 1
+                        graphics.DrawText(offscreen_canvas, self.font_small, change_x, 8, primary_color, change_text)
+                        
+                        # Middle right: Percentage (0.50%)
+                        pct_text = f"{abs(stock_info['change_percent']):.1f}%"
+                        text_width = len(pct_text) * 3
+                        pct_x = 64 - text_width - 1
+                        graphics.DrawText(offscreen_canvas, self.font_small, pct_x, 18, primary_color, pct_text)
+                        
+                        # Draw stock chart in the bottom area (like your image)
+                        chart_x = 0
+                        chart_y = 24  # Start below the price text
+                        chart_width = 64
+                        chart_height = 8  # Bottom portion of display
+                        
+                        self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
+                        
+                    else:
+                        # No data available
+                        graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], current_symbol)
+                        graphics.DrawText(offscreen_canvas, self.font_small, 1, 20, self.colors['neutral'], "Loading...")
+            else:
+                graphics.DrawText(offscreen_canvas, self.font_small, 1, 10, self.colors['neutral'], "No stocks")
+            
+            time.sleep(0.1)
             offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
 
 
