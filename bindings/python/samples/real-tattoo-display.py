@@ -22,6 +22,9 @@ class RealTattooDisplay(SampleBase):
         self.parser.add_argument("-t", "--tattoo-type", help="Specific tattoo to display: anchor, heart, rose, swallow, skull, dagger, all", default="all", type=str)
         self.parser.add_argument("-s", "--speed", help="Animation speed (seconds between images). Default: 5", default=5, type=float)
         self.parser.add_argument("--enhance", help="Enhance contrast for better LED display", action="store_true")
+        self.parser.add_argument("--remove-background", help="Remove white/light backgrounds from tattoo images", action="store_true", default=True)
+        self.parser.add_argument("--background-threshold", help="Threshold for background removal (0-255). Default: 200", type=int, default=200)
+        self.parser.add_argument("--advanced-bg-removal", help="Use advanced edge-based background removal", action="store_true")
         self.parser.add_argument("--local-images", help="Use local images instead of downloading", action="store_true")
         self.parser.add_argument("--no-download", help="Skip downloading, use placeholders only", action="store_true")
         
@@ -176,6 +179,18 @@ class RealTattooDisplay(SampleBase):
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
+        # Remove background if requested
+        if self.args.remove_background:
+            try:
+                if self.args.advanced_bg_removal:
+                    image = self.remove_background_advanced(image)
+                else:
+                    image = self.remove_background(image)
+                print(f"   🎭 Background removed from {name} tattoo")
+            except Exception as e:
+                print(f"   ⚠️  Background removal failed for {name}: {e}")
+                print(f"   📦 Install numpy with: pip install numpy")
+        
         # Get matrix dimensions
         matrix_width = self.args.led_cols
         matrix_height = self.args.led_rows
@@ -219,6 +234,107 @@ class RealTattooDisplay(SampleBase):
             canvas_image = enhancer.enhance(1.1)
         
         return canvas_image
+        
+    def remove_background(self, image):
+        """Remove white/light background from tattoo images"""
+        try:
+            import numpy as np
+            return self.remove_background_numpy(image)
+        except ImportError:
+            print("   📦 numpy not available, using basic background removal")
+            return self.remove_background_basic(image)
+    
+    def remove_background_basic(self, image):
+        """Basic background removal without numpy"""
+        # Create a new image with transparency
+        width, height = image.size
+        new_image = Image.new('RGB', (width, height), (0, 0, 0))
+        
+        threshold = self.args.background_threshold
+        
+        for y in range(height):
+            for x in range(width):
+                r, g, b = image.getpixel((x, y))
+                
+                # Calculate brightness
+                brightness = r * 0.299 + g * 0.587 + b * 0.114
+                
+                # If pixel is dark enough (not background), keep it
+                if brightness < threshold and not (r > threshold and g > threshold and b > threshold):
+                    new_image.putpixel((x, y), (r, g, b))
+                # Otherwise leave it black (background removed)
+        
+        return new_image
+        
+    def remove_background_numpy(self, image):
+        """Remove white/light background from tattoo images using numpy"""
+        import numpy as np
+        
+        # Convert PIL image to numpy array
+        img_array = np.array(image)
+        
+        # Create a mask for light pixels (likely background)
+        # Check if pixels are close to white/light colors
+        threshold = self.args.background_threshold
+        
+        # Calculate brightness for each pixel (weighted average of RGB)
+        brightness = (img_array[:, :, 0] * 0.299 + 
+                     img_array[:, :, 1] * 0.587 + 
+                     img_array[:, :, 2] * 0.114)
+        
+        # Create mask where bright pixels (background) are True
+        background_mask = brightness > threshold
+        
+        # Also check for near-white pixels
+        white_mask = ((img_array[:, :, 0] > threshold) & 
+                     (img_array[:, :, 1] > threshold) & 
+                     (img_array[:, :, 2] > threshold))
+        
+        # Combine masks
+        combined_mask = background_mask | white_mask
+        
+        # Set background pixels to black (transparent effect)
+        img_array[combined_mask] = [0, 0, 0]
+        
+        # Convert back to PIL Image
+        return Image.fromarray(img_array)
+        
+    def remove_background_advanced(self, image):
+        """Advanced background removal using edge detection and flood fill"""
+        try:
+            import numpy as np
+        except ImportError:
+            print("   📦 numpy required for advanced background removal, falling back to basic")
+            return self.remove_background_basic(image)
+            
+        from PIL import ImageFilter, ImageOps
+        
+        # Convert to grayscale for edge detection
+        gray = image.convert('L')
+        
+        # Apply edge detection to find the tattoo outline
+        edges = gray.filter(ImageFilter.FIND_EDGES)
+        
+        # Enhance edges
+        edges = ImageOps.autocontrast(edges)
+        
+        # Convert back to numpy for processing
+        img_array = np.array(image)
+        edge_array = np.array(edges)
+        
+        # Create mask based on edges and brightness
+        threshold = self.args.background_threshold
+        brightness = (img_array[:, :, 0] * 0.299 + 
+                     img_array[:, :, 1] * 0.587 + 
+                     img_array[:, :, 2] * 0.114)
+        
+        # Background is bright AND has low edge intensity
+        background_mask = (brightness > threshold) & (edge_array < 30)
+        
+        # Set background to black
+        img_array[background_mask] = [0, 0, 0]
+        
+        return Image.fromarray(img_array)
         
     def create_placeholder(self, name):
         """Create a placeholder image if download fails"""
@@ -348,4 +464,6 @@ if __name__ == "__main__":
         print("\nExample usage:")
         print("  python real-tattoo-display.py --no-download --led-cols=64 --led-rows=32")
         print("  python real-tattoo-display.py --local-images -t anchor")
+        print("  python real-tattoo-display.py --enhance --background-threshold=180")
+        print("  python real-tattoo-display.py --advanced-bg-removal -t all")
         print("  sudo python real-tattoo-display.py --enhance -t all")
