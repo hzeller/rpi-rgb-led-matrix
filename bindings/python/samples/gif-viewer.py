@@ -122,8 +122,12 @@ class GifViewer(SampleBase):
             return None, None
 
     def resize_frame(self, frame, target_width, target_height, fit_mode, background_color):
-        """Resize frame according to the specified fit mode."""
+        """Resize frame according to the specified fit mode, ensuring it fits within display bounds."""
         original_width, original_height = frame.size
+        
+        # Ensure target dimensions are positive and reasonable
+        target_width = max(1, target_width)
+        target_height = max(1, target_height)
         
         if fit_mode == 'stretch':
             # Ignore aspect ratio, stretch to fill exactly
@@ -132,33 +136,51 @@ class GifViewer(SampleBase):
         elif fit_mode == 'center':
             # No scaling, just center the image
             if original_width <= target_width and original_height <= target_height:
-                # Image is smaller, center it
+                # Image is smaller, center it with background
                 new_image = Image.new('RGB', (target_width, target_height), background_color)
                 x_offset = (target_width - original_width) // 2
                 y_offset = (target_height - original_height) // 2
                 new_image.paste(frame, (x_offset, y_offset))
                 return new_image
             else:
-                # Image is larger, crop from center
-                left = (original_width - target_width) // 2
-                top = (original_height - target_height) // 2
-                right = left + target_width
-                bottom = top + target_height
-                return frame.crop((left, top, right, bottom))
+                # Image is larger, crop from center to fit exactly
+                left = max(0, (original_width - target_width) // 2)
+                top = max(0, (original_height - target_height) // 2)
+                right = min(original_width, left + target_width)
+                bottom = min(original_height, top + target_height)
+                cropped = frame.crop((left, top, right, bottom))
+                
+                # If cropped size doesn't match target (edge case), resize to exact dimensions
+                if cropped.size != (target_width, target_height):
+                    cropped = cropped.resize((target_width, target_height), Image.LANCZOS)
+                return cropped
         
         elif fit_mode == 'fit':
-            # Maintain aspect ratio, letterbox if needed
-            frame.thumbnail((target_width, target_height), Image.LANCZOS)
-            new_image = Image.new('RGB', (target_width, target_height), background_color)
+            # Maintain aspect ratio, letterbox if needed - ensures nothing extends beyond bounds
+            original_ratio = original_width / original_height
+            target_ratio = target_width / target_height
             
-            # Center the resized image
-            x_offset = (target_width - frame.width) // 2
-            y_offset = (target_height - frame.height) // 2
-            new_image.paste(frame, (x_offset, y_offset))
+            if original_ratio > target_ratio:
+                # Image is wider, scale by width to fit
+                new_width = target_width
+                new_height = int(target_width / original_ratio)
+            else:
+                # Image is taller, scale by height to fit
+                new_height = target_height
+                new_width = int(target_height * original_ratio)
+            
+            # Resize frame to calculated dimensions (guaranteed to fit within target)
+            resized_frame = frame.resize((new_width, new_height), Image.LANCZOS)
+            
+            # Create background and center the resized image
+            new_image = Image.new('RGB', (target_width, target_height), background_color)
+            x_offset = (target_width - new_width) // 2
+            y_offset = (target_height - new_height) // 2
+            new_image.paste(resized_frame, (x_offset, y_offset))
             return new_image
         
         elif fit_mode == 'fill':
-            # Maintain aspect ratio, crop if needed to fill completely
+            # Maintain aspect ratio, crop if needed to fill completely - ensures exact dimensions
             original_ratio = original_width / original_height
             target_ratio = target_width / target_height
             
@@ -166,22 +188,27 @@ class GifViewer(SampleBase):
                 # Image is wider, scale by height and crop width
                 new_height = target_height
                 new_width = int(target_height * original_ratio)
-                frame = frame.resize((new_width, new_height), Image.LANCZOS)
-                
-                # Crop from center
-                left = (new_width - target_width) // 2
-                frame = frame.crop((left, 0, left + target_width, target_height))
             else:
-                # Image is taller, scale by width and crop height
+                # Image is taller, scale by width and crop height  
                 new_width = target_width
                 new_height = int(target_width / original_ratio)
-                frame = frame.resize((new_width, new_height), Image.LANCZOS)
-                
-                # Crop from center
-                top = (new_height - target_height) // 2
-                frame = frame.crop((0, top, target_width, top + target_height))
             
-            return frame
+            # Resize to calculated dimensions
+            resized_frame = frame.resize((new_width, new_height), Image.LANCZOS)
+            
+            # Crop from center to exact target dimensions
+            left = max(0, (new_width - target_width) // 2)
+            top = max(0, (new_height - target_height) // 2)
+            right = min(new_width, left + target_width)
+            bottom = min(new_height, top + target_height)
+            
+            final_frame = resized_frame.crop((left, top, right, bottom))
+            
+            # Ensure exact dimensions (safety check)
+            if final_frame.size != (target_width, target_height):
+                final_frame = final_frame.resize((target_width, target_height), Image.LANCZOS)
+            
+            return final_frame
     
     def enhance_frame(self, frame):
         """Apply brightness, contrast, and saturation adjustments."""
@@ -230,6 +257,13 @@ class GifViewer(SampleBase):
             print("Error: Provided image is not an animated GIF")
             return None, None, None, None
         
+        # Get original GIF dimensions for info
+        gif.seek(0)
+        original_size = gif.size
+        print(f"Original GIF size: {original_size[0]}x{original_size[1]}")
+        print(f"Target matrix size: {self.matrix.width}x{self.matrix.height}")
+        print(f"Fit mode: {self.args.fit_mode}")
+        
         # Get frame durations for proper timing
         frame_durations = []
         canvases = []
@@ -254,9 +288,14 @@ class GifViewer(SampleBase):
             if frame.mode != 'RGB':
                 frame = frame.convert('RGB')
             
-            # Resize according to fit mode
+            # Resize according to fit mode - this ensures exact matrix dimensions
             frame = self.resize_frame(frame, self.matrix.width, self.matrix.height, 
                                     self.args.fit_mode, background_color)
+            
+            # Verify frame size matches matrix (safety check)
+            if frame.size != (self.matrix.width, self.matrix.height):
+                print(f"Warning: Frame size {frame.size} doesn't match matrix size {self.matrix.width}x{self.matrix.height}, forcing resize")
+                frame = frame.resize((self.matrix.width, self.matrix.height), Image.LANCZOS)
             
             # Apply enhancements
             frame = self.enhance_frame(frame)
