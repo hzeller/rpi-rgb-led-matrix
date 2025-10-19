@@ -114,14 +114,37 @@ class WeatherDisplay:
                 icon_image = Image.open(BytesIO(response.content))
                 print(f"Original icon size: {icon_image.size}, mode: {icon_image.mode}")
                 
+                # Handle transparency properly - create white background first
+                if icon_image.mode in ('RGBA', 'LA') or 'transparency' in icon_image.info:
+                    # Create a black background for better visibility on LED matrix
+                    background = Image.new('RGB', icon_image.size, (0, 0, 0))
+                    if icon_image.mode == 'RGBA':
+                        background.paste(icon_image, mask=icon_image.split()[3])  # Use alpha channel as mask
+                    else:
+                        background.paste(icon_image, mask=icon_image.convert('RGBA').split()[3])
+                    icon_image = background
+                    print("Applied transparency with black background")
+                
                 # Resize to about 20x20 pixels to span both temperature lines
                 resample_mode = getattr(Image, "Resampling", Image).LANCZOS
                 icon_image = icon_image.resize((20, 20), resample=resample_mode)
                 print(f"Resized icon to: {icon_image.size}")
                 
-                # Convert to RGB
+                # Convert to RGB and enhance brightness for LED matrix
                 self.weather_icon = icon_image.convert('RGB')
-                print(f"Converted to RGB: {self.weather_icon.size}, mode: {self.weather_icon.mode}")
+                
+                # Enhance brightness since LED matrices can be dim
+                pixels = self.weather_icon.load()
+                for y in range(self.weather_icon.height):
+                    for x in range(self.weather_icon.width):
+                        r, g, b = pixels[x, y]
+                        # Boost brightness but cap at 255
+                        r = min(255, int(r * 1.5))
+                        g = min(255, int(g * 1.5))
+                        b = min(255, int(b * 1.5))
+                        pixels[x, y] = (r, g, b)
+                
+                print(f"Enhanced brightness and converted to RGB: {self.weather_icon.size}, mode: {self.weather_icon.mode}")
                 
                 # Debug: Print some pixel values to see if image has content
                 pixel_samples = []
@@ -149,8 +172,14 @@ class WeatherDisplay:
         """Draw the weather icon image on the display"""
         if icon_image is not None:
             # Calculate position to center the 20x20 icon
-            icon_x = x - 10  # Center horizontally
-            icon_y = y - 10  # Center vertically
+            icon_x = max(0, x - 10)  # Center horizontally but don't go negative
+            icon_y = max(0, y - 10)  # Center vertically but don't go negative
+            
+            # Make sure icon doesn't go off the right/bottom edge
+            if icon_x + icon_image.width > 64:
+                icon_x = 64 - icon_image.width
+            if icon_y + icon_image.height > 32:
+                icon_y = 32 - icon_image.height
             
             print(f"Drawing icon at position: icon_x={icon_x}, icon_y={icon_y}")
             print(f"Icon size: {icon_image.size}, mode: {icon_image.mode}")
@@ -174,13 +203,14 @@ class WeatherDisplay:
             
             # Draw the icon
             self.canvas.SetImage(icon_image, icon_x, icon_y)
-            print(f"Icon drawn successfully")
+            print(f"Icon drawn successfully at ({icon_x},{icon_y})")
         else:
             print(f"No icon image provided, drawing fallback at x={x}, y={y}")
             # Fallback - simple colored square
             for dx in range(-8, 8):
                 for dy in range(-8, 8):
-                    self.canvas.SetPixel(x+dx, y+dy, 200, 200, 255)
+                    if 0 <= x+dx < 64 and 0 <= y+dy < 32:
+                        self.canvas.SetPixel(x+dx, y+dy, 200, 200, 255)
 
     def draw_weather(self):
         """Draw weather information like the reference image: time top, icon left, temps right"""
