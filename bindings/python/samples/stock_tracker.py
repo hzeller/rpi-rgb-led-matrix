@@ -248,21 +248,23 @@ class StockTracker:
             current_time = time.time()
             force_redraw = current_time - last_redraw_time > 30  # Force redraw every 30 seconds
             
-            # Throttle data updates to prevent excessive blinking
+            # Throttle data updates to prevent excessive blinking, but allow stock switches
             data_redraw_allowed = current_time - last_data_redraw_time > 5.0  # Only allow data redraws every 5 seconds
             
-            should_redraw = ((data_updated and data_redraw_allowed) or stock_switched or symbol_changed or 
-                           (self.chart_needs_redraw and data_redraw_allowed) or force_redraw)
+            should_redraw = (stock_switched or symbol_changed or  # Always allow stock/symbol changes
+                           ((data_updated or self.chart_needs_redraw) and data_redraw_allowed) or 
+                           force_redraw)
             
             if should_redraw:
                 # Try to minimize visual disruption
                 if stock_switched or symbol_changed:
-                    # Only clear when absolutely necessary
+                    # Full redraw for stock switches - ensure chart appears
                     self.display.clear()
-                    self._draw_current_stock()
-                    self.display.swap_canvas()  # Full swap for major changes
+                    self._draw_current_stock()  # This includes both text and chart
+                    self.display.swap_canvas()
+                    last_data_redraw_time = current_time  # Reset data timer on stock switch
                 elif (data_updated or self.chart_needs_redraw) and data_redraw_allowed:
-                    # For data updates, enable no-clear mode and minimal redraw
+                    # For data updates only, enable no-clear mode and minimal redraw
                     self.chart_renderer.no_clear_mode = True
                     self._draw_current_stock_minimal()
                     self.chart_renderer.no_clear_mode = False
