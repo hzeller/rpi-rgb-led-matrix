@@ -18,7 +18,7 @@ class VideoPlayer(SampleBase):
         super(VideoPlayer, self).__init__(*args, **kwargs)
         
         # Hardcoded video URL for demonstration
-        self.video_url = "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+        self.video_url = "https://preview.redd.it/xddbh2ffcxvf1.gif?width=821&format=mp4&s=46b2a913d08c3a4eed8bc7f19ad182306aca8edc"
         
         # Override default matrix settings from environment variables
         self.parser.set_defaults(
