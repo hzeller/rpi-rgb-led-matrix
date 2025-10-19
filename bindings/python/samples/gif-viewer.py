@@ -35,7 +35,7 @@ class GifViewer(SampleBase):
         self.parser.add_argument("--url", type=str, help="URL of GIF to download and display")
         self.parser.add_argument("--fit-mode", choices=['stretch', 'fit', 'fill', 'center'], 
                                default=os.environ.get('GIF_FIT_MODE', 'fit'),
-                               help="How to fit the gif to matrix: stretch=ignore aspect ratio, fit=maintain aspect ratio with letterbox, fill=maintain aspect ratio and crop, center=no scaling, just center")
+                               help="How to fit the gif to matrix: fit=maintain aspect ratio with letterbox (default), fill=maintain aspect ratio and crop, stretch=ignore aspect ratio, center=no scaling, just center")
         self.parser.add_argument("--speed", type=float, 
                                default=float(os.environ.get('GIF_SPEED', '1.0')),
                                help="Playback speed multiplier (1.0=normal, 2.0=double speed, 0.5=half speed)")
