@@ -6,13 +6,14 @@ import time
 import sys
 import threading
 import select
+import argparse
 from datetime import datetime, timedelta
 
 class PomodoroTimerTest:
-    def __init__(self, work_seconds=10, break_seconds=5):  # Shortened for testing
+    def __init__(self, work_seconds=10, break_seconds=5):
         # Timer state
-        self.work_duration = work_seconds  # Shortened for testing
-        self.break_duration = break_seconds  # Shortened for testing
+        self.work_duration = work_seconds
+        self.break_duration = break_seconds
         self.remaining_time = self.work_duration
         self.is_running = False
         self.is_break = False
@@ -172,7 +173,25 @@ class PomodoroTimerTest:
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
 
 if __name__ == "__main__":
-    # Use shortened times for testing (10 seconds work, 5 seconds break)
-    # Change to (25*60, 5*60) for full pomodoro sessions
-    timer = PomodoroTimerTest(work_seconds=10, break_seconds=5)
+    parser = argparse.ArgumentParser(description='Pomodoro Timer Test - Console Version')
+    parser.add_argument('-w', '--work', type=int, default=10, 
+                       help='Work session duration in seconds (default: 10 for testing)')
+    parser.add_argument('-b', '--break', type=int, default=5,
+                       help='Break duration in seconds (default: 5 for testing)')
+    parser.add_argument('--pomodoro', action='store_true',
+                       help='Use standard pomodoro times: 25min work, 5min break')
+    
+    args = parser.parse_args()
+    
+    # Use standard pomodoro times if requested
+    if args.pomodoro:
+        work_time = 25 * 60
+        break_time = 5 * 60
+    else:
+        work_time = args.work
+        break_time = getattr(args, 'break')
+    
+    print(f"🍅 Starting Pomodoro Timer: {work_time//60 if work_time >= 60 else work_time}{'min' if work_time >= 60 else 's'} work, {break_time//60 if break_time >= 60 else break_time}{'min' if break_time >= 60 else 's'} break")
+    
+    timer = PomodoroTimerTest(work_seconds=work_time, break_seconds=break_time)
     timer.run()

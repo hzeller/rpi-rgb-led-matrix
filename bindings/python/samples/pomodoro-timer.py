@@ -12,24 +12,75 @@ from datetime import datetime, timedelta
 # Add the parent directory to Python path to import the rgbmatrix module
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from samplebase import SampleBase
 
-class PomodoroTimer:
-    def __init__(self):
-        # Configuration for the matrix
-        options = RGBMatrixOptions()
-        options.rows = 32
-        options.cols = 64
-        options.chain_length = 1
-        options.parallel = 1
-        options.hardware_mapping = 'adafruit-hat-pwm'
-        options.brightness = 80
+class PomodoroTimer(SampleBase):
+    def __init__(self, *args, **kwargs):
+        super(PomodoroTimer, self).__init__(*args, **kwargs)
         
-        self.matrix = RGBMatrix(options=options)
+        # Add custom arguments for timer durations
+        self.parser.add_argument('-w', '--work', type=int, default=25,
+                               help='Work session duration in minutes (default: 25)')
+        self.parser.add_argument('-b', '--break-time', type=int, default=5,
+                               help='Break duration in minutes (default: 5)')
+    
+    def get_matrix_options(self):
+        """Get matrix options with defaults"""
+        options = RGBMatrixOptions()
+        
+        # Set defaults for LED matrix
+        if self.args.led_gpio_mapping != None:
+            options.hardware_mapping = self.args.led_gpio_mapping
+        else:
+            options.hardware_mapping = 'adafruit-hat-pwm'  # Default for this project
+            
+        options.rows = self.args.led_rows
+        options.cols = self.args.led_cols
+        options.chain_length = self.args.led_chain
+        options.parallel = self.args.led_parallel
+        options.row_address_type = self.args.led_row_addr_type
+        options.multiplexing = self.args.led_multiplexing
+        options.pwm_bits = self.args.led_pwm_bits
+        options.brightness = self.args.led_brightness
+        options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
+        options.led_rgb_sequence = self.args.led_rgb_sequence
+        options.pixel_mapper_config = self.args.led_pixel_mapper
+        options.panel_type = self.args.led_panel_type
+
+        if self.args.led_show_refresh:
+            options.show_refresh_rate = 1
+        if self.args.led_slowdown_gpio != None:
+            options.gpio_slowdown = self.args.led_slowdown_gpio
+        if self.args.led_no_hardware_pulse:
+            options.disable_hardware_pulsing = True
+        if not self.args.drop_privileges:
+            options.drop_privileges = False
+            
+        return options
+    
+    def process(self):
+        """Override SampleBase process method"""
+        self.args = self.parser.parse_args()
+
+        options = self.get_matrix_options()
+        self.matrix = RGBMatrix(options = options)
+
+        try:
+            # Start the timer
+            print("Press CTRL-C to stop")
+            self.run()
+        except KeyboardInterrupt:
+            print("Exiting\n")
+            return True
+        return True
+    
+    def setup_timer(self, work_minutes, break_minutes):
+        """Set up the timer with specified durations"""
         self.canvas = self.matrix.CreateFrameCanvas()
         
         # Timer state
-        self.work_duration = 25 * 60  # 25 minutes in seconds
-        self.break_duration = 5 * 60  # 5 minutes in seconds
+        self.work_duration = work_minutes * 60  # Convert to seconds
+        self.break_duration = break_minutes * 60  # Convert to seconds
         self.remaining_time = self.work_duration
         self.is_running = False
         self.is_break = False
@@ -203,8 +254,13 @@ class PomodoroTimer:
     
     def run(self):
         """Main timer loop"""
+        # Set up timer with custom durations
+        work_minutes = self.args.work
+        break_minutes = getattr(self.args, 'break_time')
+        self.setup_timer(work_minutes, break_minutes)
+        
         print("🍅 Welcome to Pomodoro Timer!")
-        print("25-minute focus sessions with 5-minute breaks")
+        print(f"{work_minutes}-minute focus sessions with {break_minutes}-minute breaks")
         self.print_help()
         
         # Set terminal to non-blocking mode for input
@@ -250,4 +306,5 @@ class PomodoroTimer:
 
 if __name__ == "__main__":
     timer = PomodoroTimer()
-    timer.run()
+    if not timer.process():
+        timer.print_help()
