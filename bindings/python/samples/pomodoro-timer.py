@@ -157,10 +157,10 @@ class PomodoroTimer:
         icon_y = self.padding
         
         if not self.is_running or self.is_paused:
-            # Draw green play icon (filled triangle pointing right) - 6px tall
+            # Draw green play icon (filled triangle pointing right) - 5px tall
             green = graphics.Color(0, 255, 0)
             
-            # Filled triangle shape (6 pixels tall)
+            # Filled triangle shape (5 pixels tall)
             # Row 0
             self.canvas.SetPixel(icon_x, icon_y, green.red, green.green, green.blue)
             
@@ -168,7 +168,7 @@ class PomodoroTimer:
             self.canvas.SetPixel(icon_x, icon_y + 1, green.red, green.green, green.blue)
             self.canvas.SetPixel(icon_x + 1, icon_y + 1, green.red, green.green, green.blue)
             
-            # Row 2
+            # Row 2 (widest)
             self.canvas.SetPixel(icon_x, icon_y + 2, green.red, green.green, green.blue)
             self.canvas.SetPixel(icon_x + 1, icon_y + 2, green.red, green.green, green.blue)
             self.canvas.SetPixel(icon_x + 2, icon_y + 2, green.red, green.green, green.blue)
@@ -176,24 +176,19 @@ class PomodoroTimer:
             # Row 3
             self.canvas.SetPixel(icon_x, icon_y + 3, green.red, green.green, green.blue)
             self.canvas.SetPixel(icon_x + 1, icon_y + 3, green.red, green.green, green.blue)
-            self.canvas.SetPixel(icon_x + 2, icon_y + 3, green.red, green.green, green.blue)
             
             # Row 4
             self.canvas.SetPixel(icon_x, icon_y + 4, green.red, green.green, green.blue)
-            self.canvas.SetPixel(icon_x + 1, icon_y + 4, green.red, green.green, green.blue)
-            
-            # Row 5
-            self.canvas.SetPixel(icon_x, icon_y + 5, green.red, green.green, green.blue)
         else:
-            # Draw red pause icon (two vertical bars) - 6px tall
+            # Draw red pause icon (two vertical bars) - 5px tall
             red = graphics.Color(255, 0, 0)
             
-            # Left bar (1 pixel wide, 6 pixels tall)
-            for y in range(6):
+            # Left bar (1 pixel wide, 5 pixels tall)
+            for y in range(5):
                 self.canvas.SetPixel(icon_x, icon_y + y, red.red, red.green, red.blue)
             
-            # Right bar (1 pixel wide, 6 pixels tall)
-            for y in range(6):
+            # Right bar (1 pixel wide, 5 pixels tall)
+            for y in range(5):
                 self.canvas.SetPixel(icon_x + 2, icon_y + y, red.red, red.green, red.blue)
     
     def start_timer(self):
