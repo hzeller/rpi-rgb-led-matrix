@@ -278,7 +278,7 @@ class PomodoroTimer:
         
         # Calculate dimensions
         done_width = len(done_text) * 8  # 8x13 font
-        subtitle_width = len(subtitle_text) * 3  # 4x6 font is roughly 3px per char
+        subtitle_width = len(subtitle_text) * 2.5  # Tighter spacing for 4x6 font
         
         # Calculate positions for centering both messages as a group
         available_height = self.progress_bar_y - self.padding
@@ -295,9 +295,9 @@ class PomodoroTimer:
         green = graphics.Color(0, 255, 0)
         graphics.DrawText(self.canvas, self.time_font, done_x, done_y, green, done_text)
         
-        # Draw subtitle in white (moved closer to DONE message)
+        # Draw subtitle in white (very close to DONE message)
         subtitle_x = (self.width - subtitle_width) // 2
-        subtitle_y = done_y + main_font_height - 6  # Move even closer (was -4, now -6)
+        subtitle_y = done_y + main_font_height - 8  # Even closer spacing (was -6, now -8)
         white = graphics.Color(255, 255, 255)
         graphics.DrawText(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
         
