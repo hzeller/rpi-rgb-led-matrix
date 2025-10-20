@@ -1,0 +1,5 @@
+# Ignore large source weather icon files
+weather_icons/
+*.png
+*.jpg
+*.jpeg
