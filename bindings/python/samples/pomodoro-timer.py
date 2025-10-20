@@ -40,6 +40,7 @@ class PomodoroTimer:
         self.is_running = False
         self.is_break = False
         self.is_paused = False
+        self.is_completed = False
         
         # Load fonts
         self.time_font = graphics.Font()
@@ -205,6 +206,7 @@ class PomodoroTimer:
         self.is_running = False
         self.is_paused = False
         self.is_break = False
+        self.is_completed = False
         self.remaining_time = self.work_duration
     
     def start_break(self):
@@ -262,6 +264,47 @@ class PomodoroTimer:
                 graphics.DrawText(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
             time.sleep(0.5)
+        
+        # Set completion flag to show message permanently
+        self.is_completed = True
+    
+    def draw_completion_message(self):
+        """Draw the completion message permanently on screen."""
+        self.clear()
+        
+        # Draw "DONE!" message with subtitle - adjusted positioning
+        done_text = "DONE!"
+        subtitle_text = "Take a break, you earned it"
+        
+        # Calculate dimensions
+        done_width = len(done_text) * 8  # 8x13 font
+        subtitle_width = len(subtitle_text) * 3  # 4x6 font is roughly 3px per char
+        
+        # Calculate positions for centering both messages as a group
+        available_height = self.progress_bar_y - self.padding
+        main_font_height = 13
+        small_font_height = 6  # 4x6 font height
+        total_message_height = main_font_height + small_font_height + 2  # 2px spacing
+        
+        # Center the group vertically
+        group_start_y = (available_height - total_message_height) // 2 + main_font_height
+        
+        # Draw "DONE!" in green (moved down 2px)
+        done_x = (self.width - done_width) // 2
+        done_y = group_start_y + 2  # Move down 2 pixels
+        green = graphics.Color(0, 255, 0)
+        graphics.DrawText(self.canvas, self.time_font, done_x, done_y, green, done_text)
+        
+        # Draw subtitle in white (moved up 2px)
+        subtitle_x = (self.width - subtitle_width) // 2
+        subtitle_y = done_y + main_font_height  # Remove 2px gap, move closer
+        white = graphics.Color(255, 255, 255)
+        graphics.DrawText(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
+        
+        # Draw full progress bar
+        self.draw_progress_bar()
+        
+        self.swap_canvas()
     
     def get_input(self):
         """Get keyboard input in a non-blocking way"""
@@ -335,7 +378,10 @@ class PomodoroTimer:
                 last_update = current_time
                 
                 # Update display
-                self.draw_display()
+                if self.is_completed:
+                    self.draw_completion_message()
+                else:
+                    self.draw_display()
                 
                 # Small delay to prevent excessive CPU usage
                 time.sleep(0.1)
