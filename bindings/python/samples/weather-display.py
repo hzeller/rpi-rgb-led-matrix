@@ -258,6 +258,25 @@ class WeatherDisplay:
             if icon_y + icon_image.height > 32:
                 icon_y = 32 - icon_image.height
             
+            # Draw white border around the icon to show its exact size
+            white_color = graphics.Color(255, 255, 255)
+            
+            # Draw top and bottom borders
+            for border_x in range(icon_x, icon_x + icon_image.width):
+                if border_x < 64:
+                    if icon_y > 0:
+                        self.canvas.SetPixel(border_x, icon_y - 1, white_color.red, white_color.green, white_color.blue)
+                    if icon_y + icon_image.height < 32:
+                        self.canvas.SetPixel(border_x, icon_y + icon_image.height, white_color.red, white_color.green, white_color.blue)
+            
+            # Draw left and right borders
+            for border_y in range(icon_y, icon_y + icon_image.height):
+                if border_y < 32:
+                    if icon_x > 0:
+                        self.canvas.SetPixel(icon_x - 1, border_y, white_color.red, white_color.green, white_color.blue)
+                    if icon_x + icon_image.width < 64:
+                        self.canvas.SetPixel(icon_x + icon_image.width, border_y, white_color.red, white_color.green, white_color.blue)
+            
             # Draw the icon
             self.canvas.SetImage(icon_image, icon_x, icon_y)
             print(f"Weather icon drawn at ({icon_x},{icon_y}), size: {icon_image.size}")
