@@ -134,8 +134,8 @@ def resize_and_copy_icons(source_dir, target_dir, target_size=(32, 32)):
                             # Calculate brightness
                             brightness = (0.299 * r + 0.587 * g + 0.114 * b)
                             
-                            # Clean up very dim pixels (likely artifacts)
-                            if brightness < 15:
+                            # Clean up dim pixels that create artifacts around icons
+                            if brightness < 35:
                                 pixels[x, y] = (0, 0, 0)
                             else:
                                 # Enhance colors for better LED visibility
