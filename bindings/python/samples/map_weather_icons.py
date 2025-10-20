@@ -107,17 +107,46 @@ def resize_and_copy_icons(source_dir, target_dir, target_size=(32, 32)):
         
         if os.path.exists(source_path):
             try:
-                # Open and resize the image
+                # Open and process the image for LED matrix optimization
                 with Image.open(source_path) as img:
-                    # Convert to RGBA for consistency
+                    # Convert to RGBA for proper transparency handling
                     if img.mode != 'RGBA':
                         img = img.convert('RGBA')
                     
                     # Resize with high quality resampling
                     resized_img = img.resize(target_size, Image.Resampling.LANCZOS)
                     
-                    # Save the resized image
-                    resized_img.save(target_path, 'PNG')
+                    # Create RGB image with black background for LED matrix
+                    rgb_img = Image.new('RGB', target_size, (0, 0, 0))
+                    
+                    # Paste the resized image using alpha channel as mask
+                    if resized_img.mode == 'RGBA':
+                        rgb_img.paste(resized_img, mask=resized_img.split()[3])
+                    else:
+                        rgb_img.paste(resized_img)
+                    
+                    # Enhance contrast and clean up artifacts for LED display
+                    pixels = rgb_img.load()
+                    for y in range(rgb_img.height):
+                        for x in range(rgb_img.width):
+                            r, g, b = pixels[x, y]
+                            
+                            # Calculate brightness
+                            brightness = (0.299 * r + 0.587 * g + 0.114 * b)
+                            
+                            # Clean up very dim pixels (likely artifacts)
+                            if brightness < 15:
+                                pixels[x, y] = (0, 0, 0)
+                            else:
+                                # Enhance colors for better LED visibility
+                                # Use gamma correction for better color reproduction
+                                r = min(255, int(255 * ((r / 255) ** 0.8)))
+                                g = min(255, int(255 * ((g / 255) ** 0.8)))
+                                b = min(255, int(255 * ((b / 255) ** 0.8)))
+                                pixels[x, y] = (r, g, b)
+                    
+                    # Save the optimized image
+                    rgb_img.save(target_path, 'PNG')
                     
                     print(f"✓ {weather_code}: {source_filename} -> {target_filename}")
                     processed_count += 1
