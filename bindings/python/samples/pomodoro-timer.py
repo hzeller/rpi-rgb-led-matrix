@@ -108,15 +108,20 @@ class PomodoroTimer:
         progress = 1 - (self.remaining_time / total_duration)
         filled_width = int(bar_width * progress)
         
-        # Draw background (empty bar) - lighter grey
+        # Draw the entire progress bar starting with very light grey
+        base_brightness = 40  # Much lighter grey base
+        max_brightness = 255  # White at full progress
+        
         for x in range(bar_width):
             for y in range(bar_height):
-                self.canvas.SetPixel(bar_x + x, bar_y + y, 180, 180, 180)  # Lighter gray
-        
-        # Draw progress (filled bar) - white
-        for x in range(filled_width):
-            for y in range(bar_height):
-                self.canvas.SetPixel(bar_x + x, bar_y + y, 255, 255, 255)  # White progress
+                if x < filled_width:
+                    # Progress area: gradually brighten from base to white
+                    progress_ratio = (x + 1) / bar_width if bar_width > 0 else 0
+                    brightness = int(base_brightness + (max_brightness - base_brightness) * progress_ratio)
+                    self.canvas.SetPixel(bar_x + x, bar_y + y, brightness, brightness, brightness)
+                else:
+                    # Empty area: very light grey
+                    self.canvas.SetPixel(bar_x + x, bar_y + y, base_brightness, base_brightness, base_brightness)
     
     def draw_display(self):
         """Draw the complete timer display"""
