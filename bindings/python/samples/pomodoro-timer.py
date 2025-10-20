@@ -224,13 +224,8 @@ class PomodoroTimer:
     
     def run(self):
         """Main timer loop"""
-        # Set up timer with custom durations
-        work_minutes = self.args.work
-        break_minutes = self.args.break_time
-        self.setup_timer(work_minutes, break_minutes)
-        
         print("🍅 Welcome to Pomodoro Timer!")
-        print(f"{work_minutes}-minute focus sessions with {break_minutes}-minute breaks")
+        print(f"{self.work_duration//60}-minute focus sessions with {self.break_duration//60}-minute breaks")
         self.print_help()
         
         # Set terminal to non-blocking mode for input
