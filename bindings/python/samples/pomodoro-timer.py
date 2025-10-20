@@ -49,7 +49,7 @@ class PomodoroTimer:
         self.label_font.LoadFont("../../../fonts/6x13B.bdf")  # Font for labels
         
         self.small_font = graphics.Font()
-        self.small_font.LoadFont("../../../fonts/5x8.bdf")  # Small font for instructions
+        self.small_font.LoadFont("../../../fonts/4x6.bdf")  # Smaller font for subtitle
         
         # Colors
         self.work_color = graphics.Color(0, 255, 0)      # Green for work time
@@ -239,12 +239,12 @@ class PomodoroTimer:
                 
                 # Calculate dimensions
                 done_width = len(done_text) * 8  # 8x13 font
-                subtitle_width = len(subtitle_text) * 4  # 5x8 font is roughly 4px per char
+                subtitle_width = len(subtitle_text) * 3  # 4x6 font is roughly 3px per char
                 
                 # Calculate positions for centering both messages as a group
                 available_height = self.progress_bar_y - self.padding
                 main_font_height = 13
-                small_font_height = 8
+                small_font_height = 6  # 4x6 font height
                 total_message_height = main_font_height + small_font_height + 2  # 2px spacing
                 
                 # Center the group vertically
