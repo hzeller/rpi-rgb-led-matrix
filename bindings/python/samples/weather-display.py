@@ -6,9 +6,7 @@ import time
 import sys
 import os
 import requests
-import json
 import argparse
-import math
 from datetime import datetime, timezone, timedelta
 
 # Load environment variables
@@ -22,8 +20,6 @@ except ImportError:
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from PIL import Image
-from io import BytesIO
-
 class WeatherDisplay:
     def __init__(self, city="Denver, CO"):
         # Configuration for the matrix - use same settings as other displays
@@ -347,7 +343,7 @@ class WeatherDisplay:
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
-        temp_y = 18  # Aligned with icon center
+        temp_y = 16  # Moved up 2 pixels
         
         # Draw high temp with 1 pixel spacing (white)
         current_x = temp_x
@@ -357,7 +353,7 @@ class WeatherDisplay:
         
         # Low temperature (blue) - center it within the temp area
         low_x = temp_start_x + (max_temp_width - low_width) // 2
-        low_y = 25  # Restored to previous position
+        low_y = 23  # Moved up 2 pixels
         
         # Draw low temp with 1 pixel spacing (blue)
         current_x = low_x
