@@ -54,7 +54,7 @@ class PomodoroTimer:
         # Colors
         self.work_color = graphics.Color(0, 255, 0)      # Green for work time
         self.warning_color = graphics.Color(255, 165, 0)  # Orange for last 5 minutes
-        self.urgent_color = graphics.Color(255, 0, 0)     # Red for last minute
+        self.urgent_color = graphics.Color(255, 120, 0)   # Softer orange-red for last minute
         self.break_color = graphics.Color(0, 150, 255)    # Blue for break time
         self.paused_color = graphics.Color(128, 128, 128) # Gray for paused
         self.text_color = graphics.Color(255, 255, 255)   # White for text
@@ -108,16 +108,15 @@ class PomodoroTimer:
         progress = 1 - (self.remaining_time / total_duration)
         filled_width = int(bar_width * progress)
         
-        # Draw background (empty bar)
+        # Draw background (empty bar) - light grey
         for x in range(bar_width):
             for y in range(bar_height):
-                self.canvas.SetPixel(bar_x + x, bar_y + y, 50, 50, 50)  # Dark gray
+                self.canvas.SetPixel(bar_x + x, bar_y + y, 120, 120, 120)  # Light gray
         
-        # Draw progress (filled bar)
-        color = self.get_timer_color()
+        # Draw progress (filled bar) - white
         for x in range(filled_width):
             for y in range(bar_height):
-                self.canvas.SetPixel(bar_x + x, bar_y + y, color.red, color.green, color.blue)
+                self.canvas.SetPixel(bar_x + x, bar_y + y, 255, 255, 255)  # White progress
     
     def draw_display(self):
         """Draw the complete timer display"""
@@ -127,10 +126,16 @@ class PomodoroTimer:
         time_str = self.format_time(self.remaining_time)
         timer_color = self.text_color  # White font
         
-        # Center the time display
+        # Center the time display horizontally and vertically
         time_width = len(time_str) * 8  # Approximate width with 8x13 font
         time_x = (self.width - time_width) // 2
-        graphics.DrawText(self.canvas, self.time_font, time_x, 18, timer_color, time_str)
+        
+        # Calculate vertical center excluding progress bar area
+        available_height = self.progress_bar_y - self.padding  # Height minus progress bar
+        font_height = 13  # 8x13 font height
+        time_y = (available_height + font_height) // 2
+        
+        graphics.DrawText(self.canvas, self.time_font, time_x, time_y, timer_color, time_str)
         
         # Draw progress bar
         self.draw_progress_bar()
