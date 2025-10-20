@@ -316,15 +316,6 @@ class WeatherDisplay:
         time_x = (64 - time_width) // 2
         time_y = 7  # Positioned to slightly overlay the top of the icon
         
-        # Draw time with 1 pixel spacing between characters using small font
-        current_x = time_x
-        for char in time_str:
-            if char == ' ':
-                current_x += 4  # Larger space between time and AM/PM
-            else:
-                char_width = graphics.DrawText(self.canvas, self.small_font, current_x, time_y, self.temp_color, char)
-                current_x += char_width + 1  # Add 1 pixel spacing after each character
-        
         # Extract weather info
         temp = int(weather['main']['temp'])
         temp_low = int(weather['main']['temp_min'])
@@ -399,6 +390,15 @@ class WeatherDisplay:
         for char in self.city_display_name:
             char_width = graphics.DrawText(self.canvas, self.tiny_font, current_x, city_y, self.detail_color, char)
             current_x += char_width  # No extra spacing between characters
+        
+        # Draw time LAST so it appears on top of the icon
+        current_x = time_x
+        for char in time_str:
+            if char == ' ':
+                current_x += 4  # Larger space between time and AM/PM
+            else:
+                char_width = graphics.DrawText(self.canvas, self.small_font, current_x, time_y, self.temp_color, char)
+                current_x += char_width + 1  # Add 1 pixel spacing after each character
 
     def run(self):
         print(f"Starting {self.city} weather display. Press CTRL-C to stop.")
