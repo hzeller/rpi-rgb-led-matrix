@@ -123,47 +123,78 @@ class WeatherDisplay:
             self.coords = {"lat": 39.7392, "lon": -104.9903}
     
     def get_timezone(self):
-        """Get timezone for coordinates using TimeZoneDB API or fallback to simple estimation"""
+        """Get timezone for coordinates with DST awareness"""
         try:
             if not self.coords:
                 print("No coordinates available. Using Mountain Time.")
-                self.timezone = timezone(timedelta(hours=-6))
+                self.timezone = timezone(timedelta(hours=-7))  # Mountain Standard Time
                 return
             
-            # Simple timezone estimation based on longitude
-            # This is a basic approximation - for more accuracy, you'd use a timezone API
             lng = self.coords["lon"]
+            lat = self.coords["lat"]
             
-            # Very rough timezone estimation (UTC offset = longitude / 15)
-            estimated_offset = round(lng / 15)
+            # Determine if it's currently DST period (rough approximation)
+            # DST in Northern Hemisphere: Second Sunday in March to First Sunday in November
+            from datetime import datetime
+            now = datetime.now()
+            month = now.month
+            day = now.day
             
-            # Apply some common timezone corrections for major regions
+            # Simple DST check for Northern Hemisphere (most locations)
+            is_dst = False
+            if lat > 0:  # Northern Hemisphere
+                if month > 3 and month < 11:  # April through October
+                    is_dst = True
+                elif month == 3 and day > 14:  # Mid-March onwards
+                    is_dst = True
+                elif month == 11 and day < 7:  # Early November
+                    is_dst = True
+            
+            # Regional timezone mapping with DST awareness
             if -125 <= lng <= -60:  # North America
                 if lng >= -75:  # Eastern time zone area
-                    estimated_offset = -5
+                    standard_offset = -5
                 elif lng >= -90:  # Central time zone area
-                    estimated_offset = -6
+                    standard_offset = -6
                 elif lng >= -105:  # Mountain time zone area
-                    estimated_offset = -7
+                    standard_offset = -7
                 else:  # Pacific time zone area
-                    estimated_offset = -8
+                    standard_offset = -8
+                
+                # Adjust for DST (add 1 hour during DST)
+                if is_dst and lat > 25:  # Most of US/Canada observes DST
+                    estimated_offset = standard_offset + 1
+                else:
+                    estimated_offset = standard_offset
+                    
             elif -10 <= lng <= 40:  # Europe/Africa
                 if lng <= 15:
-                    estimated_offset = 1  # Central European Time
+                    standard_offset = 1  # Central European Time
                 else:
-                    estimated_offset = 2  # Eastern European Time
+                    standard_offset = 2  # Eastern European Time
+                
+                # European DST (last Sunday in March to last Sunday in October)
+                if is_dst and lat > 35:
+                    estimated_offset = standard_offset + 1
+                else:
+                    estimated_offset = standard_offset
+                    
             elif lng >= 100 and lng <= 150:  # Asia-Pacific
                 if lng <= 120:
-                    estimated_offset = 8  # China Standard Time
+                    estimated_offset = 8  # China Standard Time (no DST)
                 else:
-                    estimated_offset = 9  # Japan Standard Time
+                    estimated_offset = 9  # Japan Standard Time (no DST)
+            else:
+                # Fallback to simple longitude calculation
+                estimated_offset = round(lng / 15)
             
             self.timezone = timezone(timedelta(hours=estimated_offset))
-            print(f"Estimated timezone: UTC{estimated_offset:+d}")
+            dst_status = " (DST)" if is_dst and lat > 0 else " (Standard)"
+            print(f"Estimated timezone: UTC{estimated_offset:+d}{dst_status}")
             
         except Exception as e:
             print(f"Timezone estimation error: {e}. Using Mountain Time.")
-            self.timezone = timezone(timedelta(hours=-6))
+            self.timezone = timezone(timedelta(hours=-7))
     
     def get_weather_data(self):
         """Fetch weather data from OpenWeatherMap API"""
