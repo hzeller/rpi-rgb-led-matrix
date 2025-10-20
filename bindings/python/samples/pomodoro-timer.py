@@ -146,7 +146,47 @@ class PomodoroTimer:
         # Draw progress bar
         self.draw_progress_bar()
         
+        # Draw pause/play icon
+        self.draw_status_icon()
+        
         self.swap_canvas()
+    
+    def draw_status_icon(self):
+        """Draw pause (red) or play (green) icon in top left corner."""
+        icon_x = self.padding
+        icon_y = self.padding
+        
+        if self.is_running and not self.is_paused:
+            # Draw red pause icon (two vertical bars)
+            red = graphics.Color(255, 0, 0)
+            
+            # Left bar
+            for y in range(6):
+                self.canvas.SetPixel(icon_x, icon_y + y, red.red, red.green, red.blue)
+                self.canvas.SetPixel(icon_x + 1, icon_y + y, red.red, red.green, red.blue)
+            
+            # Right bar  
+            for y in range(6):
+                self.canvas.SetPixel(icon_x + 4, icon_y + y, red.red, red.green, red.blue)
+                self.canvas.SetPixel(icon_x + 5, icon_y + y, red.red, red.green, red.blue)
+        else:
+            # Draw green play icon (triangle pointing right)
+            green = graphics.Color(0, 255, 0)
+            
+            # Triangle shape - left edge (vertical line)
+            for y in range(6):
+                self.canvas.SetPixel(icon_x, icon_y + y, green.red, green.green, green.blue)
+            
+            # Triangle body
+            self.canvas.SetPixel(icon_x + 1, icon_y + 1, green.red, green.green, green.blue)
+            self.canvas.SetPixel(icon_x + 1, icon_y + 4, green.red, green.green, green.blue)
+            
+            self.canvas.SetPixel(icon_x + 2, icon_y + 2, green.red, green.green, green.blue)
+            self.canvas.SetPixel(icon_x + 2, icon_y + 3, green.red, green.green, green.blue)
+            
+            # Triangle tip
+            self.canvas.SetPixel(icon_x + 3, icon_y + 2, green.red, green.green, green.blue)
+            self.canvas.SetPixel(icon_x + 3, icon_y + 3, green.red, green.green, green.blue)
     
     def start_timer(self):
         """Start or resume the timer"""
