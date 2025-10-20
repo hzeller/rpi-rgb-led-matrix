@@ -7,76 +7,31 @@ import sys
 import os
 import threading
 import select
+import argparse
 from datetime import datetime, timedelta
 
 # Add the parent directory to Python path to import the rgbmatrix module
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
-from samplebase import SampleBase
 
-class PomodoroTimer(SampleBase):
-    def __init__(self, *args, **kwargs):
-        super(PomodoroTimer, self).__init__(*args, **kwargs)
+class PomodoroTimer:
+    """Manages the LED matrix pomodoro timer display and logic."""
+    
+    def __init__(self, work_minutes=25, break_minutes=5, options=None):
+        # Set up matrix options
+        if options is None:
+            options = RGBMatrixOptions()
+            options.rows = 32
+            options.cols = 64
+            options.chain_length = 1
+            options.parallel = 1
+            options.hardware_mapping = 'adafruit-hat-pwm'
+            options.brightness = 80
         
-        # Add custom arguments for timer durations
-        self.parser.add_argument('-w', '--work', type=int, default=25,
-                               help='Work session duration in minutes (default: 25)')
-        self.parser.add_argument('--break-time', type=int, default=5,
-                               help='Break duration in minutes (default: 5)')
-    
-    def get_matrix_options(self):
-        """Get matrix options with defaults"""
-        options = RGBMatrixOptions()
-        
-        # Set defaults for LED matrix
-        if self.args.led_gpio_mapping != None:
-            options.hardware_mapping = self.args.led_gpio_mapping
-        else:
-            options.hardware_mapping = 'adafruit-hat-pwm'  # Default for this project
-            
-        options.rows = self.args.led_rows
-        options.cols = self.args.led_cols
-        options.chain_length = self.args.led_chain
-        options.parallel = self.args.led_parallel
-        options.row_address_type = self.args.led_row_addr_type
-        options.multiplexing = self.args.led_multiplexing
-        options.pwm_bits = self.args.led_pwm_bits
-        options.brightness = self.args.led_brightness
-        options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
-        options.led_rgb_sequence = self.args.led_rgb_sequence
-        options.pixel_mapper_config = self.args.led_pixel_mapper
-        options.panel_type = self.args.led_panel_type
-
-        if self.args.led_show_refresh:
-            options.show_refresh_rate = 1
-        if self.args.led_slowdown_gpio != None:
-            options.gpio_slowdown = self.args.led_slowdown_gpio
-        if self.args.led_no_hardware_pulse:
-            options.disable_hardware_pulsing = True
-        if not self.args.drop_privileges:
-            options.drop_privileges = False
-            
-        return options
-    
-    def process(self):
-        """Override SampleBase process method"""
-        self.args = self.parser.parse_args()
-
-        options = self.get_matrix_options()
-        self.matrix = RGBMatrix(options = options)
-
-        try:
-            # Start the timer
-            print("Press CTRL-C to stop")
-            self.run()
-        except KeyboardInterrupt:
-            print("Exiting\n")
-            return True
-        return True
-    
-    def setup_timer(self, work_minutes, break_minutes):
-        """Set up the timer with specified durations"""
+        self.matrix = RGBMatrix(options=options)
         self.canvas = self.matrix.CreateFrameCanvas()
+        self.width = self.matrix.width
+        self.height = self.matrix.height
         
         # Timer state
         self.work_duration = work_minutes * 60  # Convert to seconds
@@ -107,6 +62,21 @@ class PomodoroTimer(SampleBase):
         # Session counter
         self.completed_sessions = 0
         
+        # Layout constants
+        self.padding = 2
+        self.progress_bar_y = 30
+        self.progress_bar_height = 2
+        self.progress_bar_width = 60
+        self.progress_bar_x = 2
+    
+    def clear(self):
+        """Clear the display canvas."""
+        self.canvas.Clear()
+    
+    def swap_canvas(self):
+        """Swap the canvas to display the updated content."""
+        self.canvas = self.matrix.SwapOnVSync(self.canvas)
+        
     def format_time(self, seconds):
         """Format seconds as MM:SS"""
         minutes = int(seconds // 60)
@@ -128,10 +98,10 @@ class PomodoroTimer(SampleBase):
     
     def draw_progress_bar(self):
         """Draw a progress bar at the bottom of the screen"""
-        bar_y = 30
-        bar_height = 2
-        bar_width = 60
-        bar_x = 2
+        bar_y = self.progress_bar_y
+        bar_height = self.progress_bar_height
+        bar_width = self.progress_bar_width
+        bar_x = self.progress_bar_x
         
         # Calculate progress
         total_duration = self.break_duration if self.is_break else self.work_duration
@@ -151,21 +121,21 @@ class PomodoroTimer(SampleBase):
     
     def draw_display(self):
         """Draw the complete timer display"""
-        self.canvas.Clear()
+        self.clear()
         
         # Draw main timer
         time_str = self.format_time(self.remaining_time)
-        timer_color = graphics.Color(255, 255, 255)  # White font
+        timer_color = self.text_color  # White font
         
         # Center the time display
         time_width = len(time_str) * 8  # Approximate width with 8x13 font
-        time_x = (64 - time_width) // 2
+        time_x = (self.width - time_width) // 2
         graphics.DrawText(self.canvas, self.time_font, time_x, 18, timer_color, time_str)
         
         # Draw progress bar
         self.draw_progress_bar()
         
-        self.canvas = self.matrix.SwapOnVSync(self.canvas)
+        self.swap_canvas()
     
     def start_timer(self):
         """Start or resume the timer"""
@@ -301,10 +271,23 @@ class PomodoroTimer(SampleBase):
         finally:
             # Restore terminal settings
             termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
-            self.canvas.Clear()
-            self.canvas = self.matrix.SwapOnVSync(self.canvas)
+            self.clear()
+            self.swap_canvas()
+
+def main():
+    """Main entry point for the pomodoro timer."""
+    parser = argparse.ArgumentParser(description='Pomodoro Timer for RGB LED Matrix')
+    parser.add_argument('-w', '--work', type=int, default=25,
+                       help='Work session duration in minutes (default: 25)')
+    parser.add_argument('--break-time', type=int, default=5,
+                       help='Break duration in minutes (default: 5)')
+    
+    args = parser.parse_args()
+    
+    print(f"🍅 Starting Pomodoro Timer: {args.work}min work, {args.break_time}min break")
+    
+    timer = PomodoroTimer(work_minutes=args.work, break_minutes=args.break_time)
+    timer.run()
 
 if __name__ == "__main__":
-    timer = PomodoroTimer()
-    if not timer.process():
-        timer.print_help()
+    main()
