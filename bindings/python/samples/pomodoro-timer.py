@@ -21,7 +21,7 @@ class PomodoroTimer(SampleBase):
         # Add custom arguments for timer durations
         self.parser.add_argument('-w', '--work', type=int, default=25,
                                help='Work session duration in minutes (default: 25)')
-        self.parser.add_argument('-b', '--break-time', type=int, default=5,
+        self.parser.add_argument('--break-time', type=int, default=5,
                                help='Break duration in minutes (default: 5)')
     
     def get_matrix_options(self):
@@ -256,7 +256,7 @@ class PomodoroTimer(SampleBase):
         """Main timer loop"""
         # Set up timer with custom durations
         work_minutes = self.args.work
-        break_minutes = getattr(self.args, 'break_time')
+        break_minutes = self.args.break_time
         self.setup_timer(work_minutes, break_minutes)
         
         print("🍅 Welcome to Pomodoro Timer!")
