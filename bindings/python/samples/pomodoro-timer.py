@@ -233,8 +233,33 @@ class PomodoroTimer:
         for i in range(6):
             self.canvas.Clear()
             if i % 2 == 0:
-                # Draw "DONE!" message
-                graphics.DrawText(self.canvas, self.time_font, 10, 18, self.urgent_color, "DONE!")
+                # Draw "DONE!" message with subtitle - centered as a group
+                done_text = "DONE!"
+                subtitle_text = "Take a break, you earned it"
+                
+                # Calculate dimensions
+                done_width = len(done_text) * 8  # 8x13 font
+                subtitle_width = len(subtitle_text) * 4  # 5x8 font is roughly 4px per char
+                
+                # Calculate positions for centering both messages as a group
+                available_height = self.progress_bar_y - self.padding
+                main_font_height = 13
+                small_font_height = 8
+                total_message_height = main_font_height + small_font_height + 2  # 2px spacing
+                
+                # Center the group vertically
+                group_start_y = (available_height - total_message_height) // 2 + main_font_height
+                
+                # Draw "DONE!" in green
+                done_x = (self.width - done_width) // 2
+                green = graphics.Color(0, 255, 0)
+                graphics.DrawText(self.canvas, self.time_font, done_x, group_start_y, green, done_text)
+                
+                # Draw subtitle in white
+                subtitle_x = (self.width - subtitle_width) // 2
+                subtitle_y = group_start_y + main_font_height + 2  # 2px gap
+                white = graphics.Color(255, 255, 255)
+                graphics.DrawText(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
             time.sleep(0.5)
     
