@@ -15,7 +15,7 @@ def create_icon_mapping():
     # Mapping OpenWeatherMap codes to the best matching descriptive icon names
     icon_mapping = {
         # Clear sky
-        "01d": "Sunny.png",                           # Clear day - bright sun
+        "01d": "Sun 1.png",                           # Clear day - bright sun
         "01n": "Moon + Star.png",                     # Clear night - moon and stars
         
         # Few clouds  
