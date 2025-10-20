@@ -111,26 +111,6 @@ class PomodoroTimer:
         time_x = (64 - time_width) // 2
         graphics.DrawText(self.canvas, self.time_font, time_x, 18, timer_color, time_str)
         
-        # Draw session label
-        if self.is_break:
-            label = "BREAK"
-            label_color = self.break_color
-        elif self.is_paused:
-            label = "PAUSED"
-            label_color = self.paused_color
-        else:
-            label = "FOCUS"
-            label_color = self.work_color
-        
-        # Center the label
-        label_width = len(label) * 6  # Approximate width
-        label_x = (64 - label_width) // 2
-        graphics.DrawText(self.canvas, self.label_font, label_x, 8, label_color, label)
-        
-        # Draw session counter
-        sessions_text = f"Sessions: {self.completed_sessions}"
-        graphics.DrawText(self.canvas, self.small_font, 2, 28, self.text_color, sessions_text)
-        
         # Draw progress bar
         self.draw_progress_bar()
         

@@ -52,10 +52,8 @@ class PomodoroTimerTest:
         
         print("🍅 POMODORO TIMER")
         print("=" * 30)
-        print(f"Status: {status}")
         print(f"Time:   {time_str}")
         print(f"Progress: [{progress_bar}]")
-        print(f"Sessions completed: {self.completed_sessions}")
         print()
     
     def start_timer(self):
