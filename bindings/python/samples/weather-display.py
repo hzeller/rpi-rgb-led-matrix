@@ -39,6 +39,7 @@ class WeatherDisplay:
         
         # Set up location
         self.city = city
+        self.city_display_name = city  # Will be updated with proper formatting after geocoding
         self.coords = None  # Will be set by geocoding
         self.timezone = None  # Will be set by timezone lookup
         
@@ -97,6 +98,14 @@ class WeatherDisplay:
                     self.coords = {"lat": data[0]["lat"], "lon": data[0]["lon"]}
                     country = data[0].get("country", "")
                     state = data[0].get("state", "")
+                    
+                    # Create display name (City, State/Country)
+                    self.city_display_name = data[0]['name']
+                    if state and country in ('US', 'USA'):  # For US cities, show state
+                        self.city_display_name += f", {state}"
+                    elif country:  # For other countries, show country
+                        self.city_display_name += f", {country}"
+                    
                     location_info = f"{data[0]['name']}"
                     if state:
                         location_info += f", {state}"
@@ -283,7 +292,7 @@ class WeatherDisplay:
         time_width -= 1  # Remove trailing spacing
         
         time_x = (64 - time_width) // 2
-        time_y = 8  # Back to small font position
+        time_y = 6  # Moved up from 8 to 6 to avoid icon overlap
         
         # Draw time with 1 pixel spacing between characters using small font
         current_x = time_x
@@ -322,9 +331,9 @@ class WeatherDisplay:
         # Center the entire group horizontally
         group_start_x = (64 - total_group_width) // 2
         
-        # Position icon on the left of the group, centered vertically in bottom area
+        # Position icon on the left of the group, centered vertically in middle area
         icon_x = group_start_x + 14  # Center of the 28px icon area (for 26x26 icons)
-        icon_y = 19  # Adjusted position for 26x26 icons
+        icon_y = 17  # Adjusted position for better spacing between time and city name
         
         print(f"Weather icon code: {icon_code}")
         print(f"Group layout: total_width={total_group_width}, start_x={group_start_x}")
@@ -336,7 +345,7 @@ class WeatherDisplay:
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
-        temp_y = 21  # Moved back up 2 pixels from 23 to 21
+        temp_y = 19  # Adjusted to align with icon center
         
         # Draw high temp with 1 pixel spacing (white)
         current_x = temp_x
@@ -346,12 +355,28 @@ class WeatherDisplay:
         
         # Low temperature (blue) - center it within the temp area
         low_x = temp_start_x + (max_temp_width - low_width) // 2
-        low_y = 28  # Moved back up 2 pixels from 30 to 28
+        low_y = 26  # Adjusted to provide better spacing before city name
         
         # Draw low temp with 1 pixel spacing (blue)
         current_x = low_x
         for char in low_str:
             char_width = graphics.DrawText(self.canvas, self.small_font, current_x, low_y, self.detail_color, char)
+            current_x += char_width + 1  # Add 1 pixel spacing between characters
+        
+        # City name at bottom center in small font
+        city_width = 0
+        for char in self.city_display_name:
+            city_width += self.small_font.CharacterWidth(ord(char))
+            city_width += 1  # Add 1 pixel spacing between characters
+        city_width -= 1  # Remove trailing spacing
+        
+        city_x = (64 - city_width) // 2
+        city_y = 31  # At bottom of 32-pixel display (font baseline)
+        
+        # Draw city name with 1 pixel spacing (gray)
+        current_x = city_x
+        for char in self.city_display_name:
+            char_width = graphics.DrawText(self.canvas, self.small_font, current_x, city_y, self.detail_color, char)
             current_x += char_width + 1  # Add 1 pixel spacing between characters
 
     def run(self):
