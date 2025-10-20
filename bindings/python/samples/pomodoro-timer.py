@@ -50,7 +50,7 @@ class PomodoroTimer:
         self.label_font.LoadFont("../../../fonts/6x13B.bdf")  # Font for labels
         
         self.small_font = graphics.Font()
-        self.small_font.LoadFont("../../../fonts/4x6.bdf")  # Smaller font for subtitle
+        self.small_font.LoadFont("../../../fonts/tom-thumb.bdf")  # Even smaller font for subtitle
         
         # Colors
         self.work_color = graphics.Color(0, 255, 0)      # Green for work time
@@ -235,44 +235,16 @@ class PomodoroTimer:
         for i in range(6):
             self.canvas.Clear()
             if i % 2 == 0:
-                # Draw "DONE!" message with subtitle - centered as a group
-                done_text = "DONE!"
-                subtitle_text = "Take a break, you earned it"
-                
-                # Calculate dimensions
-                done_width = len(done_text) * 8  # 8x13 font
-                subtitle_width = len(subtitle_text) * 3  # 4x6 font is roughly 3px per char
-                
-                # Calculate positions for centering both messages as a group
-                available_height = self.progress_bar_y - self.padding
-                main_font_height = 13
-                small_font_height = 6  # 4x6 font height
-                total_message_height = main_font_height + small_font_height + 2  # 2px spacing
-                
-                # Center the group vertically
-                group_start_y = (available_height - total_message_height) // 2 + main_font_height
-                
-                # Draw "DONE!" in green
-                done_x = (self.width - done_width) // 2
-                green = graphics.Color(0, 255, 0)
-                graphics.DrawText(self.canvas, self.time_font, done_x, group_start_y, green, done_text)
-                
-                # Draw subtitle in white
-                subtitle_x = (self.width - subtitle_width) // 2
-                subtitle_y = group_start_y + main_font_height + 2  # 2px gap
-                white = graphics.Color(255, 255, 255)
-                graphics.DrawText(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
+                # Draw "DONE!" message with subtitle using same positioning as permanent message
+                self.draw_completion_content()
             self.canvas = self.matrix.SwapOnVSync(self.canvas)
             time.sleep(0.5)
         
         # Set completion flag to show message permanently
         self.is_completed = True
     
-    def draw_completion_message(self):
-        """Draw the completion message permanently on screen."""
-        self.clear()
-        
-        # Draw "DONE!" message with subtitle - adjusted positioning
+    def draw_completion_content(self):
+        """Draw the completion message content (used for both blinking and permanent display)."""
         done_text = "DONE!"
         subtitle_text = "Take a break, you earned it"
         
@@ -280,12 +252,12 @@ class PomodoroTimer:
         done_width = len(done_text) * 8  # 8x13 font
         # Calculate subtitle width with tight word spacing
         words = subtitle_text.split(' ')
-        subtitle_width = sum(len(word) * 3 for word in words) + (len(words) - 1) * 2  # 2px between words
+        subtitle_width = sum(len(word) * 2 for word in words) + (len(words) - 1) * 2  # Smaller font spacing
         
         # Calculate positions for centering both messages as a group
         available_height = self.progress_bar_y - self.padding
         main_font_height = 13
-        small_font_height = 6  # 4x6 font height
+        small_font_height = 4  # tom-thumb font height
         total_message_height = main_font_height + small_font_height + 2  # 2px spacing
         
         # Center the group vertically
@@ -299,9 +271,16 @@ class PomodoroTimer:
         
         # Draw subtitle in white (very close to DONE message)
         subtitle_x = (self.width - subtitle_width) // 2
-        subtitle_y = done_y + main_font_height - 8  # Even closer spacing (was -6, now -8)
+        subtitle_y = done_y + main_font_height - 8  # Even closer spacing
         white = graphics.Color(255, 255, 255)
         self.draw_text_with_tight_spacing(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
+    
+    def draw_completion_message(self):
+        """Draw the completion message permanently on screen."""
+        self.clear()
+        
+        # Draw the completion content
+        self.draw_completion_content()
         
         # Don't draw progress bar on completion screen
         
