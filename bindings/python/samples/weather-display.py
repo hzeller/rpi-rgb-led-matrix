@@ -224,16 +224,24 @@ class WeatherDisplay:
                 # Convert to RGB and enhance brightness for LED matrix
                 icon_image = icon_image.convert('RGB')
                 
-                # Enhance brightness for LED matrix visibility
+                # Enhance brightness and clean up dim pixels for LED matrix visibility
                 pixels = icon_image.load()
                 for y in range(icon_image.height):
                     for x in range(icon_image.width):
                         r, g, b = pixels[x, y]
-                        # Boost brightness but cap at 255
-                        r = min(255, int(r * 1.5))
-                        g = min(255, int(g * 1.5))
-                        b = min(255, int(b * 1.5))
-                        pixels[x, y] = (r, g, b)
+                        
+                        # Calculate brightness (perceived luminance)
+                        brightness = (0.299 * r + 0.587 * g + 0.114 * b)
+                        
+                        # If pixel is too dim, make it completely black to eliminate artifacts
+                        if brightness < 30:  # Threshold for dim pixels
+                            pixels[x, y] = (0, 0, 0)
+                        else:
+                            # Boost brightness but cap at 255
+                            r = min(255, int(r * 1.5))
+                            g = min(255, int(g * 1.5))
+                            b = min(255, int(b * 1.5))
+                            pixels[x, y] = (r, g, b)
                 
                 print(f"Successfully loaded weather icon: {icon_code}")
                 return icon_image
