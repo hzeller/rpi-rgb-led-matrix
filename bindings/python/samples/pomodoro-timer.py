@@ -278,7 +278,9 @@ class PomodoroTimer:
         
         # Calculate dimensions
         done_width = len(done_text) * 8  # 8x13 font
-        subtitle_width = len(subtitle_text) * 2.5  # Tighter spacing for 4x6 font
+        # Calculate subtitle width with tight word spacing
+        words = subtitle_text.split(' ')
+        subtitle_width = sum(len(word) * 3 for word in words) + (len(words) - 1) * 2  # 2px between words
         
         # Calculate positions for centering both messages as a group
         available_height = self.progress_bar_y - self.padding
@@ -299,12 +301,25 @@ class PomodoroTimer:
         subtitle_x = (self.width - subtitle_width) // 2
         subtitle_y = done_y + main_font_height - 8  # Even closer spacing (was -6, now -8)
         white = graphics.Color(255, 255, 255)
-        graphics.DrawText(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
+        self.draw_text_with_tight_spacing(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
         
-        # Draw full progress bar
-        self.draw_progress_bar()
+        # Don't draw progress bar on completion screen
         
         self.swap_canvas()
+    
+    def draw_text_with_tight_spacing(self, canvas, font, x, y, color, text):
+        """Draw text with reduced spacing between words."""
+        current_x = x
+        words = text.split(' ')
+        
+        for i, word in enumerate(words):
+            # Draw the word
+            word_width = graphics.DrawText(canvas, font, current_x, y, color, word)
+            current_x += word_width
+            
+            # Add smaller space between words (except after last word)
+            if i < len(words) - 1:
+                current_x += 2  # Small space between words (instead of normal space width)
     
     def get_input(self):
         """Get keyboard input in a non-blocking way"""
