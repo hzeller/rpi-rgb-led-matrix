@@ -37,7 +37,7 @@ class PomodoroTimer:
         
         # Load fonts
         self.time_font = graphics.Font()
-        self.time_font.LoadFont("../../../fonts/9x18B.bdf")  # Bold font for timer
+        self.time_font.LoadFont("../../../fonts/8x13B.bdf")  # Slightly smaller bold font for timer
         
         self.label_font = graphics.Font()
         self.label_font.LoadFont("../../../fonts/6x13B.bdf")  # Font for labels
@@ -104,10 +104,10 @@ class PomodoroTimer:
         
         # Draw main timer
         time_str = self.format_time(self.remaining_time)
-        timer_color = self.get_timer_color()
+        timer_color = graphics.Color(255, 255, 255)  # White font
         
         # Center the time display
-        time_width = len(time_str) * 9  # Approximate width with 9x18 font
+        time_width = len(time_str) * 8  # Approximate width with 8x13 font
         time_x = (64 - time_width) // 2
         graphics.DrawText(self.canvas, self.time_font, time_x, 18, timer_color, time_str)
         
@@ -133,12 +133,6 @@ class PomodoroTimer:
         
         # Draw progress bar
         self.draw_progress_bar()
-        
-        # Draw controls hint if paused or not running
-        if not self.is_running or self.is_paused:
-            controls = "SPACE=Start R=Reset Q=Quit"
-            # Draw in small text at the top
-            graphics.DrawText(self.canvas, self.small_font, 1, 5, self.text_color, controls[:21])
         
         self.canvas = self.matrix.SwapOnVSync(self.canvas)
     

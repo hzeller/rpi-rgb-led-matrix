@@ -57,16 +57,6 @@ class PomodoroTimerTest:
         print(f"Progress: [{progress_bar}]")
         print(f"Sessions completed: {self.completed_sessions}")
         print()
-        
-        if not self.is_running or self.is_paused:
-            print("Controls:")
-            print("  SPACE - Start/Pause")
-            print("  R - Reset")
-            if not self.is_running and not self.is_break:
-                print("  B - Start break")
-            print("  Q - Quit")
-        else:
-            print("Timer running... Press SPACE to pause")
     
     def start_timer(self):
         """Start or resume the timer"""
