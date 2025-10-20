@@ -233,8 +233,8 @@ class WeatherDisplay:
                         # Calculate brightness to identify dim pixels
                         brightness = (0.299 * r + 0.587 * g + 0.114 * b)
                         
-                        # Remove dim pixels that create artifacts around icons
-                        if brightness < 35:
+                        # Remove only very dim pixels that create artifacts around icons
+                        if brightness < 20:
                             pixels[x, y] = (0, 0, 0)
                         else:
                             # Apply light enhancement to visible pixels
