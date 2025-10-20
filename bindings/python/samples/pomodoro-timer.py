@@ -108,10 +108,10 @@ class PomodoroTimer:
         progress = 1 - (self.remaining_time / total_duration)
         filled_width = int(bar_width * progress)
         
-        # Draw background (empty bar) - light grey
+        # Draw background (empty bar) - lighter grey
         for x in range(bar_width):
             for y in range(bar_height):
-                self.canvas.SetPixel(bar_x + x, bar_y + y, 120, 120, 120)  # Light gray
+                self.canvas.SetPixel(bar_x + x, bar_y + y, 180, 180, 180)  # Lighter gray
         
         # Draw progress (filled bar) - white
         for x in range(filled_width):
