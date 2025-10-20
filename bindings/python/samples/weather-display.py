@@ -209,8 +209,8 @@ class WeatherDisplay:
                 print(f"Loading local weather icon: {icon_path}")
                 icon_image = Image.open(icon_path)
                 
-                # Resize to appropriate size for LED matrix (26x26 - optimal size)
-                icon_image = icon_image.resize((26, 26), Image.Resampling.LANCZOS)
+                # Resize to appropriate size for LED matrix (25x25 - slightly smaller to avoid overlap)
+                icon_image = icon_image.resize((25, 25), Image.Resampling.LANCZOS)
                 
                 # Handle transparency - create black background for LED matrix
                 if icon_image.mode in ('RGBA', 'LA') or 'transparency' in icon_image.info:
@@ -327,15 +327,15 @@ class WeatherDisplay:
             low_width += 1  # Add 1 pixel spacing between characters
         low_width -= 1  # Remove trailing spacing
         
-        # Calculate total group width: icon(28) + spacing(2) + max_temp_width (updated for 26x26 icons)
+        # Calculate total group width: icon(27) + spacing(2) + max_temp_width (updated for 25x25 icons)
         max_temp_width = max(temp_width, low_width)
-        total_group_width = 28 + 2 + max_temp_width
+        total_group_width = 27 + 2 + max_temp_width
         
         # Center the entire group horizontally
         group_start_x = (64 - total_group_width) // 2
         
         # Position icon on the left of the group, centered vertically in middle area
-        icon_x = group_start_x + 14  # Center of the 28px icon area (for 26x26 icons)
+        icon_x = group_start_x + 13  # Center of the 27px icon area (for 25x25 icons)
         icon_y = 17  # Adjusted position for better spacing between time and city name
         
         print(f"Weather icon code: {icon_code}")
@@ -344,7 +344,7 @@ class WeatherDisplay:
         self.draw_weather_icon(icon_image, icon_x, icon_y)
         
         # Position temperatures to the right of icon
-        temp_start_x = group_start_x + 28 + 2  # After icon area + spacing (updated for 28px icon area)
+        temp_start_x = group_start_x + 27 + 2  # After icon area + spacing (updated for 27px icon area)
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
@@ -370,17 +370,16 @@ class WeatherDisplay:
         city_width = 0
         for char in self.city_display_name:
             city_width += self.tiny_font.CharacterWidth(ord(char))
-            city_width += 1  # Add 1 pixel spacing between characters
-        city_width -= 1  # Remove trailing spacing
+            # No extra spacing between characters for compact display
         
         city_x = (64 - city_width) // 2
         city_y = 31  # At bottom of 32-pixel display (font baseline)
         
-        # Draw city name with 1 pixel spacing (gray)
+        # Draw city name with no extra spacing (gray)
         current_x = city_x
         for char in self.city_display_name:
             char_width = graphics.DrawText(self.canvas, self.tiny_font, current_x, city_y, self.detail_color, char)
-            current_x += char_width + 1  # Add 1 pixel spacing between characters
+            current_x += char_width  # No extra spacing between characters
 
     def run(self):
         print(f"Starting {self.city} weather display. Press CTRL-C to stop.")
