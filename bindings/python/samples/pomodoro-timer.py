@@ -295,9 +295,9 @@ class PomodoroTimer:
         green = graphics.Color(0, 255, 0)
         graphics.DrawText(self.canvas, self.time_font, done_x, done_y, green, done_text)
         
-        # Draw subtitle in white (moved up 4px from original)
+        # Draw subtitle in white (moved closer to DONE message)
         subtitle_x = (self.width - subtitle_width) // 2
-        subtitle_y = done_y + main_font_height - 4  # Move up 4 pixels from the gap
+        subtitle_y = done_y + main_font_height - 6  # Move even closer (was -4, now -6)
         white = graphics.Color(255, 255, 255)
         graphics.DrawText(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
         
