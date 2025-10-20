@@ -209,8 +209,8 @@ class WeatherDisplay:
                 print(f"Loading local weather icon: {icon_path}")
                 icon_image = Image.open(icon_path)
                 
-                # Resize to appropriate size for LED matrix (25x25 - slightly smaller to avoid overlap)
-                icon_image = icon_image.resize((25, 25), Image.Resampling.LANCZOS)
+                # Resize to appropriate size for LED matrix (24x24 - optimized size)
+                icon_image = icon_image.resize((24, 24), Image.Resampling.LANCZOS)
                 
                 # Handle transparency - create black background for LED matrix
                 if icon_image.mode in ('RGBA', 'LA') or 'transparency' in icon_image.info:
@@ -326,15 +326,15 @@ class WeatherDisplay:
             low_width += 1  # Add 1 pixel spacing between characters
         low_width -= 1  # Remove trailing spacing
         
-        # Calculate total group width: icon(27) + spacing(2) + max_temp_width (updated for 25x25 icons)
+        # Calculate total group width: icon(26) + spacing(2) + max_temp_width (updated for 24x24 icons)
         max_temp_width = max(temp_width, low_width)
-        total_group_width = 27 + 2 + max_temp_width
+        total_group_width = 26 + 2 + max_temp_width
         
         # Center the entire group horizontally
         group_start_x = (64 - total_group_width) // 2
         
         # Position icon on the left of the group, centered vertically in middle area
-        icon_x = group_start_x + 13  # Center of the 27px icon area (for 25x25 icons)
+        icon_x = group_start_x + 13  # Center of the 26px icon area (for 24x24 icons)
         icon_y = 16  # Positioned so time can overlay the top edge
         
         print(f"Weather icon code: {icon_code}")
@@ -343,7 +343,7 @@ class WeatherDisplay:
         self.draw_weather_icon(icon_image, icon_x, icon_y)
         
         # Position temperatures to the right of icon
-        temp_start_x = group_start_x + 27 + 2  # After icon area + spacing (updated for 27px icon area)
+        temp_start_x = group_start_x + 26 + 2  # After icon area + spacing (updated for 26px icon area)
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
