@@ -56,6 +56,9 @@ class WeatherDisplay:
         self.small_font = graphics.Font()
         self.small_font.LoadFont("../../../fonts/5x7.bdf")  # Small font for details
         
+        self.tiny_font = graphics.Font()
+        self.tiny_font.LoadFont("../../../fonts/4x6.bdf")  # Tiny font for city name
+        
         # Colors
         self.temp_color = graphics.Color(255, 255, 255)     # White for temperature
         self.condition_color = graphics.Color(100, 200, 255) # Light blue for conditions
@@ -292,7 +295,7 @@ class WeatherDisplay:
         time_width -= 1  # Remove trailing spacing
         
         time_x = (64 - time_width) // 2
-        time_y = 6  # Moved up from 8 to 6 to avoid icon overlap
+        time_y = 5  # Moved up further to avoid 26x26 icon overlap
         
         # Draw time with 1 pixel spacing between characters using small font
         current_x = time_x
@@ -363,10 +366,10 @@ class WeatherDisplay:
             char_width = graphics.DrawText(self.canvas, self.small_font, current_x, low_y, self.detail_color, char)
             current_x += char_width + 1  # Add 1 pixel spacing between characters
         
-        # City name at bottom center in small font
+        # City name at bottom center in tiny font
         city_width = 0
         for char in self.city_display_name:
-            city_width += self.small_font.CharacterWidth(ord(char))
+            city_width += self.tiny_font.CharacterWidth(ord(char))
             city_width += 1  # Add 1 pixel spacing between characters
         city_width -= 1  # Remove trailing spacing
         
@@ -376,7 +379,7 @@ class WeatherDisplay:
         # Draw city name with 1 pixel spacing (gray)
         current_x = city_x
         for char in self.city_display_name:
-            char_width = graphics.DrawText(self.canvas, self.small_font, current_x, city_y, self.detail_color, char)
+            char_width = graphics.DrawText(self.canvas, self.tiny_font, current_x, city_y, self.detail_color, char)
             current_x += char_width + 1  # Add 1 pixel spacing between characters
 
     def run(self):
