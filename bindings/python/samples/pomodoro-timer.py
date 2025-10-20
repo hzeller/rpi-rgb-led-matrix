@@ -289,15 +289,15 @@ class PomodoroTimer:
         # Center the group vertically
         group_start_y = (available_height - total_message_height) // 2 + main_font_height
         
-        # Draw "DONE!" in green (moved down 2px)
+        # Draw "DONE!" in green (moved down 4px total)
         done_x = (self.width - done_width) // 2
-        done_y = group_start_y + 2  # Move down 2 pixels
+        done_y = group_start_y + 4  # Move down 4 pixels total
         green = graphics.Color(0, 255, 0)
         graphics.DrawText(self.canvas, self.time_font, done_x, done_y, green, done_text)
         
-        # Draw subtitle in white (moved up 2px)
+        # Draw subtitle in white (moved up 4px from original)
         subtitle_x = (self.width - subtitle_width) // 2
-        subtitle_y = done_y + main_font_height  # Remove 2px gap, move closer
+        subtitle_y = done_y + main_font_height - 4  # Move up 4 pixels from the gap
         white = graphics.Color(255, 255, 255)
         graphics.DrawText(self.canvas, self.small_font, subtitle_x, subtitle_y, white, subtitle_text)
         
