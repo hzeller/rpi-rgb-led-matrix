@@ -295,7 +295,7 @@ class WeatherDisplay:
         time_width -= 1  # Remove trailing spacing
         
         time_x = (64 - time_width) // 2
-        time_y = 6  # Moved down 1 pixel for better spacing
+        time_y = 7  # Positioned to slightly overlay the top of the icon
         
         # Draw time with 1 pixel spacing between characters using small font
         current_x = time_x
@@ -336,7 +336,7 @@ class WeatherDisplay:
         
         # Position icon on the left of the group, centered vertically in middle area
         icon_x = group_start_x + 13  # Center of the 27px icon area (for 25x25 icons)
-        icon_y = 16  # Moved up 1 pixel for better spacing
+        icon_y = 16  # Positioned so time can overlay the top edge
         
         print(f"Weather icon code: {icon_code}")
         print(f"Group layout: total_width={total_group_width}, start_x={group_start_x}")
@@ -348,7 +348,7 @@ class WeatherDisplay:
         
         # High temperature (white) - center it within the temp area
         temp_x = temp_start_x + (max_temp_width - temp_width) // 2
-        temp_y = 18  # Moved up 1 pixel to align with adjusted icon center
+        temp_y = 18  # Aligned with icon center
         
         # Draw high temp with 1 pixel spacing (white)
         current_x = temp_x
@@ -358,7 +358,7 @@ class WeatherDisplay:
         
         # Low temperature (blue) - center it within the temp area
         low_x = temp_start_x + (max_temp_width - low_width) // 2
-        low_y = 25  # Moved up 1 pixel for better overall spacing
+        low_y = 25  # Restored to previous position
         
         # Draw low temp with 1 pixel spacing (blue)
         current_x = low_x
