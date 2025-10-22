@@ -7,38 +7,31 @@ import sys
 import os
 from datetime import datetime, timezone, timedelta
 
-# Add the parent directory to Python path to import the rgbmatrix module
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+# Add shared components to path
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+from shared import MatrixBase, FontManager, ColorPalette, ConfigManager
 
-class SimpleClock:
+class SimpleClock(MatrixBase):
     def __init__(self):
-        # Configuration for the matrix - use same settings as image-viewer.py
-        options = RGBMatrixOptions()
-        options.rows = 32
-        options.cols = 64
-        options.chain_length = 1
-        options.parallel = 1
-        options.hardware_mapping = 'adafruit-hat-pwm'  # Same as image-viewer
+        # Initialize matrix base with default configuration
+        super().__init__(hardware_mapping='adafruit-hat-pwm')
         
-        self.matrix = RGBMatrix(options=options)
-        self.canvas = self.matrix.CreateFrameCanvas()
+        # Initialize managers
+        self.font_manager = FontManager()
+        self.colors = ColorPalette('default')
+        self.config = ConfigManager()
         
         # Set up Mountain Time timezone (UTC-6 for MDT, UTC-7 for MST)
         # Currently in Daylight Saving Time (March-November)
         self.mountain_tz = timezone(timedelta(hours=-6))  # Mountain Daylight Time
         
-        # Load font - use a bigger, bolder font for classic alarm clock look
-        self.font = graphics.Font()
-        self.font.LoadFont("../../../../fonts/9x18B.bdf")  # Bold 9x18 font (B = Bold)
+        # Load fonts using font manager
+        self.time_font = self.font_manager.get_font('xxlarge')  # 9x18B.bdf
+        self.date_font = self.font_manager.get_font('medium_bold')  # 6x13B.bdf
         
-        # Load bold font for date
-        self.date_font = graphics.Font()
-        self.date_font.LoadFont("../../../../fonts/6x13B.bdf")  # Bold font for date
-        
-        # Colors - classic alarm clock style
-        self.time_color = graphics.Color(255, 255, 255)  # Bright white for time
-        self.date_color = graphics.Color(200, 200, 200)  # Slightly dimmer white for date
+        # Colors using color palette
+        self.time_color = self.colors.get_color('WHITE')
+        self.date_color = self.colors.get_color('GRAY_LIGHT')
         
     def get_ordinal_suffix(self, day):
         """Get the ordinal suffix for a day (1st, 2nd, 3rd, 4th, etc.)"""
@@ -50,13 +43,13 @@ class SimpleClock:
 
     def run(self):
         print("Starting classic alarm clock. Press CTRL-C to stop.")
-        print(f"Matrix size: {self.matrix.width}x{self.matrix.height}")
-        print(f"Font height: {self.font.height}")
+        print(f"Matrix size: {self.width}x{self.height}")
+        print(f"Font height: {self.time_font.height}")
         print(f"Date font height: {self.date_font.height}")
         
         try:
             while True:
-                self.canvas.Clear()
+                self.clear()
                 # Get current time in Mountain Time
                 now = datetime.now(self.mountain_tz)
                 
@@ -92,7 +85,7 @@ class SimpleClock:
                 # Measure actual time text width
                 time_text_width = 0
                 for char in full_time_str:
-                    time_text_width += self.font.CharacterWidth(ord(char))
+                    time_text_width += self.time_font.CharacterWidth(ord(char))
                 time_x = (64 - time_text_width) // 2 + 3  # Perfect horizontal center + 3 pixels right
                 time_y = 27  # Keep close to date + 2 pixels down
                 
@@ -105,7 +98,7 @@ class SimpleClock:
                     if char == ' ':
                         current_x += 2  # Reduced space width
                     else:
-                        char_width = graphics.DrawText(self.canvas, self.date_font, current_x, date_y, self.date_color, char)
+                        char_width = self.draw_text(char, current_x, date_y, self.date_color, font=self.date_font)
                         current_x += char_width - 1  # Reduce spacing between characters
                 
                 # Draw time with tighter character spacing
@@ -114,11 +107,11 @@ class SimpleClock:
                     if char == ' ':
                         current_x += 2  # Reduced space width
                     else:
-                        char_width = graphics.DrawText(self.canvas, self.font, current_x, time_y, self.time_color, char)
+                        char_width = self.draw_text(char, current_x, time_y, self.time_color, font=self.time_font)
                         current_x += char_width - 1  # Reduce spacing between characters
                 
                 # Swap buffers
-                self.canvas = self.matrix.SwapOnVSync(self.canvas)
+                self.swap_canvas()
                 
                 # Wait until the next second boundary for accurate timing
                 current_time = time.time()
@@ -129,7 +122,7 @@ class SimpleClock:
         except KeyboardInterrupt:
             print("\nClock stopped.")
         finally:
-            self.matrix.Clear()
+            self.clear()
 
 if __name__ == "__main__":
     clock = SimpleClock()

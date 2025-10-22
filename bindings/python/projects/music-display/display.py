@@ -7,9 +7,12 @@ This module provides classes for:
 - MatrixDisplay: Manages LED matrix operations and rendering
 """
 
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from rgbmatrix import graphics
 from PIL import Image
 from config import DisplayConfig
+from ..shared.matrix_base import MatrixBase
+from ..shared.font_manager import FontManager
+from ..shared.color_palette import ColorPalette
 
 
 class ScrollableText:
@@ -96,38 +99,30 @@ class ScrollableText:
                 current_x += char_width
 
 
-class MatrixDisplay:
+class MatrixDisplay(MatrixBase):
     """Manages the LED matrix display operations."""
     
     def __init__(self, options=None):
-        if options is None:
-            options = RGBMatrixOptions()
-            options.rows = DisplayConfig.MATRIX_ROWS
-            options.cols = DisplayConfig.MATRIX_COLS
-            options.chain_length = DisplayConfig.CHAIN_LENGTH
-            options.parallel = DisplayConfig.PARALLEL
-            options.hardware_mapping = DisplayConfig.HARDWARE_MAPPING
+        # Initialize base matrix
+        super().__init__(
+            rows=DisplayConfig.MATRIX_ROWS,
+            cols=DisplayConfig.MATRIX_COLS,
+            hardware_mapping=DisplayConfig.HARDWARE_MAPPING
+        )
         
-        self.matrix = RGBMatrix(options=options)
-        self.canvas = self.matrix.CreateFrameCanvas()
-        self.width = self.matrix.width
-        self.height = self.matrix.height
-        
-        # Load fonts
-        self._load_fonts()
+        # Initialize font manager and colors
+        self.font_manager = FontManager()
+        self.color_palette = ColorPalette()
         
         # Define colors using config
-        self.song_color = graphics.Color(*DisplayConfig.SONG_COLOR)
-        self.artist_color = graphics.Color(*DisplayConfig.ARTIST_COLOR)
-        self.album_color = graphics.Color(*DisplayConfig.ALBUM_COLOR)
+        self.song_color = self.color_palette.get_color('green')
+        self.artist_color = self.color_palette.get_color('white')
+        self.album_color = self.color_palette.get_color('gray_light')
         
         # Create scrollable text instances
-        self.song_font = graphics.Font()
-        self.song_font.LoadFont(DisplayConfig.FONT_PATH)
-        self.artist_font = graphics.Font()
-        self.artist_font.LoadFont(DisplayConfig.FONT_PATH)
-        self.album_font = graphics.Font()
-        self.album_font.LoadFont(DisplayConfig.FONT_PATH)
+        self.song_font = self.font_manager.get_font('5x7')
+        self.artist_font = self.font_manager.get_font('5x7') 
+        self.album_font = self.font_manager.get_font('5x7')
         
         self.song_text = ScrollableText(self.song_font, self.song_color, DisplayConfig.STATIC_DELAY_FRAMES)
         self.artist_text = ScrollableText(self.artist_font, self.artist_color, DisplayConfig.STATIC_DELAY_FRAMES)
@@ -140,10 +135,6 @@ class MatrixDisplay:
     def _load_fonts(self):
         """Load fonts for text display."""
         pass  # Fonts are loaded in __init__ for now
-    
-    def clear(self):
-        """Clear the display canvas."""
-        self.canvas.Clear()
     
     def draw_image(self, image, x=None, y=None):
         """Draw an image on the canvas."""
@@ -182,85 +173,5 @@ class MatrixDisplay:
         self.album_text.draw(self.canvas, album_name, album_x, album_y,
                             max_x, scroll_counter, self.width, self.height)
     
-    def swap_canvas(self):
-        """Swap the canvas to display the updated content."""
-        self.canvas = self.matrix.SwapOnVSync(self.canvas)
 
 
-class StockMatrixDisplay(MatrixDisplay):
-    """Extended matrix display class for stock-specific functionality."""
-    
-    def __init__(self, options=None):
-        super().__init__(options)
-        
-        # Load stock-specific fonts
-        self.font_large = graphics.Font()
-        self.font_large.LoadFont("../../../../fonts/5x7.bdf")
-        self.font_small = graphics.Font()
-        self.font_small.LoadFont("../../../../fonts/4x6.bdf")
-        
-        # Stock-specific colors
-        from stock_config import StockConfig
-        self.stock_colors = {}
-        for name, rgb in StockConfig.STOCK_COLORS.items():
-            self.stock_colors[name] = graphics.Color(*rgb)
-    
-    def clear_text_area(self):
-        """Clear only the text area (top half) of the display."""
-        for x in range(self.width):
-            for y in range(16):  # Top half only
-                self.canvas.SetPixel(x, y, 0, 0, 0)
-    
-    def clear_chart_area(self):
-        """Clear only the chart area (bottom half) of the display."""
-        print(f"DEBUG: Clearing chart area (y=16 to y={self.height})")
-        for x in range(self.width):
-            for y in range(16, self.height):  # Bottom half only
-                self.canvas.SetPixel(x, y, 0, 0, 0)
-    
-    def get_chart_area(self):
-        """Get the chart drawing area coordinates."""
-        return {
-            'x': 0,
-            'y': 16,  # Bottom half of 32px display
-            'width': self.width,
-            'height': 16
-        }
-    
-    def draw_stock_info(self, symbol, price, change, change_percent):
-        """Draw stock symbol, price, and change information."""
-        # Determine color based on change
-        is_positive = change >= 0
-        left_color = self.stock_colors['neutral']  # White for symbol/price
-        right_color = (self.stock_colors['gain_bright'] if is_positive 
-                      else self.stock_colors['loss_bright'])
-        
-        # Left side - Stock symbol and price (white)
-        graphics.DrawText(self.canvas, self.font_large, 2, 8, left_color, symbol)
-        price_text = f"{price:.2f}"
-        graphics.DrawText(self.canvas, self.font_large, 2, 15, left_color, price_text)
-        
-        # Right side - Change amount and percentage (colored)
-        # Right-aligned text
-        change_text = f"{change:+.2f}"
-        change_width = self._measure_text_width(change_text, self.font_large)
-        change_x = self.width - change_width - 2
-        graphics.DrawText(self.canvas, self.font_large, change_x, 8, right_color, change_text)
-        
-        pct_text = f"{change_percent:+.1f}%"
-        pct_width = self._measure_text_width(pct_text, self.font_large)
-        pct_x = self.width - pct_width - 2
-        graphics.DrawText(self.canvas, self.font_large, pct_x, 15, right_color, pct_text)
-    
-    def _measure_text_width(self, text, font):
-        """Measure text width by drawing off-screen."""
-        return graphics.DrawText(self.canvas, font, 1000, 8, 
-                               self.stock_colors['neutral'], text)
-    
-    def draw_loading_message(self, symbol=None):
-        """Draw a loading message."""
-        if symbol:
-            graphics.DrawText(self.canvas, self.font_large, 1, 10, 
-                            self.stock_colors['neutral'], symbol)
-        graphics.DrawText(self.canvas, self.font_large, 1, 22, 
-                        self.stock_colors['neutral'], "Loading...")
