@@ -583,23 +583,26 @@ class AdvancedStockTracker(MatrixBase):
                     is_positive = stock_info['change'] >= 0
                     right_color = self.display_colors['gain_bright'] if is_positive else self.display_colors['loss_bright']
                     
-                    # Left side - Stock symbol and price (white)
-                    self.draw_text(self.font_large, 2, 8, left_color, current_symbol)
+                    # Left side - Stock symbol and price (white) with 2px padding
+                    self.draw_text(self.font_large, 2, 9, left_color, current_symbol)  # 2px left, increased top padding
                     price_text = f"{stock_info['price']:.2f}"
-                    self.draw_text(self.font_large, 2, 15, left_color, price_text)
+                    self.draw_text(self.font_large, 2, 16, left_color, price_text)  # 1px gap between texts
                     
                     # Right side - Change amount and percentage (green/red based on value)
-                    # Simple right-aligned positioning (approximate)
+                    # Better right-aligned positioning with proper text width calculation
                     
                     # Top right: Change amount (colored)
                     change_text = f"{stock_info['change']:+.2f}"  # Include +/- sign
-                    change_x = 64 - (len(change_text) * 4) - 2  # Approximate positioning
-                    self.draw_text(self.font_large, change_x, 8, right_color, change_text)
+                    # Calculate actual text width more accurately
+                    change_width = len(change_text) * 4  # Approximate character width for font
+                    change_x = max(32, 64 - change_width - 2)  # Don't go past middle, 2px right padding
+                    self.draw_text(self.font_large, change_x, 9, right_color, change_text)
                     
                     # Bottom right: Percentage (colored)  
                     pct_text = f"{stock_info['change_percent']:+.1f}%"  # Include +/- sign
-                    pct_x = 64 - (len(pct_text) * 4) - 2  # Approximate positioning
-                    self.draw_text(self.font_large, pct_x, 15, right_color, pct_text)
+                    pct_width = len(pct_text) * 4  # Approximate character width for font
+                    pct_x = max(32, 64 - pct_width - 2)  # Don't go past middle, 2px right padding
+                    self.draw_text(self.font_large, pct_x, 16, right_color, pct_text)
                     
                     # Draw safe time series chart in bottom half (y=16 to y=31, so 16 pixels tall)
                     chart_x = 0
@@ -611,11 +614,11 @@ class AdvancedStockTracker(MatrixBase):
                     
                 else:
                     # Loading state
-                    self.draw_text(self.font_large, 1, 10, self.display_colors['neutral'], current_symbol)
-                    self.draw_text(self.font_large, 1, 22, self.display_colors['neutral'], "Loading...")
+                    self.draw_text(self.font_large, 2, 9, self.display_colors['neutral'], current_symbol)
+                    self.draw_text(self.font_large, 2, 16, self.display_colors['neutral'], "Loading...")
             else:
                 # No data yet
-                self.draw_text(self.font_large, 1, 10, self.display_colors['neutral'], "Loading...")
+                self.draw_text(self.font_large, 2, 9, self.display_colors['neutral'], "Loading...")
             
             self.swap()
             time.sleep(0.5)  # Slower refresh rate
