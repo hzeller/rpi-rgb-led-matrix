@@ -13,6 +13,7 @@ Retro Flip Clock - Classic         # Store previous time for flip detection
         
         print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
         print(f"Matrix size: {self.width}x{self.height}")
+        print(f"Brightness: {self.matrix.brightness}%")
         print("💡 Press SPACE to trigger manual flip animation")Style LED Matrix Display
 
 A minimalist flip clock display inspired by vintage Twemco and similar designs:
@@ -43,18 +44,18 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
 from matrix_base import MatrixBase
 from font_manager import FontManager
 from color_palette import ColorPalette
+from config_manager import ConfigManager
 
 
 class RetroFlipClock(MatrixBase):
     """Classic flip clock display with vintage 1970s aesthetic."""
     
     def __init__(self):
-        # Initialize matrix with standard configuration
-        super().__init__(
-            rows=32,
-            cols=64,
-            hardware_mapping='adafruit-hat-pwm'
-        )
+        # Initialize configuration manager
+        self.config = ConfigManager()
+        
+        # Initialize matrix with configuration from ConfigManager (handled by MatrixBase)
+        super().__init__()
         
         # Initialize shared components with clean default theme
         self.font_manager = FontManager()
@@ -348,6 +349,12 @@ class RetroFlipClock(MatrixBase):
                     if key == b' ' or key == b'\r':  # Space or Enter key
                         self.manual_flip_triggered = True
                         return True
+                    elif key == b'+' or key == b'=':  # Plus key to increase brightness
+                        self.increase_brightness()
+                        return True
+                    elif key == b'-' or key == b'_':  # Minus key to decrease brightness
+                        self.decrease_brightness()
+                        return True
             else:
                 # Unix/Linux implementation
                 if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
@@ -355,16 +362,39 @@ class RetroFlipClock(MatrixBase):
                     if line == ' ' or line == '':  # Space or Enter key
                         self.manual_flip_triggered = True
                         return True
+                    elif line == '+' or line == '=':  # Plus key to increase brightness
+                        self.increase_brightness()
+                        return True
+                    elif line == '-' or line == '_':  # Minus key to decrease brightness
+                        self.decrease_brightness()
+                        return True
         except:
             # Fallback - no input detection
             pass
         return False
     
+    def increase_brightness(self):
+        """Increase brightness by 10%."""
+        current = self.matrix.brightness
+        new_brightness = min(100, current + 10)
+        self.set_brightness(new_brightness)
+        print(f"🔆 Brightness: {new_brightness}%")
+    
+    def decrease_brightness(self):
+        """Decrease brightness by 10%."""
+        current = self.matrix.brightness
+        new_brightness = max(1, current - 10)
+        self.set_brightness(new_brightness)
+        print(f"🔅 Brightness: {new_brightness}%")
+    
     def run(self):
         """Main display loop with flip animations."""
         print("🕰️  Starting Authentic Twemco-Style Flip Clock - Press CTRL-C to stop")
         print("🧡 Orange background with white frame and black digit windows")
-        print("⌨️  Press SPACE + ENTER to manually trigger flip animation")
+        print("⌨️  Controls:")
+        print("   SPACE = Manual flip animation")
+        print("   + = Increase brightness")
+        print("   - = Decrease brightness")
         
         # Initialize previous time values
         now = datetime.now()

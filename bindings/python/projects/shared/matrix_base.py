@@ -53,18 +53,19 @@ class MatrixBase(ABC):
             hardware_mapping: Hardware mapping type (default: MatrixConfig.HARDWARE_MAPPING)
             brightness: Display brightness 1-100 (default: MatrixConfig.BRIGHTNESS)
         """
-        # Initialize config manager for brightness settings
+        # Initialize config manager for settings
         config_manager = ConfigManager()
+        matrix_config = config_manager.get_matrix_config()
         brightness_config = config_manager.get_brightness_config()
         
         # Set up matrix options with defaults or provided values
         self.options = RGBMatrixOptions()
-        self.options.rows = rows or MatrixConfig.ROWS
-        self.options.cols = cols or MatrixConfig.COLS
-        self.options.chain_length = chain_length or MatrixConfig.CHAIN_LENGTH
-        self.options.parallel = parallel or MatrixConfig.PARALLEL
-        self.options.hardware_mapping = hardware_mapping or MatrixConfig.HARDWARE_MAPPING
-        self.options.brightness = brightness or brightness_config['default_brightness']
+        self.options.rows = rows or matrix_config['rows']
+        self.options.cols = cols or matrix_config['cols']
+        self.options.chain_length = chain_length or matrix_config['chain_length']
+        self.options.parallel = parallel or matrix_config['parallel']
+        self.options.hardware_mapping = hardware_mapping or matrix_config['hardware_mapping']
+        self.options.brightness = brightness or matrix_config['brightness']
         
         # Initialize matrix and canvas
         self.matrix = RGBMatrix(options=self.options)

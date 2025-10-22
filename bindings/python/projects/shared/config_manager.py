@@ -127,7 +127,7 @@ class ConfigManager:
             Dictionary with brightness configuration
         """
         return {
-            'default_brightness': self.get('BRIGHTNESS_DEFAULT', 60, int),
+            'default_brightness': self.get('MATRIX_BRIGHTNESS', 60, int),
             'min_brightness': self.get('BRIGHTNESS_MIN', 1, int),
             'max_brightness': self.get('BRIGHTNESS_MAX', 100, int),
             'auto_dim_enabled': self.get('BRIGHTNESS_AUTO_DIM', False, bool),
