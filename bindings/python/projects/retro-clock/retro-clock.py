@@ -45,7 +45,7 @@ class RetroFlipClock(MatrixBase):
         self.ampm_font = self.font_manager.get_font('tiny')      # 4x6 for AM/PM
         
         # Authentic Twemco flip clock colors
-        self.background_color = self.color_palette.get_color((255, 140, 0))   # Vibrant orange background
+        self.background_color = self.color_palette.get_color((200, 80, 0))    # Darker orange background
         self.frame_color = self.color_palette.get_color('white')               # White trim/frame
         self.window_color = self.color_palette.get_color('black')              # Black digit windows
         self.digit_color = self.color_palette.get_color('white')               # White digits
