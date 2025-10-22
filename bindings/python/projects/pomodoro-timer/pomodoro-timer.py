@@ -11,7 +11,7 @@ import argparse
 from datetime import datetime, timedelta
 
 # Add the parent directory to Python path to import the rgbmatrix module
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
 class PomodoroTimer:
@@ -44,13 +44,13 @@ class PomodoroTimer:
         
         # Load fonts
         self.time_font = graphics.Font()
-        self.time_font.LoadFont("../../../fonts/8x13B.bdf")  # Slightly smaller bold font for timer
+        self.time_font.LoadFont("../../../../fonts/8x13B.bdf")  # Slightly smaller bold font for timer
         
         self.label_font = graphics.Font()
-        self.label_font.LoadFont("../../../fonts/6x13B.bdf")  # Font for labels
+        self.label_font.LoadFont("../../../../fonts/6x13B.bdf")  # Font for labels
         
         self.small_font = graphics.Font()
-        self.small_font.LoadFont("../../../fonts/tom-thumb.bdf")  # Even smaller font for subtitle
+        self.small_font.LoadFont("../../../../fonts/tom-thumb.bdf")  # Even smaller font for subtitle
         
         # Colors
         self.work_color = graphics.Color(0, 255, 0)      # Green for work time

@@ -25,21 +25,29 @@ except ImportError:
     print("python-dotenv not installed. Using system environment variables only.")
 
 # Add the parent directory to Python path to import the rgbmatrix module
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
+from rgbmatrix import graphics
 from PIL import Image
-class WeatherDisplay:
+
+# Import shared components
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
+from matrix_base import MatrixBase
+from font_manager import FontManager
+from color_palette import ColorPalette
+class WeatherDisplay(MatrixBase):
     def __init__(self, city="Denver, CO"):
-        # Configuration for the matrix - use same settings as other displays
-        options = RGBMatrixOptions()
-        options.rows = 32
-        options.cols = 64
-        options.chain_length = 1
-        options.parallel = 1
-        options.hardware_mapping = 'adafruit-hat-pwm'
+        # Initialize base matrix with standard configuration
+        super().__init__(
+            rows=32,
+            cols=64,
+            hardware_mapping='adafruit-hat-pwm'
+        )
         
-        self.matrix = RGBMatrix(options=options)
-        self.canvas = self.matrix.CreateFrameCanvas()
+        # Initialize shared components
+        self.font_manager = FontManager()
+        self.color_palette = ColorPalette()
         
         # Set up location
         self.city = city
@@ -48,25 +56,16 @@ class WeatherDisplay:
         self.timezone = None  # Will be set by timezone lookup
         
         # Load fonts
-        self.temp_font = graphics.Font()
-        self.temp_font.LoadFont("../../../fonts/9x18B.bdf")  # Bold font for temperature
-        
-        self.condition_font = graphics.Font()
-        self.condition_font.LoadFont("../../../fonts/6x13B.bdf")  # Bold font for conditions
-        
-        self.medium_font = graphics.Font()
-        self.medium_font.LoadFont("../../../fonts/6x13.bdf")  # Regular (non-bold) medium font for time
-        
-        self.small_font = graphics.Font()
-        self.small_font.LoadFont("../../../fonts/5x7.bdf")  # Small font for details
-        
-        self.tiny_font = graphics.Font()
-        self.tiny_font.LoadFont("../../../fonts/4x6.bdf")  # Tiny font for city name
+        self.temp_font = self.font_manager.get_font('xxlarge')      # Bold font for temperature
+        self.condition_font = self.font_manager.get_font('medium_bold') # Bold font for conditions
+        self.medium_font = self.font_manager.get_font('medium')     # Regular medium font for time
+        self.small_font = self.font_manager.get_font('small')       # Small font for details
+        self.tiny_font = self.font_manager.get_font('tiny')         # Tiny font for city name
         
         # Colors
-        self.temp_color = graphics.Color(255, 255, 255)     # White for temperature
-        self.condition_color = graphics.Color(100, 200, 255) # Light blue for conditions
-        self.detail_color = graphics.Color(200, 200, 200)   # Gray for details
+        self.temp_color = self.color_palette.get_color('white')          # White for temperature
+        self.condition_color = self.color_palette.get_color((100, 200, 255))  # Light blue for conditions
+        self.detail_color = self.color_palette.get_color('gray_light')   # Gray for details
         
         # Weather data
         self.weather_data = None
@@ -273,8 +272,9 @@ class WeatherDisplay:
     def get_weather_icon(self, icon_code):
         """Load weather icon from local files based on icon code"""
         try:
-            # Try to load local weather icon file
-            icon_path = f"weather_icons/{icon_code}.png"
+            # Try to load local weather icon file - use path relative to this script
+            script_dir = os.path.dirname(__file__)
+            icon_path = os.path.join(script_dir, "weather_icons", f"{icon_code}.png")
             
             # Check if local icon file exists
             if os.path.exists(icon_path):
@@ -353,7 +353,7 @@ class WeatherDisplay:
             error_text = "No Weather Data"
             text_width = len(error_text) * 3
             x = (64 - text_width) // 2
-            graphics.DrawText(self.canvas, self.small_font, x, 16, self.detail_color, error_text)
+            self.draw_text(error_text, x, 16, self.detail_color, font=self.small_font)
             return
         
         # Get current time in specified timezone
@@ -424,7 +424,7 @@ class WeatherDisplay:
         # Draw high temp with 1 pixel spacing (white)
         current_x = temp_x
         for char in temp_str:
-            char_width = graphics.DrawText(self.canvas, self.small_font, current_x, temp_y, self.temp_color, char)
+            char_width = self.draw_text(self.small_font, current_x, temp_y, self.temp_color, char)
             current_x += char_width + 1  # Add 1 pixel spacing between characters
         
         # Low temperature (blue) - center it within the temp area
@@ -434,7 +434,7 @@ class WeatherDisplay:
         # Draw low temp with 1 pixel spacing (blue)
         current_x = low_x
         for char in low_str:
-            char_width = graphics.DrawText(self.canvas, self.small_font, current_x, low_y, self.detail_color, char)
+            char_width = self.draw_text(self.small_font, current_x, low_y, self.detail_color, char)
             current_x += char_width + 1  # Add 1 pixel spacing between characters
         
         # City name at bottom center in tiny font
@@ -449,7 +449,7 @@ class WeatherDisplay:
         # Draw city name with no extra spacing (gray)
         current_x = city_x
         for char in self.city_display_name:
-            char_width = graphics.DrawText(self.canvas, self.tiny_font, current_x, city_y, self.detail_color, char)
+            char_width = self.draw_text(self.tiny_font, current_x, city_y, self.detail_color, char)
             current_x += char_width  # No extra spacing between characters
         
         # Draw time LAST so it appears on top of the icon
@@ -458,7 +458,7 @@ class WeatherDisplay:
             if char == ' ':
                 current_x += 4  # Larger space between time and AM/PM
             else:
-                char_width = graphics.DrawText(self.canvas, self.small_font, current_x, time_y, self.temp_color, char)
+                char_width = self.draw_text(self.small_font, current_x, time_y, self.temp_color, char)
                 current_x += char_width + 1  # Add 1 pixel spacing after each character
 
     def run(self):
@@ -467,7 +467,7 @@ class WeatherDisplay:
         
         try:
             while True:
-                self.canvas.Clear()
+                self.clear()
                 
                 if not self.api_key:
                     # Show instructions to set environment variable
@@ -475,14 +475,14 @@ class WeatherDisplay:
                     line2 = "OPENWEATHER_API_KEY"
                     line3 = "in .env file"
                     
-                    graphics.DrawText(self.canvas, self.small_font, 2, 8, self.condition_color, line1)
-                    graphics.DrawText(self.canvas, self.small_font, 2, 18, self.detail_color, line2)
-                    graphics.DrawText(self.canvas, self.small_font, 2, 28, self.detail_color, line3)
+                    self.draw_text(self.small_font, 2, 8, self.condition_color, line1)
+                    self.draw_text(self.small_font, 2, 18, self.detail_color, line2)
+                    self.draw_text(self.small_font, 2, 28, self.detail_color, line3)
                 else:
                     self.draw_weather()
                 
                 # Swap buffers
-                self.canvas = self.matrix.SwapOnVSync(self.canvas)
+                self.swap()
                 
                 # Update every 30 seconds
                 time.sleep(30)
@@ -490,7 +490,7 @@ class WeatherDisplay:
         except KeyboardInterrupt:
             print("\nWeather display stopped.")
         finally:
-            self.matrix.Clear()
+            self.clear()
 
 def parse_arguments():
     """Parse command line arguments for city"""

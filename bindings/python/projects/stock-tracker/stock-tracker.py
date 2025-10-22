@@ -4,59 +4,54 @@ Stock Tracker for RGB LED Matrix
 Displays real-time stock prices with color-coded changes
 Uses Alpha Vantage API for stock data (free tier available)
 """
-from samplebase import SampleBase
-from rgbmatrix import graphics
+import sys
+import os
 import time
 import json
 import requests
 import threading
 from datetime import datetime, timedelta
-import os
-try:
-    from dotenv import load_dotenv
-    load_dotenv('stock-tracker.env')
-except ImportError:
-    print("python-dotenv not installed. Install with: pip install python-dotenv")
-    pass
+import argparse
+
+# Add shared components to path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
+from matrix_base import MatrixBase
+from font_manager import FontManager
+from color_palette import ColorPalette
+from config_manager import ConfigManager
 
 
-class StockTracker(SampleBase):
-    def __init__(self, *args, **kwargs):
-        super(StockTracker, self).__init__(*args, **kwargs)
+class StockTracker(MatrixBase):
+    def __init__(self, api_key=None, stocks=None, refresh_rate=5, scroll_speed=0.05, demo_mode=False):
+        super().__init__(hardware_mapping='adafruit-hat-pwm')
         
-        # Override default matrix settings to match your hardware configuration
-        self.parser.set_defaults(
-            led_rows=32,
-            led_cols=64,
-            led_chain=1,
-            led_parallel=1,
-            led_gpio_mapping='adafruit-hat-pwm'
-        )
+        # Initialize managers
+        self.font_manager = FontManager()
+        self.colors = ColorPalette('default')
+        self.config = ConfigManager()
         
-        self.parser.add_argument("--api-key", help="Alpha Vantage API key (get free at alphavantage.co)", type=str)
-        self.parser.add_argument("--stocks", help="Comma-separated stock symbols (e.g., AAPL,GOOGL,MSFT)", 
-                               default=os.environ.get('DEFAULT_STOCKS', "AAPL,GOOGL,MSFT,TSLA,AMZN"), type=str)
-        self.parser.add_argument("--refresh-rate", help="Data refresh rate in minutes", 
-                               default=int(os.environ.get('REFRESH_RATE', '5')), type=int)
-        self.parser.add_argument("--scroll-speed", help="Text scroll speed (lower = faster)", 
-                               default=float(os.environ.get('SCROLL_SPEED', '0.05')), type=float)
-        self.parser.add_argument("--demo-mode", help="Use demo data instead of API", action="store_true")
-        self.parser.add_argument("--config-file", help="Path to configuration file", default="stock-tracker.env", type=str)
+        # Configuration
+        self.api_key = api_key or self.config.get('ALPHA_VANTAGE_API_KEY')
+        self.stocks = stocks or self.config.get('DEFAULT_STOCKS', 'AAPL,GOOGL,MSFT,TSLA,AMZN')
+        self.refresh_rate = refresh_rate or self.config.get('REFRESH_RATE', 5, int)
+        self.scroll_speed = scroll_speed or self.config.get('SCROLL_SPEED', 0.05, float)
+        self.demo_mode = demo_mode
         
         # Stock data storage
         self.stock_data = {}
         self.last_update = None
         self.data_lock = threading.Lock()
-        self.api_key = None
         
-        # Display settings
-        self.font = None
-        self.colors = {
-            'green': graphics.Color(0, 255, 0),    # Price up
-            'red': graphics.Color(255, 0, 0),      # Price down
-            'white': graphics.Color(255, 255, 255), # Neutral/symbol
-            'blue': graphics.Color(0, 150, 255),   # Price value
-            'yellow': graphics.Color(255, 255, 0)   # Percentage change
+        # Load fonts using font manager
+        self.font = self.font_manager.get_font('small')  # 7x13.bdf equivalent
+        
+        # Color mapping using color palette
+        self.display_colors = {
+            'green': self.colors.get_color('GREEN'),      # Price up
+            'red': self.colors.get_color('RED'),          # Price down  
+            'white': self.colors.get_color('WHITE'),      # Neutral/symbol
+            'blue': self.colors.get_color('BLUE'),        # Price value
+            'yellow': self.colors.get_color('YELLOW')     # Percentage change
         }
 
     def get_demo_data(self):
@@ -208,31 +203,26 @@ class StockTracker(SampleBase):
     def get_text_color(self, text):
         """Determine color based on stock performance"""
         if '+' in text and '%' in text:
-            return self.colors['green']
+            return self.display_colors['green']
         elif '-' in text and '%' in text:
-            return self.colors['red']
+            return self.display_colors['red']
         elif '$' in text:
-            return self.colors['blue']
+            return self.display_colors['blue']
         else:
-            return self.colors['white']
+            return self.display_colors['white']
 
-    def draw_multi_color_text(self, canvas, font, y_pos, text_parts):
+    def draw_multi_color_text(self, font, y_pos, text_parts):
         """Draw text with multiple colors"""
         x_pos = 0
         
         for part, color in text_parts:
-            width = graphics.DrawText(canvas, font, x_pos, y_pos, color, part)
+            width = self.draw_text(font, x_pos, y_pos, color, part)
             x_pos += width
         
         return x_pos
 
     def run(self):
-        # Load font
-        self.font = graphics.Font()
-        self.font.LoadFont("../../../fonts/7x13.bdf")
-        
-        # Get API key
-        self.api_key = self.args.api_key or os.environ.get('ALPHA_VANTAGE_API_KEY')
+        print("🚀 Starting stock tracker...")
         
         # Start background data update thread
         update_thread = threading.Thread(target=self.update_stock_data, daemon=True)
@@ -241,11 +231,10 @@ class StockTracker(SampleBase):
         # Wait a moment for initial data
         time.sleep(2)
         
-        offscreen_canvas = self.matrix.CreateFrameCanvas()
-        pos = offscreen_canvas.width
+        pos = self.width  # Use MatrixBase width property
         
         while True:
-            offscreen_canvas.Clear()
+            self.clear()  # Use MatrixBase clear method
             
             # Get formatted stock text
             display_text, _ = self.format_stock_display()
@@ -283,7 +272,7 @@ class StockTracker(SampleBase):
                     while change_end < len(display_text) and display_text[change_end] not in ['|', ' Updated']:
                         change_end += 1
                     change_text = display_text[i:change_end].strip()
-                    color = self.colors['green'] if char == '+' else self.colors['red']
+                    color = self.display_colors['green'] if char == '+' else self.display_colors['red']
                     text_parts.append((change_text, color))
                     current_part = ""
                     i = change_end - 1
@@ -294,51 +283,73 @@ class StockTracker(SampleBase):
             
             # Add any remaining text
             if current_part:
-                text_parts.append((current_part, self.colors['white']))
+                text_parts.append((current_part, self.display_colors['white']))
             
             # If parsing failed, use simple approach
             if not text_parts:
                 color = self.get_text_color(display_text)
-                text_len = graphics.DrawText(offscreen_canvas, self.font, pos, 10, color, display_text)
+                text_len = self.draw_text(self.font, pos, 10, color, display_text)
             else:
                 # Draw multicolored text
                 temp_pos = pos
                 for part, color in text_parts:
-                    width = graphics.DrawText(offscreen_canvas, self.font, temp_pos, 10, color, part)
+                    width = self.draw_text(self.font, temp_pos, 10, color, part)
                     temp_pos += width
                 text_len = temp_pos - pos
             
             # Update position for scrolling
             pos -= 1
             if pos + text_len < 0:
-                pos = offscreen_canvas.width
+                pos = self.width
             
             # Add status line if matrix is tall enough
-            if offscreen_canvas.height > 16:
-                status_color = self.colors['yellow']
+            if self.height > 16:
+                status_color = self.display_colors['yellow']
                 if self.last_update:
                     time_diff = datetime.now() - self.last_update
                     if time_diff.total_seconds() > 300:  # 5 minutes
                         status_text = "Data may be stale"
-                        status_color = self.colors['red']
+                        status_color = self.display_colors['red']
                     else:
                         status_text = f"Live • {len(self.stock_data)} stocks"
                 else:
                     status_text = "Connecting..."
                 
-                graphics.DrawText(offscreen_canvas, self.font, 0, 25, status_color, status_text)
+                self.draw_text(self.font, 0, 25, status_color, status_text)
             
-            time.sleep(self.args.scroll_speed)
-            offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
+            time.sleep(self.scroll_speed)
+            self.swap()
 
 
-# Main function
+# Main function with argument parsing
+def main():
+    parser = argparse.ArgumentParser(description='Stock Tracker for RGB LED Matrix')
+    parser.add_argument("--api-key", help="Alpha Vantage API key", type=str)
+    parser.add_argument("--stocks", help="Comma-separated stock symbols", 
+                       default="AAPL,GOOGL,MSFT,TSLA,AMZN", type=str)
+    parser.add_argument("--refresh-rate", help="Data refresh rate in minutes", 
+                       default=5, type=int)
+    parser.add_argument("--scroll-speed", help="Text scroll speed", 
+                       default=0.05, type=float)
+    parser.add_argument("--demo-mode", help="Use demo data", action="store_true")
+    
+    args = parser.parse_args()
+    
+    try:
+        stock_tracker = StockTracker(
+            api_key=args.api_key,
+            stocks=args.stocks,
+            refresh_rate=args.refresh_rate,
+            scroll_speed=args.scroll_speed,
+            demo_mode=args.demo_mode
+        )
+        stock_tracker.run()
+    except KeyboardInterrupt:
+        print("\n🛑 Stock tracker stopped.")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
 if __name__ == "__main__":
-    stock_tracker = StockTracker()
-    if not stock_tracker.process():
-        stock_tracker.print_help()
-    else:
-        try:
-            stock_tracker.run()
-        except KeyboardInterrupt:
-            print("\nStock tracker stopped.")
+    main()
