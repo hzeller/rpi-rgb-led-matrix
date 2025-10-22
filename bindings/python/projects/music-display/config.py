@@ -26,7 +26,7 @@ class DisplayConfig:
     REFRESH_RATE = 0.03  # 33fps
     
     # Font paths
-    FONT_PATH = "../../../fonts/5x7.bdf"
+    FONT_PATH = "../../../../fonts/5x7.bdf"
     
     # Spotify update settings
     SPOTIFY_UPDATE_INTERVAL = 0.5

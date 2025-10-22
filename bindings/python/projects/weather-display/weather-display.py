@@ -49,19 +49,19 @@ class WeatherDisplay:
         
         # Load fonts
         self.temp_font = graphics.Font()
-        self.temp_font.LoadFont("../../../fonts/9x18B.bdf")  # Bold font for temperature
+        self.temp_font.LoadFont("../../../../fonts/9x18B.bdf")  # Bold font for temperature
         
         self.condition_font = graphics.Font()
-        self.condition_font.LoadFont("../../../fonts/6x13B.bdf")  # Bold font for conditions
+        self.condition_font.LoadFont("../../../../fonts/6x13B.bdf")  # Bold font for conditions
         
         self.medium_font = graphics.Font()
-        self.medium_font.LoadFont("../../../fonts/6x13.bdf")  # Regular (non-bold) medium font for time
+        self.medium_font.LoadFont("../../../../fonts/6x13.bdf")  # Regular (non-bold) medium font for time
         
         self.small_font = graphics.Font()
-        self.small_font.LoadFont("../../../fonts/5x7.bdf")  # Small font for details
+        self.small_font.LoadFont("../../../../fonts/5x7.bdf")  # Small font for details
         
         self.tiny_font = graphics.Font()
-        self.tiny_font.LoadFont("../../../fonts/4x6.bdf")  # Tiny font for city name
+        self.tiny_font.LoadFont("../../../../fonts/4x6.bdf")  # Tiny font for city name
         
         # Colors
         self.temp_color = graphics.Color(255, 255, 255)     # White for temperature

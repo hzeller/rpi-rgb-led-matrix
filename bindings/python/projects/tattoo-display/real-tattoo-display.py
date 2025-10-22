@@ -142,10 +142,10 @@ class RealTattooDisplay(SampleBase):
         # Load fonts for titles
         try:
             self.title_font = graphics.Font()
-            self.title_font.LoadFont("../../../fonts/7x13B.bdf")
+            self.title_font.LoadFont("../../../../fonts/7x13B.bdf")
             
             self.subtitle_font = graphics.Font()
-            self.subtitle_font.LoadFont("../../../fonts/6x10.bdf")
+            self.subtitle_font.LoadFont("../../../../fonts/6x10.bdf")
         except:
             print("Warning: Could not load fonts. Titles may not display properly.")
             self.title_font = graphics.Font()

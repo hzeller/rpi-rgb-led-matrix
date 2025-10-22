@@ -519,9 +519,9 @@ class AdvancedStockTracker(SampleBase):
         # Load smaller fonts to fit in compact 16px height with 2px margins
         print("Loading fonts...")
         self.font_large = graphics.Font()
-        self.font_large.LoadFont("../../../fonts/5x7.bdf")  # Smaller font for symbol
+        self.font_large.LoadFont("../../../../fonts/5x7.bdf")  # Smaller font for symbol
         self.font_small = graphics.Font()
-        self.font_small.LoadFont("../../../fonts/4x6.bdf")  # Even smaller for price
+        self.font_small.LoadFont("../../../../fonts/4x6.bdf")  # Even smaller for price
         print("✓ Fonts loaded")
         
         # Get API key (already loaded from environment in argument defaults)

@@ -232,7 +232,7 @@ class StockTracker(SampleBase):
     def run(self):
         # Load font
         self.font = graphics.Font()
-        self.font.LoadFont("../../../fonts/7x13.bdf")
+        self.font.LoadFont("../../../../fonts/7x13.bdf")
         
         # Get API key
         self.api_key = self.args.api_key or os.environ.get('ALPHA_VANTAGE_API_KEY')

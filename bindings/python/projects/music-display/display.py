@@ -195,9 +195,9 @@ class StockMatrixDisplay(MatrixDisplay):
         
         # Load stock-specific fonts
         self.font_large = graphics.Font()
-        self.font_large.LoadFont("../../../fonts/5x7.bdf")
+        self.font_large.LoadFont("../../../../fonts/5x7.bdf")
         self.font_small = graphics.Font()
-        self.font_small.LoadFont("../../../fonts/4x6.bdf")
+        self.font_small.LoadFont("../../../../fonts/4x6.bdf")
         
         # Stock-specific colors
         from stock_config import StockConfig

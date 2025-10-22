@@ -30,11 +30,11 @@ class SimpleClock:
         
         # Load font - use a bigger, bolder font for classic alarm clock look
         self.font = graphics.Font()
-        self.font.LoadFont("../../../fonts/9x18B.bdf")  # Bold 9x18 font (B = Bold)
+        self.font.LoadFont("../../../../fonts/9x18B.bdf")  # Bold 9x18 font (B = Bold)
         
         # Load bold font for date
         self.date_font = graphics.Font()
-        self.date_font.LoadFont("../../../fonts/6x13B.bdf")  # Bold font for date
+        self.date_font.LoadFont("../../../../fonts/6x13B.bdf")  # Bold font for date
         
         # Colors - classic alarm clock style
         self.time_color = graphics.Color(255, 255, 255)  # Bright white for time
