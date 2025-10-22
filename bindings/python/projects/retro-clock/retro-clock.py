@@ -44,10 +44,12 @@ class RetroFlipClock(MatrixBase):
         self.digit_font = self.font_manager.get_font('xxlarge')  # 9x18B for main digits
         self.ampm_font = self.font_manager.get_font('tiny')      # 4x6 for AM/PM
         
-        # Classic flip clock colors - simple and clean
-        self.digit_color = self.color_palette.get_color('white')    # White digits
-        self.background_color = self.color_palette.get_color('black') # Black background
-        self.ampm_color = self.color_palette.get_color('gray_light')  # Gray AM/PM
+        # Authentic Twemco flip clock colors
+        self.background_color = self.color_palette.get_color((255, 100, 50))  # Orange background
+        self.frame_color = self.color_palette.get_color('white')               # White trim/frame
+        self.window_color = self.color_palette.get_color('black')              # Black digit windows
+        self.digit_color = self.color_palette.get_color('white')               # White digits
+        self.ampm_color = self.color_palette.get_color('white')                # White AM indicator
         
         # Store previous time for flip detection
         self.previous_time = ""
@@ -56,66 +58,29 @@ class RetroFlipClock(MatrixBase):
         print("�️  Retro Flip Clock initialized - Classic 1970s style")
         print(f"Matrix size: {self.width}x{self.height}")
         
-    def draw_digit_blocks(self, digit_str, start_x, y):
-        """Draw digits with flip-card style blocks."""
-        current_x = start_x
-        
-        for char in digit_str:
-            if char == ':':
-                # Draw colon as two dots (flip clock style)
-                dot_color = self.digit_color
-                self.set_pixel(current_x + 1, y - 6, dot_color)   # Upper dot
-                self.set_pixel(current_x + 1, y - 2, dot_color)   # Lower dot
-                current_x += 4  # Space for colon
-            elif char == ' ':
-                current_x += 6  # Space between digits
-            else:
-                # Draw the actual digit
-                char_width = self.draw_text(self.digit_font, current_x, y, 
-                                          self.digit_color, char)
-                current_x += char_width + 2  # Add slight spacing between digits
-        
-        return current_x
+
     
     def draw_flip_time(self):
-        """Draw time in classic flip clock style."""
+        """Draw time in authentic Twemco flip clock style with separate windows."""
         now = datetime.now()
         
-        # Format time in 12-hour format with leading space instead of zero
+        # Format time components separately
         hour = now.strftime("%I")
         if hour.startswith("0"):
-            hour = " " + hour[1:]  # Replace leading zero with space
+            hour = " " + hour[1:]  # Replace leading zero with space for authenticity
         
-        minute = now.strftime("%M")
-        time_str = f"{hour}:{minute}"
+        minute = now.strftime("%M")  # Always two digits for minutes
         
-        # Calculate total width to center the time
-        total_width = 0
-        for char in time_str:
-            if char == ':':
-                total_width += 4  # Colon width
-            elif char == ' ':
-                total_width += 6  # Space width
-            else:
-                total_width += self.digit_font.CharacterWidth(ord(char)) + 2
+        # Draw the digit windows and digits
+        self.draw_digit_windows(hour, minute)
         
-        # Center horizontally and vertically
-        start_x = (64 - total_width) // 2
-        time_y = 20  # Vertically centered for 32px display
-        
-        # Draw the time digits
-        self.draw_digit_blocks(time_str, start_x, time_y)
-        
-        # Draw AM/PM if enabled
+        # Draw AM indicator (like the original - small text on orange background)
         if self.show_ampm:
-            ampm = now.strftime("%p")
-            ampm_width = 0
-            for char in ampm:
-                ampm_width += self.ampm_font.CharacterWidth(ord(char))
+            ampm = now.strftime("%p").lower()  # Use lowercase "am" like the original
             
-            # Position AM/PM in bottom right corner
-            ampm_x = 64 - ampm_width - 2
-            ampm_y = 30
+            # Position AM/PM in upper left area on orange background
+            ampm_x = 4
+            ampm_y = 6
             
             current_x = ampm_x
             for char in ampm:
@@ -123,33 +88,97 @@ class RetroFlipClock(MatrixBase):
                                           self.ampm_color, char)
                 current_x += char_width
     
-    def draw_subtle_frame(self):
-        """Draw a subtle frame around the display area (optional)."""
-        # Very minimal frame - just corner pixels for classic look
-        frame_color = self.color_palette.get_color('gray_dark')
+    def draw_background_and_frame(self):
+        """Draw the orange background and white frame like a real Twemco clock."""
+        # Fill entire background with orange
+        for x in range(64):
+            for y in range(32):
+                self.set_pixel(x, y, self.background_color)
         
-        # Just small corner indicators
-        corners = [(1, 1), (62, 1), (1, 30), (62, 30)]
-        for x, y in corners:
-            self.set_pixel(x, y, frame_color)
+        # Draw white frame border (2-pixel thick for visibility)
+        # Top and bottom borders
+        for x in range(64):
+            self.set_pixel(x, 0, self.frame_color)
+            self.set_pixel(x, 1, self.frame_color)
+            self.set_pixel(x, 30, self.frame_color) 
+            self.set_pixel(x, 31, self.frame_color)
+        
+        # Left and right borders  
+        for y in range(32):
+            self.set_pixel(0, y, self.frame_color)
+            self.set_pixel(1, y, self.frame_color)
+            self.set_pixel(62, y, self.frame_color)
+            self.set_pixel(63, y, self.frame_color)
+    
+    def draw_digit_windows(self, hour_str, minute_str):
+        """Draw black rectangular windows for the digits like flip cards."""
+        # Define window positions (two separate rectangles for hour and minute)
+        # Hour window (left side)
+        hour_window = {
+            'x': 6, 'y': 8, 'width': 22, 'height': 16
+        }
+        
+        # Minute window (right side)  
+        minute_window = {
+            'x': 36, 'y': 8, 'width': 22, 'height': 16
+        }
+        
+        # Draw hour window (black rectangle)
+        for x in range(hour_window['x'], hour_window['x'] + hour_window['width']):
+            for y in range(hour_window['y'], hour_window['y'] + hour_window['height']):
+                if 0 <= x < 64 and 0 <= y < 32:
+                    self.set_pixel(x, y, self.window_color)
+        
+        # Draw minute window (black rectangle)
+        for x in range(minute_window['x'], minute_window['x'] + minute_window['width']):
+            for y in range(minute_window['y'], minute_window['y'] + minute_window['height']):
+                if 0 <= x < 64 and 0 <= y < 32:
+                    self.set_pixel(x, y, self.window_color)
+        
+        # Draw white digits centered in their respective windows
+        # Hour digits
+        hour_width = 0
+        for char in hour_str:
+            if char != ' ':
+                hour_width += self.digit_font.CharacterWidth(ord(char))
+        hour_x = hour_window['x'] + (hour_window['width'] - hour_width) // 2
+        hour_y = hour_window['y'] + 14  # Adjust for font baseline
+        
+        current_x = hour_x
+        for char in hour_str:
+            if char != ' ':
+                char_width = self.draw_text(self.digit_font, current_x, hour_y, 
+                                          self.digit_color, char)
+                current_x += char_width
+        
+        # Minute digits
+        minute_width = 0
+        for char in minute_str:
+            minute_width += self.digit_font.CharacterWidth(ord(char))
+        minute_x = minute_window['x'] + (minute_window['width'] - minute_width) // 2  
+        minute_y = minute_window['y'] + 14  # Adjust for font baseline
+        
+        current_x = minute_x
+        for char in minute_str:
+            char_width = self.draw_text(self.digit_font, current_x, minute_y,
+                                      self.digit_color, char)
+            current_x += char_width
     
 
     
     def run(self):
         """Main display loop - simple and clean like a real flip clock."""
-        print("🕰️  Starting Classic Flip Clock - Press CTRL-C to stop")
-        print("📟 Authentic 1970s styling - simple and elegant")
+        print("🕰️  Starting Authentic Twemco-Style Flip Clock - Press CTRL-C to stop")
+        print("🧡 Orange background with white frame and black digit windows")
         
         try:
             while True:
-                # Clear the display
+                # Start with clean slate
                 self.clear()
                 
-                # Draw the time in flip clock style
+                # Draw background, frame, and time windows
+                self.draw_background_and_frame()
                 self.draw_flip_time()
-                
-                # Optional: Draw subtle frame (uncomment if desired)
-                # self.draw_subtle_frame()
                 
                 # Update display
                 self.swap()
