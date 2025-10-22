@@ -45,7 +45,7 @@ class RetroFlipClock(MatrixBase):
         self.ampm_font = self.font_manager.get_font('tiny')      # 4x6 for AM/PM
         
         # Authentic Twemco flip clock colors
-        self.background_color = self.color_palette.get_color((255, 100, 50))  # Orange background
+        self.background_color = self.color_palette.get_color((255, 140, 0))   # Vibrant orange background
         self.frame_color = self.color_palette.get_color('white')               # White trim/frame
         self.window_color = self.color_palette.get_color('black')              # Black digit windows
         self.digit_color = self.color_palette.get_color('white')               # White digits
@@ -80,7 +80,7 @@ class RetroFlipClock(MatrixBase):
             
             # Position AM/PM in upper left area on orange background
             ampm_x = 4
-            ampm_y = 6
+            ampm_y = 7
             
             current_x = ampm_x
             for char in ampm:
@@ -89,26 +89,33 @@ class RetroFlipClock(MatrixBase):
                 current_x += char_width
     
     def draw_background_and_frame(self):
-        """Draw the orange background and white frame like a real Twemco clock."""
+        """Draw the orange background and dual frame like a real Twemco clock."""
         # Fill entire background with orange
         for x in range(64):
             for y in range(32):
                 self.set_pixel(x, y, self.background_color)
         
-        # Draw white frame border (2-pixel thick for visibility)
+        # Draw orange outer frame border (1-pixel thick)
         # Top and bottom borders
         for x in range(64):
-            self.set_pixel(x, 0, self.frame_color)
-            self.set_pixel(x, 1, self.frame_color)
-            self.set_pixel(x, 30, self.frame_color) 
-            self.set_pixel(x, 31, self.frame_color)
+            self.set_pixel(x, 0, self.background_color)
+            self.set_pixel(x, 31, self.background_color)
         
         # Left and right borders  
         for y in range(32):
-            self.set_pixel(0, y, self.frame_color)
+            self.set_pixel(0, y, self.background_color)
+            self.set_pixel(63, y, self.background_color)
+        
+        # Draw white inner frame border (1-pixel thick)
+        # Top and bottom borders
+        for x in range(1, 63):
+            self.set_pixel(x, 1, self.frame_color)
+            self.set_pixel(x, 30, self.frame_color)
+        
+        # Left and right borders  
+        for y in range(1, 31):
             self.set_pixel(1, y, self.frame_color)
             self.set_pixel(62, y, self.frame_color)
-            self.set_pixel(63, y, self.frame_color)
     
     def draw_digit_windows(self, hour_str, minute_str):
         """Draw black rectangular windows for the digits like flip cards."""
