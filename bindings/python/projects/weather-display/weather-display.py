@@ -272,8 +272,9 @@ class WeatherDisplay(MatrixBase):
     def get_weather_icon(self, icon_code):
         """Load weather icon from local files based on icon code"""
         try:
-            # Try to load local weather icon file
-            icon_path = f"weather_icons/{icon_code}.png"
+            # Try to load local weather icon file - use path relative to this script
+            script_dir = os.path.dirname(__file__)
+            icon_path = os.path.join(script_dir, "weather_icons", f"{icon_code}.png")
             
             # Check if local icon file exists
             if os.path.exists(icon_path):
