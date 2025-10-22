@@ -73,7 +73,14 @@ class RetroFlipClock(MatrixBase):
         
         # Store previous time for flip detection
         self.previous_time = ""
+        self.previous_hour = ""
+        self.previous_minute = ""
         self.show_ampm = True  # Option to show AM/PM
+        
+        # Flip animation state
+        self.manual_flip_triggered = False
+        self.flip_animation_frames = 8  # Number of frames in flip animation
+        self.flip_duration = 0.4  # Total duration in seconds
         
         print("�️  Retro Flip Clock initialized - Classic 1970s style")
         print(f"Matrix size: {self.width}x{self.height}")
