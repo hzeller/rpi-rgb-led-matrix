@@ -1,4 +1,4 @@
-# Advanced Stock Tracker with Charts
+# Stock Tracker with Charts
 
 A sophisticated stock tracker that displays individual stocks with historical price charts, matching the professional layout shown in your reference image.
 
@@ -33,17 +33,17 @@ ________________
 
 ### Demo Mode (No API Key Needed)
 ```bash
-sudo python advanced-stock-tracker.py --demo-mode
+sudo python stock-tracker.py --demo-mode
 ```
 
 ### With Real Data
 ```bash
-sudo python advanced-stock-tracker.py --api-key YOUR_KEY --stocks "AAPL,GOOGL,MSFT,TSLA"
+sudo python stock-tracker.py --api-key YOUR_KEY --stocks "AAPL,GOOGL,MSFT,TSLA"
 ```
 
 ## Command Line Options
 
-### Advanced Stock Tracker Options
+### Stock Tracker Options
 - `--display-time`: Seconds to show each stock (default: 10)
 - `--chart-days`: Days of historical data for charts (default: 30)
 - `--stocks`: Stock symbols to cycle through
@@ -80,13 +80,13 @@ The display uses intelligent color coding:
 ### Basic Usage
 ```bash
 # Show AAPL, GOOGL, MSFT with 10 second intervals
-sudo python advanced-stock-tracker.py --demo-mode --stocks "AAPL,GOOGL,MSFT"
+sudo python stock-tracker.py --demo-mode --stocks "AAPL,GOOGL,MSFT"
 ```
 
 ### Custom Configuration  
 ```bash
 # 5-second intervals, 60 days of chart data
-sudo python advanced-stock-tracker.py \
+sudo python stock-tracker.py \
   --api-key YOUR_KEY \
   --stocks "AAPL,TSLA,NVDA" \
   --display-time 5 \
@@ -96,7 +96,7 @@ sudo python advanced-stock-tracker.py \
 ### Quick Test
 ```bash
 # Demo with single stock for testing
-sudo python advanced-stock-tracker.py --demo-mode --stocks "AAPL" --display-time 30
+sudo python stock-tracker.py --demo-mode --stocks "AAPL" --display-time 30
 ```
 
 ## API Requirements
@@ -178,7 +178,7 @@ self.colors = {
 
 ## Comparison with Basic Tracker
 
-| Feature | Basic Stock Tracker | Advanced Stock Tracker |
+| Feature | Old Stock Tracker | Current Stock Tracker |
 |---------|-------------------|----------------------|
 | Layout | Scrolling text | Professional quadrant |
 | Stocks | All at once | One at a time |  
@@ -197,4 +197,4 @@ AAPL        +2.15
 
 Where the bottom line represents the price chart over time.
 
-This advanced tracker provides a much more professional and informative stock display that matches modern trading interfaces!
+This stock tracker provides a much more professional and informative stock display that matches modern trading interfaces!

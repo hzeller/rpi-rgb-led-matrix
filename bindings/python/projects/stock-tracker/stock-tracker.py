@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Advanced Stock Tracker with Charts for RGB LED Matrix
+Stock Tracker with Charts for RGB LED Matrix
 Displays stock prices with historical charts and color-coded performance
 Uses Alpha Vantage API for stock data and historical prices
 """
@@ -23,7 +23,7 @@ from color_palette import ColorPalette
 from config_manager import ConfigManager
 
 
-class AdvancedStockTracker(MatrixBase):
+class StockTracker(MatrixBase):
     def __init__(self, api_key=None, stocks=None, refresh_rate=5, display_time=10, 
                  demo_mode=False, chart_days=30, include_trending=False, trending_count=3):
         super().__init__(hardware_mapping='adafruit-hat-pwm')
@@ -502,7 +502,7 @@ class AdvancedStockTracker(MatrixBase):
                 y += sy
 
     def run(self):
-        print("🚀 Starting advanced stock tracker...")
+        print("🚀 Starting stock tracker...")
         
         # Fonts are already loaded in __init__
         print("✓ Fonts loaded")
@@ -626,7 +626,7 @@ class AdvancedStockTracker(MatrixBase):
 
 # Main function with argument parsing
 def main():
-    parser = argparse.ArgumentParser(description='Advanced Stock Tracker with Charts')
+    parser = argparse.ArgumentParser(description='Stock Tracker with Charts')
     parser.add_argument("--api-key", help="Alpha Vantage API key", type=str)
     parser.add_argument("--stocks", help="Comma-separated stock symbols", 
                        default="AAPL,GOOGL,MSFT,TSLA", type=str)
@@ -645,7 +645,7 @@ def main():
     args = parser.parse_args()
     
     try:
-        stock_tracker = AdvancedStockTracker(
+        stock_tracker = StockTracker(
             api_key=args.api_key,
             stocks=args.stocks,
             refresh_rate=args.refresh_rate,
@@ -657,7 +657,7 @@ def main():
         )
         stock_tracker.run()
     except KeyboardInterrupt:
-        print("\n🛑 Advanced stock tracker stopped.")
+        print("\n🛑 Stock tracker stopped.")
     except Exception as e:
         print(f"❌ Error: {e}")
         import traceback
