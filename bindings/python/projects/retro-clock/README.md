@@ -1,25 +1,26 @@
-# 🕒 Retro Clock
+# �️ Retro Flip Clock
 
-An 80s/90s-inspired digital clock display for RGB LED matrices, featuring classic retro aesthetics and smooth animations.
+A classic 1970s-style flip clock display for RGB LED matrices, inspired by iconic Twemco and similar vintage timepieces.
 
 ## ✨ Features
 
-### Retro Visual Design
-- **Color Theme**: Lime green, yellow, and magenta color scheme
-- **Typography**: Classic digital-style fonts
-- **Animations**: Blinking colon, scanning side effects, animated borders
+### Authentic Flip Clock Design
+- **Minimalist Aesthetic**: Clean white digits on black background
+- **Classic Typography**: Large, blocky digits mimicking flip cards
+- **Proper Proportions**: Authentic spacing and layout
+- **Simple Elegance**: No distracting animations, just pure timekeeping
 
 ### Display Elements
-- **Time**: Large, centered 12-hour format with blinking colon
-- **Day**: Day of the week in bright yellow
-- **Date**: Month/day in retro magenta with yellow separator
-- **Effects**: Animated border corners and scanning side dots
+- **Time**: Large, centered 12-hour format (10:15 style)
+- **AM/PM**: Small indicator in bottom-right corner
+- **Colon**: Two-dot separator between hours and minutes
+- **Leading Space**: Hour display uses space instead of leading zero (like real flip clocks)
 
 ### Technical Features
-- 30fps smooth animations
+- 1-second update interval (like real flip clocks)
 - Shared component architecture (MatrixBase, FontManager, ColorPalette)
-- Automatic animation cycling to prevent overflow
-- Clean startup and shutdown
+- Clean, readable font selection
+- Minimal resource usage
 
 ## 🎮 Usage
 
@@ -36,35 +37,34 @@ sudo python retro-clock/retro-clock.py
 
 ## 🎨 Color Scheme
 
-The retro theme uses:
-- **Primary (Lime Green)**: Main time display
-- **Secondary (Yellow)**: Day of week, date separator, dim effects
-- **Accent (Magenta)**: Date numbers, animated highlights
+Classic flip clock colors:
+- **White Digits**: Clean, high-contrast main time display
+- **Gray AM/PM**: Subtle indicator that doesn't compete with time
+- **Black Background**: Pure black for maximum digit clarity
+- **Dark Gray Frame**: Optional subtle corner accents
 
 ## 🔧 Customization
 
-### Change Colors
-Modify the theme in the constructor:
+### Enable/Disable AM/PM
 ```python
-# Use different theme
-self.color_palette = ColorPalette('matrix')  # Matrix green theme
-self.color_palette = ColorPalette('dark')    # Dark theme
+# In the constructor
+self.show_ampm = False  # Hide AM/PM for 24-hour style
+self.show_ampm = True   # Show AM/PM (default)
 ```
 
-### Adjust Animation Speed
-Change the refresh rate:
+### Add Subtle Frame
+Uncomment in the run() method:
 ```python
-# Slower animations (20fps)
-time.sleep(1.0 / 20.0)
-
-# Faster animations (60fps)
-time.sleep(1.0 / 60.0)
+# Optional: Draw subtle frame (uncomment if desired)
+self.draw_subtle_frame()
 ```
 
-### Modify Effects
-- **Border animation**: Change `animation_frame // 30` divisor
-- **Colon blink**: Adjust `animation_frame % 30` modulus
-- **Dot scanning**: Modify `animation_frame // 10` divisor
+### Change Color Theme
+```python
+# For a green monochrome look
+self.color_palette = ColorPalette('matrix')
+self.digit_color = self.color_palette.get_color('primary')
+```
 
 ## 📋 Requirements
 
@@ -75,18 +75,31 @@ time.sleep(1.0 / 60.0)
 
 ## 🎯 Perfect For
 
-- Retro gaming setups
-- 80s/90s themed displays  
-- Nostalgic room decor
-- Demonstration of theme system
+- Vintage electronics enthusiasts
+- Minimalist desk displays
+- Classic interior design
+- Authentic retro aesthetics
+- Bedside or office timekeeping
 
 ## 🚀 Example Output
 
 ```
-🕒 Retro Clock initialized with 80s theme!
+�️  Retro Flip Clock initialized - Classic 1970s style
 Matrix size: 64x32
-🎮 Starting Retro Clock - Press CTRL-C to stop
-✨ Featuring 80s-style animations and colors!
+🕰️  Starting Classic Flip Clock - Press CTRL-C to stop
+📟 Authentic 1970s styling - simple and elegant
+```
+
+## 📐 Display Layout
+
+```
+┌─────────────────────────┐
+│                         │
+│                         │
+│        10:15            │
+│                      AM │
+│                         │
+└─────────────────────────┘
 ```
 
 Press `Ctrl+C` to stop the display gracefully.

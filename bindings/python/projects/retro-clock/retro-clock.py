@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 """
-Retro Clock - 80s/90s Style LED Matrix Display
+Retro Flip Clock - Classic 1970s Style LED Matrix Display
 
-A nostalgic clock display featuring:
-- Retro color scheme (lime green, yellow, magenta)
-- Digital-style time display with classic fonts
-- Animated elements and effects
-- Day/date display with retro styling
+A minimalist flip clock display inspired by vintage Twemco and similar designs:
+- Clean, blocky digit display mimicking flip cards
+- Simple black background with white digits
+- Hour:minute format in large, readable font
+- Classic proportions and spacing
+- Optional AM/PM indicator
 
 Usage:
     sudo python retro-clock.py
@@ -24,8 +25,8 @@ from font_manager import FontManager
 from color_palette import ColorPalette
 
 
-class RetroClock(MatrixBase):
-    """Retro-styled clock display with 80s/90s aesthetic."""
+class RetroFlipClock(MatrixBase):
+    """Classic flip clock display with vintage 1970s aesthetic."""
     
     def __init__(self):
         # Initialize matrix with standard configuration
@@ -35,172 +36,133 @@ class RetroClock(MatrixBase):
             hardware_mapping='adafruit-hat-pwm'
         )
         
-        # Initialize shared components with retro theme
+        # Initialize shared components with clean default theme
         self.font_manager = FontManager()
-        self.color_palette = ColorPalette('retro')  # Use retro theme!
+        self.color_palette = ColorPalette('default')  # Clean white on black
         
-        # Load fonts for different elements
-        self.time_font = self.font_manager.get_font('xxlarge')     # 9x18B for time
-        self.date_font = self.font_manager.get_font('medium_bold') # 6x13B for date
-        self.day_font = self.font_manager.get_font('small')        # 5x7 for day
+        # Load fonts - use the largest available for authentic flip clock look
+        self.digit_font = self.font_manager.get_font('xxlarge')  # 9x18B for main digits
+        self.ampm_font = self.font_manager.get_font('tiny')      # 4x6 for AM/PM
         
-        # Get retro theme colors
-        self.primary_color = self.color_palette.get_color('primary')    # Lime green
-        self.secondary_color = self.color_palette.get_color('secondary') # Yellow
-        self.accent_color = self.color_palette.get_color('accent')       # Magenta
+        # Classic flip clock colors - simple and clean
+        self.digit_color = self.color_palette.get_color('white')    # White digits
+        self.background_color = self.color_palette.get_color('black') # Black background
+        self.ampm_color = self.color_palette.get_color('gray_light')  # Gray AM/PM
         
-        # Animation state
-        self.animation_frame = 0
-        self.blink_state = True
+        # Store previous time for flip detection
+        self.previous_time = ""
+        self.show_ampm = True  # Option to show AM/PM
         
-        print("🕒 Retro Clock initialized with 80s theme!")
+        print("�️  Retro Flip Clock initialized - Classic 1970s style")
         print(f"Matrix size: {self.width}x{self.height}")
         
-    def draw_retro_border(self):
-        """Draw a retro-style animated border."""
-        # Animate border color between accent and secondary
-        if (self.animation_frame // 30) % 2 == 0:  # Switch every 30 frames (~1 second)
-            border_color = self.accent_color      # Magenta
-        else:
-            border_color = self.secondary_color   # Yellow
-            
-        # Draw corner pixels for retro look
-        corners = [(0, 0), (63, 0), (0, 31), (63, 31)]
-        for x, y in corners:
-            self.set_pixel(x, y, border_color)
-            
-        # Draw small side decorations
-        mid_y = 15  # Middle of 32px display
-        for offset in [-1, 0, 1]:
-            if 0 <= mid_y + offset < 32:
-                self.set_pixel(0, mid_y + offset, border_color)   # Left side
-                self.set_pixel(63, mid_y + offset, border_color)  # Right side
+    def draw_digit_blocks(self, digit_str, start_x, y):
+        """Draw digits with flip-card style blocks."""
+        current_x = start_x
+        
+        for char in digit_str:
+            if char == ':':
+                # Draw colon as two dots (flip clock style)
+                dot_color = self.digit_color
+                self.set_pixel(current_x + 1, y - 6, dot_color)   # Upper dot
+                self.set_pixel(current_x + 1, y - 2, dot_color)   # Lower dot
+                current_x += 4  # Space for colon
+            elif char == ' ':
+                current_x += 6  # Space between digits
+            else:
+                # Draw the actual digit
+                char_width = self.draw_text(self.digit_font, current_x, y, 
+                                          self.digit_color, char)
+                current_x += char_width + 2  # Add slight spacing between digits
+        
+        return current_x
     
-    def draw_retro_time(self):
-        """Draw time in retro digital style with animations."""
+    def draw_flip_time(self):
+        """Draw time in classic flip clock style."""
         now = datetime.now()
         
-        # Format time in 12-hour format
-        time_str = now.strftime("%I:%M")
-        if time_str.startswith("0"):
-            time_str = time_str[1:]  # Remove leading zero
+        # Format time in 12-hour format with leading space instead of zero
+        hour = now.strftime("%I")
+        if hour.startswith("0"):
+            hour = " " + hour[1:]  # Replace leading zero with space
         
-        # Add blinking colon effect
-        if self.blink_state:
-            time_display = time_str
-        else:
-            time_display = time_str.replace(":", " ")  # Replace colon with space for blink
-            
-        # Calculate position for centered time
-        time_width = 0
-        for char in time_display:
-            time_width += self.time_font.CharacterWidth(ord(char))
-        time_x = (64 - time_width) // 2
-        time_y = 20  # Positioned in lower half
+        minute = now.strftime("%M")
+        time_str = f"{hour}:{minute}"
         
-        # Draw time with retro primary color (lime green)
-        current_x = time_x
-        for char in time_display:
-            if char == ' ':
-                current_x += 4
+        # Calculate total width to center the time
+        total_width = 0
+        for char in time_str:
+            if char == ':':
+                total_width += 4  # Colon width
+            elif char == ' ':
+                total_width += 6  # Space width
             else:
-                char_width = self.draw_text(self.time_font, current_x, time_y, 
-                                          self.primary_color, char)
+                total_width += self.digit_font.CharacterWidth(ord(char)) + 2
+        
+        # Center horizontally and vertically
+        start_x = (64 - total_width) // 2
+        time_y = 20  # Vertically centered for 32px display
+        
+        # Draw the time digits
+        self.draw_digit_blocks(time_str, start_x, time_y)
+        
+        # Draw AM/PM if enabled
+        if self.show_ampm:
+            ampm = now.strftime("%p")
+            ampm_width = 0
+            for char in ampm:
+                ampm_width += self.ampm_font.CharacterWidth(ord(char))
+            
+            # Position AM/PM in bottom right corner
+            ampm_x = 64 - ampm_width - 2
+            ampm_y = 30
+            
+            current_x = ampm_x
+            for char in ampm:
+                char_width = self.draw_text(self.ampm_font, current_x, ampm_y,
+                                          self.ampm_color, char)
                 current_x += char_width
     
-    def draw_retro_date(self):
-        """Draw date in retro style."""
-        now = datetime.now()
+    def draw_subtle_frame(self):
+        """Draw a subtle frame around the display area (optional)."""
+        # Very minimal frame - just corner pixels for classic look
+        frame_color = self.color_palette.get_color('gray_dark')
         
-        # Day of week in small font (secondary color - yellow)
-        day_str = now.strftime("%a").upper()  # "WED"
-        day_width = 0
-        for char in day_str:
-            day_width += self.day_font.CharacterWidth(ord(char))
-        day_x = (64 - day_width) // 2
-        day_y = 8
-        
-        current_x = day_x
-        for char in day_str:
-            char_width = self.draw_text(self.day_font, current_x, day_y, 
-                                      self.secondary_color, char)
-            current_x += char_width
-        
-        # Date in medium font (accent color - magenta)
-        date_str = now.strftime("%m/%d")  # "10/21"
-        date_width = 0
-        for char in date_str:
-            date_width += self.date_font.CharacterWidth(ord(char))
-        date_x = (64 - date_width) // 2
-        date_y = 30
-        
-        current_x = date_x
-        for char in date_str:
-            if char == '/':
-                char_width = self.draw_text(self.date_font, current_x, date_y, 
-                                          self.secondary_color, char)  # Yellow slash
-            else:
-                char_width = self.draw_text(self.date_font, current_x, date_y, 
-                                          self.accent_color, char)     # Magenta numbers
-            current_x += char_width
+        # Just small corner indicators
+        corners = [(1, 1), (62, 1), (1, 30), (62, 30)]
+        for x, y in corners:
+            self.set_pixel(x, y, frame_color)
     
-    def draw_retro_effects(self):
-        """Add retro visual effects."""
-        # Animated dots on sides
-        dot_positions = [
-            (2, 5), (2, 10), (2, 15), (2, 20), (2, 25),    # Left side
-            (61, 5), (61, 10), (61, 15), (61, 20), (61, 25)  # Right side
-        ]
-        
-        # Animate dots - create a "scanning" effect
-        active_dot = (self.animation_frame // 10) % len(dot_positions)
-        
-        for i, (x, y) in enumerate(dot_positions[:5]):  # Left side only
-            if i == active_dot % 5:  # Active dot
-                color = self.accent_color      # Bright magenta
-            else:
-                color = self.color_palette.dim_color(self.secondary_color, 0.3)  # Dim yellow
-            self.set_pixel(x, y, color)
-            self.set_pixel(63 - x + 2, y, color)  # Mirror on right side
+
     
     def run(self):
-        """Main display loop with retro effects."""
-        print("🎮 Starting Retro Clock - Press CTRL-C to stop")
-        print("✨ Featuring 80s-style animations and colors!")
+        """Main display loop - simple and clean like a real flip clock."""
+        print("🕰️  Starting Classic Flip Clock - Press CTRL-C to stop")
+        print("📟 Authentic 1970s styling - simple and elegant")
         
         try:
             while True:
+                # Clear the display
                 self.clear()
                 
-                # Draw all retro elements
-                self.draw_retro_border()
-                self.draw_retro_time()
-                self.draw_retro_date()
-                self.draw_retro_effects()
+                # Draw the time in flip clock style
+                self.draw_flip_time()
+                
+                # Optional: Draw subtle frame (uncomment if desired)
+                # self.draw_subtle_frame()
                 
                 # Update display
                 self.swap()
                 
-                # Update animation states
-                self.animation_frame += 1
-                
-                # Blink colon every 30 frames (~1 second at 30fps)
-                if self.animation_frame % 30 == 0:
-                    self.blink_state = not self.blink_state
-                
-                # Reset animation frame to prevent overflow
-                if self.animation_frame >= 1800:  # Reset every minute
-                    self.animation_frame = 0
-                
-                # 30fps refresh rate for smooth animations
-                time.sleep(1.0 / 30.0)
+                # Update every second (like a real flip clock)
+                time.sleep(1.0)
                 
         except KeyboardInterrupt:
-            print("\n🛑 Retro Clock stopped - Back to the future!")
+            print("\n�️  Flip clock stopped - Time stands still!")
         finally:
             self.clear()
 
 
 if __name__ == "__main__":
-    retro_clock = RetroClock()
-    retro_clock.run()
+    flip_clock = RetroFlipClock()
+    flip_clock.run()
