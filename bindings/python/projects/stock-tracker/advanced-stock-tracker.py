@@ -73,7 +73,7 @@ class AdvancedStockTracker(MatrixBase):
     def get_demo_data(self):
         """Generate demo stock data with historical prices for charts"""
         import random
-        demo_stocks = self.args.stocks.split(',')
+        demo_stocks = self.stocks.split(',')
         current_data = {}
         history_data = {}
         
@@ -110,7 +110,7 @@ class AdvancedStockTracker(MatrixBase):
 
     def fetch_historical_data(self, symbol):
         """Fetch historical stock data for chart"""
-        if self.args.demo_mode or not self.api_key:
+        if self.demo_mode or not self.api_key:
             return None
             
         try:
@@ -165,7 +165,7 @@ class AdvancedStockTracker(MatrixBase):
                         quotes = data['finance']['result'][0].get('quotes', [])
                         
                         # Get top movers
-                        for quote in quotes[:self.args.trending_count]:
+                        for quote in quotes[:self.trending_count]:
                             symbol = quote.get('symbol', '').upper()
                             change_percent = quote.get('regularMarketChangePercent', {}).get('raw', 0)
                             
@@ -173,10 +173,10 @@ class AdvancedStockTracker(MatrixBase):
                                 trending_symbols.append(symbol)
                                 print(f"✓ Found trending stock: {symbol} ({change_percent:+.1f}%)")
                                 
-                                if len(trending_symbols) >= self.args.trending_count:
+                                if len(trending_symbols) >= self.trending_count:
                                     break
                     
-                    if len(trending_symbols) >= self.args.trending_count:
+                    if len(trending_symbols) >= self.trending_count:
                         break
                         
                 except Exception as inner_e:
@@ -189,10 +189,10 @@ class AdvancedStockTracker(MatrixBase):
         # Fallback: use some popular volatile stocks if API fails
         if not trending_symbols:
             fallback_trending = ['GME', 'AMC', 'PLTR', 'RIVN', 'LCID', 'SOFI']
-            trending_symbols = fallback_trending[:self.args.trending_count]
+            trending_symbols = fallback_trending[:self.trending_count]
             print(f"Using fallback trending stocks: {trending_symbols}")
             
-        return trending_symbols[:self.args.trending_count]
+        return trending_symbols[:self.trending_count]
 
     def fetch_yahoo_finance_data(self, symbol):
         """Fetch stock data from Yahoo Finance (free, no API key required)"""
@@ -230,14 +230,14 @@ class AdvancedStockTracker(MatrixBase):
     
     def fetch_stock_data(self):
         """Fetch real stock data from multiple free APIs"""
-        if self.args.demo_mode:
+        if self.demo_mode:
             return self.get_demo_data()
         
         # Start with hardcoded stocks
-        stocks = [s.strip().upper() for s in self.args.stocks.split(',')]
+        stocks = [s.strip().upper() for s in self.stocks.split(',')]
         
         # Add trending stocks if requested
-        if self.args.include_trending:
+        if self.include_trending:
             print("Fetching trending stocks...")
             trending_stocks = self.fetch_trending_stocks()
             if trending_stocks:
@@ -310,7 +310,7 @@ class AdvancedStockTracker(MatrixBase):
 
     def fetch_alpha_vantage_data(self):
         """Fallback to Alpha Vantage API if available"""
-        stocks = [s.strip().upper() for s in self.args.stocks.split(',')]
+        stocks = [s.strip().upper() for s in self.stocks.split(',')]
         current_data = {}
         history_data = {}
         successful_fetches = 0
@@ -375,7 +375,7 @@ class AdvancedStockTracker(MatrixBase):
                 print(f"✓ Updated at {self.last_update.strftime('%H:%M:%S')} - {len(self.stock_data)} stocks")
                 
                 # Wait for next update
-                time.sleep(self.args.refresh_rate * 60)
+                time.sleep(self.refresh_rate * 60)
                 
             except Exception as e:
                 print(f"Error in update thread: {e}")

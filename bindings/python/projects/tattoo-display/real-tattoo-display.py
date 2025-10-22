@@ -11,87 +11,47 @@ from PIL import Image, ImageEnhance, ImageOps
 from io import BytesIO
 import threading
 
-# Add the parent directory to Python path to import the rgbmatrix module
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
-from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../samples'))
-from samplebase import SampleBase
+# Add shared components to path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
+from matrix_base import MatrixBase
+from font_manager import FontManager
+from color_palette import ColorPalette
+from config_manager import ConfigManager
+from image_utils import ImageUtils
 
-class RealTattooDisplay(SampleBase):
-    def __init__(self, *args, **kwargs):
-        super(RealTattooDisplay, self).__init__(*args, **kwargs)
-        self.parser.add_argument("-t", "--tattoo-type", help="Specific tattoo to display: anchor, heart, rose, swallow, skull, dagger, all", default="all", type=str)
-        self.parser.add_argument("-s", "--speed", help="Animation speed (seconds between images). Default: 5", default=5, type=float)
-        self.parser.add_argument("--enhance", help="Enhance contrast for better LED display", action="store_true")
-        self.parser.add_argument("--remove-background", help="Remove white/light backgrounds from tattoo images", action="store_true", default=True)
-        self.parser.add_argument("--background-threshold", help="Threshold for background removal (0-255). Default: 200", type=int, default=200)
-        self.parser.add_argument("--advanced-bg-removal", help="Use advanced edge-based background removal", action="store_true")
-        self.parser.add_argument("--local-images", help="Use local images instead of downloading", action="store_true")
-        self.parser.add_argument("--no-download", help="Skip downloading, use placeholders only", action="store_true")
+class RealTattooDisplay(MatrixBase):
+    def __init__(self, tattoo_type="all", speed=5, enhance=False, remove_background=True, 
+                 background_threshold=200, advanced_bg_removal=False, local_images=False, no_download=False):
+        super().__init__(hardware_mapping='adafruit-hat-pwm')
         
-    def process(self):
-        """Override to set default matrix options"""
-        # Parse arguments first
-        self.args = self.parser.parse_args()
+        # Initialize managers
+        self.font_manager = FontManager()
+        self.colors = ColorPalette('default')
+        self.config = ConfigManager()
+        self.image_utils = ImageUtils()
         
-        # Set default matrix options if not specified
-        if not hasattr(self.args, 'led_rows') or self.args.led_rows == 32:
-            self.args.led_rows = 32
-        if not hasattr(self.args, 'led_cols') or self.args.led_cols == 32:
-            self.args.led_cols = 64
-        if not hasattr(self.args, 'led_chain') or self.args.led_chain == 1:
-            self.args.led_chain = 1
-        if not hasattr(self.args, 'led_parallel') or self.args.led_parallel == 1:
-            self.args.led_parallel = 1
-        if not hasattr(self.args, 'led_gpio_mapping') or self.args.led_gpio_mapping is None:
-            self.args.led_gpio_mapping = 'adafruit-hat-pwm'
-            
-        # Create matrix options
-        options = RGBMatrixOptions()
-        options.rows = self.args.led_rows
-        options.cols = self.args.led_cols
-        options.chain_length = self.args.led_chain
-        options.parallel = self.args.led_parallel
-        options.hardware_mapping = self.args.led_gpio_mapping
+        # Configuration
+        self.tattoo_type = tattoo_type
+        self.speed = speed
+        self.enhance = enhance
+        self.remove_background = remove_background
+        self.background_threshold = background_threshold
+        self.advanced_bg_removal = advanced_bg_removal
+        self.local_images = local_images
+        self.no_download = no_download
         
-        # Apply other options from parent class
-        if hasattr(self.args, 'led_row_addr_type'):
-            options.row_address_type = self.args.led_row_addr_type
-        if hasattr(self.args, 'led_multiplexing'):
-            options.multiplexing = self.args.led_multiplexing
-        if hasattr(self.args, 'led_pwm_bits'):
-            options.pwm_bits = self.args.led_pwm_bits
-        if hasattr(self.args, 'led_brightness'):
-            options.brightness = self.args.led_brightness
-        if hasattr(self.args, 'led_pwm_lsb_nanoseconds'):
-            options.pwm_lsb_nanoseconds = self.args.led_pwm_lsb_nanoseconds
-        if hasattr(self.args, 'led_rgb_sequence'):
-            options.led_rgb_sequence = self.args.led_rgb_sequence
-        if hasattr(self.args, 'led_pixel_mapper'):
-            options.pixel_mapper_config = self.args.led_pixel_mapper
-        if hasattr(self.args, 'led_panel_type'):
-            options.panel_type = self.args.led_panel_type
-        if hasattr(self.args, 'led_show_refresh'):
-            options.show_refresh_rate = self.args.led_show_refresh
-        if hasattr(self.args, 'led_slowdown_gpio'):
-            options.gpio_slowdown = self.args.led_slowdown_gpio
-        if hasattr(self.args, 'led_no_hardware_pulse'):
-            options.disable_hardware_pulsing = self.args.led_no_hardware_pulse
-        if hasattr(self.args, 'drop_privileges'):
-            options.drop_privileges = self.args.drop_privileges
-
-        # Create the matrix
-        self.matrix = RGBMatrix(options=options)
-
-        try:
-            # Start loop
-            print("Press CTRL-C to stop tattoo display")
-            self.run()
-        except KeyboardInterrupt:
-            print("Exiting tattoo display\n")
-            sys.exit(0)
-
-        return True
+        # Initialize display components
+        self.setup_fonts_and_colors()
+        
+    def setup_fonts_and_colors(self):
+        """Setup fonts and colors for the display"""
+        # Load fonts using font manager
+        self.title_font = self.font_manager.get_font('medium')
+        self.subtitle_font = self.font_manager.get_font('small')
+        
+        # Setup colors
+        self.text_color = self.colors.get_color('WHITE')
+        self.shadow_color = self.colors.get_color('BLACK')
         
     def get_writable_directory(self):
         """Find a writable directory for storing images"""
@@ -139,28 +99,12 @@ class RealTattooDisplay(SampleBase):
             'dagger': 'https://www.shutterstock.com/image-vector/traditional-dagger-tattoo-vector-design-260nw-2436282185.jpg'
         }
         
-        # Load fonts for titles
-        try:
-            self.title_font = graphics.Font()
-            self.title_font.LoadFont("../../../../fonts/7x13B.bdf")
-            
-            self.subtitle_font = graphics.Font()
-            self.subtitle_font.LoadFont("../../../../fonts/6x10.bdf")
-        except:
-            print("Warning: Could not load fonts. Titles may not display properly.")
-            self.title_font = graphics.Font()
-            self.subtitle_font = graphics.Font()
-        
-        # Colors for text overlays
-        self.text_color = graphics.Color(255, 255, 255)  # White
-        self.shadow_color = graphics.Color(0, 0, 0)      # Black shadow
-        
         # Download or load images
         self.tattoo_images = {}
-        if self.args.no_download:
+        if self.no_download:
             print("Using placeholder images only (no download)")
             self.create_all_placeholders()
-        elif self.args.local_images:
+        elif self.local_images:
             self.load_local_images()
         else:
             self.download_images()
@@ -436,14 +380,14 @@ class RealTattooDisplay(SampleBase):
         
         return image
         
-    def draw_text_with_shadow(self, canvas, font, x, y, color, shadow_color, text):
+    def draw_text_with_shadow(self, font, x, y, color, shadow_color, text):
         """Draw text with shadow for better visibility"""
         # Draw shadow (offset by 1 pixel)
-        graphics.DrawText(canvas, font, x + 1, y + 1, shadow_color, text)
+        self.draw_text(font, x + 1, y + 1, shadow_color, text)
         # Draw main text
-        graphics.DrawText(canvas, font, x, y, color, text)
+        self.draw_text(font, x, y, color, text)
         
-    def display_image(self, canvas, image, title):
+    def display_image(self, image, title):
         """Display a tattoo image on the canvas"""
         # Convert PIL image to matrix format
         width, height = image.size
@@ -451,15 +395,16 @@ class RealTattooDisplay(SampleBase):
         for y in range(height):
             for x in range(width):
                 r, g, b = image.getpixel((x, y))
-                canvas.SetPixel(x, y, r, g, b)
+                color = self.colors.create_color(r, g, b)
+                self.set_pixel(x, y, color)
         
         # Add title at the top if there's space
-        if height < self.args.led_rows - 8:
+        if height < self.height - 8:
             title_text = title.upper()
             text_width = len(title_text) * 6  # Approximate width
-            x_pos = max(1, (self.args.led_cols - text_width) // 2)
+            x_pos = max(1, (self.width - text_width) // 2)
             
-            self.draw_text_with_shadow(canvas, self.title_font, x_pos, 7, 
+            self.draw_text_with_shadow(self.title_font, x_pos, 7, 
                                      self.text_color, self.shadow_color, title_text)
 
     def run(self):
@@ -512,23 +457,41 @@ class RealTattooDisplay(SampleBase):
             current_tattoo = (current_tattoo + 1) % len(tattoo_list)
 
 # Main execution
-if __name__ == "__main__":
-    tattoo_display = RealTattooDisplay()
+def main():
+    """Main function to run tattoo display with argument parsing"""
+    parser = argparse.ArgumentParser(description='Traditional Tattoo Display')
+    parser.add_argument("-t", "--tattoo-type", help="Specific tattoo to display", default="all", type=str)
+    parser.add_argument("-s", "--speed", help="Animation speed (seconds)", default=5.0, type=float)
+    parser.add_argument("--enhance", help="Enhance contrast", action="store_true")
+    parser.add_argument("--remove-background", help="Remove backgrounds", action="store_true", default=True)
+    parser.add_argument("--background-threshold", help="Background threshold", type=int, default=200)
+    parser.add_argument("--advanced-bg-removal", help="Advanced background removal", action="store_true")
+    parser.add_argument("--local-images", help="Use local images", action="store_true")
+    parser.add_argument("--no-download", help="Skip downloading", action="store_true")
+    
+    args = parser.parse_args()
+    
     try:
-        if not tattoo_display.process():
-            tattoo_display.print_help()
+        tattoo_display = RealTattooDisplay(
+            tattoo_type=args.tattoo_type,
+            speed=args.speed,
+            enhance=args.enhance,
+            remove_background=args.remove_background,
+            background_threshold=args.background_threshold,
+            advanced_bg_removal=args.advanced_bg_removal,
+            local_images=args.local_images,
+            no_download=args.no_download
+        )
+        
+        print("🎨 Starting tattoo display... Press CTRL-C to stop")
+        tattoo_display.run()
+        
     except KeyboardInterrupt:
-        print("\nExiting tattoo display...")
+        print("\n🛑 Tattoo display stopped.")
     except Exception as e:
-        print(f"\nError: {e}")
-        print("\nTroubleshooting tips:")
-        print("1. Try running with --no-download to skip image downloading")
-        print("2. Check your internet connection if downloading images")
-        print("3. Run with sudo if you get permission errors")
-        print("4. Verify your LED matrix configuration")
-        print("\nExample usage:")
-        print("  python real-tattoo-display.py --no-download --led-cols=64 --led-rows=32")
-        print("  python real-tattoo-display.py --local-images -t anchor")
-        print("  python real-tattoo-display.py --enhance --background-threshold=180")
-        print("  python real-tattoo-display.py --advanced-bg-removal -t all")
-        print("  sudo python real-tattoo-display.py --enhance -t all")
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    main()
