@@ -199,70 +199,149 @@ class RetroFlipClock(MatrixBase):
             current_x += char_width
     
     def animate_flip(self, window_rect, old_text, new_text, is_hour=True):
-        """Animate a flip card transition between old and new text."""
+        """Animate a realistic flip card transition like vintage mechanical flip clocks."""
+        # Redraw background and frame first
+        self.clear()
+        self.draw_background_and_frame()
+        
+        # Draw AM/PM (doesn't change during flip)
+        if self.show_ampm:
+            now = datetime.now()
+            ampm = now.strftime("%p").lower()
+            ampm_x = 4
+            ampm_y = 7
+            current_x = ampm_x
+            for char in ampm:
+                char_width = self.draw_text(self.ampm_font, current_x, ampm_y,
+                                          self.ampm_color, char)
+                current_x += char_width
+        
+        # Draw the non-flipping window normally
+        other_window = {'x': 36, 'y': 8, 'width': 22, 'height': 16} if is_hour else {'x': 6, 'y': 8, 'width': 22, 'height': 16}
+        other_text = new_text if is_hour else (datetime.now().strftime("%I").replace("0", " ", 1) if datetime.now().strftime("%I").startswith("0") else datetime.now().strftime("%I"))
+        if not is_hour:
+            other_text = datetime.now().strftime("%M")
+        
+        # Draw other window normally
+        for x in range(other_window['x'], other_window['x'] + other_window['width']):
+            for y in range(other_window['y'], other_window['y'] + other_window['height']):
+                if 0 <= x < 64 and 0 <= y < 32:
+                    self.set_pixel(x, y, self.window_color)
+        
+        # Draw other text
+        other_text_width = 0
+        for char in other_text:
+            if char != ' ':
+                other_text_width += self.digit_font.CharacterWidth(ord(char))
+        other_text_x = other_window['x'] + (other_window['width'] - other_text_width) // 2
+        other_text_y = other_window['y'] + 14
+        current_x = other_text_x
+        for char in other_text:
+            if char != ' ':
+                char_width = self.draw_text(self.digit_font, current_x, other_text_y,
+                                          self.digit_color, char)
+                current_x += char_width
+        
+        # Now animate the flipping window
         frame_duration = self.flip_duration / self.flip_animation_frames
+        center_y = window_rect['y'] + window_rect['height'] // 2
         
         for frame in range(self.flip_animation_frames):
-            # Clear the window area
-            for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                for y in range(window_rect['y'], window_rect['y'] + window_rect['height']):
-                    if 0 <= x < 64 and 0 <= y < 32:
-                        self.set_pixel(x, y, self.window_color)
-            
             # Calculate flip progress (0.0 to 1.0)
             progress = frame / (self.flip_animation_frames - 1)
             
-            # Create flipping effect by squashing the window vertically
-            if progress < 0.5:
-                # First half: show old text squashing down
-                squash_factor = 1.0 - (progress * 2)  # 1.0 to 0.0
-                text_to_show = old_text
+            # Create realistic flip card animation
+            if progress <= 0.5:
+                # First half: old card flips down from top
+                flip_progress = progress * 2  # 0.0 to 1.0 for first half
+                visible_height = int(window_rect['height'] * (1.0 - flip_progress) / 2)
+                
+                # Draw top half of old card (getting smaller)
+                if visible_height > 0:
+                    for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+                        for y in range(window_rect['y'], window_rect['y'] + visible_height):
+                            if 0 <= x < 64 and 0 <= y < 32:
+                                self.set_pixel(x, y, self.window_color)
+                    
+                    # Draw old text in top section if there's space
+                    if visible_height > 4:
+                        old_text_width = 0
+                        for char in old_text:
+                            if char != ' ':
+                                old_text_width += self.digit_font.CharacterWidth(ord(char))
+                        old_text_x = window_rect['x'] + (window_rect['width'] - old_text_width) // 2
+                        old_text_y = window_rect['y'] + min(visible_height - 2, 14)
+                        current_x = old_text_x
+                        for char in old_text:
+                            if char != ' ':
+                                char_width = self.draw_text(self.digit_font, current_x, old_text_y,
+                                                          self.digit_color, char)
+                                current_x += char_width
+                
+                # Fill rest with orange background
+                for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+                    for y in range(window_rect['y'] + visible_height, window_rect['y'] + window_rect['height']):
+                        if 0 <= x < 64 and 0 <= y < 32:
+                            self.set_pixel(x, y, self.background_color)
+            
             else:
-                # Second half: show new text expanding up
-                squash_factor = (progress - 0.5) * 2  # 0.0 to 1.0
-                text_to_show = new_text
-            
-            # Calculate squashed height and position
-            normal_height = window_rect['height']
-            squashed_height = max(2, int(normal_height * squash_factor))
-            y_offset = (normal_height - squashed_height) // 2
-            
-            # Draw squashed window
-            squashed_rect = {
-                'x': window_rect['x'],
-                'y': window_rect['y'] + y_offset,
-                'width': window_rect['width'],
-                'height': squashed_height
-            }
-            
-            # Fill squashed window with black
-            for x in range(squashed_rect['x'], squashed_rect['x'] + squashed_rect['width']):
-                for y in range(squashed_rect['y'], squashed_rect['y'] + squashed_rect['height']):
-                    if 0 <= x < 64 and 0 <= y < 32:
-                        self.set_pixel(x, y, self.window_color)
-            
-            # Draw text only if window is tall enough and squash factor is significant
-            if squashed_height > 6 and squash_factor > 0.3:
-                # Calculate text position
-                text_width = 0
-                for char in text_to_show:
-                    if char != ' ':
-                        text_width += self.digit_font.CharacterWidth(ord(char))
+                # Second half: new card flips up from bottom
+                flip_progress = (progress - 0.5) * 2  # 0.0 to 1.0 for second half
+                visible_height = int(window_rect['height'] * flip_progress / 2)
                 
-                text_x = squashed_rect['x'] + (squashed_rect['width'] - text_width) // 2
-                text_y = squashed_rect['y'] + int(squashed_rect['height'] * 0.8)  # Near bottom of squashed window
+                # Fill top with orange background
+                for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+                    for y in range(window_rect['y'], window_rect['y'] + window_rect['height'] - visible_height):
+                        if 0 <= x < 64 and 0 <= y < 32:
+                            self.set_pixel(x, y, self.background_color)
                 
-                # Draw the text
-                current_x = text_x
-                for char in text_to_show:
-                    if char != ' ':
-                        char_width = self.draw_text(self.digit_font, current_x, text_y,
-                                                  self.digit_color, char)
-                        current_x += char_width
+                # Draw bottom half of new card (getting bigger)
+                if visible_height > 0:
+                    start_y = window_rect['y'] + window_rect['height'] - visible_height
+                    for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+                        for y in range(start_y, window_rect['y'] + window_rect['height']):
+                            if 0 <= x < 64 and 0 <= y < 32:
+                                self.set_pixel(x, y, self.window_color)
+                    
+                    # Draw new text in bottom section if there's space
+                    if visible_height > 4:
+                        new_text_width = 0
+                        for char in new_text:
+                            if char != ' ':
+                                new_text_width += self.digit_font.CharacterWidth(ord(char))
+                        new_text_x = window_rect['x'] + (window_rect['width'] - new_text_width) // 2
+                        new_text_y = start_y + min(visible_height - 2, 14)
+                        current_x = new_text_x
+                        for char in new_text:
+                            if char != ' ':
+                                char_width = self.draw_text(self.digit_font, current_x, new_text_y,
+                                                          self.digit_color, char)
+                                current_x += char_width
             
-            # Update display
+            # Update display and wait
             self.swap()
             time.sleep(frame_duration)
+        
+        # Final frame: draw complete new window normally
+        for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+            for y in range(window_rect['y'], window_rect['y'] + window_rect['height']):
+                if 0 <= x < 64 and 0 <= y < 32:
+                    self.set_pixel(x, y, self.window_color)
+        
+        new_text_width = 0
+        for char in new_text:
+            if char != ' ':
+                new_text_width += self.digit_font.CharacterWidth(ord(char))
+        new_text_x = window_rect['x'] + (window_rect['width'] - new_text_width) // 2
+        new_text_y = window_rect['y'] + 14
+        current_x = new_text_x
+        for char in new_text:
+            if char != ' ':
+                char_width = self.draw_text(self.digit_font, current_x, new_text_y,
+                                          self.digit_color, char)
+                current_x += char_width
+        
+        self.swap()
     
     def check_for_input(self):
         """Check for keyboard input in a non-blocking way (cross-platform)."""
