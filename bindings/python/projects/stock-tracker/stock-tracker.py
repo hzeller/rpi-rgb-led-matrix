@@ -583,34 +583,35 @@ class StockTracker(MatrixBase):
                     is_positive = stock_info['change'] >= 0
                     right_color = self.display_colors['gain_bright'] if is_positive else self.display_colors['loss_bright']
                     
-                    # Left side - Stock symbol and price (white) with 2px padding
-                    self.draw_text(self.font_large, 2, 2, left_color, current_symbol)  # 2px left, 2px top padding
+                    # Left side - Stock symbol and price (white) with proper padding
+                    # Use y=8 for first line (gives some top padding) and y=15 for second line  
+                    self.draw_text(self.font_large, 2, 8, left_color, current_symbol)  # 2px left padding, reasonable top padding
                     price_text = f"{stock_info['price']:.2f}"
-                    self.draw_text(self.font_large, 2, 9, left_color, price_text)  # 1px gap from symbol (2+6+1=9)
+                    self.draw_text(self.font_large, 2, 15, left_color, price_text)  # 1px gap between lines
                     
                     # Right side - Change amount and percentage (green/red based on value)
-                    # Use fixed positioning to prevent text from going off screen
+                    # Position carefully to avoid overflow - use shorter text formats
                     
-                    # Top right: Change amount (colored) - positioned at middle of display
-                    change_text = f"{stock_info['change']:+.2f}"  # Include +/- sign
-                    self.draw_text(self.font_large, 32, 2, right_color, change_text)  # Start at middle of 64px width
+                    # Top right: Change amount (colored) - use shorter format and safe positioning
+                    change_text = f"{stock_info['change']:+.1f}"  # Shorter format: +1.2 instead of +1.23
+                    self.draw_text(self.font_large, 35, 8, right_color, change_text)  # Start further right but not too far
                     
                     # Bottom right: Percentage (colored)  
-                    pct_text = f"{stock_info['change_percent']:+.1f}%"  # Include +/- sign
-                    self.draw_text(self.font_large, 32, 9, right_color, pct_text)  # 1px gap from change text
+                    pct_text = f"{stock_info['change_percent']:+.0f}%"  # Even shorter: +5% instead of +5.1%
+                    self.draw_text(self.font_large, 35, 15, right_color, pct_text)  # Same x position for alignment
                     
-                    # Draw time series chart in remaining space (after text area)
+                    # Draw time series chart in bottom portion of display
                     chart_x = 0
-                    chart_y = 16  # Start after text area (2px top + 6px font + 1px gap + 6px font + 1px = 16px)
+                    chart_y = 20  # Start after text lines (y=15 + ~6px font height + small gap)
                     chart_width = 64
-                    chart_height = 16  # Remaining pixels to bottom of 32px display
+                    chart_height = 12  # Remaining pixels to bottom of 32px display
                     
                     self.draw_stock_chart(current_symbol, chart_x, chart_y, chart_width, chart_height)
                     
                 else:
                     # Loading state - match the same positioning as normal display
-                    self.draw_text(self.font_large, 2, 2, self.display_colors['neutral'], current_symbol)
-                    self.draw_text(self.font_large, 2, 9, self.display_colors['neutral'], "Loading...")
+                    self.draw_text(self.font_large, 2, 8, self.display_colors['neutral'], current_symbol)
+                    self.draw_text(self.font_large, 2, 15, self.display_colors['neutral'], "Loading...")
             else:
                 # No data yet
                 self.draw_text(self.font_large, 2, 9, self.display_colors['neutral'], "Loading...")
