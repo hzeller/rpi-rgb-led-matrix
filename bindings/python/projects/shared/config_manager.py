@@ -116,7 +116,24 @@ class ConfigManager:
             'chain_length': self.get('MATRIX_CHAIN_LENGTH', 1, int),
             'parallel': self.get('MATRIX_PARALLEL', 1, int),
             'hardware_mapping': self.get('MATRIX_HARDWARE_MAPPING', 'adafruit-hat-pwm'),
-            'brightness': self.get('MATRIX_BRIGHTNESS', 100, int)
+            'brightness': self.get('MATRIX_BRIGHTNESS', 60, int)
+        }
+        
+    def get_brightness_config(self) -> Dict[str, Any]:
+        """
+        Get brightness-related configuration values.
+        
+        Returns:
+            Dictionary with brightness configuration
+        """
+        return {
+            'default_brightness': self.get('BRIGHTNESS_DEFAULT', 60, int),
+            'min_brightness': self.get('BRIGHTNESS_MIN', 1, int),
+            'max_brightness': self.get('BRIGHTNESS_MAX', 100, int),
+            'auto_dim_enabled': self.get('BRIGHTNESS_AUTO_DIM', False, bool),
+            'auto_dim_time': self.get('BRIGHTNESS_AUTO_DIM_TIME', '22:00'),
+            'auto_dim_level': self.get('BRIGHTNESS_AUTO_DIM_LEVEL', 20, int),
+            'schedule_enabled': self.get('BRIGHTNESS_SCHEDULE_ENABLED', False, bool)
         }
         
     def get_api_config(self, service: str) -> Dict[str, str]:

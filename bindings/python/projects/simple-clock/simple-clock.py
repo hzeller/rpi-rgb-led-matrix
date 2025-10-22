@@ -40,6 +40,12 @@ class SimpleClock(MatrixBase):
         self.time_color = self.colors.get_color('WHITE')
         self.date_color = self.colors.get_color('GRAY_LIGHT')
         
+        # Auto-dimming based on time
+        self.auto_dim_enabled = self.config.get('AUTO_DIM_ENABLED', False, bool)
+        self.dim_start_time = self.config.get('AUTO_DIM_TIME', '22:00')
+        self.dim_brightness = self.config.get('AUTO_DIM_LEVEL', 20, int)
+        self.normal_brightness = self.config.get('BRIGHTNESS_DEFAULT', 60, int)
+        
     def get_ordinal_suffix(self, day):
         """Get the ordinal suffix for a day (1st, 2nd, 3rd, 4th, etc.)"""
         if 10 <= day % 100 <= 20:
@@ -47,6 +53,41 @@ class SimpleClock(MatrixBase):
         else:
             suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(day % 10, 'th')
         return suffix
+        
+    def check_auto_dim(self, current_time):
+        """
+        Check if auto-dimming should be applied based on current time.
+        
+        Args:
+            current_time: Current datetime object
+        """
+        if not self.auto_dim_enabled:
+            return
+            
+        current_hour_min = current_time.strftime("%H:%M")
+        
+        # Parse dim start time
+        try:
+            dim_hour, dim_min = map(int, self.dim_start_time.split(':'))
+            dim_time_minutes = dim_hour * 60 + dim_min
+            current_time_minutes = current_time.hour * 60 + current_time.minute
+            
+            # Check if it's dimming time (after dim start until 6 AM)
+            should_be_dimmed = (current_time_minutes >= dim_time_minutes or 
+                              current_time_minutes < 6 * 60)  # Before 6 AM
+                              
+            current_brightness = self.get_brightness()
+            
+            if should_be_dimmed and current_brightness > self.dim_brightness:
+                self.set_brightness(self.dim_brightness)
+                print(f"🌙 Auto-dimmed to {self.dim_brightness}% at {current_hour_min}")
+            elif not should_be_dimmed and current_brightness < self.normal_brightness:
+                self.set_brightness(self.normal_brightness) 
+                print(f"☀️ Auto-brightened to {self.normal_brightness}% at {current_hour_min}")
+                
+        except ValueError:
+            print(f"⚠️ Invalid dim start time format: {self.dim_start_time}")
+            self.auto_dim_enabled = False
 
     def run(self):
         print("Starting classic alarm clock. Press CTRL-C to stop.")
@@ -119,6 +160,9 @@ class SimpleClock(MatrixBase):
                 
                 # Swap buffers
                 self.swap()
+                
+                # Check for auto-dimming
+                self.check_auto_dim(now)
                 
                 # Wait until the next second boundary for accurate timing
                 current_time = time.time()

@@ -14,6 +14,9 @@ from abc import ABC, abstractmethod
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
+# Import shared components
+from config_manager import ConfigManager
+
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../samples'))
 from samplebase import SampleBase
 
@@ -25,7 +28,7 @@ class MatrixConfig:
     CHAIN_LENGTH = 1
     PARALLEL = 1
     HARDWARE_MAPPING = 'adafruit-hat-pwm'
-    BRIGHTNESS = 100
+    BRIGHTNESS = 60  # More reasonable default (60% instead of 100%)
 
 
 class MatrixBase(ABC):
@@ -50,6 +53,10 @@ class MatrixBase(ABC):
             hardware_mapping: Hardware mapping type (default: MatrixConfig.HARDWARE_MAPPING)
             brightness: Display brightness 1-100 (default: MatrixConfig.BRIGHTNESS)
         """
+        # Initialize config manager for brightness settings
+        config_manager = ConfigManager()
+        brightness_config = config_manager.get_brightness_config()
+        
         # Set up matrix options with defaults or provided values
         self.options = RGBMatrixOptions()
         self.options.rows = rows or MatrixConfig.ROWS
@@ -57,15 +64,16 @@ class MatrixBase(ABC):
         self.options.chain_length = chain_length or MatrixConfig.CHAIN_LENGTH
         self.options.parallel = parallel or MatrixConfig.PARALLEL
         self.options.hardware_mapping = hardware_mapping or MatrixConfig.HARDWARE_MAPPING
-        self.options.brightness = brightness or MatrixConfig.BRIGHTNESS
+        self.options.brightness = brightness or brightness_config['default_brightness']
         
         # Initialize matrix and canvas
         self.matrix = RGBMatrix(options=self.options)
         self.canvas = self.matrix.CreateFrameCanvas()
         
-        # Store dimensions for convenience
+        # Store dimensions and brightness config for convenience
         self.width = self.matrix.width
         self.height = self.matrix.height
+        self.brightness_config = brightness_config
         
     def clear(self):
         """Clear the display canvas."""
@@ -85,6 +93,76 @@ class MatrixBase(ABC):
             color: graphics.Color object
         """
         self.canvas.SetPixel(x, y, color.red, color.green, color.blue)
+        
+    def set_brightness(self, brightness):
+        """
+        Set the display brightness dynamically.
+        
+        Args:
+            brightness: Brightness level from 1-100
+        """
+        min_bright = self.brightness_config['min_brightness']
+        max_bright = self.brightness_config['max_brightness']
+        
+        if min_bright <= brightness <= max_bright:
+            self.matrix.brightness = brightness
+            print(f"🔆 Brightness set to {brightness}%")
+        else:
+            print(f"⚠️ Brightness must be between {min_bright}-{max_bright}, got {brightness}")
+            
+    def get_brightness(self):
+        """
+        Get the current display brightness.
+        
+        Returns:
+            Current brightness level (1-100)
+        """
+        return self.matrix.brightness
+        
+    def dim_display(self, factor=0.5):
+        """
+        Dim the display by a factor of current brightness.
+        
+        Args:
+            factor: Dimming factor (0.1 = 10% of current, 0.5 = 50% of current)
+        """
+        current = self.get_brightness()
+        new_brightness = max(1, int(current * factor))
+        self.set_brightness(new_brightness)
+        
+    def save_brightness_preference(self, brightness):
+        """
+        Save brightness as user preference for future sessions.
+        
+        Args:
+            brightness: Brightness level to save as default
+        """
+        env_file = os.path.join(os.path.dirname(__file__), '..', '.env')
+        
+        # Read existing .env content
+        env_lines = []
+        if os.path.exists(env_file):
+            with open(env_file, 'r') as f:
+                env_lines = f.readlines()
+        
+        # Update or add brightness setting
+        brightness_line = f"BRIGHTNESS_DEFAULT={brightness}\n"
+        updated = False
+        
+        for i, line in enumerate(env_lines):
+            if line.startswith('BRIGHTNESS_DEFAULT='):
+                env_lines[i] = brightness_line
+                updated = True
+                break
+                
+        if not updated:
+            env_lines.append(brightness_line)
+            
+        # Write back to .env file
+        with open(env_file, 'w') as f:
+            f.writelines(env_lines)
+            
+        print(f"💾 Saved brightness preference: {brightness}%")
         
     def draw_text(self, font, x, y, color, text, kerning=0):
         """
