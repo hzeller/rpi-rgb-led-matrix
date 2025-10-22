@@ -129,9 +129,9 @@ class MatrixDisplay:
         self.album_color = self.color_palette.get_color('gray_light')
         
         # Create scrollable text instances
-        self.song_font = self.font_manager.get_font('5x7')
-        self.artist_font = self.font_manager.get_font('5x7') 
-        self.album_font = self.font_manager.get_font('5x7')
+        self.song_font = self.font_manager.get_font('small')
+        self.artist_font = self.font_manager.get_font('small') 
+        self.album_font = self.font_manager.get_font('small')
         
         self.song_text = ScrollableText(self.song_font, self.song_color, DisplayConfig.STATIC_DELAY_FRAMES)
         self.artist_text = ScrollableText(self.artist_font, self.artist_color, DisplayConfig.STATIC_DELAY_FRAMES)

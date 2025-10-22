@@ -118,7 +118,7 @@ class SimpleClock(MatrixBase):
                         current_x += char_width - 1  # Reduce spacing between characters
                 
                 # Swap buffers
-                self.swap_canvas()
+                self.swap()
                 
                 # Wait until the next second boundary for accurate timing
                 current_time = time.time()

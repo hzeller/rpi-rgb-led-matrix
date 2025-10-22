@@ -56,11 +56,11 @@ class WeatherDisplay(MatrixBase):
         self.timezone = None  # Will be set by timezone lookup
         
         # Load fonts
-        self.temp_font = self.font_manager.get_font('9x18B')  # Bold font for temperature
-        self.condition_font = self.font_manager.get_font('6x13B')  # Bold font for conditions
-        self.medium_font = self.font_manager.get_font('6x13')  # Regular medium font for time
-        self.small_font = self.font_manager.get_font('5x7')   # Small font for details
-        self.tiny_font = self.font_manager.get_font('4x6')    # Tiny font for city name
+        self.temp_font = self.font_manager.get_font('xxlarge')      # Bold font for temperature
+        self.condition_font = self.font_manager.get_font('medium_bold') # Bold font for conditions
+        self.medium_font = self.font_manager.get_font('medium')     # Regular medium font for time
+        self.small_font = self.font_manager.get_font('small')       # Small font for details
+        self.tiny_font = self.font_manager.get_font('tiny')         # Tiny font for city name
         
         # Colors
         self.temp_color = self.color_palette.get_color('white')          # White for temperature
@@ -481,7 +481,7 @@ class WeatherDisplay(MatrixBase):
                     self.draw_weather()
                 
                 # Swap buffers
-                self.swap_canvas()
+                self.swap()
                 
                 # Update every 30 seconds
                 time.sleep(30)
