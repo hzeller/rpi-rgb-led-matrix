@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timezone, timedelta
 
 # Add the parent directory to Python path to import the rgbmatrix module
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 
 class SimpleClock:

@@ -25,7 +25,7 @@ except ImportError:
     print("python-dotenv not installed. Using system environment variables only.")
 
 # Add the parent directory to Python path to import the rgbmatrix module
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from PIL import Image
 class WeatherDisplay:

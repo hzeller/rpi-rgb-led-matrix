@@ -4,6 +4,9 @@ Stock Tracker for RGB LED Matrix
 Displays real-time stock prices with color-coded changes
 Uses Alpha Vantage API for stock data (free tier available)
 """
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../samples'))
 from samplebase import SampleBase
 from rgbmatrix import graphics
 import time

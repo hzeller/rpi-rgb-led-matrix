@@ -12,8 +12,9 @@ from io import BytesIO
 import threading
 
 # Add the parent directory to Python path to import the rgbmatrix module
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../..'))
 from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../samples'))
 from samplebase import SampleBase
 
 class RealTattooDisplay(SampleBase):

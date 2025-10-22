@@ -4,6 +4,9 @@ Advanced Stock Tracker with Charts for RGB LED Matrix
 Displays stock prices with historical charts and color-coded performance
 Uses Alpha Vantage API for stock data and historical prices
 """
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../samples'))
 from samplebase import SampleBase
 from rgbmatrix import graphics
 import time
