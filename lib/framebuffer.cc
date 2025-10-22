@@ -707,6 +707,46 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   }
 }
 
+void Framebuffer::SubFill(int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b) {
+
+  uint16_t red, green, blue;
+  MapColors(r, g, b, &red, &green, &blue);
+
+  int safe_y = std::max(0, y);
+  int safe_y_max = std::min((*shared_mapper_)->height(), y + height);
+  int safe_x = std::max(0, x);
+  int safe_x_max = std::min((*shared_mapper_)->width(), x + width);
+
+  for (int row = safe_y; row < safe_y_max; row++)
+  {
+    const PixelDesignator* designator = (*shared_mapper_)->get(safe_x, row);
+
+    for (int col = safe_x; col < safe_x_max; col++)
+    {
+      if (designator == NULL) continue;
+      const long pos = designator->gpio_word;
+      if (pos < 0) continue;  // non-used pixel marker.
+
+      gpio_bits_t* bits = bitplane_buffer_ + pos;
+      const int min_bit_plane = kBitPlanes - pwm_bits_;
+      bits += (columns_ * min_bit_plane);
+      const gpio_bits_t r_bits = designator->r_bit;
+      const gpio_bits_t g_bits = designator->g_bit;
+      const gpio_bits_t b_bits = designator->b_bit;
+      const gpio_bits_t designator_mask = designator->mask;
+      for (uint16_t mask = 1 << min_bit_plane; mask != 1 << kBitPlanes; mask <<= 1) {
+        gpio_bits_t color_bits = 0;
+        if (red & mask)   color_bits |= r_bits;
+        if (green & mask) color_bits |= g_bits;
+        if (blue & mask)  color_bits |= b_bits;
+        *bits = (*bits & designator_mask) | color_bits;
+        bits += columns_;
+      }
+      designator++;
+    }
+  }
+}
+
 int Framebuffer::width() const { return (*shared_mapper_)->width(); }
 int Framebuffer::height() const { return (*shared_mapper_)->height(); }
 
