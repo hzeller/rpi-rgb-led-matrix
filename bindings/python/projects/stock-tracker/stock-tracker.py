@@ -590,15 +590,19 @@ class StockTracker(MatrixBase):
                     self.draw_text(self.font_large, 2, 15, left_color, price_text)  # 1px gap between lines
                     
                     # Right side - Change amount and percentage (green/red based on value)
-                    # Position carefully to avoid overflow - use shorter text formats
+                    # Right-align with 2px padding from right edge (64px width - 2px = 62px)
                     
-                    # Top right: Change amount (colored) - use shorter format and safe positioning
+                    # Top right: Change amount (colored) - right-aligned
                     change_text = f"{stock_info['change']:+.1f}"  # Shorter format: +1.2 instead of +1.23
-                    self.draw_text(self.font_large, 35, 8, right_color, change_text)  # Start further right but not too far
+                    change_width = len(change_text) * 4  # Approximate pixel width per character
+                    change_x = 64 - change_width - 2  # Right edge minus text width minus 2px padding
+                    self.draw_text(self.font_large, change_x, 8, right_color, change_text)
                     
-                    # Bottom right: Percentage (colored)  
+                    # Bottom right: Percentage (colored) - right-aligned  
                     pct_text = f"{stock_info['change_percent']:+.0f}%"  # Even shorter: +5% instead of +5.1%
-                    self.draw_text(self.font_large, 35, 15, right_color, pct_text)  # Same x position for alignment
+                    pct_width = len(pct_text) * 4  # Approximate pixel width per character
+                    pct_x = 64 - pct_width - 2  # Right edge minus text width minus 2px padding
+                    self.draw_text(self.font_large, pct_x, 15, right_color, pct_text)
                     
                     # Draw time series chart in bottom portion of display
                     chart_x = 0
