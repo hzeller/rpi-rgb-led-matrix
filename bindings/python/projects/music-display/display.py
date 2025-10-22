@@ -7,13 +7,12 @@ This module provides classes for:
 - MatrixDisplay: Manages LED matrix operations and rendering
 """
 
-from rgbmatrix import graphics
+from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
 from PIL import Image
 from config import DisplayConfig
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
-from matrix_base import MatrixBase
 from font_manager import FontManager
 from color_palette import ColorPalette
 
@@ -102,16 +101,23 @@ class ScrollableText:
                 current_x += char_width
 
 
-class MatrixDisplay(MatrixBase):
+class MatrixDisplay:
     """Manages the LED matrix display operations."""
     
     def __init__(self, options=None):
-        # Initialize base matrix
-        super().__init__(
-            rows=DisplayConfig.MATRIX_ROWS,
-            cols=DisplayConfig.MATRIX_COLS,
-            hardware_mapping=DisplayConfig.HARDWARE_MAPPING
-        )
+        # Initialize matrix directly
+        if options is None:
+            options = RGBMatrixOptions()
+            options.rows = DisplayConfig.MATRIX_ROWS
+            options.cols = DisplayConfig.MATRIX_COLS
+            options.chain_length = DisplayConfig.CHAIN_LENGTH
+            options.parallel = DisplayConfig.PARALLEL
+            options.hardware_mapping = DisplayConfig.HARDWARE_MAPPING
+        
+        self.matrix = RGBMatrix(options=options)
+        self.canvas = self.matrix.CreateFrameCanvas()
+        self.width = self.matrix.width
+        self.height = self.matrix.height
         
         # Initialize font manager and colors
         self.font_manager = FontManager()
@@ -176,5 +182,10 @@ class MatrixDisplay(MatrixBase):
         self.album_text.draw(self.canvas, album_name, album_x, album_y,
                             max_x, scroll_counter, self.width, self.height)
     
-
-
+    def clear(self):
+        """Clear the display canvas."""
+        self.canvas.Clear()
+    
+    def swap_canvas(self):
+        """Swap the canvas to display the updated content."""
+        self.canvas = self.matrix.SwapOnVSync(self.canvas)

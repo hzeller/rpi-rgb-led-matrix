@@ -96,12 +96,12 @@ class MatrixBase(ABC):
             y: Y position (baseline)
             color: graphics.Color object
             text: Text to draw
-            kerning: Additional character spacing
+            kerning: Additional character spacing (handled manually if needed)
             
         Returns:
             Width of the drawn text
         """
-        return graphics.DrawText(self.canvas, font, x, y, color, text, kerning)
+        return graphics.DrawText(self.canvas, font, x, y, color, text)
         
     def draw_text_centered(self, font, y, color, text, kerning=0):
         """
@@ -119,7 +119,7 @@ class MatrixBase(ABC):
         """
         text_width = sum(font.CharacterWidth(ord(c)) + kerning for c in text)
         x = (self.width - text_width) // 2
-        graphics.DrawText(self.canvas, font, x, y, color, text, kerning)
+        graphics.DrawText(self.canvas, font, x, y, color, text)
         return x
         
     def draw_text_right_aligned(self, font, x_right, y, color, text, kerning=0):
@@ -139,7 +139,7 @@ class MatrixBase(ABC):
         """
         text_width = sum(font.CharacterWidth(ord(c)) + kerning for c in text)
         x = x_right - text_width
-        graphics.DrawText(self.canvas, font, x, y, color, text, kerning)
+        graphics.DrawText(self.canvas, font, x, y, color, text)
         return x
         
     def draw_line(self, x1, y1, x2, y2, color):
