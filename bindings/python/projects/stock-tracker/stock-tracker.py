@@ -584,38 +584,33 @@ class StockTracker(MatrixBase):
                     right_color = self.display_colors['gain_bright'] if is_positive else self.display_colors['loss_bright']
                     
                     # Left side - Stock symbol and price (white) with 2px padding
-                    self.draw_text(self.font_large, 2, 9, left_color, current_symbol)  # 2px left, increased top padding
+                    self.draw_text(self.font_large, 2, 2, left_color, current_symbol)  # 2px left, 2px top padding
                     price_text = f"{stock_info['price']:.2f}"
-                    self.draw_text(self.font_large, 2, 16, left_color, price_text)  # 1px gap between texts
+                    self.draw_text(self.font_large, 2, 9, left_color, price_text)  # 1px gap from symbol (2+6+1=9)
                     
                     # Right side - Change amount and percentage (green/red based on value)
-                    # Better right-aligned positioning with proper text width calculation
+                    # Use fixed positioning to prevent text from going off screen
                     
-                    # Top right: Change amount (colored)
+                    # Top right: Change amount (colored) - positioned at middle of display
                     change_text = f"{stock_info['change']:+.2f}"  # Include +/- sign
-                    # Calculate actual text width more accurately
-                    change_width = len(change_text) * 4  # Approximate character width for font
-                    change_x = max(32, 64 - change_width - 2)  # Don't go past middle, 2px right padding
-                    self.draw_text(self.font_large, change_x, 9, right_color, change_text)
+                    self.draw_text(self.font_large, 32, 2, right_color, change_text)  # Start at middle of 64px width
                     
                     # Bottom right: Percentage (colored)  
                     pct_text = f"{stock_info['change_percent']:+.1f}%"  # Include +/- sign
-                    pct_width = len(pct_text) * 4  # Approximate character width for font
-                    pct_x = max(32, 64 - pct_width - 2)  # Don't go past middle, 2px right padding
-                    self.draw_text(self.font_large, pct_x, 16, right_color, pct_text)
+                    self.draw_text(self.font_large, 32, 9, right_color, pct_text)  # 1px gap from change text
                     
-                    # Draw safe time series chart in bottom half (y=16 to y=31, so 16 pixels tall)
+                    # Draw time series chart in remaining space (after text area)
                     chart_x = 0
-                    chart_y = 16  # Start at bottom half of 32px display  
+                    chart_y = 16  # Start after text area (2px top + 6px font + 1px gap + 6px font + 1px = 16px)
                     chart_width = 64
-                    chart_height = 16  # Bottom 16 pixels
+                    chart_height = 16  # Remaining pixels to bottom of 32px display
                     
                     self.draw_stock_chart(current_symbol, chart_x, chart_y, chart_width, chart_height)
                     
                 else:
-                    # Loading state
-                    self.draw_text(self.font_large, 2, 9, self.display_colors['neutral'], current_symbol)
-                    self.draw_text(self.font_large, 2, 16, self.display_colors['neutral'], "Loading...")
+                    # Loading state - match the same positioning as normal display
+                    self.draw_text(self.font_large, 2, 2, self.display_colors['neutral'], current_symbol)
+                    self.draw_text(self.font_large, 2, 9, self.display_colors['neutral'], "Loading...")
             else:
                 # No data yet
                 self.draw_text(self.font_large, 2, 9, self.display_colors['neutral'], "Loading...")
