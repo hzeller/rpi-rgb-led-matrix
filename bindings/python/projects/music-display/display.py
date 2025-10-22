@@ -10,9 +10,12 @@ This module provides classes for:
 from rgbmatrix import graphics
 from PIL import Image
 from config import DisplayConfig
-from ..shared.matrix_base import MatrixBase
-from ..shared.font_manager import FontManager
-from ..shared.color_palette import ColorPalette
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
+from matrix_base import MatrixBase
+from font_manager import FontManager
+from color_palette import ColorPalette
 
 
 class ScrollableText:

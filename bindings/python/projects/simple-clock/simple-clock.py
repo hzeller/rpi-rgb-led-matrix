@@ -9,7 +9,14 @@ from datetime import datetime, timezone, timedelta
 
 # Add shared components to path
 sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/..'))
-from shared import MatrixBase, FontManager, ColorPalette, ConfigManager
+# Import shared components
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
+from matrix_base import MatrixBase
+from font_manager import FontManager
+from color_palette import ColorPalette
+from config_manager import ConfigManager
 
 class SimpleClock(MatrixBase):
     def __init__(self):
@@ -98,7 +105,7 @@ class SimpleClock(MatrixBase):
                     if char == ' ':
                         current_x += 2  # Reduced space width
                     else:
-                        char_width = self.draw_text(char, current_x, date_y, self.date_color, font=self.date_font)
+                        char_width = self.draw_text(self.date_font, current_x, date_y, self.date_color, char)
                         current_x += char_width - 1  # Reduce spacing between characters
                 
                 # Draw time with tighter character spacing
@@ -107,7 +114,7 @@ class SimpleClock(MatrixBase):
                     if char == ' ':
                         current_x += 2  # Reduced space width
                     else:
-                        char_width = self.draw_text(char, current_x, time_y, self.time_color, font=self.time_font)
+                        char_width = self.draw_text(self.time_font, current_x, time_y, self.time_color, char)
                         current_x += char_width - 1  # Reduce spacing between characters
                 
                 # Swap buffers

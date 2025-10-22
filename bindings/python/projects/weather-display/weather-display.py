@@ -30,9 +30,12 @@ from rgbmatrix import graphics
 from PIL import Image
 
 # Import shared components
-from ..shared.matrix_base import MatrixBase
-from ..shared.font_manager import FontManager
-from ..shared.color_palette import ColorPalette
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
+from matrix_base import MatrixBase
+from font_manager import FontManager
+from color_palette import ColorPalette
 class WeatherDisplay(MatrixBase):
     def __init__(self, city="Denver, CO"):
         # Initialize base matrix with standard configuration
@@ -420,7 +423,7 @@ class WeatherDisplay(MatrixBase):
         # Draw high temp with 1 pixel spacing (white)
         current_x = temp_x
         for char in temp_str:
-            char_width = self.draw_text(char, current_x, temp_y, self.temp_color, font=self.small_font)
+            char_width = self.draw_text(self.small_font, current_x, temp_y, self.temp_color, char)
             current_x += char_width + 1  # Add 1 pixel spacing between characters
         
         # Low temperature (blue) - center it within the temp area
@@ -430,7 +433,7 @@ class WeatherDisplay(MatrixBase):
         # Draw low temp with 1 pixel spacing (blue)
         current_x = low_x
         for char in low_str:
-            char_width = self.draw_text(char, current_x, low_y, self.detail_color, font=self.small_font)
+            char_width = self.draw_text(self.small_font, current_x, low_y, self.detail_color, char)
             current_x += char_width + 1  # Add 1 pixel spacing between characters
         
         # City name at bottom center in tiny font
@@ -445,7 +448,7 @@ class WeatherDisplay(MatrixBase):
         # Draw city name with no extra spacing (gray)
         current_x = city_x
         for char in self.city_display_name:
-            char_width = self.draw_text(char, current_x, city_y, self.detail_color, font=self.tiny_font)
+            char_width = self.draw_text(self.tiny_font, current_x, city_y, self.detail_color, char)
             current_x += char_width  # No extra spacing between characters
         
         # Draw time LAST so it appears on top of the icon
@@ -454,7 +457,7 @@ class WeatherDisplay(MatrixBase):
             if char == ' ':
                 current_x += 4  # Larger space between time and AM/PM
             else:
-                char_width = self.draw_text(char, current_x, time_y, self.temp_color, font=self.small_font)
+                char_width = self.draw_text(self.small_font, current_x, time_y, self.temp_color, char)
                 current_x += char_width + 1  # Add 1 pixel spacing after each character
 
     def run(self):
@@ -471,9 +474,9 @@ class WeatherDisplay(MatrixBase):
                     line2 = "OPENWEATHER_API_KEY"
                     line3 = "in .env file"
                     
-                    self.draw_text(line1, 2, 8, self.condition_color, font=self.small_font)
-                    self.draw_text(line2, 2, 18, self.detail_color, font=self.small_font)
-                    self.draw_text(line3, 2, 28, self.detail_color, font=self.small_font)
+                    self.draw_text(self.small_font, 2, 8, self.condition_color, line1)
+                    self.draw_text(self.small_font, 2, 18, self.detail_color, line2)
+                    self.draw_text(self.small_font, 2, 28, self.detail_color, line3)
                 else:
                     self.draw_weather()
                 
