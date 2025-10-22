@@ -265,17 +265,17 @@ class RetroFlipClock(MatrixBase):
             # Calculate flip progress (0.0 to 1.0)
             progress = frame / (self.flip_animation_frames - 1)
             
-            # Fill entire window with black first
+            # Fill window with black
             for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
                 for y in range(window_rect['y'], window_rect['y'] + window_rect['height']):
                     if 0 <= x < 64 and 0 <= y < 32:
                         self.set_pixel(x, y, self.window_color)
             
             if progress <= 0.5:
-                # First half: bottom half darkens (like card casting shadow)
+                # First half: show old text with shadow
                 flip_progress = progress * 2  # 0.0 to 1.0 for first half
                 
-                # Show old text in full window
+                # Draw old text
                 current_x = old_text_x
                 for char in old_text:
                     if char != ' ':
@@ -283,51 +283,58 @@ class RetroFlipClock(MatrixBase):
                                                   self.digit_color, char)
                         current_x += char_width
                 
-                # Darken bottom half progressively (simulate shadow of flipping card)
-                darkness = int(flip_progress * 128)  # 0 to 128
-                dark_color = self.color_palette.get_color((darkness, darkness//2, 0))  # Dark orange
-                
-                darken_height = int(window_rect['height'] * flip_progress / 2)
-                start_darken_y = center_y
-                for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                    for y in range(start_darken_y, start_darken_y + darken_height):
-                        if 0 <= x < 64 and 0 <= y < 32:
-                            self.set_pixel(x, y, dark_color)
+                # Add shadow at bottom
+                shadow_height = int(window_rect['height'] * flip_progress * 0.3)
+                if shadow_height > 0:
+                    shadow_color = self.color_palette.get_color((15, 8, 3))  # Dark shadow
+                    start_y = window_rect['y'] + window_rect['height'] - shadow_height
+                    
+                    for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+                        for y in range(start_y, window_rect['y'] + window_rect['height']):
+                            if 0 <= x < 64 and 0 <= y < 32:
+                                self.set_pixel(x, y, shadow_color)
                             
             else:
-                # Second half: new number flips up from bottom
+                # Second half: transition from old to new
                 flip_progress = (progress - 0.5) * 2  # 0.0 to 1.0 for second half
                 
-                # Calculate how much of the new number is visible from bottom
-                visible_height = int(window_rect['height'] * flip_progress)
-                flip_line_y = window_rect['y'] + window_rect['height'] - visible_height
+                # Calculate the boundary line that sweeps from bottom to top
+                sweep_height = int(window_rect['height'] * flip_progress)
+                boundary_y = window_rect['y'] + window_rect['height'] - sweep_height
                 
-                # Show old text in top area
-                if flip_line_y > window_rect['y']:
+                # Draw old text completely first
+                current_x = old_text_x
+                for char in old_text:
+                    if char != ' ':
+                        char_width = self.draw_text(self.digit_font, current_x, old_text_y,
+                                                  self.digit_color, char)
+                        current_x += char_width
+                
+                # Draw new text completely on top
+                current_x = new_text_x  
+                for char in new_text:
+                    if char != ' ':
+                        char_width = self.draw_text(self.digit_font, current_x, new_text_y,
+                                                  self.digit_color, char)
+                        current_x += char_width
+                
+                # Now erase the top part to reveal old text underneath
+                if boundary_y > window_rect['y']:
+                    # Clear top area and redraw old text there
+                    for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+                        for y in range(window_rect['y'], boundary_y):
+                            if 0 <= x < 64 and 0 <= y < 32:
+                                self.set_pixel(x, y, self.window_color)
+                    
+                    # Redraw old text in cleared area
                     current_x = old_text_x
                     for char in old_text:
                         if char != ' ':
                             char_width = self.draw_text(self.digit_font, current_x, old_text_y,
                                                       self.digit_color, char)
                             current_x += char_width
-                
-                # Show new text in bottom area (flipping up)
-                if visible_height > 0:
-                    current_x = new_text_x
-                    for char in new_text:
-                        if char != ' ':
-                            char_width = self.draw_text(self.digit_font, current_x, new_text_y,
-                                                      self.digit_color, char)
-                            current_x += char_width
-                    
-                    # Create flip line by darkening the boundary
-                    if flip_line_y < window_rect['y'] + window_rect['height']:
-                        dark_color = self.color_palette.get_color((100, 50, 0))  # Dark orange flip line
-                        for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                            if 0 <= x < 64 and 0 <= flip_line_y < 32:
-                                self.set_pixel(x, flip_line_y, dark_color)
             
-            # Update display and wait
+            # Update display and wait  
             self.swap()
             time.sleep(frame_duration)
     
