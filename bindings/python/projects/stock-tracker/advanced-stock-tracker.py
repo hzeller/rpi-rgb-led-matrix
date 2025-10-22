@@ -6,55 +6,42 @@ Uses Alpha Vantage API for stock data and historical prices
 """
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../samples'))
-from samplebase import SampleBase
-from rgbmatrix import graphics
 import time
 import json
 import requests
 import threading
 from datetime import datetime, timedelta
-import os
 import math
 import random
-try:
-    from dotenv import load_dotenv
-    load_dotenv('stock-tracker.env')
-except ImportError:
-    print("python-dotenv not installed. Install with: pip install python-dotenv")
-    pass
+import argparse
+
+# Add shared components to path
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
+from matrix_base import MatrixBase
+from font_manager import FontManager
+from color_palette import ColorPalette
+from config_manager import ConfigManager
 
 
-class AdvancedStockTracker(SampleBase):
-    def __init__(self, *args, **kwargs):
-        super(AdvancedStockTracker, self).__init__(*args, **kwargs)
+class AdvancedStockTracker(MatrixBase):
+    def __init__(self, api_key=None, stocks=None, refresh_rate=5, display_time=10, 
+                 demo_mode=False, chart_days=30, include_trending=False, trending_count=3):
+        super().__init__(hardware_mapping='adafruit-hat-pwm')
         
-        # Override default matrix settings to match your hardware configuration
-        self.parser.set_defaults(
-            led_rows=32,
-            led_cols=64,
-            led_chain=1,
-            led_parallel=1,
-            led_gpio_mapping='adafruit-hat-pwm'
-        )
+        # Initialize managers
+        self.font_manager = FontManager()
+        self.colors = ColorPalette('default')
+        self.config = ConfigManager()
         
-        self.parser.add_argument("--api-key", help="Alpha Vantage API key (get free at alphavantage.co)", 
-                               default=os.environ.get('ALPHA_VANTAGE_API_KEY'), type=str)
-        self.parser.add_argument("--stocks", help="Comma-separated stock symbols (e.g., AAPL,GOOGL,MSFT)", 
-                               default=os.environ.get('DEFAULT_STOCKS', "AAPL,GOOGL,MSFT,TSLA"), type=str)
-        self.parser.add_argument("--refresh-rate", help="Data refresh rate in minutes", 
-                               default=int(os.environ.get('REFRESH_RATE', '5')), type=int)
-        self.parser.add_argument("--display-time", help="Time to show each stock in seconds", 
-                               default=int(os.environ.get('DISPLAY_TIME', '10')), type=int)
-        self.parser.add_argument("--demo-mode", help="Use demo data instead of API", action="store_true")
-        self.parser.add_argument("--chart-days", help="Number of days of historical data for chart", 
-                               default=int(os.environ.get('CHART_DAYS', '30')), type=int)
-        self.parser.add_argument("--api-source", help="API source to use", 
-                               choices=['yahoo', 'alphavantage', 'auto'], default='auto', type=str)
-        self.parser.add_argument("--include-trending", help="Include trending stocks (gainers/losers)", 
-                               action="store_true", default=False)
-        self.parser.add_argument("--trending-count", help="Number of trending stocks to include", 
-                               default=int(os.environ.get('TRENDING_COUNT', '3')), type=int)
+        # Configuration
+        self.api_key = api_key or self.config.get('ALPHA_VANTAGE_API_KEY')
+        self.stocks = stocks or self.config.get('DEFAULT_STOCKS', 'AAPL,GOOGL,MSFT,TSLA')
+        self.refresh_rate = refresh_rate or self.config.get('REFRESH_RATE', 5, int)
+        self.display_time = display_time or self.config.get('DISPLAY_TIME', 10, int)
+        self.demo_mode = demo_mode
+        self.chart_days = chart_days or self.config.get('CHART_DAYS', 30, int)
+        self.include_trending = include_trending
+        self.trending_count = trending_count or self.config.get('TRENDING_COUNT', 3, int)
         
         # Stock data storage
         self.stock_data = {}
@@ -65,23 +52,22 @@ class AdvancedStockTracker(SampleBase):
         # Display-safe copies (no locking required)
         self.display_stock_data = {}
         self.display_stock_history = {}
-        self.api_key = None
         
         # Display settings
-        self.font_large = None
-        self.font_small = None
+        self.font_large = self.font_manager.get_font('medium')  # 7x13.bdf equivalent
+        self.font_small = self.font_manager.get_font('small')   # 5x7.bdf equivalent
         self.current_stock_index = 0
         self.stock_symbols = []
         
-        # Colors for different states
-        self.colors = {
-            'gain_bright': graphics.Color(0, 255, 0),     # Bright green for positive
-            'gain_dim': graphics.Color(0, 180, 0),        # Dim green for chart
-            'loss_bright': graphics.Color(255, 0, 0),     # Bright red for negative  
-            'loss_dim': graphics.Color(180, 0, 0),        # Dim red for chart
-            'neutral': graphics.Color(255, 255, 255),     # White for neutral
-            'chart_line': graphics.Color(0, 120, 0),      # Chart line color
-            'text_secondary': graphics.Color(200, 200, 200)  # Secondary text
+        # Colors for different states using color palette
+        self.display_colors = {
+            'gain_bright': self.colors.get_color('GREEN'),
+            'gain_dim': self.colors.get_color('GREEN_DARK'),
+            'loss_bright': self.colors.get_color('RED'),
+            'loss_dim': self.colors.get_color('RED_DARK'),
+            'neutral': self.colors.get_color('WHITE'),
+            'chart_line': self.colors.get_color('GREEN_DARK'),
+            'text_secondary': self.colors.get_color('GRAY_LIGHT')
         }
 
     def get_demo_data(self):
@@ -397,7 +383,7 @@ class AdvancedStockTracker(SampleBase):
                 traceback.print_exc()
                 time.sleep(30)
 
-    def draw_stock_chart(self, canvas, symbol, x_start, y_start, width, height):
+    def draw_stock_chart(self, symbol, x_start, y_start, width, height):
         """Draw a simple, safe time series chart for the given symbol"""
         try:
             # Safety bounds check
@@ -416,7 +402,7 @@ class AdvancedStockTracker(SampleBase):
                 prices = None
             
             if not prices or len(prices) < 2:
-                self.draw_demo_chart(canvas, x_start, y_start, width, height)
+                self.draw_demo_chart(x_start, y_start, width, height)
                 return
                 
             # Simple safety checks
@@ -440,9 +426,10 @@ class AdvancedStockTracker(SampleBase):
                 for fill_y in range(y_start + height - 1, top_y - 1, -1):  # From bottom to top_y
                     if 0 <= x < 64 and 0 <= fill_y < 32:
                         if fill_y <= top_y + 1:  # Top 2 pixels get lighter green
-                            canvas.SetPixel(x, fill_y, 0, 180, 0)  # Lighter green for top line
+                            color = self.display_colors['gain_bright']
                         else:
-                            canvas.SetPixel(x, fill_y, 0, 100, 0)  # Darker green for fill
+                            color = self.display_colors['gain_dim']
+                        self.set_pixel(x, fill_y, color)
                         pixels_drawn += 1
             
             # Chart drawn successfully
@@ -452,7 +439,7 @@ class AdvancedStockTracker(SampleBase):
             import traceback
             traceback.print_exc()
     
-    def draw_demo_chart(self, canvas, x_start, y_start, width, height):
+    def draw_demo_chart(self, x_start, y_start, width, height):
         """Draw a simple, safe demo chart pattern when no real data is available"""
         try:
             # Safety bounds check
@@ -477,9 +464,10 @@ class AdvancedStockTracker(SampleBase):
                 for fill_y in range(y_start + height - 1, top_y - 1, -1):
                     if 0 <= x_start + x < 64 and 0 <= fill_y < 32:
                         if fill_y <= top_y + 1:  # Top 2 pixels get lighter green
-                            canvas.SetPixel(x_start + x, fill_y, 0, 120, 0)  # Lighter green for demo top
+                            color = self.display_colors['chart_line']
                         else:
-                            canvas.SetPixel(x_start + x, fill_y, 0, 60, 0)   # Darker green for demo fill
+                            color = self.display_colors['gain_dim']
+                        self.set_pixel(x_start + x, fill_y, color)
                         pixels_drawn += 1
             
             # Demo chart drawn
@@ -514,23 +502,16 @@ class AdvancedStockTracker(SampleBase):
                 y += sy
 
     def run(self):
-        print("Starting advanced stock tracker...")
+        print("🚀 Starting advanced stock tracker...")
         
-        # Load smaller fonts to fit in compact 16px height with 2px margins
-        print("Loading fonts...")
-        self.font_large = graphics.Font()
-        self.font_large.LoadFont("../../../../fonts/5x7.bdf")  # Smaller font for symbol
-        self.font_small = graphics.Font()
-        self.font_small.LoadFont("../../../../fonts/4x6.bdf")  # Even smaller for price
+        # Fonts are already loaded in __init__
         print("✓ Fonts loaded")
         
-        # Get API key (already loaded from environment in argument defaults)
-        self.api_key = self.args.api_key
         print(f"API key configured: {bool(self.api_key)}")
-        print(f"Demo mode: {self.args.demo_mode}")
+        print(f"Demo mode: {self.demo_mode}")
         
-        # Initialize with hardcoded stock symbols initially
-        self.stock_symbols = [s.strip().upper() for s in self.args.stocks.split(',')]
+        # Initialize with stock symbols
+        self.stock_symbols = [s.strip().upper() for s in self.stocks.split(',')]
         print(f"Initial stock symbols: {self.stock_symbols}")
         
         # Start background data update thread
@@ -566,9 +547,7 @@ class AdvancedStockTracker(SampleBase):
                 print(f"✓ Demo data loaded for {len(self.stock_data)} stocks")
                 print(f"✓ Demo display will cycle through: {self.stock_symbols}")
         
-        print("Creating offscreen canvas...")
-        offscreen_canvas = self.matrix.CreateFrameCanvas()
-        print("✓ Offscreen canvas created")
+        print("✓ Matrix canvas ready")
         
         last_switch_time = time.time()
         print("Starting main display loop...")
@@ -578,11 +557,11 @@ class AdvancedStockTracker(SampleBase):
             loop_count += 1
             # Reduce debug spam - only print important events
             
-            offscreen_canvas.Clear()
+            self.clear()
             
             # Check if we need to switch to the next stock
             current_time = time.time()
-            if current_time - last_switch_time >= self.args.display_time:
+            if current_time - last_switch_time >= self.display_time:
                 old_index = self.current_stock_index
                 self.current_stock_index = (self.current_stock_index + 1) % len(self.stock_symbols)
                 last_switch_time = current_time
@@ -598,31 +577,29 @@ class AdvancedStockTracker(SampleBase):
                     stock_info = self.display_stock_data[current_symbol]
                     
                     # Left side uses white color for symbol and price
-                    left_color = self.colors['neutral']  # White color
+                    left_color = self.display_colors['neutral']  # White color
                     
                     # Right side uses green/red based on performance
                     is_positive = stock_info['change'] >= 0
-                    right_color = self.colors['gain_bright'] if is_positive else self.colors['loss_bright']
+                    right_color = self.display_colors['gain_bright'] if is_positive else self.display_colors['loss_bright']
                     
                     # Left side - Stock symbol and price (white)
-                    graphics.DrawText(offscreen_canvas, self.font_large, 2, 8, left_color, current_symbol)
+                    self.draw_text(self.font_large, 2, 8, left_color, current_symbol)
                     price_text = f"{stock_info['price']:.2f}"
-                    graphics.DrawText(offscreen_canvas, self.font_large, 2, 15, left_color, price_text)
+                    self.draw_text(self.font_large, 2, 15, left_color, price_text)
                     
                     # Right side - Change amount and percentage (green/red based on value)
-                    # True right alignment: measure actual text width and position accordingly
+                    # Simple right-aligned positioning (approximate)
                     
-                    # Top right: Change amount (colored) - properly right aligned
+                    # Top right: Change amount (colored)
                     change_text = f"{stock_info['change']:+.2f}"  # Include +/- sign
-                    change_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 8, right_color, change_text)  # Measure width off-screen
-                    change_x = 64 - change_width - 2  # True right align with 2px buffer from right edge
-                    graphics.DrawText(offscreen_canvas, self.font_large, change_x, 8, right_color, change_text)
+                    change_x = 64 - (len(change_text) * 4) - 2  # Approximate positioning
+                    self.draw_text(self.font_large, change_x, 8, right_color, change_text)
                     
-                    # Bottom right: Percentage (colored) - properly right aligned  
+                    # Bottom right: Percentage (colored)  
                     pct_text = f"{stock_info['change_percent']:+.1f}%"  # Include +/- sign
-                    pct_width = graphics.DrawText(offscreen_canvas, self.font_large, 1000, 15, right_color, pct_text)  # Measure width off-screen
-                    pct_x = 64 - pct_width - 2  # True right align with 2px buffer from right edge
-                    graphics.DrawText(offscreen_canvas, self.font_large, pct_x, 15, right_color, pct_text)
+                    pct_x = 64 - (len(pct_text) * 4) - 2  # Approximate positioning
+                    self.draw_text(self.font_large, pct_x, 15, right_color, pct_text)
                     
                     # Draw safe time series chart in bottom half (y=16 to y=31, so 16 pixels tall)
                     chart_x = 0
@@ -630,27 +607,58 @@ class AdvancedStockTracker(SampleBase):
                     chart_width = 64
                     chart_height = 16  # Bottom 16 pixels
                     
-                    self.draw_stock_chart(offscreen_canvas, current_symbol, chart_x, chart_y, chart_width, chart_height)
+                    self.draw_stock_chart(current_symbol, chart_x, chart_y, chart_width, chart_height)
                     
                 else:
                     # Loading state
-                    graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], current_symbol)
-                    graphics.DrawText(offscreen_canvas, self.font_large, 1, 22, self.colors['neutral'], "Loading...")
+                    self.draw_text(self.font_large, 1, 10, self.display_colors['neutral'], current_symbol)
+                    self.draw_text(self.font_large, 1, 22, self.display_colors['neutral'], "Loading...")
             else:
                 # No data yet
-                graphics.DrawText(offscreen_canvas, self.font_large, 1, 10, self.colors['neutral'], "Loading...")
+                self.draw_text(self.font_large, 1, 10, self.display_colors['neutral'], "Loading...")
             
-            offscreen_canvas = self.matrix.SwapOnVSync(offscreen_canvas)
+            self.swap()
             time.sleep(0.5)  # Slower refresh rate
 
 
-# Main function
+# Main function with argument parsing
+def main():
+    parser = argparse.ArgumentParser(description='Advanced Stock Tracker with Charts')
+    parser.add_argument("--api-key", help="Alpha Vantage API key", type=str)
+    parser.add_argument("--stocks", help="Comma-separated stock symbols", 
+                       default="AAPL,GOOGL,MSFT,TSLA", type=str)
+    parser.add_argument("--refresh-rate", help="Data refresh rate in minutes", 
+                       default=5, type=int)
+    parser.add_argument("--display-time", help="Time to show each stock in seconds",
+                       default=10, type=int)
+    parser.add_argument("--demo-mode", help="Use demo data", action="store_true")
+    parser.add_argument("--chart-days", help="Days of historical data", 
+                       default=30, type=int)
+    parser.add_argument("--include-trending", help="Include trending stocks", 
+                       action="store_true")
+    parser.add_argument("--trending-count", help="Number of trending stocks",
+                       default=3, type=int)
+    
+    args = parser.parse_args()
+    
+    try:
+        stock_tracker = AdvancedStockTracker(
+            api_key=args.api_key,
+            stocks=args.stocks,
+            refresh_rate=args.refresh_rate,
+            display_time=args.display_time,
+            demo_mode=args.demo_mode,
+            chart_days=args.chart_days,
+            include_trending=args.include_trending,
+            trending_count=args.trending_count
+        )
+        stock_tracker.run()
+    except KeyboardInterrupt:
+        print("\n🛑 Advanced stock tracker stopped.")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
 if __name__ == "__main__":
-    stock_tracker = AdvancedStockTracker()
-    if not stock_tracker.process():
-        stock_tracker.print_help()
-    else:
-        try:
-            stock_tracker.run()
-        except KeyboardInterrupt:
-            print("\nAdvanced stock tracker stopped.")
+    main()
