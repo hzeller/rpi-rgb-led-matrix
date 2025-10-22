@@ -332,11 +332,20 @@ class RetroFlipClock(MatrixBase):
                             current_x += char_width
                     
                     # Animate flips for changed digits
-                    if hour_changed or self.manual_flip_triggered:
+                    if hour_changed:
                         print(f"🔄 Flipping hour: {self.previous_hour} → {current_hour}")
                         self.animate_flip(hour_window, self.previous_hour, current_hour, is_hour=True)
+                    elif self.manual_flip_triggered and now.second >= 58:
+                        # Manual flip when close to minute change - flip minute
+                        next_minute = str((int(current_minute) + 1) % 60).zfill(2)
+                        print(f"🔄 Manual flip minute: {current_minute} → {next_minute}")
+                        self.animate_flip(minute_window, current_minute, next_minute, is_hour=False)
+                    elif self.manual_flip_triggered:
+                        # Manual flip at other times - flip minute
+                        print(f"🔄 Manual flip minute: {self.previous_minute} → {current_minute}")
+                        self.animate_flip(minute_window, self.previous_minute, current_minute, is_hour=False)
                         
-                    if minute_changed or self.manual_flip_triggered:
+                    if minute_changed:
                         print(f"🔄 Flipping minute: {self.previous_minute} → {current_minute}")
                         self.animate_flip(minute_window, self.previous_minute, current_minute, is_hour=False)
                     
