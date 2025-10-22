@@ -61,12 +61,12 @@ class AdvancedStockTracker(MatrixBase):
         
         # Colors for different states using color palette
         self.display_colors = {
-            'gain_bright': self.colors.get_color('GREEN'),
-            'gain_dim': self.colors.get_color('GREEN_DARK'),
-            'loss_bright': self.colors.get_color('RED'),
-            'loss_dim': self.colors.get_color('RED_DARK'),
+            'gain_bright': self.colors.get_color('GAIN_BRIGHT'),
+            'gain_dim': self.colors.get_color('GAIN_DIM'),
+            'loss_bright': self.colors.get_color('LOSS_BRIGHT'),
+            'loss_dim': self.colors.get_color('LOSS_DIM'),
             'neutral': self.colors.get_color('WHITE'),
-            'chart_line': self.colors.get_color('GREEN_DARK'),
+            'chart_line': self.colors.get_color('GAIN_DIM'),
             'text_secondary': self.colors.get_color('GRAY_LIGHT')
         }
 
