@@ -242,6 +242,21 @@ class RetroFlipClock(MatrixBase):
                                           self.digit_color, char)
                 current_x += char_width
         
+        # Calculate text positions (these stay fixed)
+        old_text_width = 0
+        for char in old_text:
+            if char != ' ':
+                old_text_width += self.digit_font.CharacterWidth(ord(char))
+        old_text_x = window_rect['x'] + (window_rect['width'] - old_text_width) // 2
+        old_text_y = window_rect['y'] + 14
+        
+        new_text_width = 0
+        for char in new_text:
+            if char != ' ':
+                new_text_width += self.digit_font.CharacterWidth(ord(char))
+        new_text_x = window_rect['x'] + (window_rect['width'] - new_text_width) // 2
+        new_text_y = window_rect['y'] + 14
+        
         # Now animate the flipping window
         frame_duration = self.flip_duration / self.flip_animation_frames
         center_y = window_rect['y'] + window_rect['height'] // 2
@@ -250,98 +265,71 @@ class RetroFlipClock(MatrixBase):
             # Calculate flip progress (0.0 to 1.0)
             progress = frame / (self.flip_animation_frames - 1)
             
-            # Create realistic flip card animation
-            if progress <= 0.5:
-                # First half: old card flips down from top
-                flip_progress = progress * 2  # 0.0 to 1.0 for first half
-                visible_height = int(window_rect['height'] * (1.0 - flip_progress) / 2)
-                
-                # Draw top half of old card (getting smaller)
-                if visible_height > 0:
-                    for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                        for y in range(window_rect['y'], window_rect['y'] + visible_height):
-                            if 0 <= x < 64 and 0 <= y < 32:
-                                self.set_pixel(x, y, self.window_color)
-                    
-                    # Draw old text in top section if there's space
-                    if visible_height > 4:
-                        old_text_width = 0
-                        for char in old_text:
-                            if char != ' ':
-                                old_text_width += self.digit_font.CharacterWidth(ord(char))
-                        old_text_x = window_rect['x'] + (window_rect['width'] - old_text_width) // 2
-                        old_text_y = window_rect['y'] + min(visible_height - 2, 14)
-                        current_x = old_text_x
-                        for char in old_text:
-                            if char != ' ':
-                                char_width = self.draw_text(self.digit_font, current_x, old_text_y,
-                                                          self.digit_color, char)
-                                current_x += char_width
-                
-                # Fill rest with orange background
-                for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                    for y in range(window_rect['y'] + visible_height, window_rect['y'] + window_rect['height']):
-                        if 0 <= x < 64 and 0 <= y < 32:
-                            self.set_pixel(x, y, self.background_color)
+            # Fill entire window with black first
+            for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+                for y in range(window_rect['y'], window_rect['y'] + window_rect['height']):
+                    if 0 <= x < 64 and 0 <= y < 32:
+                        self.set_pixel(x, y, self.window_color)
             
-            else:
-                # Second half: new card flips up from bottom
-                flip_progress = (progress - 0.5) * 2  # 0.0 to 1.0 for second half
-                visible_height = int(window_rect['height'] * flip_progress / 2)
+            if progress <= 0.5:
+                # First half: bottom half darkens (like card casting shadow)
+                flip_progress = progress * 2  # 0.0 to 1.0 for first half
                 
-                # Fill top with orange background
+                # Show old text in full window
+                current_x = old_text_x
+                for char in old_text:
+                    if char != ' ':
+                        char_width = self.draw_text(self.digit_font, current_x, old_text_y,
+                                                  self.digit_color, char)
+                        current_x += char_width
+                
+                # Darken bottom half progressively (simulate shadow of flipping card)
+                darkness = int(flip_progress * 128)  # 0 to 128
+                dark_color = self.color_palette.get_color((darkness, darkness//2, 0))  # Dark orange
+                
+                darken_height = int(window_rect['height'] * flip_progress / 2)
+                start_darken_y = center_y
                 for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                    for y in range(window_rect['y'], window_rect['y'] + window_rect['height'] - visible_height):
+                    for y in range(start_darken_y, start_darken_y + darken_height):
                         if 0 <= x < 64 and 0 <= y < 32:
-                            self.set_pixel(x, y, self.background_color)
+                            self.set_pixel(x, y, dark_color)
+                            
+            else:
+                # Second half: new number flips up from bottom
+                flip_progress = (progress - 0.5) * 2  # 0.0 to 1.0 for second half
                 
-                # Draw bottom half of new card (getting bigger)
+                # Calculate how much of the new number is visible from bottom
+                visible_height = int(window_rect['height'] * flip_progress)
+                flip_line_y = window_rect['y'] + window_rect['height'] - visible_height
+                
+                # Show old text in top area
+                if flip_line_y > window_rect['y']:
+                    current_x = old_text_x
+                    for char in old_text:
+                        if char != ' ':
+                            char_width = self.draw_text(self.digit_font, current_x, old_text_y,
+                                                      self.digit_color, char)
+                            current_x += char_width
+                
+                # Show new text in bottom area (flipping up)
                 if visible_height > 0:
-                    start_y = window_rect['y'] + window_rect['height'] - visible_height
-                    for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                        for y in range(start_y, window_rect['y'] + window_rect['height']):
-                            if 0 <= x < 64 and 0 <= y < 32:
-                                self.set_pixel(x, y, self.window_color)
+                    current_x = new_text_x
+                    for char in new_text:
+                        if char != ' ':
+                            char_width = self.draw_text(self.digit_font, current_x, new_text_y,
+                                                      self.digit_color, char)
+                            current_x += char_width
                     
-                    # Draw new text in bottom section if there's space
-                    if visible_height > 4:
-                        new_text_width = 0
-                        for char in new_text:
-                            if char != ' ':
-                                new_text_width += self.digit_font.CharacterWidth(ord(char))
-                        new_text_x = window_rect['x'] + (window_rect['width'] - new_text_width) // 2
-                        new_text_y = start_y + min(visible_height - 2, 14)
-                        current_x = new_text_x
-                        for char in new_text:
-                            if char != ' ':
-                                char_width = self.draw_text(self.digit_font, current_x, new_text_y,
-                                                          self.digit_color, char)
-                                current_x += char_width
+                    # Create flip line by darkening the boundary
+                    if flip_line_y < window_rect['y'] + window_rect['height']:
+                        dark_color = self.color_palette.get_color((100, 50, 0))  # Dark orange flip line
+                        for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
+                            if 0 <= x < 64 and 0 <= flip_line_y < 32:
+                                self.set_pixel(x, flip_line_y, dark_color)
             
             # Update display and wait
             self.swap()
             time.sleep(frame_duration)
-        
-        # Final frame: draw complete new window normally
-        for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-            for y in range(window_rect['y'], window_rect['y'] + window_rect['height']):
-                if 0 <= x < 64 and 0 <= y < 32:
-                    self.set_pixel(x, y, self.window_color)
-        
-        new_text_width = 0
-        for char in new_text:
-            if char != ' ':
-                new_text_width += self.digit_font.CharacterWidth(ord(char))
-        new_text_x = window_rect['x'] + (window_rect['width'] - new_text_width) // 2
-        new_text_y = window_rect['y'] + 14
-        current_x = new_text_x
-        for char in new_text:
-            if char != ' ':
-                char_width = self.draw_text(self.digit_font, current_x, new_text_y,
-                                          self.digit_color, char)
-                current_x += char_width
-        
-        self.swap()
     
     def check_for_input(self):
         """Check for keyboard input in a non-blocking way (cross-platform)."""
