@@ -590,18 +590,21 @@ class StockTracker(MatrixBase):
                     self.draw_text(self.font_large, 2, 15, left_color, price_text)  # 1px gap between lines
                     
                     # Right side - Change amount and percentage (green/red based on value)
-                    # Right-align with 2px padding from right edge (64px width - 2px = 62px)
+                    # Right-align with 2px padding - use conservative positioning
                     
-                    # Top right: Change amount (colored) - right-aligned
+                    # Top right: Change amount (colored) - right-aligned with safe positioning
                     change_text = f"{stock_info['change']:+.1f}"  # Shorter format: +1.2 instead of +1.23
-                    change_width = len(change_text) * 4  # Approximate pixel width per character
-                    change_x = 64 - change_width - 2  # Right edge minus text width minus 2px padding
+                    # Use conservative estimate: assume each character is ~3.5 pixels wide for safety
+                    change_width = len(change_text) * 3.5
+                    change_x = int(64 - change_width - 2)  # Right edge minus estimated width minus 2px padding
+                    change_x = max(32, change_x)  # Don't overlap with left side (failsafe)
                     self.draw_text(self.font_large, change_x, 8, right_color, change_text)
                     
-                    # Bottom right: Percentage (colored) - right-aligned  
+                    # Bottom right: Percentage (colored) - right-aligned with safe positioning
                     pct_text = f"{stock_info['change_percent']:+.0f}%"  # Even shorter: +5% instead of +5.1%
-                    pct_width = len(pct_text) * 4  # Approximate pixel width per character
-                    pct_x = 64 - pct_width - 2  # Right edge minus text width minus 2px padding
+                    pct_width = len(pct_text) * 3.5
+                    pct_x = int(64 - pct_width - 2)  # Right edge minus estimated width minus 2px padding  
+                    pct_x = max(32, pct_x)  # Don't overlap with left side (failsafe)
                     self.draw_text(self.font_large, pct_x, 15, right_color, pct_text)
                     
                     # Draw time series chart in bottom portion of display
