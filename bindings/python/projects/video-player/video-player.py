@@ -4,6 +4,9 @@ import sys
 import os
 import argparse
 import warnings
+
+# Add path to access samplebase from samples directory
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '/../../samples'))
 from samplebase import SampleBase
 from PIL import Image, ImageEnhance, ImageOps
 import cv2
