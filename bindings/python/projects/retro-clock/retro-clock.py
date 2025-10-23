@@ -1,14 +1,29 @@
 #!/usr/bin/env python
 """
 Retro Clock - Classic Style LED Matrix Display
-
-A mini        # Timezone configuration - Denver/Mountain Time
+        # Fl        # Flip animation state
+        self.manual_flip_triggered = False
+        self.flip_animation_frames = 8  # Number of frames in flip animation
+        self.flip_duration = 0.4  # Total duration in seconds
+        
+        # Timezone configuration - Denver/Mountain Time
         self.timezone_manager = TimezoneManager()
         self.current_timezone = self.timezone_manager.get_denver_timezone()
         
         print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
         print(f"Matrix size: {self.width}x{self.height}")
-        print(f"🏔️  Timezone: {self.timezone_manager.get_timezone_name()}") clock display inspired by vintage Twemco and similar designs:
+        print(f"🏔️  Timezone: {self.timezone_manager.get_timezone_name()}")n state
+        self.manual_flip_triggered = False
+        self.flip_animation_frames = 8  # Number of frames in flip animation
+        self.flip_duration = 0.4  # Total duration in seconds
+        
+        # Timezone configuration - Denver/Mountain Time
+        self.timezone_manager = TimezoneManager()
+        self.current_timezone = self.timezone_manager.get_denver_timezone()
+        
+        print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
+        print(f"Matrix size: {self.width}x{self.height}")
+        print(f"🏔️  Timezone: {self.timezone_manager.get_timezone_name()}")st clock display inspired by vintage Twemco and similar designs:
 - Clean, blocky digit display
 - Orange background with white frame and black digit windows
 - Hour:minute format in large, readable font
@@ -23,6 +38,7 @@ Usage:
 import time
 import sys
 import os
+from datetime import datetime
 try:
     from zoneinfo import ZoneInfo  # Python 3.9+
     TIMEZONE_MODULE = 'zoneinfo'
@@ -95,7 +111,19 @@ class RetroClock(MatrixBase):
     
     def get_current_time(self):
         """Get current time in Denver timezone."""
-        return self.timezone_manager.get_current_time(self.current_timezone)
+        current_time = self.timezone_manager.get_current_time(self.current_timezone)
+        # Debug: Print timezone info occasionally
+        if hasattr(self, '_debug_counter'):
+            self._debug_counter += 1
+        else:
+            self._debug_counter = 1
+        
+        if self._debug_counter % 600 == 1:  # Every 60 seconds (since we update every 0.1s)
+            print(f"🐛 Debug - Current time: {current_time}")
+            print(f"🐛 Debug - Timezone: {self.timezone_manager.get_timezone_name()}")
+            print(f"🐛 Debug - Timezone object: {self.current_timezone}")
+            
+        return current_time
 
     def draw_flip_time(self):
         """Draw time in authentic Twemco flip clock style with separate windows."""
