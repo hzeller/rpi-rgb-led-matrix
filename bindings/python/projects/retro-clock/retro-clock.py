@@ -1,27 +1,14 @@
 #!/usr/bin/env python
 """
-Retro Flip Clock - Classic         # Store previous time for flip detection
-        self.previous_time = ""
-        self.previous_hour = ""
-        self.previous_minute = ""
-        self.show_ampm = True  # Option to show AM/PM
-        
-        # Flip animation state
-        self.manual_flip_triggered = False
-        self.flip_animation_frames = 8  # Number of frames in flip animation
-        self.flip_duration = 0.4  # Total duration in seconds
-        
-        print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
-        print(f"Matrix size: {self.width}x{self.height}")
-        print(f"Brightness: {self.matrix.brightness}%")
-        print("💡 Press SPACE to trigger manual flip animation")Style LED Matrix Display
+Retro Clock - Classic Style LED Matrix Display
 
-A minimalist flip clock display inspired by vintage Twemco and similar designs:
-- Clean, blocky digit display mimicking flip cards
-- Simple black background with white digits
+A minimalist clock display inspired by vintage Twemco and similar designs:
+- Clean, blocky digit display
+- Orange background with white frame and black digit windows
 - Hour:minute format in large, readable font
 - Classic proportions and spacing
 - Optional AM/PM indicator
+- Simple number changes with no complex animations
 
 Usage:
     sudo python retro-clock.py
@@ -47,8 +34,8 @@ from color_palette import ColorPalette
 from config_manager import ConfigManager
 
 
-class RetroFlipClock(MatrixBase):
-    """Classic flip clock display with vintage 1970s aesthetic."""
+class RetroClock(MatrixBase):
+    """Classic clock display with vintage 1970s aesthetic."""
     
     def __init__(self):
         # Initialize configuration manager
@@ -199,145 +186,11 @@ class RetroFlipClock(MatrixBase):
                                       self.digit_color, char)
             current_x += char_width
     
-    def animate_flip(self, window_rect, old_text, new_text, is_hour=True):
-        """Animate a realistic flip card transition like vintage mechanical flip clocks."""
-        # Redraw background and frame first
-        self.clear()
-        self.draw_background_and_frame()
-        
-        # Draw AM/PM (doesn't change during flip)
-        if self.show_ampm:
-            now = datetime.now()
-            ampm = now.strftime("%p").lower()
-            ampm_x = 4
-            ampm_y = 7
-            current_x = ampm_x
-            for char in ampm:
-                char_width = self.draw_text(self.ampm_font, current_x, ampm_y,
-                                          self.ampm_color, char)
-                current_x += char_width
-        
-        # Draw the non-flipping window normally
-        other_window = {'x': 36, 'y': 8, 'width': 22, 'height': 16} if is_hour else {'x': 6, 'y': 8, 'width': 22, 'height': 16}
-        other_text = new_text if is_hour else (datetime.now().strftime("%I").replace("0", " ", 1) if datetime.now().strftime("%I").startswith("0") else datetime.now().strftime("%I"))
-        if not is_hour:
-            other_text = datetime.now().strftime("%M")
-        
-        # Draw other window normally
-        for x in range(other_window['x'], other_window['x'] + other_window['width']):
-            for y in range(other_window['y'], other_window['y'] + other_window['height']):
-                if 0 <= x < 64 and 0 <= y < 32:
-                    self.set_pixel(x, y, self.window_color)
-        
-        # Draw other text
-        other_text_width = 0
-        for char in other_text:
-            if char != ' ':
-                other_text_width += self.digit_font.CharacterWidth(ord(char))
-        other_text_x = other_window['x'] + (other_window['width'] - other_text_width) // 2
-        other_text_y = other_window['y'] + 14
-        current_x = other_text_x
-        for char in other_text:
-            if char != ' ':
-                char_width = self.draw_text(self.digit_font, current_x, other_text_y,
-                                          self.digit_color, char)
-                current_x += char_width
-        
-        # Calculate text positions (these stay fixed)
-        old_text_width = 0
-        for char in old_text:
-            if char != ' ':
-                old_text_width += self.digit_font.CharacterWidth(ord(char))
-        old_text_x = window_rect['x'] + (window_rect['width'] - old_text_width) // 2
-        old_text_y = window_rect['y'] + 14
-        
-        new_text_width = 0
-        for char in new_text:
-            if char != ' ':
-                new_text_width += self.digit_font.CharacterWidth(ord(char))
-        new_text_x = window_rect['x'] + (window_rect['width'] - new_text_width) // 2
-        new_text_y = window_rect['y'] + 14
-        
-        # Now animate the flipping window
-        frame_duration = self.flip_duration / self.flip_animation_frames
-        center_y = window_rect['y'] + window_rect['height'] // 2
-        
-        for frame in range(self.flip_animation_frames):
-            # Calculate flip progress (0.0 to 1.0)
-            progress = frame / (self.flip_animation_frames - 1)
-            
-            # Fill window with black
-            for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                for y in range(window_rect['y'], window_rect['y'] + window_rect['height']):
-                    if 0 <= x < 64 and 0 <= y < 32:
-                        self.set_pixel(x, y, self.window_color)
-            
-            if progress <= 0.5:
-                # First half: show old text with shadow
-                flip_progress = progress * 2  # 0.0 to 1.0 for first half
-                
-                # Draw old text
-                current_x = old_text_x
-                for char in old_text:
-                    if char != ' ':
-                        char_width = self.draw_text(self.digit_font, current_x, old_text_y,
-                                                  self.digit_color, char)
-                        current_x += char_width
-                
-                # Add shadow at bottom
-                shadow_height = int(window_rect['height'] * flip_progress * 0.3)
-                if shadow_height > 0:
-                    shadow_color = self.color_palette.get_color((15, 8, 3))  # Dark shadow
-                    start_y = window_rect['y'] + window_rect['height'] - shadow_height
-                    
-                    for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                        for y in range(start_y, window_rect['y'] + window_rect['height']):
-                            if 0 <= x < 64 and 0 <= y < 32:
-                                self.set_pixel(x, y, shadow_color)
-                            
-            else:
-                # Second half: transition from old to new
-                flip_progress = (progress - 0.5) * 2  # 0.0 to 1.0 for second half
-                
-                # Calculate the boundary line that sweeps from bottom to top
-                sweep_height = int(window_rect['height'] * flip_progress)
-                boundary_y = window_rect['y'] + window_rect['height'] - sweep_height
-                
-                # Draw old text completely first
-                current_x = old_text_x
-                for char in old_text:
-                    if char != ' ':
-                        char_width = self.draw_text(self.digit_font, current_x, old_text_y,
-                                                  self.digit_color, char)
-                        current_x += char_width
-                
-                # Draw new text completely on top
-                current_x = new_text_x  
-                for char in new_text:
-                    if char != ' ':
-                        char_width = self.draw_text(self.digit_font, current_x, new_text_y,
-                                                  self.digit_color, char)
-                        current_x += char_width
-                
-                # Now erase the top part to reveal old text underneath
-                if boundary_y > window_rect['y']:
-                    # Clear top area and redraw old text there
-                    for x in range(window_rect['x'], window_rect['x'] + window_rect['width']):
-                        for y in range(window_rect['y'], boundary_y):
-                            if 0 <= x < 64 and 0 <= y < 32:
-                                self.set_pixel(x, y, self.window_color)
-                    
-                    # Redraw old text in cleared area
-                    current_x = old_text_x
-                    for char in old_text:
-                        if char != ' ':
-                            char_width = self.draw_text(self.digit_font, current_x, old_text_y,
-                                                      self.digit_color, char)
-                            current_x += char_width
-            
-            # Update display and wait  
-            self.swap()
-            time.sleep(frame_duration)
+    def simple_change(self, old_text, new_text, is_hour=True):
+        """Simply change from old number to new number - no animation."""
+        print(f"🔄 Changing {'hour' if is_hour else 'minute'}: {old_text} → {new_text}")
+        # The display will be updated in the main loop, so we don't need to do anything here
+        pass
     
     def check_for_input(self):
         """Check for keyboard input in a non-blocking way (cross-platform)."""
@@ -389,10 +242,10 @@ class RetroFlipClock(MatrixBase):
     
     def run(self):
         """Main display loop with flip animations."""
-        print("🕰️  Starting Authentic Twemco-Style Flip Clock - Press CTRL-C to stop")
+        print("🕰️  Starting Authentic Twemco-Style Clock - Press CTRL-C to stop")
         print("🧡 Orange background with white frame and black digit windows")
         print("⌨️  Controls:")
-        print("   SPACE = Manual flip animation")
+        print("   SPACE = Manual refresh")
         print("   + = Increase brightness")
         print("   - = Decrease brightness")
         
@@ -415,48 +268,21 @@ class RetroFlipClock(MatrixBase):
                 hour_changed = current_hour != self.previous_hour
                 minute_changed = current_minute != self.previous_minute
                 
-                if hour_changed or minute_changed or self.manual_flip_triggered:
-                    # Define window rectangles
-                    hour_window = {'x': 6, 'y': 8, 'width': 22, 'height': 16}
-                    minute_window = {'x': 36, 'y': 8, 'width': 22, 'height': 16}
+                # Simple notifications when time changes
+                if hour_changed:
+                    self.simple_change(self.previous_hour, current_hour, is_hour=True)
                     
-                    # Draw static background and frame first
-                    self.clear()
-                    self.draw_background_and_frame()
+                if minute_changed:
+                    self.simple_change(self.previous_minute, current_minute, is_hour=False)
                     
-                    # Draw AM/PM (doesn't flip)
-                    if self.show_ampm:
-                        ampm = now.strftime("%p").lower()
-                        ampm_x = 4
-                        ampm_y = 7
-                        current_x = ampm_x
-                        for char in ampm:
-                            char_width = self.draw_text(self.ampm_font, current_x, ampm_y,
-                                                      self.ampm_color, char)
-                            current_x += char_width
-                    
-                    # Animate flips for changed digits
-                    if hour_changed:
-                        print(f"🔄 Flipping hour: {self.previous_hour} → {current_hour}")
-                        self.animate_flip(hour_window, self.previous_hour, current_hour, is_hour=True)
-                    elif self.manual_flip_triggered and now.second >= 58:
-                        # Manual flip when close to minute change - flip minute
-                        next_minute = str((int(current_minute) + 1) % 60).zfill(2)
-                        print(f"🔄 Manual flip minute: {current_minute} → {next_minute}")
-                        self.animate_flip(minute_window, current_minute, next_minute, is_hour=False)
-                    elif self.manual_flip_triggered:
-                        # Manual flip at other times - flip minute
-                        print(f"🔄 Manual flip minute: {self.previous_minute} → {current_minute}")
-                        self.animate_flip(minute_window, self.previous_minute, current_minute, is_hour=False)
-                        
-                    if minute_changed:
-                        print(f"🔄 Flipping minute: {self.previous_minute} → {current_minute}")
-                        self.animate_flip(minute_window, self.previous_minute, current_minute, is_hour=False)
-                    
-                    # Update previous values
-                    self.previous_hour = current_hour
-                    self.previous_minute = current_minute
+                # Handle manual flip trigger
+                if self.manual_flip_triggered:
+                    print("🔄 Manual change triggered - updating display")
                     self.manual_flip_triggered = False
+                
+                # Update previous values
+                self.previous_hour = current_hour
+                self.previous_minute = current_minute
                 
                 # Draw normal time display
                 self.clear()
@@ -468,11 +294,11 @@ class RetroFlipClock(MatrixBase):
                 time.sleep(0.1)
                 
         except KeyboardInterrupt:
-            print("\n⏰️  Flip clock stopped - Time stands still!")
+            print("\n⏰️  Clock stopped - Time stands still!")
         finally:
             self.clear()
 
 
 if __name__ == "__main__":
-    flip_clock = RetroFlipClock()
-    flip_clock.run()
+    clock = RetroClock()
+    clock.run()
