@@ -2,7 +2,13 @@
 """
 Retro Clock - Classic Style LED Matrix Display
 
-A minimalist clock display inspired by vintage Twemco and similar designs:
+A mini        # Timezone configuration - Denver/Mountain Time
+        self.timezone_manager = TimezoneManager()
+        self.current_timezone = self.timezone_manager.get_denver_timezone()
+        
+        print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
+        print(f"Matrix size: {self.width}x{self.height}")
+        print(f"🏔️  Timezone: {self.timezone_manager.get_timezone_name()}") clock display inspired by vintage Twemco and similar designs:
 - Clean, blocky digit display
 - Orange background with white frame and black digit windows
 - Hour:minute format in large, readable font
@@ -17,8 +23,6 @@ Usage:
 import time
 import sys
 import os
-import threading
-from datetime import datetime
 try:
     from zoneinfo import ZoneInfo  # Python 3.9+
     TIMEZONE_MODULE = 'zoneinfo'
@@ -43,6 +47,7 @@ from matrix_base import MatrixBase
 from font_manager import FontManager
 from color_palette import ColorPalette
 from config_manager import ConfigManager
+from timezone_manager import TimezoneManager
 
 
 class RetroClock(MatrixBase):
@@ -88,36 +93,9 @@ class RetroClock(MatrixBase):
         print(f"Matrix size: {self.width}x{self.height}")
         print("�️  Timezone: Denver/Mountain Time")
     
-    def setup_denver_timezone(self):
-        """Set up Denver/Mountain Time timezone."""
-        self.current_timezone = None
-        
-        if TIMEZONE_MODULE:
-            try:
-                if TIMEZONE_MODULE == 'zoneinfo':
-                    self.current_timezone = ZoneInfo('America/Denver')
-                else:  # pytz
-                    self.current_timezone = pytz.timezone('America/Denver')
-                print("🏔️  Using Denver/Mountain Time")
-            except Exception as e:
-                print(f"⚠️  Could not set Denver timezone: {e}")
-                print("   Using system local time instead")
-        else:
-            print("⚠️  Timezone libraries not available - using system local time")
-    
     def get_current_time(self):
         """Get current time in Denver timezone."""
-        if not TIMEZONE_MODULE or not self.current_timezone:
-            return datetime.now()
-        
-        try:
-            if TIMEZONE_MODULE == 'zoneinfo':
-                return datetime.now(self.current_timezone)
-            else:  # pytz
-                utc_now = datetime.utcnow().replace(tzinfo=pytz.utc)
-                return utc_now.astimezone(self.current_timezone)
-        except Exception:
-            return datetime.now()
+        return self.timezone_manager.get_current_time(self.current_timezone)
 
     def draw_flip_time(self):
         """Draw time in authentic Twemco flip clock style with separate windows."""

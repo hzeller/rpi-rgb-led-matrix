@@ -36,6 +36,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
 from matrix_base import MatrixBase
 from font_manager import FontManager
 from color_palette import ColorPalette
+from timezone_manager import TimezoneManager
 class WeatherDisplay(MatrixBase):
     def __init__(self, city="Denver, CO"):
         # Initialize base matrix with standard configuration
@@ -48,6 +49,7 @@ class WeatherDisplay(MatrixBase):
         # Initialize shared components
         self.font_manager = FontManager()
         self.color_palette = ColorPalette()
+        self.timezone_manager = TimezoneManager()
         
         # Set up location
         self.city = city
@@ -130,115 +132,16 @@ class WeatherDisplay(MatrixBase):
             self.coords = {"lat": 39.7392, "lon": -104.9903}
     
     def get_timezone(self):
-        """Get accurate timezone for coordinates using API or pytz library"""
-        try:
-            if not self.coords:
-                print("No coordinates available. Using Mountain Time.")
-                self.timezone = timezone(timedelta(hours=-7))
-                return
-            
-            lat = self.coords["lat"]
-            lng = self.coords["lon"]
-            
-            # Method 1: Try timezone API (free tier available)
-            try:
-                tz_url = f"http://worldtimeapi.org/api/timezone"
-                # First get all timezones and find the closest one
-                response = requests.get(tz_url, timeout=5)
-                if response.status_code == 200:
-                    # Use coordinate-based lookup
-                    coord_url = f"http://worldtimeapi.org/api/ip"  # This gets current timezone
-                    # Better: use a proper coordinate-based service
-                    
-                    # Try TimeZoneDB API as backup (requires free API key)
-                    timezonedb_key = os.getenv('TIMEZONEDB_API_KEY')
-                    if timezonedb_key:
-                        tz_api_url = f"http://api.timezonedb.com/v2.1/get-time-zone"
-                        params = {
-                            'key': timezonedb_key,
-                            'format': 'json',
-                            'by': 'position',
-                            'lat': lat,
-                            'lng': lng
-                        }
-                        tz_response = requests.get(tz_api_url, params=params, timeout=5)
-                        if tz_response.status_code == 200:
-                            tz_data = tz_response.json()
-                            if tz_data.get('status') == 'OK':
-                                offset_seconds = tz_data['gmtOffset']
-                                offset_hours = offset_seconds / 3600
-                                self.timezone = timezone(timedelta(seconds=offset_seconds))
-                                print(f"TimeZoneDB timezone: UTC{offset_hours:+.1f} ({tz_data.get('zoneName', 'Unknown')})")
-                                return
-            except Exception as e:
-                print(f"Timezone API error: {e}")
-            
-            # Method 2: Use pytz with coordinate-based estimation
-            if HAS_PYTZ:
-                try:
-                    # Use a simple coordinate-to-timezone mapping for major regions
-                    timezone_name = None
-                    
-                    # North America timezone mapping
-                    if -125 <= lng <= -60 and 25 <= lat <= 70:
-                        if lng >= -75:  # Eastern
-                            timezone_name = 'US/Eastern'
-                        elif lng >= -90:  # Central
-                            timezone_name = 'US/Central'
-                        elif lng >= -105:  # Mountain
-                            timezone_name = 'US/Mountain'
-                        else:  # Pacific
-                            timezone_name = 'US/Pacific'
-                    
-                    # Europe timezone mapping
-                    elif -10 <= lng <= 40 and 35 <= lat <= 70:
-                        if lng <= 15:
-                            timezone_name = 'Europe/Berlin'  # CET
-                        else:
-                            timezone_name = 'Europe/Athens'  # EET
-                    
-                    # Asia timezone mapping
-                    elif 100 <= lng <= 150 and 20 <= lat <= 50:
-                        if lng <= 120:
-                            timezone_name = 'Asia/Shanghai'  # China
-                        else:
-                            timezone_name = 'Asia/Tokyo'    # Japan
-                    
-                    if timezone_name:
-                        tz = pytz.timezone(timezone_name)
-                        # Get current time in that timezone
-                        local_time = datetime.now(tz)
-                        self.timezone = local_time.tzinfo
-                        print(f"pytz timezone: {timezone_name} (UTC{local_time.strftime('%z')})")
-                        return
-                        
-                except Exception as e:
-                    print(f"pytz error: {e}")
-            
-            # Method 3: Fallback to improved manual calculation
-            print("Using fallback timezone calculation")
-            if -125 <= lng <= -60:  # North America
-                if lng >= -75:
-                    offset = -5  # Eastern
-                elif lng >= -90:
-                    offset = -6  # Central  
-                elif lng >= -105:
-                    offset = -7  # Mountain
-                else:
-                    offset = -8  # Pacific
-            elif -10 <= lng <= 40:  # Europe
-                offset = 1 if lng <= 15 else 2
-            elif 100 <= lng <= 150:  # Asia
-                offset = 8 if lng <= 120 else 9
-            else:
-                offset = round(lng / 15)
-            
-            self.timezone = timezone(timedelta(hours=offset))
-            print(f"Fallback timezone: UTC{offset:+d}")
-            
-        except Exception as e:
-            print(f"Timezone error: {e}. Using Mountain Time.")
-            self.timezone = timezone(timedelta(hours=-7))
+        """Get timezone for coordinates using shared timezone manager"""
+        lat = self.coords["lat"] if self.coords else None
+        lng = self.coords["lon"] if self.coords else None
+        
+        # Use shared timezone manager
+        self.timezone = self.timezone_manager.get_timezone_for_coordinates(lat, lng)
+        
+        # Log the timezone that was selected
+        timezone_name = self.timezone_manager.get_timezone_name()
+        print(f"🌍 Weather display timezone: {timezone_name}")
     
     def get_weather_data(self):
         """Fetch weather data from OpenWeatherMap API"""
