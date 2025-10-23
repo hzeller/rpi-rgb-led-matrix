@@ -588,20 +588,20 @@ class StockTracker(MatrixBase):
                     price_text = f"{stock_info['price']:.1f}"  # Shorter format to fit
                     self.draw_text(self.font_small, 2, 12, left_color, price_text)  # Below symbol
                     
-                    # Right half (32x16): Change amount and percentage - right-aligned within right 32px
-                    # Right half starts at x=32, so right edge is at x=64, with 2px padding = x=62
+                    # Right half (32x16): Change amount and percentage - right-aligned to end 2px from right edge
                     
-                    # Top right: Change amount (colored) - right-aligned in right half
+                    # Top right: Change amount (colored) - positioned so text ENDS 2px from right edge
                     change_text = f"{stock_info['change']:+.1f}"  # Format: +1.2 or -1.2
-                    # Small font is ~3 pixels wide per character
-                    change_width = len(change_text) * 3
-                    change_x = 64 - change_width - 2  # Right edge of display minus text width minus 2px padding
+                    # Calculate position so the rightmost pixel of text is at x=62 (64-2)
+                    # For font_small, each character is approximately 4 pixels wide
+                    change_width = len(change_text) * 4
+                    change_x = 62 - change_width  # Position so text ends at x=62
                     self.draw_text(self.font_small, change_x, 6, right_color, change_text)
                     
-                    # Bottom right: Percentage (colored) - right-aligned in right half
+                    # Bottom right: Percentage (colored) - positioned so text ENDS 2px from right edge
                     pct_text = f"{stock_info['change_percent']:+.0f}%"  # Format: +5% or -5%
-                    pct_width = len(pct_text) * 3
-                    pct_x = 64 - pct_width - 2  # Right edge of display minus text width minus 2px padding
+                    pct_width = len(pct_text) * 4
+                    pct_x = 62 - pct_width  # Position so text ends at x=62
                     self.draw_text(self.font_small, pct_x, 12, right_color, pct_text)
                     
                     # Draw time series chart in bottom portion of display
