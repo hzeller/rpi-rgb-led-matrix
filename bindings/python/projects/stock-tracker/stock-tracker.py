@@ -608,9 +608,9 @@ class StockTracker(MatrixBase):
                     
                     # Draw time series chart in bottom portion of display
                     chart_x = 0
-                    chart_y = 20  # Start after text lines (y=15 + ~6px font height + small gap)
-                    chart_width = 64
-                    chart_height = 16  # Remaining pixels to bottom of 32px display
+                    chart_y = 16  # Start at bottom half of 32px display
+                    chart_width = 64  # Full width
+                    chart_height = 16  # Bottom half height
                     
                     self.draw_stock_chart(current_symbol, chart_x, chart_y, chart_width, chart_height)
                     
