@@ -610,7 +610,7 @@ class StockTracker(MatrixBase):
                     chart_x = 0
                     chart_y = 20  # Start after text lines (y=15 + ~6px font height + small gap)
                     chart_width = 64
-                    chart_height = 12  # Remaining pixels to bottom of 32px display
+                    chart_height = 16  # Remaining pixels to bottom of 32px display
                     
                     self.draw_stock_chart(current_symbol, chart_x, chart_y, chart_width, chart_height)
                     
