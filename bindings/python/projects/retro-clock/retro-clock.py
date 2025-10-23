@@ -79,7 +79,7 @@ class RetroClock(MatrixBase):
         self.flip_duration = 0.4  # Total duration in seconds
         
         # Timezone configuration - Denver/Mountain Time
-        self.setup_denver_timezone()
+        self.denver_timezone = timezone(timedelta(hours=-7))  # Mountain Standard Time
         
         print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
         print(f"Matrix size: {self.width}x{self.height}")
