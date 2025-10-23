@@ -79,15 +79,15 @@ class RetroClock(MatrixBase):
         self.flip_duration = 0.4  # Total duration in seconds
         
         # Timezone configuration - Denver/Mountain Time
-        self.denver_timezone = timezone(timedelta(hours=-7))  # Mountain Standard Time
+        self.denver_timezone = timezone(timedelta(hours=-6))  # Mountain Time
         
         print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
         print(f"Matrix size: {self.width}x{self.height}")
         print("�️  Timezone: Denver/Mountain Time")
     
     def get_current_time(self):
-        """Get current time in Denver/Mountain timezone (UTC-7)."""
-        # Get UTC time and convert to Mountain Time (UTC-7)
+        """Get current time in Denver/Mountain timezone (UTC-6)."""
+        # Get UTC time and convert to Mountain Time (UTC-6)
         utc_now = datetime.now(timezone.utc)
         denver_time = utc_now.astimezone(self.denver_timezone)
         return denver_time
