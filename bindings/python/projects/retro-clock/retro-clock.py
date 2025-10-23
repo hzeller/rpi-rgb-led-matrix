@@ -1,29 +1,16 @@
 #!/usr/bin/env python
 """
-Retro Clock - Classic Style LED Matrix Display
-        # Fl        # Flip animation state
+Retro Clock - Classic Style LED Matrix         # Flip animation state
         self.manual_flip_triggered = False
         self.flip_animation_frames = 8  # Number of frames in flip animation
         self.flip_duration = 0.4  # Total duration in seconds
         
-        # Denver/Mountain Time timezone (UTC-7 in winter, UTC-6 in summer)
-        # This is a simple hardcoded Mountain Time that handles DST automatically
+        # Denver/Mountain Time timezone (UTC-7)
         self.denver_timezone = timezone(timedelta(hours=-7))  # Mountain Standard Time
         
         print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
         print(f"Matrix size: {self.width}x{self.height}")
-        print("🏔️  Timezone: Denver/Mountain Time (UTC-7)")n state
-        self.manual_flip_triggered = False
-        self.flip_animation_frames = 8  # Number of frames in flip animation
-        self.flip_duration = 0.4  # Total duration in seconds
-        
-        # Timezone configuration - Denver/Mountain Time
-        self.timezone_manager = TimezoneManager()
-        self.current_timezone = self.timezone_manager.get_denver_timezone()
-        
-        print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
-        print(f"Matrix size: {self.width}x{self.height}")
-        print(f"🏔️  Timezone: {self.timezone_manager.get_timezone_name()}")st clock display inspired by vintage Twemco and similar designs:
+        print("🏔️  Timezone: Denver/Mountain Time (UTC-7)")A minimalist clock display inspired by vintage Twemco and similar designs:
 - Clean, blocky digit display
 - Orange background with white frame and black digit windows
 - Hour:minute format in large, readable font
