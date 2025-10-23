@@ -594,17 +594,17 @@ class StockTracker(MatrixBase):
                     # Top right: Change amount (colored) - calculate position for right alignment
                     change_text = f"{stock_info['change']:+.1f}"  # Format: +1.2 or -1.2 (4-5 chars)
                     # For font_small, estimate 3 pixels per character (conservative)
-                    change_width = len(change_text) * 3
+                    change_width = len(change_text) * 5
                     change_x = 62 - change_width  # Position so text ends at x=62
                     print(f"DEBUG: Change text='{change_text}', len={len(change_text)}, width={change_width}, x={change_x}")
-                    self.draw_text(self.font_small, change_x, 3, right_color, change_text)
+                    self.draw_text(self.font_small, change_x, 6, right_color, change_text)
                     
                     # Bottom right: Percentage (colored) - calculate position for right alignment
                     pct_text = f"{stock_info['change_percent']:+.0f}%"  # Format: +5% or -15% (3-4 chars)
-                    pct_width = len(pct_text) * 3
+                    pct_width = len(pct_text) * 5
                     pct_x = 62 - pct_width  # Position so text ends at x=62
                     print(f"DEBUG: Percent text='{pct_text}', len={len(pct_text)}, width={pct_width}, x={pct_x}")
-                    self.draw_text(self.font_small, pct_x, 12, right_color, pct_text)
+                    self.draw_text(self.font_small, pct_x, 13, right_color, pct_text)
                     
                     # Draw time series chart in bottom portion of display
                     chart_x = 0
