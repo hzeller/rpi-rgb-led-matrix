@@ -20,6 +20,17 @@ import os
 import threading
 from datetime import datetime
 try:
+    from zoneinfo import ZoneInfo  # Python 3.9+
+    TIMEZONE_MODULE = 'zoneinfo'
+except ImportError:
+    try:
+        import pytz  # Fallback for older Python versions
+        TIMEZONE_MODULE = 'pytz'
+    except ImportError:
+        TIMEZONE_MODULE = None
+        print("Warning: Neither zoneinfo nor pytz available. Timezone functionality disabled.")
+
+try:
     import msvcrt  # Windows
     WINDOWS = True
 except ImportError:
@@ -70,14 +81,141 @@ class RetroClock(MatrixBase):
         self.flip_animation_frames = 8  # Number of frames in flip animation
         self.flip_duration = 0.4  # Total duration in seconds
         
-        print("�️  Retro Flip Clock initialized - Classic 1970s style")
-        print(f"Matrix size: {self.width}x{self.height}")
+        # Timezone configuration
+        self.setup_timezones()
         
-
+        print("🕰️  Retro Flip Clock initialized - Classic 1970s style")
+        print(f"Matrix size: {self.width}x{self.height}")
+        print(f"🌍 Current timezone: {self.get_current_timezone_name()}")
     
+    def setup_timezones(self):
+        """Initialize timezone configuration with common timezones."""
+        self.timezone_list = [
+            'UTC',
+            'US/Eastern',
+            'US/Central', 
+            'US/Mountain',
+            'US/Pacific',
+            'Europe/London',
+            'Europe/Paris',
+            'Europe/Berlin',
+            'Asia/Tokyo',
+            'Asia/Shanghai',
+            'Asia/Kolkata',
+            'Australia/Sydney',
+            'America/New_York',
+            'America/Chicago',
+            'America/Denver',
+            'America/Los_Angeles'
+        ]
+        
+        self.current_timezone_index = 0  # Default to UTC
+        self.current_timezone = None
+        self.show_timezone = True  # Show timezone abbreviation
+        
+        if TIMEZONE_MODULE:
+            self.set_timezone_by_index(0)  # Set to UTC
+        else:
+            print("⚠️  Timezone functionality not available - using system local time")
+    
+    def set_timezone_by_index(self, index):
+        """Set timezone by index in the timezone list."""
+        if not TIMEZONE_MODULE or index >= len(self.timezone_list):
+            return False
+            
+        timezone_name = self.timezone_list[index]
+        return self.set_timezone(timezone_name)
+    
+    def set_timezone(self, timezone_name):
+        """Set the current timezone."""
+        if not TIMEZONE_MODULE:
+            return False
+            
+        try:
+            if TIMEZONE_MODULE == 'zoneinfo':
+                self.current_timezone = ZoneInfo(timezone_name)
+            else:  # pytz
+                self.current_timezone = pytz.timezone(timezone_name)
+            
+            # Update index if this timezone is in our list
+            if timezone_name in self.timezone_list:
+                self.current_timezone_index = self.timezone_list.index(timezone_name)
+            
+            print(f"🌍 Timezone changed to: {timezone_name}")
+            return True
+        except Exception as e:
+            print(f"❌ Error setting timezone '{timezone_name}': {e}")
+            return False
+    
+    def get_current_timezone_name(self):
+        """Get the current timezone name."""
+        if not self.current_timezone:
+            return "Local System Time"
+        
+        if TIMEZONE_MODULE == 'zoneinfo':
+            return str(self.current_timezone)
+        else:  # pytz
+            return self.current_timezone.zone
+    
+    def get_current_time(self):
+        """Get current time in the selected timezone."""
+        if not TIMEZONE_MODULE or not self.current_timezone:
+            return datetime.now()
+        
+        if TIMEZONE_MODULE == 'zoneinfo':
+            return datetime.now(self.current_timezone)
+        else:  # pytz
+            utc_now = datetime.utcnow()
+            return self.current_timezone.localize(utc_now) if utc_now.tzinfo is None else utc_now.astimezone(self.current_timezone)
+    
+    def cycle_timezone_forward(self):
+        """Cycle to the next timezone in the list."""
+        if not TIMEZONE_MODULE:
+            return
+            
+        self.current_timezone_index = (self.current_timezone_index + 1) % len(self.timezone_list)
+        self.set_timezone_by_index(self.current_timezone_index)
+    
+    def cycle_timezone_backward(self):
+        """Cycle to the previous timezone in the list."""
+        if not TIMEZONE_MODULE:
+            return
+            
+        self.current_timezone_index = (self.current_timezone_index - 1) % len(self.timezone_list)
+        self.set_timezone_by_index(self.current_timezone_index)
+    
+    def get_timezone_abbreviation(self):
+        """Get a short abbreviation for the current timezone."""
+        if not TIMEZONE_MODULE or not self.current_timezone:
+            return "LOC"  # Local time
+        
+        try:
+            # Get current time to determine if we're in DST
+            current_time = self.get_current_time()
+            
+            if TIMEZONE_MODULE == 'zoneinfo':
+                # Use the timezone's tzname method if available
+                abbrev = current_time.strftime('%Z')
+                if abbrev:
+                    return abbrev[:3]  # Limit to 3 characters
+            else:  # pytz
+                abbrev = current_time.strftime('%Z')
+                if abbrev:
+                    return abbrev[:3]  # Limit to 3 characters
+            
+            # Fallback to creating abbreviation from timezone name
+            tz_name = self.get_current_timezone_name()
+            if '/' in tz_name:
+                return tz_name.split('/')[-1][:3].upper()
+            else:
+                return tz_name[:3].upper()
+                
+        except Exception:
+            return "UTC"
+
     def draw_flip_time(self):
         """Draw time in authentic Twemco flip clock style with separate windows."""
-        now = datetime.now()
+        now = self.get_current_time()
         
         # Format time components separately
         hour = now.strftime("%I")
@@ -100,6 +238,20 @@ class RetroClock(MatrixBase):
             current_x = ampm_x
             for char in ampm:
                 char_width = self.draw_text(self.ampm_font, current_x, ampm_y,
+                                          self.ampm_color, char)
+                current_x += char_width
+        
+        # Draw timezone abbreviation in lower right corner if enabled
+        if self.show_timezone and TIMEZONE_MODULE:
+            tz_abbrev = self.get_timezone_abbreviation()
+            
+            # Position timezone in lower right corner
+            tz_x = 64 - len(tz_abbrev) * 4 - 2  # Approximate positioning
+            tz_y = 28
+            
+            current_x = tz_x
+            for char in tz_abbrev:
+                char_width = self.draw_text(self.ampm_font, current_x, tz_y,
                                           self.ampm_color, char)
                 current_x += char_width
     
@@ -208,6 +360,16 @@ class RetroClock(MatrixBase):
                     elif key == b'-' or key == b'_':  # Minus key to decrease brightness
                         self.decrease_brightness()
                         return True
+                    elif key == b'z' or key == b'Z':  # Z key to cycle timezone forward
+                        self.cycle_timezone_forward()
+                        return True
+                    elif key == b'x' or key == b'X':  # X key to cycle timezone backward
+                        self.cycle_timezone_backward()
+                        return True
+                    elif key == b't' or key == b'T':  # T key to toggle timezone display
+                        self.show_timezone = not self.show_timezone
+                        print(f"🌍 Timezone display: {'ON' if self.show_timezone else 'OFF'}")
+                        return True
             else:
                 # Unix/Linux implementation
                 if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
@@ -220,6 +382,16 @@ class RetroClock(MatrixBase):
                         return True
                     elif line == '-' or line == '_':  # Minus key to decrease brightness
                         self.decrease_brightness()
+                        return True
+                    elif line.lower() == 'z':  # Z key to cycle timezone forward
+                        self.cycle_timezone_forward()
+                        return True
+                    elif line.lower() == 'x':  # X key to cycle timezone backward
+                        self.cycle_timezone_backward()
+                        return True
+                    elif line.lower() == 't':  # T key to toggle timezone display
+                        self.show_timezone = not self.show_timezone
+                        print(f"🌍 Timezone display: {'ON' if self.show_timezone else 'OFF'}")
                         return True
         except:
             # Fallback - no input detection
@@ -248,16 +420,19 @@ class RetroClock(MatrixBase):
         print("   SPACE = Manual refresh")
         print("   + = Increase brightness")
         print("   - = Decrease brightness")
+        print("   Z = Next timezone")
+        print("   X = Previous timezone") 
+        print("   T = Toggle timezone display")
         
         # Initialize previous time values
-        now = datetime.now()
+        now = self.get_current_time()
         self.previous_hour = now.strftime("%I").replace("0", " ", 1) if now.strftime("%I").startswith("0") else now.strftime("%I")
         self.previous_minute = now.strftime("%M")
         
         try:
             while True:
                 # Get current time
-                now = datetime.now()
+                now = self.get_current_time()
                 current_hour = now.strftime("%I").replace("0", " ", 1) if now.strftime("%I").startswith("0") else now.strftime("%I")
                 current_minute = now.strftime("%M")
                 
