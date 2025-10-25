@@ -18,8 +18,9 @@ cdef struct PillowImagingInstance:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def get_pillow_unsafe_ptr(image):
-    cdef void* ptr = PyCapsule_GetPointer(image.im.getim(), b"Pillow Imaging")
+cdef PillowImagingInstance* get_pillow_unsafe_ptr(image):
+    cdef object capsule = image.im.getim()
+    cdef void* ptr = PyCapsule_GetPointer(capsule, b"Pillow Imaging")
 
     return <PillowImagingInstance*>ptr
 
@@ -60,7 +61,7 @@ cdef class Canvas:
         cdef uint32_t **image_ptr
         cdef uint32_t pixel
         image.load()
-        ptr_tmp = get_pillow_unsafe_ptr(image)['image32']
+        ptr_tmp = get_pillow_unsafe_ptr(image).image32
         image_ptr = (<uint32_t **>(<uintptr_t>ptr_tmp))
 
         for col in range(max(0, -xstart), min(width, frame_width - xstart)):
