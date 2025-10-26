@@ -88,7 +88,7 @@ public:
               int scan_mode,
               const char* led_sequence, bool inverse_color,
               PixelDesignatorMap **mapper);
-  ~Framebuffer();
+  virtual ~Framebuffer();
 
   // Initialize GPIO bits for output. Only call once.
   static void InitHardwareMapping(const char *named_hardware);
@@ -116,20 +116,20 @@ public:
   }
   uint8_t brightness() { return brightness_; }
 
-  void DumpToMatrix(GPIO *io, int pwm_bits_to_show);
+  virtual void DumpToMatrix(GPIO *io, int pwm_bits_to_show);
 
-  void Serialize(const char **data, size_t *len) const;
-  bool Deserialize(const char *data, size_t len);
-  void CopyFrom(const Framebuffer *other);
+  virtual void Serialize(const char **data, size_t *len) const;
+  virtual bool Deserialize(const char *data, size_t len);
+  virtual void CopyFrom(const Framebuffer *other);
 
   // Canvas-inspired methods, but we're not implementing this interface to not
   // have an unnecessary vtable.
-  int width() const;
-  int height() const;
-  void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+  virtual int width() const;
+  virtual int height() const;
+  virtual void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
   void SetPixels(int x, int y, int width, int height, Color *colors);
-  void Clear();
-  void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  virtual void Clear();
+  virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
 private:
   static const struct HardwareMapping *hardware_mapping_;
