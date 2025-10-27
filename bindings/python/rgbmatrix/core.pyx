@@ -26,8 +26,6 @@ cdef class Canvas:
         raise Exception("Not implemented")
 
     def SetImage(self, image, int offset_x = 0, int offset_y = 0, unsafe=True):
-        cdef object capsule = image.getim()
-
         if (image.mode != "RGB"):
             raise Exception("Currently, only RGB mode is supported for SetImage(). Please create images with mode 'RGB' or convert first with image = image.convert('RGB'). Pull requests to support more modes natively are also welcome :)")
 
@@ -37,7 +35,7 @@ cdef class Canvas:
             #however it's super fast and seems to work fine
             #https://groups.google.com/forum/#!topic/cython-users/Dc1ft5W6KM4
             img_width, img_height = image.size
-            self.SetPixelsPillow(offset_x, offset_y, img_width, img_height, capsule)
+            self.SetPixelsPillow(offset_x, offset_y, img_width, img_height, image.getim())
         else:
             # First implementation of a SetImage(). OPTIMIZE_ME: A more native
             # implementation that directly reads the buffer and calls the underlying
