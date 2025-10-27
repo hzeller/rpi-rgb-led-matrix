@@ -17,8 +17,7 @@ cdef int** get_pillow_buffer(object capsule):
     cdef void *raw_ptr
     cdef void *image
 
-    raw_ptr = PyCapsule_GetPointer(capsule, PyCapsule_GetName(capsule))
-    image = <void*>raw_ptr
+    image = PyCapsule_GetPointer(capsule, PyCapsule_GetName(capsule))
 
     return get_image32(image)
 
