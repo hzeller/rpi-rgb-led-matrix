@@ -14,7 +14,6 @@ cdef extern from "shims/pillow.h":
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef int** get_pillow_buffer(object capsule):
-    cdef void *raw_ptr
     cdef void *image
 
     image = PyCapsule_GetPointer(capsule, PyCapsule_GetName(capsule))
