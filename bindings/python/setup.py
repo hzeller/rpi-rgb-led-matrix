@@ -5,8 +5,8 @@ from setuptools import setup, Extension
 
 core_ext = Extension(
     name                = 'core',
-    sources             = ['rgbmatrix/core.cpp'],
-    include_dirs        = ['../../include'],
+    sources             = ['rgbmatrix/core.cpp', 'rgbmatrix/shims/pillow.c'],
+    include_dirs        = ['../../include', 'rgbmatrix/shims'],
     library_dirs        = ['../../lib'],
     libraries           = ['rgbmatrix'],
     extra_compile_args  = ["-O3", "-Wall"],
