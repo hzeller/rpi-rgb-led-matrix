@@ -1,3 +1,14 @@
+RGB LED Python Package
+======================
+This fork was created to smooth installation of the Python rpi-rgb-led-matrix
+bindings (rgbmatrix). Wheel is built on Python 3.11 on a Pi3 - which should work
+for all intended use cases but has not been thoroughly tested. I'm purely an
+amateur so welcome someone with more skill and experience picking this up and
+improving it.
+
+As the originating library does not actually version, the package version is using
+the package's version (0.0.1) plus the date of the last commit as the version.
+
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
