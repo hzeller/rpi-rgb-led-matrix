@@ -881,6 +881,17 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 
 ![](./img/user-action-shot.jpg)
 
+A a few pictures from  https://github.com/marcmerlin :
+![thumb1024_102_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/2adbef86-96bf-4ff8-afb4-493aa9174de7)
+![thumb1024_137_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/d87ca86c-2804-4aee-b6f2-f4c88145908c)
+![prev1280_140_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/2a621c91-4a84-4b4e-a9d2-092073cdee41)
+
+And probably the highest resolution build (384x256):
+![thumb1024_429_20200310_FastLED_RPIRGBPanel_GFX_384x256](https://github.com/user-attachments/assets/60114825-efc4-4fef-88b0-749b53fa17b8)  
+![prev1280_551_20200310_FastLED_RPIRGBPanel_GFX_TableME_384x256](https://github.com/user-attachments/assets/94ea3c99-b751-4d12-8709-ef8b2bd197b9)
+
+https://www.youtube.com/watch?v=85PI2C6oBsQ
+
 [led-image-viewer]: ./utils#image-viewer
 [video-viewer]: ./utils#video-viewer
 [matrix64]: ./img/chained-64x64.jpg
@@ -897,3 +908,12 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [Rust binding]: https://crates.io/crates/rpi-led-matrix
 [Nodejs/Typescript binding]: https://github.com/alexeden/rpi-led-matrix
 [headless]: https://www.raspberrypi.com/documentation/computers/configuration.html#setting-up-a-headless-raspberry-pi
+[how to build bigger displays]: https://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html
+
+Maintenance
+-----------
+Henner as of 2025, isn't actively maintaining this project due to plenty of other projects that keep him busy :)  
+A few people have stepped him to help:
+- https://github.com/marcmerlin is no expert on the codebase but is willing to merge safe looking and well tested patches
+- https://github.com/board707 has provided valuable technical expertise on new panel types and chips as well as ABC mode 5 code for newer panels
+- https://github.com/ty-porter and https://github.com/chrisgilldc have provided python binding expertise and help
