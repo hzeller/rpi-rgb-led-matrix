@@ -63,7 +63,10 @@ Until this wiki has its own confirmed list of working panels, you can refer to
 this list: https://github.com/board707/DMD_STM32/wiki/Led_drivers and assume
 that all supported panels there should work with this library, or could work
 with minimal work to create a pixel mapper.  
-Please do refer to --led-multiplexing=<0..17> mentioned below and try all values.
+Please do refer to --led-multiplexing=<0..17> mentioned below and try all values. \
+2025/11 update: DMD_STM32 has started adding experimental support for some PWM panels.
+These should be labelled as "special" in the table above. They are not supported by this
+lib, as it only supports non PWM panels (until someone contributes PWM support).
 
 
 Raspberry Pi up to 4 supported
