@@ -663,6 +663,14 @@ In general, run a minimal configuration on your Pi.
     happening that would be very appreciated. Also, you might know a minimal
     Linux distribution that is more suited for near realtime applications ?
 
+  * When attempting to connect sensors like the DHT22 to available GPIO pins
+    and display their results on your LED panel, you might encounter an issue
+    where the sensors fail to provide any data due to the Raspberry Pi resource
+    limitations. This situation is particularly evident on older models like the
+    Raspberry Pi 1 B. To address this, it is advisable to select a Raspberry Pi
+    model with higher resources to ensure proper functionality.
+
+
 The default install of **[Raspbian Lite][raspbian-lite]** or **[DietPi]**
 seem to be good starting points, as they have a reasonably minimal
 configuration to begin with. Raspbian Lite is not as lite anymore
