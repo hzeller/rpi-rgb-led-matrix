@@ -787,6 +787,9 @@ void FrameCanvas::Clear() { return frame_->Clear(); }
 void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   frame_->Fill(red, green, blue);
 }
+void FrameCanvas::SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue) {
+  frame_->SubFill(x, y, width, height, red, green, blue);
+}
 bool FrameCanvas::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
 uint8_t FrameCanvas::pwmbits() { return frame_->pwmbits(); }
 

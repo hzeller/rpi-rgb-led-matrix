@@ -77,6 +77,9 @@ internal static class Bindings
     [DllImport(Lib)]
     public static extern void led_canvas_fill(IntPtr canvas, byte r, byte g, byte b);
 
+	[DllImport(Lib)]
+    public static extern void led_canvas_subfill(IntPtr canvas, int x, int y, int width, int height, byte r, byte g, byte b);
+
     [DllImport(Lib)]
     public static extern void draw_circle(IntPtr canvas, int xx, int y, int radius, byte r, byte g, byte b);
 
