@@ -36,9 +36,8 @@ static void DrawOnCanvas(Canvas *canvas) {
       return;
     float dot_x = cos(a * 2 * M_PI) * r;
     float dot_y = sin(a * 2 * M_PI) * r;
-    canvas->SetPixel(center_x + dot_x, center_y + dot_y,
-                     255, 0, 0);
-    usleep(1 * 1000);  // wait a little to slow down things.
+    canvas->SetPixel(center_x + dot_x, center_y + dot_y, 255, 0, 0);
+    usleep(1 * 1000); // wait a little to slow down things.
   }
 }
 

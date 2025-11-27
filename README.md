@@ -17,15 +17,21 @@ With fewer colors or so-called 'outdoor panels' you can control even more,
 faster.
 
 The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org>, licensed with
-[GNU General Public License Version 2.0](http://www.gnu.org/licenses/gpl-2.0.txt)
+[GNU General Public License Version 2.0 (or any later version)](http://www.gnu.org/licenses/gpl-2.0.txt)
 (which means, if you use it in a product somewhere, you need to make the
 source and all your modifications available to the receiver of such product so
-that they have the freedom to adapt and improve).
+that they have the freedom to adapt and improve). 
+Yes, you are also allowed to use
+this code under the [GNU General Public License Version 3.0](http://www.gnu.org/licenses/gpl-3.0.txt) 
+which allows linking with Apache 2.0 code and LGPL-3.0 code.
 
 ## Discourse discussion group
 
-If you'd like help, please do not file a bug, use the discussion board instead:
-https://rpi-rgb-led-matrix.discourse.group/
+**If you'd like help, please do not file a bug, use the discussion board instead:**
+https://rpi-rgb-led-matrix.discourse.group/  (obviously please read this whole page first).
+If you file a bug asking for personal help instead of using the discourse group, please
+state in your bug that you have read this entire page and that you're indeed filing a bug
+or request for improvement. Otherwise, please use the discourse group.
 
 Overview
 --------
@@ -41,12 +47,45 @@ Check out [utils/ directory for some ready-made tools](./utils) to get started
 using the library, or the [examples-api-use/](./examples-api-use) directory if
 you want to get started programming your own utils.
 
-All Raspberry Pi versions supported
------------------------------------
+Panels supported
+----------------
+This library does not support PWM panels (which actually are better, but need 
+a completely different driver).\
+It should support most other panels with direct addressing (3 to 5 address lines,
+ABC for 8x2=16 lines, ABCD for 16x2=32 lines, and ABCDE for 32x2=64 lines). 
+It also supports panels using shift registers for line addressing, also called ABC 
+panels up to 64 lines.\
+However some amount of panels have uncommon pixel layouts, especially the brighter
+panels and may require special pixel mappers (some are called zigzag or zagzig, see
+https://rpi-rgb-led-matrix.discourse.group/t/p10rgb-3535-4s-zaggiz-1-4scan-abc-p10-panels-and-https-github-com-2dom-pxmatrix/921 )
 
-This supports the old Raspberry Pi's Version 1 with 26 pin header and also the
-B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well as the
-Compute Modules which have 44 GPIOs.
+Until this wiki has its own confirmed list of working panels, you can refer to
+this list: https://github.com/board707/DMD_STM32/wiki/Led_drivers and assume
+that all supported panels there should work with this library, or could work
+with minimal work to create a pixel mapper.  
+Please do refer to --led-multiplexing=<0..17> mentioned below and try all values. \
+2025/11 update: DMD_STM32 has started adding experimental support for some PWM panels.
+These should be labelled as "special" in the table above. They are not supported by this
+lib, as it only supports non PWM panels (until someone contributes PWM support).
+
+PWM/E-PWM/S-PWM Panels
+----------------------
+Newer PWM panels are not currently supported by this lib, but support would really be appreciated.
+- https://github.com/hzeller/rpi-rgb-led-matrix/pull/1353 is one early attempt that needs testing/updating
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/466 is a list of spec sheets
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/1825 is the master bug tracking PWM efforts
+
+Raspberry Pi up to 4 supported
+------------------------------
+
+This library supports the old Raspberry Pi's Version 1 with 26 pin header and
+also the B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well
+as the Compute Modules which have 44 GPIOs.
+
+The Raspberry Pi 5 still needs some research into the vastly changed peripherals
+and is not yet supported. See https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603#issuecomment-2624713250
+and https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter
+
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
 The Compute Module can drive **up to 6 chains in parallel**.
@@ -96,6 +135,10 @@ parameter. So-called 'outdoor panels' are typically brighter and allow for
 faster refresh-rate for the same size, but do some multiplexing internally
 of which there are a few types out there; they can be chosen with
 the `--led-multiplexing` parameter.
+Many 128x64 panels now use ABC addressing using shift registers, instead of direct
+ABCDE addressing. Look at using --led-row-addr-type=5 or --led-row-addr-type=3
+with them (and you may need to use --led-slowdown-gpio of 2 or more. Please
+see this bug for more details: https://github.com/hzeller/rpi-rgb-led-matrix/issues/1774
 
 There are some panels that have a different chip-set than the default HUB75.
 These require some initialization sequence. The current supported types are
@@ -111,27 +154,43 @@ use `--led-row-addr-type=2` parameter. Also the matrix Qiangli Q10(1/4)
 have "Z"-stripe pixel mapping and in this case, you'd use two parameters
 at the same time `--led-row-addr-type=2 --led-multiplexing=4`.
 
-Let's do it
-------------
+Sub-Pages
+---------
 This documentation is split into parts that help you through the process
 
-  1. <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
+- <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
     [**Wire up the matrix to your Pi**](./wiring.md). This document describes
-    what goes where. You might also be interested
-    in [breakout boards](./adapter) for that.
+    what goes where.
+- [How to map pixels between panels or withing panels](./lib). This is crutial for figuring out pixel mappers,
+  matrix mappers and so forth. This is where you will learn about panel layout with U-Mapper, V-Mapper, V-Mapper:Z
+- [Adapter GPIO boards output to up to 3 channels (electrodragon board recommended)](./adapter).
     If you have an [Adafruit HAT] or [Adafruit Bonnet], you can choose that with
     a command line option [described below](#if-you-have-an-adafruit-hat-or-bonnet)
-  2. Run a demo. You find that in the
+- [All the command line options you can give to demo and in turn use in your library code](./examples-api-use).
+
+
+Let's do it
+------------
+  1. Run a demo. You find that in the
      [examples-api-use/](./examples-api-use#running-some-demos) directory:
 ```
 make -C examples-api-use
 sudo examples-api-use/demo -D0
 ```
-  3. Use the utilities. The [utils](./utils) directory has some ready-made
+  2. Use the utilities. The [utils](./utils) directory has some ready-made
     useful utilities to show content. [Go there](./utils) to see how to
     compile and run these.
-  4. Write your own programs using the Matrix in C++ or one of the
+  3. Write your own programs using the Matrix in C++ or one of the
      bindings such as Python or C#.
+
+### Wiring / Boards
+
+Please see the [Adadpter Boards or Self Wiring](./adapter). 
+
+Summary is:
+- Yes you can self wire without level shifters and it will work most of the time, but if you're not in a hurry get a board
+- https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-for-raspberry-pi-v2/ **is the recommended solution with 3 channels and level shifters**. You can't go wrong there, but expect a bit of shipping time.
+- If shipping time is crucial and you don't want to wire your own, Adafruit sells a single channel board (the electrodragon one is 3 channels), but note that its wiring is non standard and requires a special compile option or command line argument: https://www.adafruit.com/product/3211
 
 ### Utilities
 
@@ -194,7 +253,7 @@ Learn more about the mappings in the [wiring documentation](wiring.md#alternativ
 #### GPIO speed
 
 ```
---led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
+--led-slowdown-gpio=<0..10>: Slowdown GPIO. Needed for faster Pis and/or slower panels (Default: 1).
 ```
 
 The Raspberry Pi starting with Pi2 are putting out data too fast for almost
@@ -204,6 +263,10 @@ GPIO. Zero for this parameter means 'no slowdown'.
 The default 1 (one) typically works fine, but often you have to even go further
 by setting it to 2 (two). If you have a Raspberry Pi with a slower processor
 (Model A, A+, B+, Zero), then a value of 0 (zero) might work and is desirable.
+
+If you find yourself needing very high values of slowdown like 8 for ABC 128x64 panels, 
+do try --led-row-addr-type=5 instead of --led-row-addr-type=3. Details in this bug:
+https://github.com/hzeller/rpi-rgb-led-matrix/issues/1773
 
 A Raspberry Pi 3 or Pi4 might even need higher values for the panels to be
 happy.
@@ -273,7 +336,7 @@ two chained panels, so then you'd use
 `--led-rows=32 --led-cols=32 --led-chain=2 --led-multiplexing=1`;
 
 ```
---led-row-addr-type=<0..4>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct (Default: 0).
+--led-row-addr-type=<0..5>: 0 = default; 1 = AB-addressed panels; 2 = direct row select; 3 = ABC-addressed panels; 4 = ABC Shift + DE direct, 5 = ABC method similar to 3, but faster on some panels (needs less of a slowdown) (Default: 0).
 ```
 
 This option is useful for certain 64x64 or 32x16 panels. For 64x64 panels,
@@ -283,6 +346,54 @@ please send a pull request.
 
 For 32x16 outdoor panels, that have have 4 address line (A, B, C, D), it is
 necessary to use `--led-row-addr-type=2`.
+
+Performance improvements and limits, Maximizing refresh rate, ABC vs ABCDE, row-addr-type=5 vs 3
+-------------------------------------------------------------------------------------------------
+Regardless of which driving hardware you use, ultimately you can only push pixels
+so fast to a string of panels before you get flickering due to too low a refresh
+rate (less than 80-100Hz), or before you refresh the panel lines too fast and they
+appear too dim because each line is not displayed long enough before it is turned off.
+
+Basic performance tips:
+- Use --led-show-refresh to see the refresh rate while you try parameters
+- use an active-3 board with led-parallel=3 any time possible instead of chaining panels.
+- led-pwm-dither-bits=1 gives you a speed boost but potentially less brightness
+- led-pwm-lsb-nanoseconds=50 also gives you a speed boost but may lead to less brightness
+- led-pwm-bits=7 or even lower decrease color depth but increases refresh speed
+- AB panels and other panels with that use values of led-multiplexing bigger than 0,
+will also go faster, although as you tune more options given above, their advantage will decrease.
+- 32x16 ABC panels are faster than ABCD which are faster than ABCDE, which are faster than 128x64 ABC panels
+(which do use 5 address lines, but over only 3 wires)
+- For 128x64 ABC speed on shift registers vs ABCDE 
+- Use at least an rPi3 (rPi4 is still slightly faster but may need --led-slowdown-gpio=2)
+
+Maximizing refresh rate to 300 or even 400Mhz refresh for 3x 128x64 panels:
+- ABCDE panels will allow for faster refresh rate than ABC panels because they can be run with
+lower --led-slowdown-gpio=1 (which may need to be 2 for ABCDE) on rPi3 (rPi4 may require bigger
+slowdowns. You may even end up in a situation where a Pi3 will give you faster refresh than a Pi4
+by needing smaller slowdowns
+- To achieve 410Hz refresh for 3x 128x64 direct ABCDE panels, use this "~/rpi-rgb-led-matrix/examples-api-use/demo --led-rows=64 --led-cols=128 --led-chain=1 --led-parallel=3 --led-show-refresh --led-scan-mode=0 --led-pwm-bits=7 --led-pwm-lsb-nanoseconds=50 --led-pwm-dither-bits=1 -D0  --led-row-addr-type=0 --led-slowdown-gpio=1"
+- To achieve 350hz refresh for 3x 128x64 shift register panels, use this: "~/rpi-rgb-led-matrix/examples-api-use/demo --led-rows=64 --led-cols=128 --led-chain=1 --led-parallel=3 --led-show-refresh --led-scan-mode=0 --led-pwm-bits=7 --led-pwm-lsb-nanoseconds=50 --led-pwm-dither-bits=1 -D0  --led-row-addr-type=5 --led-slowdown-gpio=2"
+
+Please see this bug for discussion of ABC vs ABCDE and using --led-row-addr-type=5 instead of --led-row-addr-type=3: 
+https://github.com/hzeller/rpi-rgb-led-matrix/issues/1774#issuecomment-2860617056
+
+Maximum resolutions reasonably achievable:
+A general rule of thumb is that running 16K pixels (128x128 or otherwise) on a single chain,
+is already pushing limits and you will have to make tradeoffs in visual quality. 32K pixels
+(like 128x256) is definitely pushing things and you'll get 100Hz or less depending on the
+performance options you choose.
+This puts the maximum reasonable resolution around 100K pixels (like 384x256) for 3 chains.
+You can see more examples and video capture of speed on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)
+If your refresh rate is below 300Hz, expect likely black bars when taking cell phone pictures.
+A real camera with shutter speed lowered accordingly, will get around this.
+
+Ultimately, you should not expect to go past 64K pixels using 3 chains without significant
+quality tradeoffs. If you need bigger displays, you should use multiple boards and synchronize the
+output.
+
+
+
 
 #### Panel Arrangement
 
@@ -381,6 +492,20 @@ the vsync-multiple flag `-V` in the [led-image-viewer] or
 [video-viewer] utility programs.
 
 ```
+--led-no-busy-waiting     : Don't use busy waiting when limiting refresh rate.
+```
+
+This allows to switch from busy waiting to sleep waiting when limiting the
+refresh rate (`--led-limit-refresh`).
+
+By default, refresh rate limiting uses busy waiting, which is CPU intensive but
+gives most accurate timings. This is fine for multi-core boards.
+
+On single core boards (e.g.: Raspberry Pi Zero) busy waiting makes the system
+unresponsive for other/background tasks. There, sleep waiting improves the
+system's responsiveness at the cost of slightly less accurate timings.
+
+```
 --led-scan-mode=<0..1>    : 0 = progressive; 1 = interlaced (Default: 0).
 ```
 
@@ -445,7 +570,7 @@ to debug if it has something to do with the sound subsystem (see Troubleshooting
 section). This is really only recommended for debugging; typically you actually
 want the hardware pulses as it results in a much more stable picture.
 
-<a name="no-drop-priv"/>
+<a name="no-drop-priv"></a>
 
 ```
 --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
@@ -489,7 +614,9 @@ In general, run a minimal configuration on your Pi.
     perfectly good embedded device.).
     Always operate your Raspberry Pi [headless].
 
-  * Switch off on-board sound (`dtparam=audio=off` in `/boot/config.txt`).
+  * Switch off on-board sound
+    (`dtparam=audio=off` in `/boot/config.txt` pre-bookworm)
+    (`dtparam=audio=off` in `/boot/firmware/config.txt` post-bookworm)
     External USB sound adapters work, and are much better quality anyway,
     so that is recommended if you happen to need sound. The on-board sound
     uses a timing circuit that the RGB-Matrix needs (it seems in some
@@ -502,7 +629,8 @@ In general, run a minimal configuration on your Pi.
 
   * I have also seen reports that on some Pis, the one-wire protocol is
     enabled (w1-gpio). This will also not work (disable by removing
-    `dtoverlay=w1-gpio` in `/boot/config.txt`; or using `raspi-config`,
+    `dtoverlay=w1-gpio` in `/boot/config.txt` (pre-bookworm) or in
+    `/boot/firmware/config.txt` (post-bookworm); or using `raspi-config`,
     Interface Options -> 1-Wire)
 
   * If you see some regular flickering, make sure that there is no other
@@ -717,49 +845,17 @@ computer - there might be changes in the overall brigthness when this affects
 the referesh rate.
 
 If you have a loaded system and one of the newer Pis with 4 cores, you can
-reserve one core just for the refresh of the display:
+reserve one core just for the refresh of the display. Add:
 
 ```
 isolcpus=3
 ```
 
-.. at the end of the line of `/boot/cmdline.txt` (needs to be in the same as
-the other arguments, no newline). This will use the last core
+to the end of the line in `/boot/cmdline.txt` (pre-bookworm) or
+`boot/firmware/cmdline.txt` (post-bookworm). It needs to be in the same line
+line as the existing arguments -- no newline. This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
-
-Performance improvements and limits
------------------------------------
-Regardless of which driving hardware you use, ultimately you can only push pixels
-so fast to a string of panels before you get flickering due to too low a refresh
-rate (less than 80-100Hz), or before you refresh the panel lines too fast and they
-appear too dim because each line is not displayed long enough before it is turned off.
-
-Basic performance tips:
-- Use --led-show-refresh to see the refresh rate while you try parameters
-- use an active-3 board with led-parallel=3
-- led-pwm-dither-bits=1 gives you a speed boost but less brightness
-- led-pwm-lsb-nanoseconds=50 also gives you a speed boost but less brightness
-- led-pwm-bits=7 or even lower decrease color depth but increases refresh speed
-- AB panels and other panels with that use values of led-multiplexing bigger than 0,
-will also go faster, although as you tune more options given above, their advantage will decrease.
-- 32x16 ABC panels are faster than ABCD which are faster than ABCDE, which are faster than 128x64 ABC panels
-(which do use 5 address lines, but over only 3 wires)
-- Use at least an rPi3 (rPi4 is still slightly faster but may need --led-slowdown-gpio=2)
-
-Maximum resolutions reasonably achievable:
-A general rule of thumb is that running 16K pixels (128x128 or otherwise) on a single chain,
-is already pushing limits and you will have to make tradeoffs in visual quality. 32K pixels
-(like 128x256) is definitely pushing things and you'll get 100Hz or less depending on the
-performance options you choose.
-This puts the maximum reasonable resolution around 100K pixels (like 384x256) for 3 chains.
-You can see more examples and video capture of speed on [Marc MERLIN's page 'RGB Panels, from 192x80, to 384x192, to 384x256 and maybe not much beyond'](http://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html)
-If your refresh rate is below 300Hz, expect likely black bars when taking cell phone pictures.
-A real camera with shutter speed lowered accordingly, will get around this.
-
-Ultimately, you should not expect to go past 64K pixels using 3 chains without significant
-quality tradeoffs. If you need bigger displays, you should use multiple boards and synchronize the
-output.
 
 Limitations
 -----------
@@ -794,6 +890,17 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 
 ![](./img/user-action-shot.jpg)
 
+A a few pictures from  https://github.com/marcmerlin :
+![thumb1024_102_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/2adbef86-96bf-4ff8-afb4-493aa9174de7)
+![thumb1024_137_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/d87ca86c-2804-4aee-b6f2-f4c88145908c)
+![prev1280_140_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/2a621c91-4a84-4b4e-a9d2-092073cdee41)
+
+And probably the highest resolution build (384x256):
+![thumb1024_429_20200310_FastLED_RPIRGBPanel_GFX_384x256](https://github.com/user-attachments/assets/60114825-efc4-4fef-88b0-749b53fa17b8)  
+![prev1280_551_20200310_FastLED_RPIRGBPanel_GFX_TableME_384x256](https://github.com/user-attachments/assets/94ea3c99-b751-4d12-8709-ef8b2bd197b9)
+
+https://www.youtube.com/watch?v=85PI2C6oBsQ
+
 [led-image-viewer]: ./utils#image-viewer
 [video-viewer]: ./utils#video-viewer
 [matrix64]: ./img/chained-64x64.jpg
@@ -810,3 +917,12 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [Rust binding]: https://crates.io/crates/rpi-led-matrix
 [Nodejs/Typescript binding]: https://github.com/alexeden/rpi-led-matrix
 [headless]: https://www.raspberrypi.com/documentation/computers/configuration.html#setting-up-a-headless-raspberry-pi
+[how to build bigger displays]: https://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html
+
+Maintenance
+-----------
+Henner as of 2025, isn't actively maintaining this project due to plenty of other projects that keep him busy :)  
+A few people have stepped him to help:
+- https://github.com/marcmerlin is no expert on the codebase but is willing to merge safe looking and well tested patches
+- https://github.com/board707 has provided valuable technical expertise on new panel types and chips as well as ABC mode 5 code for newer panels
+- https://github.com/ty-porter and https://github.com/chrisgilldc have provided python binding expertise and help

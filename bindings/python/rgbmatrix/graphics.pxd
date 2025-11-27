@@ -1,4 +1,5 @@
-cimport cppinc
+# cython: language_level=3str
+from . cimport cppinc
 
 cdef class Color:
     cdef cppinc.Color __color

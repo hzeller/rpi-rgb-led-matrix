@@ -1,10 +1,12 @@
-#!/usr/bin/python
-from distutils.core import setup, Extension
+#!/usr/bin/env python
+
+# 2025-10, updated to import from setuptools rather than distutils.core which was removed in Python 3.12.
+from setuptools import setup, Extension
 
 core_ext = Extension(
     name                = 'core',
-    sources             = ['rgbmatrix/core.cpp'],
-    include_dirs        = ['../../include'],
+    sources             = ['rgbmatrix/core.cpp', 'rgbmatrix/shims/pillow.c'],
+    include_dirs        = ['../../include', 'rgbmatrix/shims'],
     library_dirs        = ['../../lib'],
     libraries           = ['rgbmatrix'],
     extra_compile_args  = ["-O3", "-Wall"],

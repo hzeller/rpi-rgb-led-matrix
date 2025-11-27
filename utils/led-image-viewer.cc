@@ -62,8 +62,8 @@ struct ImageParams {
 
 struct FileInfo {
   ImageParams params;      // Each file might have specific timing settings
-  bool is_multi_frame;
-  rgb_matrix::StreamIO *content_stream;
+  bool is_multi_frame = false;
+  rgb_matrix::StreamIO *content_stream = nullptr;
 };
 
 volatile bool interrupt_received = false;
@@ -209,6 +209,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n"
           "\t-O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).\n"
           "\t-C                        : Center images.\n"
+          "\t-m                        : if this is a stream, mmap() it. This can work around IO latencies in SD-card and refilling kernel buffers. This will use physical memory so only use if you have enough to map file size\n"
 
           "\nThese options affect images FOLLOWING them on the command line,\n"
           "so it is possible to have different options for each image\n"
@@ -261,6 +262,7 @@ int main(int argc, char *argv[]) {
     return usage(argv[0]);
   }
 
+  bool do_mmap = false;
   bool do_forever = false;
   bool do_center = false;
   bool do_shuffle = false;
@@ -283,7 +285,7 @@ int main(int argc, char *argv[]) {
   const char *stream_output = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:")) != -1) {
+  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:m")) != -1) {
     switch (opt) {
     case 'w':
       img_param.wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -296,6 +298,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'D':
       img_param.anim_delay_ms = atoi(optarg);
+      break;
+    case 'm':
+      do_mmap = true;
       break;
     case 'f':
       do_forever = true;
@@ -417,7 +422,18 @@ int main(int argc, char *argv[]) {
       if (fd >= 0) {
         file_info = new FileInfo();
         file_info->params = filename_params[filename];
-        file_info->content_stream = new rgb_matrix::FileStreamIO(fd);
+        if (do_mmap) {
+          rgb_matrix::MemMapViewInput *stream_input =
+            new rgb_matrix::MemMapViewInput(fd);
+          if (stream_input->IsInitialized()) {
+            file_info->content_stream = stream_input;
+          } else {
+            delete stream_input;
+          }
+        }
+        if (!file_info->content_stream) {
+          file_info->content_stream = new rgb_matrix::FileStreamIO(fd);
+        }
         StreamReader reader(file_info->content_stream);
         if (reader.GetNext(offscreen_canvas, NULL)) {  // header+size ok
           file_info->is_multi_frame = reader.GetNext(offscreen_canvas, NULL);
