@@ -1,0 +1,53 @@
+#!/bin/bash
+
+REPO="hzeller/rpi-rgb-led-matrix"
+COMMENT="
+With apologies to everyone, this project is doing a one time cleanup of 
+all the bugs that have not been addressed and closed in the last 10 years.
+
+If you filed an issue to ask for help, please do not re-open this one or a new
+bug, but go here instead: https://rpi-rgb-led-matrix.discourse.group/
+
+Please be mindful that this project does not have any full time maintainers
+or anyone paid. You should not expect personal help for your own projects or
+answers to programming questions but you can ask for help with panels that
+aren't working, setup questions, or anything that may be a bug here:
+https://rpi-rgb-led-matrix.discourse.group/
+If you need programming help and are willing to pay someone for it, please
+state so in your message, and someone may be interested.
+
+If you did report an actual bug that is still not fixed today, please accept
+our apologies for this being mass closed, you can absolutely send a followup
+and re-open the issue, or open a new up to date one as applicable.
+Note that we very much welcome help, so if you can help fix your bug, you will
+be a superstar :)
+
+If your bug was linked to a pull request that was not resolved, please update
+the pull request and the issue, and we will do our best to review them. We do
+thank you for your undertanding that we have very limited free time, so any
+extra work you do along with your bug report or PR request will be very much
+appreciated and improve the odds that they will be looked at.
+
+If you want to help contribute as a python or C# or any other language bindings,
+you are also a superstar, please state so in the issue and we'll do our best to
+give you the access and reviews you need.
+
+For anything related to PWM panel support, please make sure you read README and
+then refer to https://github.com/hzeller/rpi-rgb-led-matrix/issues/466 . 
+Please do not comment if you're haven't read everything and/or if you're just
+asking when your panel is going to be supported. Those bugs are if you're 
+able to contribute to the effort.
+
+For rPI5: https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603
+
+For anything python, please link your bug to: https://github.com/hzeller/rpi-rgb-led-matrix/issues/1828
+For anything C#, please link your bug to: https://github.com/hzeller/rpi-rgb-led-matrix/issues/1828
+"
+
+cat buglist | while read issue_number; do
+  echo "Commenting on and closing issue #$issue_number"
+  # Add the comment
+  gh issue comment "$issue_number" --body "$COMMENT" --repo $REPO
+  # Close the issue
+  gh issue close "$issue_number" --repo $REPO
+done
