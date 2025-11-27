@@ -31,7 +31,7 @@
  * nanosleep() takes longer than requested because of OS jitter.
  * In about 99.9% of the cases, this is <= 25 microcseconds on
  * the Raspberry Pi (empirically determined with a Raspbian kernel), so
- * we substract this value whenever we do nanosleep(); the remaining time
+ * we subtract this value whenever we do nanosleep(); the remaining time
  * we then busy wait to get a good accurate result.
  *
  * You can measure the overhead using DEBUG_SLEEP_JITTER below.
@@ -363,7 +363,7 @@ static uint32_t *mmap_bcm_register(off_t register_offset) {
   }
 
   uint32_t *result =
-    (uint32_t*) mmap(NULL,                  // Any adddress in our space will do
+    (uint32_t*) mmap(NULL,                  // Any address in our space will do
                      REGISTER_BLOCK_SIZE,   // Map length
                      PROT_READ|PROT_WRITE,  // Enable r/w on GPIO registers.
                      MAP_SHARED,
@@ -382,7 +382,7 @@ static uint32_t *mmap_bcm_register(off_t register_offset) {
 }
 
 static bool mmap_all_bcm_registers_once() {
-  if (s_GPIO_registers != NULL) return true;  // alrady done.
+  if (s_GPIO_registers != NULL) return true;  // already done.
 
   // The common GPIO registers.
   s_GPIO_registers = mmap_bcm_register(GPIO_REGISTER_OFFSET);
@@ -551,7 +551,7 @@ void Timers::sleep_nanos(long nanos) {
   // a chance to do something else.
 
   // However, these timings have a lot of jitter, so if we have the 1Mhz timer
-  // available, we use that to accurately mesure time spent and do the
+  // available, we use that to accurately measure time spent and do the
   // remaining time with busy wait. If we don't have the timer available
   // (not running as root), we just use nanosleep() for larger values.
 

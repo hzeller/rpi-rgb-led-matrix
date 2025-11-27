@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
-    <!-- Skip builing native libraries by default on Windows -->
+    <!-- Skip building native libraries by default on Windows -->
     <PropertyGroup Condition="$(SkipNative) == '' and $(OS) != 'Unix'">
         <SkipNative>true</SkipNative>
     </PropertyGroup>

@@ -38,7 +38,7 @@ Options:
         --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
         --led-daemon              : Make the process run in the background as daemon.
         --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
-Demos, choosen with -D
+Demos, chosen with -D
         0  - some rotating square
         1  - forward scrolling an image (-m <scroll-ms>)
         2  - backward scrolling an image (-m <scroll-ms>)
@@ -216,7 +216,7 @@ was the `matrix` directory:
      RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
      LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
-Also, you want to add a target to build the libary in your sub-module
+Also, you want to add a target to build the library in your sub-module
 
 	 # (FYI: Make sure, there is a TAB-character in front of the $(MAKE))
      $(RGB_LIBRARY):

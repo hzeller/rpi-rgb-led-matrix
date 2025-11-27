@@ -550,7 +550,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
 }
 
 // The FM6217 is very similar to the FM6216.
-// FM6217 adds Register 3 to allow for automatic bad pixel supression.
+// FM6217 adds Register 3 to allow for automatic bad pixel suppression.
 static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   const gpio_bits_t bits_r_on= h.p0_r1 | h.p0_r2;
   const gpio_bits_t bits_g_on= h.p0_g1 | h.p0_g2;
