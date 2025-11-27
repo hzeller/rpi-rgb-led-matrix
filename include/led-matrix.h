@@ -29,6 +29,7 @@
 #include "canvas.h"
 #include "thread.h"
 #include "pixel-mapper.h"
+#include "graphics.h"
 
 namespace rgb_matrix {
 class RGBMatrix;
@@ -154,6 +155,10 @@ public:
     // Limit refresh rate of LED panel. This will help on a loaded system
     // to keep a constant refresh rate. <= 0 for no limit.
     int limit_refresh_rate_hz;   // Flag: --led-limit-refresh
+
+    // Sleep instead of busy wait to free CPU cycles but get slightly less
+    // accurate frame timing.
+    bool disable_busy_waiting;   // Flag: --led-busy-waiting
   };
 
   // Factory to create a matrix. Additional functionality includes dropping
@@ -202,7 +207,7 @@ public:
   // -- Double- and Multibuffering.
 
   // Create a new buffer to be used for multi-buffering. The returned new
-  // Buffer implements a Canvas with the same size of thie RGBMatrix.
+  // Buffer implements a Canvas with the same size as this RGBMatrix.
   // You can use it to draw off-screen on it, then swap it with the active
   // buffer using SwapOnVSync(). That would be classic double-buffering.
   //
@@ -377,6 +382,8 @@ public:
   virtual int height() const;
   virtual void SetPixel(int x, int y,
                         uint8_t red, uint8_t green, uint8_t blue);
+  virtual void SetPixels(int x, int y, int width, int height,
+                         Color *colors);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
 
@@ -395,16 +402,16 @@ private:
 struct RuntimeOptions {
   RuntimeOptions();
 
-  int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
+  int gpio_slowdown;    // 0 = no slowdown.    Flag: --led-slowdown-gpio
 
   // ----------
   // If the following options are set to disabled with -1, they are not
   // even offered via the command line flags.
   // ----------
 
-  // Thre are three possible values here
-  //   -1 : don't leave choise of becoming daemon to the command line parsing.
-  //        If set to -1, the --led-daemon option is not offered.
+  // There are three possible values here
+  //   -1 : don't leave choice of becoming daemon to the command line
+  //        parsing. If set to -1, the --led-daemon option is not offered.
   //    0 : do not becoma a daemon, run in forgreound (default value)
   //    1 : become a daemon, run in background.
   //
@@ -412,12 +419,14 @@ struct RuntimeOptions {
   // RGBMatrix::StartRefresh() manually once the matrix is created, to leave
   // the decision to become a daemon
   // after the call (which requires that no threads have been started yet).
-  // In the other cases (off or on), the choice is already made, so the thread
-  // is conveniently already started for you.
+  // In the other cases (off or on), the choice is already made, so the
+  // thread is conveniently already started for you.
   int daemon;           // -1 disabled. 0=off, 1=on. Flag: --led-daemon
 
-  // Drop privileges from 'root' to 'daemon' once the hardware is initialized.
+  // Drop privileges from 'root' to drop_priv_user/group once the hardware is
+  // initialized.
   // This is usually a good idea unless you need to stay on elevated privs.
+  // -1, 0, 1 similar meaning to 'daemon' above.
   int drop_privileges;  // -1 disabled. 0=off, 1=on. flag: --led-drop-privs
 
   // By default, the gpio is initialized for you, but if you run on a platform
@@ -425,6 +434,11 @@ struct RuntimeOptions {
   // e.g. you want to just create a stream output (see content-streamer.h),
   // set this to false.
   bool do_gpio_init;
+
+  // If drop privileges is enabled, this is the user/group we drop privileges
+  // to. Unless chosen otherwise, the default is "daemon" for user and group.
+  const char *drop_priv_user;
+  const char *drop_priv_group;
 };
 
 // Convenience utility functions to read standard rgb-matrix flags and create
@@ -467,7 +481,7 @@ int main(int argc, char **argv) {
 // This parses the flags from argv and updates the structs with the parsed-out
 // values. Structs can be NULL if you are not interested in it.
 //
-// The recongized flags are removed from argv if "remove_consumed_flags" is
+// The recognized flags are removed from argv if "remove_consumed_flags" is
 // true; this simplifies your command line processing for the remaining options.
 //
 // Returns 'true' on success, 'false' if there was flag parsing problem.

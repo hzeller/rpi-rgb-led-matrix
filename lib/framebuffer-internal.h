@@ -19,6 +19,7 @@
 #include <stdlib.h>
 
 #include "hardware-mapping.h"
+#include "../include/graphics.h"
 
 namespace rgb_matrix {
 class GPIO;
@@ -74,8 +75,8 @@ public:
   // TODO(hzeller): make the default 15 bit or so, but slide the use of
   //  timing to lower bits if fewer bits requested to not affect the overall
   //  refresh in that case.
-  //  This needs to be balanced to not create too agressive timing however.
-  //  To be explored in a separete commit.
+  //  This needs to be balanced to not create too aggressive timing however.
+  //  To be explored in a separate commit.
   //
   // For now, if someone needs very low level of light, change this to
   // say 13 and recompile. Run with --led-pwm-bits=13. Also, consider
@@ -126,6 +127,7 @@ public:
   int width() const;
   int height() const;
   void SetPixel(int x, int y, uint8_t red, uint8_t green, uint8_t blue);
+  void SetPixels(int x, int y, int width, int height, Color *colors);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
 

@@ -53,6 +53,123 @@ private:
  * class DemoRunner to generate new frames.
  */
 
+// Simple 3d wireframe generator
+class WireCube : public DemoRunner {
+public:
+  WireCube(Canvas *m) : DemoRunner(m) {}
+
+  void Run() override 
+  {
+    while(!interrupt_received)
+    {
+      //you can define your own shape here if you want
+      //(x, y, z)
+      double verts[8*3] = {
+        -1,-1,-1, //0           1---------5         ^ +z
+        -1,-1, 1, //1          /|        /|         |
+        -1, 1,-1, //2         3-|-------7 |         |
+        -1, 1, 1, //3         | |       | |         |
+         1,-1,-1, //4         | |       | |         o--------> +x
+         1,-1, 1, //5         | 0---------4
+         1, 1,-1, //6         |/        |/
+         1, 1, 1  //7         2---------6
+      };
+
+      uint16_t edges[12*4] = {
+        0,1,  1,3,  3,2,  2,0,
+        0,4,  1,5,  2,6,  3,7,
+        4,5,  5,7,  7,6,  6,4,
+      };
+
+      // create smooth color transitions
+      int red = sin(freq*k + rad/3*1) * 128 + 127;
+      int grn = sin(freq*k + rad/3*2) * 128 + 127;
+      int blu = sin(freq*k + rad/3*3) * 128 + 127;
+
+      // draw complete mesh with rotated vertices and color
+      int edgeSize = sizeof(edges)/sizeof(edges[0]);
+      drawMesh(rotate(verts,8,k,k/3,k/2), edges, edgeSize/2, red, grn, blu);
+
+      // sleep and then clear canvas
+      usleep(20*1000);
+      canvas()->Fill(0,0,0);
+      k+=0.05;
+    }
+  }
+
+private:
+  FrameCanvas *off_screen_canvas_;
+
+  double k = 0;
+  double zoom = canvas()->width();
+  double freq = 0.1;    //color changing frequency
+  double camDist = 4.0; //distance the camera is to the wireframe
+  double pi = 3.14159265;
+  double rad = 2*pi;
+
+  void drawMesh(double verts[], uint16_t edges[],int edgeCnt, int r, int g, int b)
+  {
+    // get center of the matrix
+    const int cx = canvas()->width()/2;
+    const int cy = canvas()->height()/2; 
+
+    // for every edge
+    for (int i=0;i<edgeCnt*2;i+=2){
+
+      double xpoints[2] = {};
+      double zpoints[2] = {};
+      for (int j=0; j<2; j++) {
+        float x = verts[edges[i+j]*3+0];
+        float y = verts[edges[i+j]*3+1]+camDist;
+        float z = verts[edges[i+j]*3+2];
+        float f = zoom/y;
+        xpoints[j] = x*f;
+        zpoints[j] = z*f;
+      }
+
+      DrawLine(canvas(), cx+xpoints[0], cy+zpoints[0], cx+xpoints[1], cy+zpoints[1], Color(r, g, b));
+    }
+  }
+
+  //3d rotation
+  //https://stackoverflow.com/questions/34050929/3d-point-rotation-algorithm
+  double *rotate(double *v, int len, double rX, double rY, double rZ)
+  {
+    double cosa = cos(rZ);
+    double sina = sin(rZ);
+
+    double cosb = cos(rY);
+    double sinb = sin(rY);
+
+    double cosc = cos(rX);
+    double sinc = sin(rX);
+
+    double Axx = cosa*cosb;
+    double Axy = cosa*sinb*sinc - sina*cosc;
+    double Axz = cosa*sinb*cosc + sina*sinc;
+
+    double Ayx = sina*cosb;
+    double Ayy = sina*sinb*sinc + cosa*cosc;
+    double Ayz = sina*sinb*cosc - cosa*sinc;
+
+    double Azx = -sinb;
+    double Azy = cosb*sinc;
+    double Azz = cosb*cosc;
+
+    for (int i=0;i<len*3;i+=3)
+    {
+      double px = v[i+0];
+      double py = v[i+1];
+      double pz = v[i+2];
+
+      v[i+0] = Axx*px + Axy*py + Axz*pz;
+      v[i+1] = Ayx*px + Ayy*py + Ayz*pz;
+      v[i+2] = Azx*px + Azy*py + Azz*pz;
+    }	
+    return v;
+  }
+};
+
 // Simple generator that pulses through RGB and White.
 class ColorPulseGenerator : public DemoRunner {
 public:
@@ -267,7 +384,7 @@ public:
     line = ReadLine(f, header_buf, sizeof(header_buf));
     if (!line || sscanf(line, "%d ", &value) != 1 || value != 255)
       EXIT_WITH_MSG("Only 255 for maxval allowed.");
-    const size_t pixel_count = new_width * new_height;
+    const size_t pixel_count = (size_t)new_width * (size_t)new_height;
     Pixel *new_image = new Pixel [ pixel_count ];
     assert(sizeof(Pixel) == 3);   // we make that assumption.
     if (fread(new_image, sizeof(Pixel), pixel_count, f) != pixel_count) {
@@ -1037,7 +1154,7 @@ static int usage(const char *progname) {
 
   rgb_matrix::PrintMatrixFlags(stderr);
 
-  fprintf(stderr, "Demos, choosen with -D\n");
+  fprintf(stderr, "Demos, chosen with -D\n");
   fprintf(stderr, "\t0  - some rotating square\n"
           "\t1  - forward scrolling an image (-m <scroll-ms>)\n"
           "\t2  - backward scrolling an image (-m <scroll-ms>)\n"
@@ -1049,7 +1166,8 @@ static int usage(const char *progname) {
           "\t8  - Langton's ant (-m <time-step-ms>)\n"
           "\t9  - Volume bars (-m <time-step-ms>)\n"
           "\t10 - Evolution of color (-m <time-step-ms>)\n"
-          "\t11 - Brightness pulse generator\n");
+          "\t11 - Brightness pulse generator\n"
+          "\t12 - Colorful rotating 3d cube\n");
   fprintf(stderr, "Example:\n\t%s -D 1 runtext.ppm\n"
           "Scrolls the runtext until Ctrl-C is pressed\n", progname);
   return 1;
@@ -1112,60 +1230,64 @@ int main(int argc, char *argv[]) {
   // the matrix continuously.
   DemoRunner *demo_runner = NULL;
   switch (demo) {
-  case 0:
-    demo_runner = new RotatingBlockGenerator(canvas);
-    break;
+    case 0:
+      demo_runner = new RotatingBlockGenerator(canvas);
+      break;
 
-  case 1:
-  case 2:
-    if (demo_parameter) {
-      ImageScroller *scroller = new ImageScroller(matrix,
-                                                  demo == 1 ? 1 : -1,
-                                                  scroll_ms);
-      if (!scroller->LoadPPM(demo_parameter))
+    case 1:
+    case 2:
+      if (demo_parameter) {
+        ImageScroller *scroller = new ImageScroller(matrix,
+                                                    demo == 1 ? 1 : -1,
+                                                    scroll_ms);
+        if (!scroller->LoadPPM(demo_parameter))
+          return 1;
+        demo_runner = scroller;
+      } else {
+        fprintf(stderr, "Demo %d Requires PPM image as parameter\n", demo);
         return 1;
-      demo_runner = scroller;
-    } else {
-      fprintf(stderr, "Demo %d Requires PPM image as parameter\n", demo);
-      return 1;
-    }
-    break;
+      }
+      break;
 
-  case 3:
-    demo_runner = new SimpleSquare(canvas);
-    break;
+    case 3:
+      demo_runner = new SimpleSquare(canvas);
+      break;
 
-  case 4:
-    demo_runner = new ColorPulseGenerator(matrix);
-    break;
+    case 4:
+      demo_runner = new ColorPulseGenerator(matrix);
+      break;
 
-  case 5:
-    demo_runner = new GrayScaleBlock(canvas);
-    break;
+    case 5:
+      demo_runner = new GrayScaleBlock(canvas);
+      break;
 
-  case 6:
-    demo_runner = new Sandpile(canvas, scroll_ms);
-    break;
+    case 6:
+      demo_runner = new Sandpile(canvas, scroll_ms);
+      break;
 
-  case 7:
-    demo_runner = new GameLife(canvas, scroll_ms);
-    break;
+    case 7:
+      demo_runner = new GameLife(canvas, scroll_ms);
+      break;
 
-  case 8:
-    demo_runner = new Ant(canvas, scroll_ms);
-    break;
+    case 8:
+      demo_runner = new Ant(canvas, scroll_ms);
+      break;
 
-  case 9:
-    demo_runner = new VolumeBars(canvas, scroll_ms, canvas->width()/2);
-    break;
+    case 9:
+      demo_runner = new VolumeBars(canvas, scroll_ms, canvas->width()/2);
+      break;
 
-  case 10:
-    demo_runner = new GeneticColors(canvas, scroll_ms);
-    break;
+    case 10:
+      demo_runner = new GeneticColors(canvas, scroll_ms);
+      break;
 
-  case 11:
-    demo_runner = new BrightnessPulseGenerator(matrix);
-    break;
+    case 11:
+      demo_runner = new BrightnessPulseGenerator(matrix);
+      break;
+      
+    case 12:
+      demo_runner = new WireCube(canvas);
+      break;
   }
 
   if (demo_runner == NULL)

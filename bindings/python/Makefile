@@ -1,5 +1,5 @@
 # TODO: This contains a lot of {c|p}ython build boilerplate, this needs cleanup.
-PYTHON     ?= python
+PYTHON     ?= python3
 SETUP      := setup.py
 BUILD_ARGS := build --build-lib .
 INST_ARGS  := install
@@ -64,6 +64,7 @@ clean-python-%:
 	$(PYTHON)$* $(SETUP) $(CLEAN_ARGS)
 else
 build-python: $(RGB_LIBRARY)
+	$(MAKE) -C rgbmatrix
 	$(PYTHON) $(SETUP) $(BUILD_ARGS)
 
 install-python:

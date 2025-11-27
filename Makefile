@@ -22,6 +22,7 @@ clean:
 	$(MAKE) -C $(PYTHON_LIB_DIR) clean
 
 build-csharp:
+	$(MAKE) -C $(CSHARP_LIB_DIR) nuget
 	$(MAKE) -C $(CSHARP_LIB_DIR) build
 
 build-python: $(RGB_LIBRARY)

@@ -1,5 +1,6 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
 // Copyright (C) 2014 Henner Zeller <h.zeller@acm.org>
+// Modified 2024 by WMcD (adding ReadFont/parseLine)
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <sstream>
 
 #include <algorithm>
 #include <bitset>
@@ -82,49 +84,80 @@ bool Font::LoadFont(const char *path) {
     return false;
   uint32_t codepoint;
   char buffer[1024];
-  int dummy;
   Glyph tmp;
   Glyph *current_glyph = NULL;
   int row = 0;
 
   while (fgets(buffer, sizeof(buffer), f)) {
-    if (sscanf(buffer, "FONTBOUNDINGBOX %d %d %d %d",
-               &dummy, &font_height_, &dummy, &base_line_) == 4) {
-      base_line_ += font_height_;
-    }
-    else if (sscanf(buffer, "ENCODING %ud", &codepoint) == 1) {
-      // parsed.
-    }
-    else if (sscanf(buffer, "DWIDTH %d %d", &tmp.device_width, &tmp.device_height
-                    ) == 2) {
-      // Limit to width we can actually display, limited by rowbitmap_t
-      tmp.device_width = std::min(tmp.device_width, kMaxFontWidth);
-      // parsed.
-    }
-    else if (sscanf(buffer, "BBX %d %d %d %d", &tmp.width, &tmp.height,
-                    &tmp.x_offset, &tmp.y_offset) == 4) {
-      current_glyph = new Glyph();
-      *current_glyph = tmp;
-      current_glyph->bitmap.resize(tmp.height);
-      row = -1;  // let's not start yet, wait for BITMAP
-    }
-    else if (strncmp(buffer, "BITMAP", strlen("BITMAP")) == 0) {
-      row = 0;
-    }
-    else if (current_glyph && row >= 0 && row < current_glyph->height
-             && parseBitmap(buffer, &current_glyph->bitmap[row])) {
-      row++;
-    }
-    else if (strncmp(buffer, "ENDCHAR", strlen("ENDCHAR")) == 0) {
-      if (current_glyph && row == current_glyph->height) {
-        delete glyphs_[codepoint];  // just in case there was one.
-        glyphs_[codepoint] = current_glyph;
-        current_glyph = NULL;
-      }
-    }
+    parseLine(buffer, current_glyph, codepoint, tmp, row);
   }
   fclose(f);
   return true;
+}
+
+bool Font::ReadFont(const char *font_file_as_string) {
+  if (!font_file_as_string || !*font_file_as_string) return false;
+  uint32_t codepoint;
+  uint32_t BUFFER_SIZE = 1024;
+  char buffer[BUFFER_SIZE];
+  Glyph tmp;
+  Glyph *current_glyph = NULL;
+  int row = 0;
+
+  std::istringstream f(font_file_as_string);
+  std::string line;
+  while (std::getline(f, line)) {
+    if (line.length() < BUFFER_SIZE) {
+      strcpy(buffer, line.data());
+    }
+    else {
+      return false;
+    }
+
+    parseLine(buffer, current_glyph, codepoint, tmp, row);
+  }
+  return true;
+}
+
+ void Font::parseLine(const char* buffer, Glyph* &current_glyph, uint32_t &codepoint, Glyph &tmp, int &row) {
+  int dummy;
+
+  if (sscanf(buffer, "FONTBOUNDINGBOX %d %d %d %d",
+             &dummy, &font_height_, &dummy, &base_line_) == 4) {
+    base_line_ += font_height_;
+             }
+  else if (sscanf(buffer, "ENCODING %ud", &codepoint) == 1) {
+    // parsed.
+  }
+  else if (sscanf(buffer, "DWIDTH %d %d", &tmp.device_width, &tmp.device_height
+                  ) == 2) {
+    // Limit to width we can actually display, limited by rowbitmap_t
+    tmp.device_width = std::min(tmp.device_width, kMaxFontWidth);
+    // parsed.
+                  }
+  else if (sscanf(buffer, "BBX %d %d %d %d", &tmp.width, &tmp.height,
+                  &tmp.x_offset, &tmp.y_offset) == 4) {
+    current_glyph = new Glyph();
+    *current_glyph = tmp;
+    current_glyph->bitmap.resize(tmp.height);
+    row = -1;  // let's not start yet, wait for BITMAP
+                  }
+  else if (strncmp(buffer, "BITMAP", strlen("BITMAP")) == 0) {
+    row = 0;
+  }
+  else if (current_glyph && row >= 0 && row < current_glyph->height
+           && parseBitmap(buffer, &current_glyph->bitmap[row])) {
+    current_glyph->bitmap[row] >>= current_glyph->x_offset;
+    row++;
+           }
+  else if (strncmp(buffer, "ENDCHAR", strlen("ENDCHAR")) == 0) {
+    if (current_glyph && row == current_glyph->height) {
+      delete glyphs_[codepoint];  // just in case there was one.
+      glyphs_[codepoint] = current_glyph;
+      current_glyph = NULL;
+    }
+  }
+
 }
 
 Font *Font::CreateOutlineFont() const {
@@ -187,6 +220,12 @@ int Font::DrawGlyph(Canvas *c, int x_pos, int y_pos,
   if (g == NULL) g = FindGlyph(kUnicodeReplacementCodepoint);
   if (g == NULL) return 0;
   y_pos = y_pos - g->height - g->y_offset;
+
+  if (x_pos + g->device_width < 0 || x_pos > c->width() ||
+      y_pos + g->height < 0 || y_pos > c->height()) {
+    return g->device_width;  // Outside canvas border. Bail out early.
+  }
+
   for (int y = 0; y < g->height; ++y) {
     const rowbitmap_t& row = g->bitmap[y];
     for (int x = 0; x < g->device_width; ++x) {

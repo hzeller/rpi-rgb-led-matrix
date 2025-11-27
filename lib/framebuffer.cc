@@ -30,6 +30,7 @@
 #include <algorithm>
 
 #include "gpio.h"
+#include "../include/graphics.h"
 
 namespace rgb_matrix {
 namespace internal {
@@ -167,6 +168,43 @@ private:
   const gpio_bits_t dck_;
   gpio_bits_t row_lookup_[32];
 };
+
+class B707ShiftRegisterRowAddressSetter : public RowAddressSetter {
+public:
+  B707ShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
+    : row_mask_(h.a | h.b | h.c),
+      last_row_(-1),
+      bk_(h.b),
+      din_(h.c),
+      dck_(h.a) {
+    assert(double_rows <= 32); // designed for up to 1/32 panel
+  }
+
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    io->SetBits(bk_);  // Enable serial input for the shifter
+    if (row == 0) {
+        io->SetBits(din_);
+      } else {
+        io->ClearBits(din_);
+      }
+    io->SetBits(dck_);
+    io->SetBits(dck_);  // Longer clock time; tested with Pi3
+    io->ClearBits(dck_);
+    io->ClearBits(bk_);  // Disable serial input to keep unwanted bits out of the shifters
+    last_row_ = row;
+  }
+
+private:
+  gpio_bits_t row_mask_;
+  int last_row_;
+  const gpio_bits_t bk_;
+  const gpio_bits_t din_;
+  const gpio_bits_t dck_;
+};
+
 
 class ShiftRegisterRowAddressSetter : public RowAddressSetter {
 public:
@@ -439,6 +477,11 @@ Framebuffer::~Framebuffer() {
   case 4:
     row_setter_ = new SM5266RowAddressSetter(double_rows, h);
     break;
+  case 5:
+    row_setter_ = new B707ShiftRegisterRowAddressSetter(double_rows, h);
+    break;
+
+
   default:
     assert(0);  // unexpected type.
   }
@@ -507,7 +550,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
 }
 
 // The FM6217 is very similar to the FM6216.
-// FM6217 adds Register 3 to allow for automatic bad pixel supression.
+// FM6217 adds Register 3 to allow for automatic bad pixel suppression.
 static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   const gpio_bits_t bits_r_on= h.p0_r1 | h.p0_r2;
   const gpio_bits_t bits_g_on= h.p0_g1 | h.p0_g2;
@@ -648,15 +691,15 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
   MapColors(r, g, b, &red, &green, &blue);
   const PixelDesignator &fill = (*shared_mapper_)->GetFillColorBits();
 
-  for (int b = kBitPlanes - pwm_bits_; b < kBitPlanes; ++b) {
-    uint16_t mask = 1 << b;
+  for (int bits = kBitPlanes - pwm_bits_; bits < kBitPlanes; ++bits) {
+    uint16_t mask = 1 << bits;
     gpio_bits_t plane_bits = 0;
     plane_bits |= ((red & mask) == mask)   ? fill.r_bit : 0;
     plane_bits |= ((green & mask) == mask) ? fill.g_bit : 0;
     plane_bits |= ((blue & mask) == mask)  ? fill.b_bit : 0;
 
     for (int row = 0; row < double_rows_; ++row) {
-      gpio_bits_t *row_data = ValueAt(row, 0, b);
+      gpio_bits_t *row_data = ValueAt(row, 0, bits);
       for (int col = 0; col < columns_; ++col) {
         *row_data++ = plane_bits;
       }
@@ -693,6 +736,14 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   }
 }
 
+void Framebuffer::SetPixels(int x, int y, int width, int height, Color *colors) {
+  for (int iy = 0; iy < height; ++iy) {
+    for (int ix = 0; ix < width; ++ix) {
+      SetPixel(x + ix, y + iy, colors->r, colors->g, colors->b);
+      ++colors;
+    }
+  }
+}
 // Strange LED-mappings such as RBG or so are handled here.
 gpio_bits_t Framebuffer::GetGpioFromLedSequence(char col,
                                                 const char *led_sequence,

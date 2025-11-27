@@ -39,6 +39,8 @@ the [toplevel readme](../README.md#changing-parameters-via-command-line-flags)
  --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
  --led-daemon              : Make the process run in the background as daemon.
  --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+ --led-drop-priv-user      : Drop privileges to this username or UID (Default: 'daemon')
+ --led-drop-priv-group     : Drop privileges to this groupname or GID (Default: 'daemon')
 ```
 </details>
 
@@ -156,6 +158,7 @@ usage: ./text-scroller [options] <text>
 Takes text and scrolls it with speed -s
 Options:
         -f <font-file>    : Path to *.bdf-font to be used.
+        -i <textfile>     : Input from file.
         -s <speed>        : Approximate letters per second.
                             Positive: scroll right to left; Negative: scroll left to right
                             (Zero for no scrolling)
@@ -173,15 +176,29 @@ General LED matrix options:
         <... all the --led- options>
 ```
 
-You need to specify a font for the tool to use. We are using BDF-fonts, which are bitmap fonts
-nicely suited for low-resolution displays such as ours. A few fonts you find in the
+You need to specify a font for the tool to use. We are using BDF-fonts,
+which are bitmap fonts nicely suited for low-resolution displays such as ours.
+A few fonts you find in the
 [../fonts](../fonts) directory. The [README.md](../fonts/README.md) there also describes
 how to make your own.
+
+The program directly takes the text found on the command line and scrolls
+it over the screen.
+Alternatively, with the `-i` option, a file is read with the text to be
+scrolled. The file is watched, and if the content changes, the `text-scroller`
+automatically updates the scroll text.
 
 ##### Examples
 
 ```bash
 # (use your --led-rows, --led-chain and --led-parallel suited for your setup)
+
+# Print simple 'Hello world'
+sudo ./text-scroller -f ../fonts/9x18.bdf "Hello World ♥"
+
+# Read input from text file (will pick up changes when file changes)
+echo "Hello world" > input.txt
+sudo ./text-scroller -f ../fonts/9x18.bdf -i input.txt
 
 # Red (-C) text on a display with 4 chained displays. Notice you can use UTF-8 characters
 # if they are supported by the font.
@@ -248,7 +265,7 @@ built with `make video-viewer`.
 
 ```
 sudo apt-get update
-sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev libavdevice-dev
 make video-viewer
 ```
 
@@ -291,6 +308,24 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 myvideo.webm
 # Let's fix the refresh rate to 200 and sync a new frame with every
 # 8th refresh to get the desired video fps (200/8 = 25)
 sudo ./video-viewer --led-chain=4 --led-parallel=3 --led-limit-refresh=200 -V8 myvideo.webm
+
+# Output a webcam. Since /dev/video0 is usually not readable by the user
+# the privileges are dropped to ('daemon'), in the simplest case, just
+# switch of privilege dropping.
+# (Note, reading from a camerea device and scaling it then writing to the LED
+#  panel might create enough contention on the Pi memory busses that slight
+#  flicker might be noticeable)
+sudo ./video-viewer --led-chain=5 --led-parallel=3 --led-no-drop-privs /dev/video0
+
+# Often, webcam camera streams are pretty large which need to be scaled
+# in the video viewer. Reading large amounts of data from USB and scaling are
+# known to result in flickering on the matrix, so setting the video resolution
+# as close as possible using the video4linux utils can reduce the impact.
+# Consider you have an RGB panel with 160x96 pixels, use `v4l2-ctl` for an best
+# effort to pre-scale the video. Use the `-v` verbose option on the
+# video-viewer to see some meta-data about the stream it receives:
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=160,height=96
+sudo ./video-viewer -v --led-chain=5 --led-parallel=3 --led-no-drop-privs /dev/video0
 ```
 
 **Example preparing a preprocessed stream**
