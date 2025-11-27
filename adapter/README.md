@@ -22,7 +22,9 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
        who wanted 3 channels instead of an RTC.
      * The new HD board with angled connectors (thinner footprint), is here: https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-for-raspberry-pi-v2/ << **this is the recommended board for most users today**
        
-    ![RGB-Matrix-Panel-Drive-Board-For-Raspberry-Pi-V2-02-400x400](https://github.com/user-attachments/assets/713e2414-04f9-4fc3-86a2-cb576e29e057)
+![399914418-713e2414-04f9-4fc3-86a2-cb576e29e057](https://github.com/user-attachments/assets/2bf3b1b9-aa24-4a0c-a587-842b92fdc5a0)
+
+
 
    * The [Passive-RPi1](./passive-rpi1) adapter board is to connect one panel to
      Raspberry Pi 1 with 26 GPIO pins.
