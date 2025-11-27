@@ -262,6 +262,7 @@ Last panel on second chain is not used
 8 8 9 9
 ```
 
+
 ### Writing your own mappers
 
 If you want to write your own mappers, e.g. if you have a fancy panel
@@ -291,6 +292,14 @@ parameters: In the command-line flag, parameters provided after `:` are passed
 as-is to your `SetParameters()` implementation
 (e.g. using `--led-pixel-mapper="Rotate:90"`, the `Rotate` mapper
 gets a parameter string `"90"` as parameter).
+
+#### Custom mapper example from barryVDs
+
+Please see https://github.com/hzeller/rpi-rgb-led-matrix/issues/1732
+
+![446766687-ef343583-fcf4-47f8-b784-abc83c458c7f](https://github.com/user-attachments/assets/f337e39b-9264-4e4d-bb97-f54686a6e086)
+
+
 
 #### Multiplex Mappers
 
