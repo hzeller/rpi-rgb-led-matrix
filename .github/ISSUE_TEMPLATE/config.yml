@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+
+contact_links:
+- name: discourse
+  url: https://rpi-rgb-led-matrix.discourse.group/
+  about: Please use discourse for personal help
