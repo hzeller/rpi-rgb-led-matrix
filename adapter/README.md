@@ -24,7 +24,7 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
        
 ![399914418-713e2414-04f9-4fc3-86a2-cb576e29e057](https://github.com/user-attachments/assets/2bf3b1b9-aa24-4a0c-a587-842b92fdc5a0)
 
-
+   * Another ready-to-use active-3 adapter is available also from Acme Systems ( https://www.acmesystems.it/HAT-A3 )
 
    * The [Passive-RPi1](./passive-rpi1) adapter board is to connect one panel to
      Raspberry Pi 1 with 26 GPIO pins.
