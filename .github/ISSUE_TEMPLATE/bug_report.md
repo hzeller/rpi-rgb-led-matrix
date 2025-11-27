@@ -1,6 +1,9 @@
 ---
 name: Open an Issue
 about: Feel free to report bugs, suggest features, or submit proposals here
+title: ''
+labels: ''
+assignees: ''
 ---
 
 Before filing an issue, please keep in mind that developer time is extremely limited.  

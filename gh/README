@@ -1,0 +1,24 @@
+How to mass edit bugs
+
+For Classic Tokens (Legacy)
+Navigate to Developer Settings: Follow step 1 as above (Settings > Developer settings).
+Access Tokens: In the left sidebar, click Personal access tokens, then select Tokens (classic).
+Generate New Token: Click Generate new token, then click Generate new token (classic).
+Configure Token Details: Give it a note, select an expiration date, and choose scopes (permissions). For command-line access to repositories, the repo scope is typically needed.
+
+give access to token:
+https://github.com/settings/tokens
+https://github.com/settings/tokens/2920674132
+
+sauron:~/rPi/libraries/rpi-rgb-led-matrix$ gh auth login
+? What account do you want to log into? GitHub.com
+? You're already logged into github.com. Do you want to re-authenticate? Yes
+? What is your preferred protocol for Git operations? HTTPS
+? Authenticate Git with your GitHub credentials? Yes
+? How would you like to authenticate GitHub CLI? Paste an authentication token
+Tip: you can generate a Personal Access Token here https://github.com/settings/tokens
+The minimum required scopes are 'repo', 'read:org', 'workflow'.
+? Paste your authentication token: ****************************************
+- gh config set -h github.com git_protocol https
+✓ Configured git protocol
+✓ Logged in as marcmerlin
