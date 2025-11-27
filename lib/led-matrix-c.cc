@@ -256,6 +256,10 @@ int height_font(struct LedFont * font) {
   return to_font(font)->height();
 }
 
+int character_width_font(struct LedFont *font, uint32_t unicode_codepoint) {
+  return to_font(font)->CharacterWidth(unicode_codepoint);
+}
+
 struct LedFont *create_outline_font(struct LedFont * font) {
   rgb_matrix::Font* outlineFont = to_font(font)->CreateOutlineFont();
   return from_font(outlineFont);

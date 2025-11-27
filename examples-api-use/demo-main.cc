@@ -267,7 +267,7 @@ public:
     line = ReadLine(f, header_buf, sizeof(header_buf));
     if (!line || sscanf(line, "%d ", &value) != 1 || value != 255)
       EXIT_WITH_MSG("Only 255 for maxval allowed.");
-    const size_t pixel_count = new_width * new_height;
+    const size_t pixel_count = (size_t)new_width * (size_t)new_height;
     Pixel *new_image = new Pixel [ pixel_count ];
     assert(sizeof(Pixel) == 3);   // we make that assumption.
     if (fread(new_image, sizeof(Pixel), pixel_count, f) != pixel_count) {

@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-# The following distutils seems to stop working with newer
-# Python version >= 3.12
-# Someone with Python knowlege, please fix.
-from distutils.core import setup, Extension
+# 2025-10, updated to import from setuptools rather than distutils.core which was removed in Python 3.12.
+from setuptools import setup, Extension
 
 core_ext = Extension(
     name                = 'core',
-    sources             = ['rgbmatrix/core.cpp'],
-    include_dirs        = ['../../include'],
+    sources             = ['rgbmatrix/core.cpp', 'rgbmatrix/shims/pillow.c'],
+    include_dirs        = ['../../include', 'rgbmatrix/shims'],
     library_dirs        = ['../../lib'],
     libraries           = ['rgbmatrix'],
     extra_compile_args  = ["-O3", "-Wall"],
