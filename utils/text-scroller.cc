@@ -16,13 +16,19 @@
 #include "led-matrix.h"
 #include "graphics.h"
 
+#include <algorithm>
+#include <fstream>
+#include <streambuf>
 #include <string>
 
 #include <getopt.h>
+#include <math.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -34,15 +40,19 @@ static void InterruptHandler(int signo) {
 }
 
 static int usage(const char *progname) {
-  fprintf(stderr, "usage: %s [options] <text>\n", progname);
+  fprintf(stderr, "usage: %s [options] [<text>| -i <filename>]\n", progname);
   fprintf(stderr, "Takes text and scrolls it with speed -s\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr,
-          "\t-s <speed>        : Approximate letters per second. "
-          "(Zero for no scrolling)\n"
+          "\t-f <font-file>    : Path to *.bdf-font to be used.\n"
+          "\t-i <textfile>     : Input from file.\n"
+          "\t-s <speed>        : Approximate letters per second. \n"
+          "\t                    Positive: scroll right to left; Negative: scroll left to right\n"
+          "\t                    (Zero for no scrolling)\n"
           "\t-l <loop-count>   : Number of loops through the text. "
           "-1 for endless (default)\n"
-          "\t-f <font-file>    : Path to *.bdf-font to be used.\n"
+          "\t-b <on-time>,<off-time>  : Blink while scrolling. Keep "
+          "on and off for these amount of scrolled pixels.\n"
           "\t-x <x-origin>     : Shift X-Origin of displaying text (Default: 0)\n"
           "\t-y <y-origin>     : Shift Y-Origin of displaying text (Default: 0)\n"
           "\t-t <track-spacing>: Spacing pixels between letters (Default: 0)\n"
@@ -77,9 +87,40 @@ static void add_micros(struct timespec *accumulator, long micros) {
   }
 }
 
+// Read line and return if it changed.
+typedef uint64_t stat_fingerprint_t;
+static bool ReadLineOnChange(const char *filename, std::string *out,
+                             stat_fingerprint_t *last_file_status) {
+  struct stat sb;
+  if (stat(filename, &sb) < 0) {
+    perror("Couldn't determine file change");
+    return false;
+  }
+  const stat_fingerprint_t fp = ((uint64_t)sb.st_mtime << 32) + sb.st_size;
+  if (fp == *last_file_status) {
+    return false;  // no change according to stat()
+  }
+
+  *last_file_status = fp;
+  std::ifstream fs(filename);
+  std::string str((std::istreambuf_iterator<char>(fs)),
+                  std::istreambuf_iterator<char>());
+  std::replace(str.begin(), str.end(), '\n', ' ');
+  if (*out == str) {
+    return false;  // no content change
+  }
+  *out = str;
+  return true;
+}
+
 int main(int argc, char *argv[]) {
   RGBMatrix::Options matrix_options;
   rgb_matrix::RuntimeOptions runtime_opt;
+  // If started with 'sudo': make sure to drop privileges to same user
+  // we started with, which is the most expected (and allows us to read
+  // files as that user).
+  runtime_opt.drop_priv_user = getenv("SUDO_UID");
+  runtime_opt.drop_priv_group = getenv("SUDO_GID");
   if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
                                          &matrix_options, &runtime_opt)) {
     return usage(argv[0]);
@@ -91,24 +132,32 @@ int main(int argc, char *argv[]) {
   bool with_outline = false;
 
   const char *bdf_font_file = NULL;
+  const char *input_file = NULL;
   std::string line;
-  /* x_origin is set by default just right of the screen */
-  const int x_default_start = (matrix_options.chain_length
-                               * matrix_options.cols) + 5;
-  int x_orig = x_default_start;
+  bool xorigin_configured = false;
+  int x_orig = 0;
   int y_orig = 0;
   int letter_spacing = 0;
   float speed = 7.0f;
   int loops = -1;
+  int blink_on = 0;
+  int blink_off = 0;
 
   int opt;
-  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:t:s:l:")) != -1) {
+  while ((opt = getopt(argc, argv, "x:y:f:C:B:O:t:s:l:b:i:")) != -1) {
     switch (opt) {
     case 's': speed = atof(optarg); break;
+    case 'b':
+      if (sscanf(optarg, "%d,%d", &blink_on, &blink_off) == 1) {
+        blink_off = blink_on;
+      }
+      fprintf(stderr, "hz: on=%d off=%d\n", blink_on, blink_off);
+      break;
     case 'l': loops = atoi(optarg); break;
-    case 'x': x_orig = atoi(optarg); break;
+    case 'x': x_orig = atoi(optarg); xorigin_configured = true; break;
     case 'y': y_orig = atoi(optarg); break;
     case 'f': bdf_font_file = strdup(optarg); break;
+    case 'i': input_file = strdup(optarg); break;
     case 't': letter_spacing = atoi(optarg); break;
     case 'C':
       if (!parseColor(&color, optarg)) {
@@ -134,13 +183,23 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  for (int i = optind; i < argc; ++i) {
-    line.append(argv[i]).append(" ");
-  }
+  stat_fingerprint_t last_change = 0;
 
-  if (line.empty()) {
-    fprintf(stderr, "Add the text you want to print on the command-line.\n");
-    return usage(argv[0]);
+  if (input_file) {
+    if (!ReadLineOnChange(input_file, &line, &last_change)) {
+      fprintf(stderr, "Couldn't read file '%s'\n", input_file);
+      return usage(argv[0]);
+    }
+  }
+  else {
+    for (int i = optind; i < argc; ++i) {
+      line.append(argv[i]).append(" ");
+    }
+
+    if (line.empty()) {
+      fprintf(stderr, "Add the text you want to print on the command-line or -i for input file.\n");
+      return usage(argv[0]);
+    }
   }
 
   if (bdf_font_file == NULL) {
@@ -185,12 +244,20 @@ int main(int argc, char *argv[]) {
   // Create a new canvas to be used with led_matrix_swap_on_vsync
   FrameCanvas *offscreen_canvas = canvas->CreateFrameCanvas();
 
+  const int scroll_direction = (speed >= 0) ? -1 : 1;
+  speed = fabs(speed);
   int delay_speed_usec = 1000000;
   if (speed > 0) {
     delay_speed_usec = 1000000 / speed / font.CharacterWidth('W');
-  } else if (x_orig == x_default_start) {
-    // There would be no scrolling, so text would never appear. Move to front.
-    x_orig = with_outline ? 1 : 0;
+  }
+
+  if (!xorigin_configured) {
+    if (speed == 0) {
+      // There would be no scrolling, so text would never appear. Move to front.
+      x_orig = with_outline ? 1 : 0;
+    } else {
+      x_orig = scroll_direction < 0 ? canvas->width() : 0;
+    }
   }
 
   int x = x_orig;
@@ -199,33 +266,44 @@ int main(int argc, char *argv[]) {
 
   struct timespec next_frame = {0, 0};
 
+  uint64_t frame_counter = 0;
   while (!interrupt_received && loops != 0) {
+    if (input_file && ReadLineOnChange(input_file, &line, &last_change)) {
+      x = x_orig;
+    }
+    ++frame_counter;
     offscreen_canvas->Fill(bg_color.r, bg_color.g, bg_color.b);
-    if (outline_font) {
-      // The outline font, we need to write with a negative (-2) text-spacing,
-      // as we want to have the same letter pitch as the regular text that
-      // we then write on top.
-      rgb_matrix::DrawText(offscreen_canvas, *outline_font,
-                           x - 1, y + font.baseline(),
-                           outline_color, NULL,
-                           line.c_str(), letter_spacing - 2);
+    const bool draw_on_frame = (blink_on <= 0)
+      || (frame_counter % (blink_on + blink_off) < (uint64_t)blink_on);
+
+    if (draw_on_frame) {
+      if (outline_font) {
+        // The outline font, we need to write with a negative (-2) text-spacing,
+        // as we want to have the same letter pitch as the regular text that
+        // we then write on top.
+        rgb_matrix::DrawText(offscreen_canvas, *outline_font,
+                             x - 1, y + font.baseline(),
+                             outline_color, NULL,
+                             line.c_str(), letter_spacing - 2);
+      }
+
+      // length = holds how many pixels our text takes up
+      length = rgb_matrix::DrawText(offscreen_canvas, font,
+                                    x, y + font.baseline(),
+                                    color, NULL,
+                                    line.c_str(), letter_spacing);
     }
 
-    // length = holds how many pixels our text takes up
-    length = rgb_matrix::DrawText(offscreen_canvas, font,
-                                  x, y + font.baseline(),
-                                  color, NULL,
-                                  line.c_str(), letter_spacing);
-
-    --x;
-    if (speed > 0 && x + length < 0) {  // moved all the way left out of frame.
-      x = x_orig;
+    x += scroll_direction;
+    if ((scroll_direction < 0 && x + length < 0) ||
+        (scroll_direction > 0 && x > canvas->width())) {
+      x = x_orig + ((scroll_direction > 0) ? -length : 0);
       if (loops > 0) --loops;
     }
 
     // Make sure render-time delays are not influencing scroll-time
     if (speed > 0) {
-      if (next_frame.tv_sec == 0) {
+      if (next_frame.tv_sec == 0 && next_frame.tv_nsec == 0) {
         // First time. Start timer, but don't wait.
         clock_gettime(CLOCK_MONOTONIC, &next_frame);
       } else {

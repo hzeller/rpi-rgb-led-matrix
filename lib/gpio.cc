@@ -31,7 +31,7 @@
  * nanosleep() takes longer than requested because of OS jitter.
  * In about 99.9% of the cases, this is <= 25 microcseconds on
  * the Raspberry Pi (empirically determined with a Raspbian kernel), so
- * we substract this value whenever we do nanosleep(); the remaining time
+ * we subtract this value whenever we do nanosleep(); the remaining time
  * we then busy wait to get a good accurate result.
  *
  * You can measure the overhead using DEBUG_SLEEP_JITTER below.
@@ -125,6 +125,22 @@ static volatile uint32_t *s_PWM_registers = NULL;
 static volatile uint32_t *s_CLK_registers = NULL;
 
 namespace rgb_matrix {
+static bool LinuxHasModuleLoaded(const char *name) {
+  FILE *f = fopen("/proc/modules", "r");
+  if (f == NULL) return false; // don't care.
+  char buf[256];
+  const size_t namelen = strlen(name);
+  bool found = false;
+  while (fgets(buf, sizeof(buf), f) != NULL) {
+    if (strncmp(buf, name, namelen) == 0) {
+      found = true;
+      break;
+    }
+  }
+  fclose(f);
+  return found;
+}
+
 #define GPIO_BIT(x) (1ull << x)
 
 GPIO::GPIO() : output_bits_(0), input_bits_(0), reserved_bits_(0),
@@ -161,6 +177,16 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
   }
 
   outputs &= ~(output_bits_ | input_bits_ | reserved_bits_);
+
+  // We don't know exactly what GPIO pins are occupied by 1-wire (can we
+  // easily do that ?), so let's complain only about the default GPIO.
+  if ((outputs & GPIO_BIT(4))
+      && LinuxHasModuleLoaded("w1_gpio")) {
+    fprintf(stderr, "This Raspberry Pi has the one-wire protocol enabled.\n"
+            "This will mess with the display if GPIO pins overlap.\n"
+            "Disable 1-wire in raspi-config (Interface Options).\n\n");
+  }
+
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
   const int kMaxAvailableBit = 45;
   uses_64_bit_ |= (outputs >> 32) != 0;
@@ -208,34 +234,74 @@ enum RaspberryPiModel {
   PI_MODEL_4
 };
 
-static int ReadFileToBuffer(char *buffer, size_t size, const char *filename) {
+static int ReadBinaryFileToBuffer(uint8_t *buffer, size_t size,
+                                  const char *filename) {
   const int fd = open(filename, O_RDONLY);
   if (fd < 0) return -1;
-  ssize_t r = read(fd, buffer, size - 1); // assume one read enough
-  buffer[r >= 0 ? r : 0] = '\0';
+  const ssize_t r = read(fd, buffer, size); // assume one read enough.
   close(fd);
   return r;
 }
 
-static RaspberryPiModel DetermineRaspberryModel() {
+// Like ReadBinaryFileToBuffer(), but adds null-termination.
+static int ReadTextFileToBuffer(char *buffer, size_t size,
+                                const char *filename) {
+  int r = ReadBinaryFileToBuffer((uint8_t *)buffer, size - 1, filename);
+  buffer[r >= 0 ? r : 0] = '\0';
+  return r;
+}
+
+/*
+ * Try to read the revision from /proc/cpuinfo. In case of any errors, or if
+ * /proc/cpuinfo simply contains zero as the revision, this function returns
+ * zero. This is ok because zero was never used as a real revision code.
+ */
+static uint32_t ReadRevisionFromProcCpuinfo() {
   char buffer[4096];
-  if (ReadFileToBuffer(buffer, sizeof(buffer), "/proc/cpuinfo") < 0) {
+  if (ReadTextFileToBuffer(buffer, sizeof(buffer), "/proc/cpuinfo") < 0) {
     fprintf(stderr, "Reading cpuinfo: Could not determine Pi model\n");
-    return PI_MODEL_3;  // safe guess fallback.
+    return 0;
   }
   static const char RevisionTag[] = "Revision";
   const char *revision_key;
   if ((revision_key = strstr(buffer, RevisionTag)) == NULL) {
     fprintf(stderr, "non-existent Revision: Could not determine Pi model\n");
-    return PI_MODEL_3;
+    return 0;
   }
   unsigned int pi_revision;
   if (sscanf(index(revision_key, ':') + 1, "%x", &pi_revision) != 1) {
-    fprintf(stderr, "Unknown Revision: Could not determine Pi model\n");
-    return PI_MODEL_3;
+    return 0;
+  }
+  return pi_revision;
+}
+
+// Read a 32-bit big-endian number from a 4-byte buffer.
+static uint32_t read_be32(const uint8_t *p) {
+  return p[0] << 24 | p[1] << 16 | p[2] << 8 | p[3];
+}
+
+// Try to read the revision from the devicetree.
+static uint32_t ReadRevisionFromDeviceTree() {
+  const char *const kDeviceTreeRev = "/proc/device-tree/system/linux,revision";
+  uint8_t buffer[4];
+  if (ReadBinaryFileToBuffer(buffer, sizeof(buffer), kDeviceTreeRev) != 4) {
+    fprintf(stderr, "Failed to read revision from %s\n", kDeviceTreeRev);
+    return 0;
+  }
+  return read_be32(buffer);
+}
+
+static RaspberryPiModel DetermineRaspberryModel() {
+  uint32_t pi_revision = ReadRevisionFromProcCpuinfo();
+  if (pi_revision == 0) {
+    pi_revision = ReadRevisionFromDeviceTree();
+    if (pi_revision == 0) {
+      fprintf(stderr, "Unknown Revision: Could not determine Pi model\n");
+      return PI_MODEL_3;  // safe guess fallback.
+    }
   }
 
-  // https://www.raspberrypi.org/documentation/hardware/raspberrypi/revision-codes/README.md
+  // https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#raspberry-pi-revision-codes
   const unsigned pi_type = (pi_revision >> 4) & 0xff;
   switch (pi_type) {
   case 0x00: /* A */
@@ -249,9 +315,11 @@ static RaspberryPiModel DetermineRaspberryModel() {
     return PI_MODEL_1;
 
   case 0x04:  /* Pi 2 */
+  case 0x12:  /* Zero W 2 (behaves close to Pi 2) */
     return PI_MODEL_2;
 
   case 0x11: /* Pi 4 */
+  case 0x13: /* Pi 400 */
   case 0x14: /* CM4 */
     return PI_MODEL_4;
 
@@ -295,7 +363,7 @@ static uint32_t *mmap_bcm_register(off_t register_offset) {
   }
 
   uint32_t *result =
-    (uint32_t*) mmap(NULL,                  // Any adddress in our space will do
+    (uint32_t*) mmap(NULL,                  // Any address in our space will do
                      REGISTER_BLOCK_SIZE,   // Map length
                      PROT_READ|PROT_WRITE,  // Enable r/w on GPIO registers.
                      MAP_SHARED,
@@ -314,7 +382,7 @@ static uint32_t *mmap_bcm_register(off_t register_offset) {
 }
 
 static bool mmap_all_bcm_registers_once() {
-  if (s_GPIO_registers != NULL) return true;  // alrady done.
+  if (s_GPIO_registers != NULL) return true;  // already done.
 
   // The common GPIO registers.
   s_GPIO_registers = mmap_bcm_register(GPIO_REGISTER_OFFSET);
@@ -355,6 +423,10 @@ bool GPIO::Init(int slowdown) {
 #endif
 
   return true;
+}
+
+bool GPIO::IsPi4() {
+  return GetPiModel() == PI_MODEL_4;
 }
 
 /*
@@ -398,20 +470,11 @@ private:
   const std::vector<int> nano_specs_;
 };
 
-static bool LinuxHasModuleLoaded(const char *name) {
-  FILE *f = fopen("/proc/modules", "r");
-  if (f == NULL) return false; // don't care.
+// Check that 3 shows up in isolcpus
+static bool HasIsolCPUs() {
   char buf[256];
-  const size_t namelen = strlen(name);
-  bool found = false;
-  while (fgets(buf, sizeof(buf), f) != NULL) {
-    if (strncmp(buf, name, namelen) == 0) {
-      found = true;
-      break;
-    }
-  }
-  fclose(f);
-  return found;
+  ReadTextFileToBuffer(buf, sizeof(buf), "/sys/devices/system/cpu/isolated");
+  return index(buf, '3') != NULL;
 }
 
 static void busy_wait_nanos_rpi_1(long nanos);
@@ -437,8 +500,8 @@ static void DisableRealtimeThrottling() {
   if (GetNumCores() == 1) return;   // Not safe if we don't have > 1 core.
   // We need to leave the kernel a little bit of time, as it does not like
   // us to hog the kernel solidly. The default of 950000 leaves 50ms that
-  // can generate visible flicker, so we reduce that to 1ms.
-  WriteTo("/proc/sys/kernel/sched_rt_runtime_us", "999000");
+  // can generate visible flicker, so we reduce that to 10ms.
+  WriteTo("/proc/sys/kernel/sched_rt_runtime_us", "990000");
 }
 
 bool Timers::Init() {
@@ -457,6 +520,11 @@ bool Timers::Init() {
   // If we have it, we run the update thread on core3. No perf-compromises:
   WriteTo("/sys/devices/system/cpu/cpu3/cpufreq/scaling_governor",
           "performance");
+
+  if (GetPiModel() != PI_MODEL_1 && !HasIsolCPUs()) {
+    fprintf(stderr, "Suggestion: to slightly improve display update, add\n\tisolcpus=3\n"
+            "at the end of /boot/cmdline.txt and reboot (see README.md)\n");
+  }
   return true;
 }
 
@@ -483,7 +551,7 @@ void Timers::sleep_nanos(long nanos) {
   // a chance to do something else.
 
   // However, these timings have a lot of jitter, so if we have the 1Mhz timer
-  // available, we use that to accurately mesure time spent and do the
+  // available, we use that to accurately measure time spent and do the
   // remaining time with busy wait. If we don't have the timer available
   // (not running as root), we just use nanosleep() for larger values.
 
@@ -783,6 +851,11 @@ uint32_t GetMicrosecondCounter() {
   const uint64_t micros = ts.tv_nsec / 1000;
   const uint64_t epoch_usec = (uint64_t)ts.tv_sec * 1000000 + micros;
   return epoch_usec & 0xFFFFFFFF;
+}
+
+// For external use, e.g. to lessen busy waiting.
+void SleepMicroseconds(long t) {
+  Timers::sleep_nanos(t * 1000);
 }
 
 } // namespace rgb_matrix

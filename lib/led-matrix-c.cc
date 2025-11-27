@@ -23,8 +23,8 @@
 #include "graphics.h"
 
 // Make sure C++ is in sync with C
-static_assert(sizeof(rgb_matrix::RGBMatrix::Options) == sizeof(RGBLedMatrixOptions));
-static_assert(sizeof(rgb_matrix::RuntimeOptions) == sizeof(RGBLedRuntimeOptions));
+static_assert(sizeof(rgb_matrix::RGBMatrix::Options) == sizeof(RGBLedMatrixOptions), "C and C++ out of sync");
+static_assert(sizeof(rgb_matrix::RuntimeOptions) == sizeof(RGBLedRuntimeOptions), "C and C++ out of sync");
 
 // Our opaque dummy structs to communicate with the c-world
 struct RGBLedMatrix {};
@@ -51,6 +51,9 @@ static rgb_matrix::Font *to_font(struct LedFont *font) {
 }
 static struct LedFont *from_font(rgb_matrix::Font *font) {
   return reinterpret_cast<struct LedFont*>(font);
+}
+static rgb_matrix::Color* to_color(struct Color* color) {
+  return reinterpret_cast<rgb_matrix::Color*>(color);
 }
 
 
@@ -85,6 +88,7 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     OPT_COPY_IF_SET(pixel_mapper_config);
     OPT_COPY_IF_SET(panel_type);
     OPT_COPY_IF_SET(limit_refresh_rate_hz);
+    OPT_COPY_IF_SET(disable_busy_waiting);
 #undef OPT_COPY_IF_SET
   }
 
@@ -95,6 +99,8 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     RT_OPT_COPY_IF_SET(daemon);
     RT_OPT_COPY_IF_SET(drop_privileges);
     RT_OPT_COPY_IF_SET(do_gpio_init);
+    RT_OPT_COPY_IF_SET(drop_priv_user);
+    RT_OPT_COPY_IF_SET(drop_priv_group);
 #undef RT_OPT_COPY_IF_SET
   }
 
@@ -129,6 +135,7 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     ACTUAL_VALUE_BACK_TO_OPT(pixel_mapper_config);
     ACTUAL_VALUE_BACK_TO_OPT(panel_type);
     ACTUAL_VALUE_BACK_TO_OPT(limit_refresh_rate_hz);
+    ACTUAL_VALUE_BACK_TO_OPT(disable_busy_waiting);
 #undef ACTUAL_VALUE_BACK_TO_OPT
   }
 
@@ -138,6 +145,8 @@ static struct RGBLedMatrix *led_matrix_create_from_options_optional_edit(
     ACTUAL_VALUE_BACK_TO_RT_OPT(daemon);
     ACTUAL_VALUE_BACK_TO_RT_OPT(drop_privileges);
     ACTUAL_VALUE_BACK_TO_RT_OPT(do_gpio_init);
+    ACTUAL_VALUE_BACK_TO_RT_OPT(drop_priv_user);
+    ACTUAL_VALUE_BACK_TO_RT_OPT(drop_priv_group);
 #undef ACTUAL_VALUE_BACK_TO_RT_OPT
   }
 
@@ -220,6 +229,11 @@ void led_canvas_set_pixel(struct LedCanvas *canvas, int x, int y,
   to_canvas(canvas)->SetPixel(x, y, r, g, b);
 }
 
+void led_canvas_set_pixels(struct LedCanvas *canvas, int x, int y,
+  int width, int height, struct Color *colors) {
+  to_canvas(canvas)->SetPixels(x, y, width, height, to_color(colors));
+}
+
 void led_canvas_clear(struct LedCanvas *canvas) {
   to_canvas(canvas)->Clear();
 }
@@ -228,6 +242,9 @@ void led_canvas_fill(struct LedCanvas *canvas, uint8_t r, uint8_t g, uint8_t b) 
   to_canvas(canvas)->Fill(r, g, b);
 }
 
+void led_canvas_subfill(struct LedCanvas *canvas, int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b) {
+  to_canvas(canvas)->SubFill(x, y, width, height, r, g, b);
+}
 struct LedFont *load_font(const char *bdf_font_file) {
   rgb_matrix::Font* font = new rgb_matrix::Font();
   font->LoadFont(bdf_font_file);
@@ -240,6 +257,10 @@ int baseline_font(struct LedFont * font) {
 
 int height_font(struct LedFont * font) {
   return to_font(font)->height();
+}
+
+int character_width_font(struct LedFont *font, uint32_t unicode_codepoint) {
+  return to_font(font)->CharacterWidth(unicode_codepoint);
 }
 
 struct LedFont *create_outline_font(struct LedFont * font) {

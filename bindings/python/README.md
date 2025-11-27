@@ -10,21 +10,12 @@ the hardware in question (see below for setting it via command line argument).
 
 Then, in the root directory for the matrix library simply type:
 
-### Python 2
-
-```shell
-sudo apt-get update && sudo apt-get install python2.7-dev python-pillow -y
-make build-python
-sudo make install-python
-```
-
 ### Python 3
-You can also build for Python 3:
 
 ```shell
-sudo apt-get update && sudo apt-get install python3-dev python3-pillow -y
-make build-python PYTHON=$(which python3)
-sudo make install-python PYTHON=$(which python3)
+sudo apt-get update && sudo apt-get install python3-dev cython3 -y
+make build-python 
+sudo make install-python 
 ```
 
 ### PyPy
@@ -53,16 +44,16 @@ in a tight loop:
   * On a Pi-2 and Pi-3, a Python script will be about 1/8 of the speed compared
     to the corresponding C++ program (pushing ~0.43 Megapixels/s Python
     vs. ~3.5 Megapixels/s C++ on a Pi-3 for instance)
-  * On a Pi-1, the difference is even worse: 1/24 of the speed to the
-    corresponding C++ program. Given that the Pi-1 is already about 1/10 the
+  * On a Pi-1/Pi Zero, the difference is even worse: 1/24 of the speed to the
+    corresponding C++ program. Given that this Pi is already about 1/10 the
     speed of a Pi-3, this almost makes Python unusable on a Pi-1
     (~0.015 Megapixels/s Python vs. ~0.36 Megapixels/s C++)
   * Also interesting: Python3 is a little bit slower than Python2.7.
     So if you can, stick with Python2.7 for now.
   * The good news is, that this is due to overhead per function call. If you
     can do more per function call, then this is less problematic. For instance
-    if you have an image to be displayed with `SetImage()`, that will much faster
-    per pixel (internally this then copies the pixels natively).
+    if you have an image to be displayed with `SetImage()`, that will much
+    faster per pixel (internally this then copies the pixels natively).
 
 The ~0.015 Megapixels/s on a Pi-1 means that you can update a 32x32 matrix
 at most with ~15fps. If you have chained 5, then you barely reach 3fps.
@@ -126,7 +117,7 @@ options.hardware_mapping = 'regular'  # If you have an Adafruit HAT: 'adafruit-h
 matrix = RGBMatrix(options = options)
 
 # Make image fit our screen.
-image.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
+image.thumbnail((matrix.width, matrix.height), Image.LANCZOS)
 
 matrix.SetImage(image.convert('RGB'))
 

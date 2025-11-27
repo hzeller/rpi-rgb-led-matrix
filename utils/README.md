@@ -39,6 +39,8 @@ the [toplevel readme](../README.md#changing-parameters-via-command-line-flags)
  --led-slowdown-gpio=<0..4>: Slowdown GPIO. Needed for faster Pis/slower panels (Default: 1).
  --led-daemon              : Make the process run in the background as daemon.
  --led-no-drop-privs       : Don't drop privileges from 'root' after initializing the hardware.
+ --led-drop-priv-user      : Drop privileges to this username or UID (Default: 'daemon')
+ --led-drop-priv-group     : Drop privileges to this groupname or GID (Default: 'daemon')
 ```
 </details>
 
@@ -155,9 +157,13 @@ make text-scroller
 usage: ./text-scroller [options] <text>
 Takes text and scrolls it with speed -s
 Options:
-        -s <speed>        : Approximate letters per second. (Zero for no scrolling)
-        -l <loop-count>   : Number of loops through the text. -1 for endless (default)
         -f <font-file>    : Path to *.bdf-font to be used.
+        -i <textfile>     : Input from file.
+        -s <speed>        : Approximate letters per second.
+                            Positive: scroll right to left; Negative: scroll left to right
+                            (Zero for no scrolling)
+        -l <loop-count>   : Number of loops through the text. -1 for endless (default)
+        -b <on-time>,<off-time>  : Blink while scrolling. Keep on and off for these amount of scrolled pixels.
         -x <x-origin>     : Shift X-Origin of displaying text (Default: 0)
         -y <y-origin>     : Shift Y-Origin of displaying text (Default: 0)
         -t <track-spacing>: Spacing pixels between letters (Default: 0)
@@ -170,15 +176,29 @@ General LED matrix options:
         <... all the --led- options>
 ```
 
-You need to specify a font for the tool to use. We are using BDF-fonts, which are bitmap fonts
-nicely suited for low-resolution displays such as ours. A few fonts you find in the
+You need to specify a font for the tool to use. We are using BDF-fonts,
+which are bitmap fonts nicely suited for low-resolution displays such as ours.
+A few fonts you find in the
 [../fonts](../fonts) directory. The [README.md](../fonts/README.md) there also describes
 how to make your own.
+
+The program directly takes the text found on the command line and scrolls
+it over the screen.
+Alternatively, with the `-i` option, a file is read with the text to be
+scrolled. The file is watched, and if the content changes, the `text-scroller`
+automatically updates the scroll text.
 
 ##### Examples
 
 ```bash
 # (use your --led-rows, --led-chain and --led-parallel suited for your setup)
+
+# Print simple 'Hello world'
+sudo ./text-scroller -f ../fonts/9x18.bdf "Hello World ♥"
+
+# Read input from text file (will pick up changes when file changes)
+echo "Hello world" > input.txt
+sudo ./text-scroller -f ../fonts/9x18.bdf -i input.txt
 
 # Red (-C) text on a display with 4 chained displays. Notice you can use UTF-8 characters
 # if they are supported by the font.
@@ -211,17 +231,22 @@ This is currently doing a software decode; if you are familiar with the
 av libraries, a pull request that adds hardware decoding is welcome.
 
 Right now, this is CPU intensive and decoding can result in an output that
-is not smooth or presents flicker. If you observe that, it is suggested to
-do one of these:
+is not smooth or presents flicker, in particular on older Pis.
+If you observe that, it is suggested to
+prepare a preprocessed stream that you then later watch with `led-image-viewer`
+(see example below). This will use a bit of disk-space, but it will result
+in best quality as all the expensive calculation has been done beforehand.
 
-  - Transcode the video first to the width and height of the final output size.
+Short of that, if you want to use the video viewer directly (e.g. because the
+stream file would be super-large), do the following when you observe flicker:
+  - Use the `-T` option to add more decode threads; `-T2` or `-T3` typically.
+  - Transcode the video first to the width and height of the final output size
+    so that decoding and scaling is much cheaper at runtime.
   - If you use tools such as [youtube-dl] to acquire the video, tell it
     to choose a low resolution version (e.g. for that program use option
     `-f"[height<480]"`).
   - Synchronize output as integer fraction of matrix refresh rate (example
     below).
-  - Prepare an animation stream that you then later watch with led-image-viewer
-    (see example below).
   - Another route to watch videos is to run a [flaschen-taschen]
     server on your Pi, that provides a network interface to your LED-Matrix.
     Now, you can use [vlc] from some other computer on your network and
@@ -240,7 +265,7 @@ built with `make video-viewer`.
 
 ```
 sudo apt-get update
-sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install pkg-config libavcodec-dev libavformat-dev libswscale-dev libavdevice-dev
 make video-viewer
 ```
 
@@ -258,6 +283,7 @@ Options:
                              is a fraction of matrix refresh. In particular with a stable refresh,
                              this can result in more smooth playback. Choose multiple for desired framerate.
                              (Tip: use --led-limit-refresh for stable rate)
+        -T <threads>       : Number of threads used to decode (default 1, max=4)
         -v                 : verbose; prints video metadata and other info.
         -f                 : Loop forever.
 
@@ -270,7 +296,7 @@ General LED matrix options:
 ```bash
 # Play video. If you observe that the Pi has trouble to keep up (extensive
 # flickering), transcode the video first to the exact size of your display.
-sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
+sudo ./video-viewer --led-chain=4 --led-parallel=3 -T2 myvideo.webm
 
 # If you observe flicker you can try to synchronize video output with
 # the refresh rate of the panel. For that, first figure out with
@@ -283,18 +309,47 @@ sudo ./video-viewer --led-chain=4 --led-parallel=3 myvideo.webm
 # 8th refresh to get the desired video fps (200/8 = 25)
 sudo ./video-viewer --led-chain=4 --led-parallel=3 --led-limit-refresh=200 -V8 myvideo.webm
 
-# Another way to avoid flicker playback with best possible results even with
+# Output a webcam. Since /dev/video0 is usually not readable by the user
+# the privileges are dropped to ('daemon'), in the simplest case, just
+# switch of privilege dropping.
+# (Note, reading from a camerea device and scaling it then writing to the LED
+#  panel might create enough contention on the Pi memory busses that slight
+#  flicker might be noticeable)
+sudo ./video-viewer --led-chain=5 --led-parallel=3 --led-no-drop-privs /dev/video0
+
+# Often, webcam camera streams are pretty large which need to be scaled
+# in the video viewer. Reading large amounts of data from USB and scaling are
+# known to result in flickering on the matrix, so setting the video resolution
+# as close as possible using the video4linux utils can reduce the impact.
+# Consider you have an RGB panel with 160x96 pixels, use `v4l2-ctl` for an best
+# effort to pre-scale the video. Use the `-v` verbose option on the
+# video-viewer to see some meta-data about the stream it receives:
+v4l2-ctl -d /dev/video0 --set-fmt-video=width=160,height=96
+sudo ./video-viewer -v --led-chain=5 --led-parallel=3 --led-no-drop-privs /dev/video0
+```
+
+**Example preparing a preprocessed stream**
+
+```bash
+# A way to avoid flicker playback with best possible results even with
 # very high framerate: create a preprocessed stream first, then replay it with
 # led-image-viewer. This results in best quality (no CPU use at play-time), but
 # comes with a caveat: It can use _A LOT_ of disk, as it is not compressed.
 # Note:
+#  o We don't need to be root, as we don't write to the matrix, just to a file.
 #  o We have to supply all the options (rows, chain, parallel, hardware-mapping,
-#    rotation etc), that we would supply to the real viewer later.
-#  o We don't need to be root, as we don't write to the matrix
-./video-viewer --led-chain=5 --led-parallel=3 myvideo.webm -O/tmp/vid.stream
+#    rotation etc), that we would supply to the real viewer later as the
+#    framebuffer is fully pre-processed to avoid any overhead while playing.
+#  o You could even run this on your much faster regular Linux PC (little
+#    endian) and create a stream that you then can play on your Pi.
+# ----- STEP 1 Preprocessing ------
+./video-viewer --led-chain=5 --led-parallel=3 -T4 myvideo.mp4 -O/tmp/vid.stream
 
-#.. now play it with led-image-viewer. Also try using -D or -V to replay with
-# different frame rate.
+#.. now play the resulting stream with the with led-image-viewer. Also try
+# using -D or -V to replay with different frame rate.
+# Note, you need to give the same options (rows, chain, parallel etc.) as
+# you did when creating the stream.
+# ----- STEP 2 Actual Playing ------
 sudo ./led-image-viewer --led-chain=5 --led-parallel=3 /tmp/vid.stream
 ```
 

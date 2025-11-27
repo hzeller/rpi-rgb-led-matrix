@@ -62,8 +62,8 @@ struct ImageParams {
 
 struct FileInfo {
   ImageParams params;      // Each file might have specific timing settings
-  bool is_multi_frame;
-  rgb_matrix::StreamIO *content_stream;
+  bool is_multi_frame = false;
+  rgb_matrix::StreamIO *content_stream = nullptr;
 };
 
 volatile bool interrupt_received = false;
@@ -95,7 +95,7 @@ static void StoreInStream(const Magick::Image &img, int delay_time_us,
   for (size_t y = 0; y < img.rows(); ++y) {
     for (size_t x = 0; x < img.columns(); ++x) {
       const Magick::Color &c = img.pixelColor(x, y);
-      if (c.alphaQuantum() < 256) {
+      if (c.alphaQuantum() < 255) {
         scratch->SetPixel(x + x_offset, y + y_offset,
                           ScaleQuantumToChar(c.redQuantum()),
                           ScaleQuantumToChar(c.greenQuantum()),
@@ -209,6 +209,7 @@ static int usage(const char *progname) {
   fprintf(stderr, "Options:\n"
           "\t-O<streamfile>            : Output to stream-file instead of matrix (Don't need to be root).\n"
           "\t-C                        : Center images.\n"
+          "\t-m                        : if this is a stream, mmap() it. This can work around IO latencies in SD-card and refilling kernel buffers. This will use physical memory so only use if you have enough to map file size\n"
 
           "\nThese options affect images FOLLOWING them on the command line,\n"
           "so it is possible to have different options for each image\n"
@@ -251,11 +252,17 @@ int main(int argc, char *argv[]) {
 
   RGBMatrix::Options matrix_options;
   rgb_matrix::RuntimeOptions runtime_opt;
+  // If started with 'sudo': make sure to drop privileges to same user
+  // we started with, which is the most expected (and allows us to read
+  // files as that user).
+  runtime_opt.drop_priv_user = getenv("SUDO_UID");
+  runtime_opt.drop_priv_group = getenv("SUDO_GID");
   if (!rgb_matrix::ParseOptionsFromFlags(&argc, &argv,
                                          &matrix_options, &runtime_opt)) {
     return usage(argv[0]);
   }
 
+  bool do_mmap = false;
   bool do_forever = false;
   bool do_center = false;
   bool do_shuffle = false;
@@ -264,7 +271,7 @@ int main(int argc, char *argv[]) {
   // there is a flag modifying them. This map keeps track of filenames
   // and their image params (also for unrelated elements of argv[], but doesn't
   // matter).
-  // We map the pointer instad of the string of the argv parameter so that
+  // We map the pointer instead of the string of the argv parameter so that
   // we can have two times the same image on the commandline list with different
   // parameters.
   std::map<const void *, struct ImageParams> filename_params;
@@ -278,7 +285,7 @@ int main(int argc, char *argv[]) {
   const char *stream_output = NULL;
 
   int opt;
-  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:")) != -1) {
+  while ((opt = getopt(argc, argv, "w:t:l:fr:c:P:LhCR:sO:V:D:m")) != -1) {
     switch (opt) {
     case 'w':
       img_param.wait_ms = roundf(atof(optarg) * 1000.0f);
@@ -291,6 +298,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'D':
       img_param.anim_delay_ms = atoi(optarg);
+      break;
+    case 'm':
+      do_mmap = true;
       break;
     case 'f':
       do_forever = true;
@@ -412,7 +422,18 @@ int main(int argc, char *argv[]) {
       if (fd >= 0) {
         file_info = new FileInfo();
         file_info->params = filename_params[filename];
-        file_info->content_stream = new rgb_matrix::FileStreamIO(fd);
+        if (do_mmap) {
+          rgb_matrix::MemMapViewInput *stream_input =
+            new rgb_matrix::MemMapViewInput(fd);
+          if (stream_input->IsInitialized()) {
+            file_info->content_stream = stream_input;
+          } else {
+            delete stream_input;
+          }
+        }
+        if (!file_info->content_stream) {
+          file_info->content_stream = new rgb_matrix::FileStreamIO(fd);
+        }
         StreamReader reader(file_info->content_stream);
         if (reader.GetNext(offscreen_canvas, NULL)) {  // header+size ok
           file_info->is_multi_frame = reader.GetNext(offscreen_canvas, NULL);
@@ -421,7 +442,7 @@ int main(int argc, char *argv[]) {
             CopyStream(&reader, global_stream_writer, offscreen_canvas);
           }
         } else {
-          err_msg = "Can't read as image or compatible stream";
+          err_msg += "; Can't read as image or compatible stream";
           delete file_info->content_stream;
           delete file_info;
           file_info = NULL;

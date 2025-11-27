@@ -20,6 +20,12 @@
 
 #include <vector>
 
+#if __ARM_ARCH >= 7
+#define LED_MATRIX_ALLOW_BARRIER_DELAY 1
+#else
+#define LED_MATRIX_ALLOW_BARRIER_DELAY 0
+#endif
+
 // Putting this in our namespace to not collide with other things called like
 // this.
 namespace rgb_matrix {
@@ -30,14 +36,7 @@ public:
 
   // Initialize before use. Returns 'true' if successful, 'false' otherwise
   // (e.g. due to a permission problem).
-  bool Init(int
-#if RGB_SLOWDOWN_GPIO
-            slowdown = RGB_SLOWDOWN_GPIO
-#else
-            slowdown = 1
-#endif
-      );
-
+  bool Init(int slowdown);
 
   // Initialize outputs.
   // Returns the bits that were available and could be set for output.
@@ -54,31 +53,43 @@ public:
   inline void SetBits(gpio_bits_t value) {
     if (!value) return;
     WriteSetBits(value);
-    for (int i = 0; i < slowdown_; ++i) {
-      WriteSetBits(value);
-    }
+    delay();
   }
 
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   inline void ClearBits(gpio_bits_t value) {
     if (!value) return;
     WriteClrBits(value);
-    for (int i = 0; i < slowdown_; ++i) {
-      WriteClrBits(value);
-    }
+    delay();
   }
 
   // Write all the bits of "value" mentioned in "mask". Leave the rest untouched.
   inline void WriteMaskedBits(gpio_bits_t value, gpio_bits_t mask) {
     // Writing a word is two operations. The IO is actually pretty slow, so
     // this should probably  be unnoticable.
-    ClearBits(~value & mask);
-    SetBits(value & mask);
+    WriteClrBits(~value & mask);
+    WriteSetBits(value & mask);
+    delay();
   }
 
   inline gpio_bits_t Read() const { return ReadRegisters() & input_bits_; }
 
+  // Return if this is appears to be a Pi4
+  static bool IsPi4();
+
 private:
+  inline void delay() const {
+#if LED_MATRIX_ALLOW_BARRIER_DELAY
+    if (slowdown_ == -1) {
+        asm volatile("dsb\tst");
+        return;
+    }
+#endif
+    for (int n = 0; n < slowdown_; n++) {
+      *gpio_clr_bits_low_ = 0;
+    }
+  }
+
   inline gpio_bits_t ReadRegisters() const {
     return (static_cast<gpio_bits_t>(*gpio_read_bits_low_)
 #ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
@@ -147,6 +158,8 @@ public:
 // Get rolling over microsecond counter. We get this from a hardware register
 // if possible and a terrible slow fallback otherwise.
 uint32_t GetMicrosecondCounter();
+
+void SleepMicroseconds(long);
 
 }  // end namespace rgb_matrix
 
