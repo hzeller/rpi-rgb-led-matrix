@@ -674,7 +674,9 @@ In general, run a minimal configuration on your Pi.
 The default install of **[Raspbian Lite][raspbian-lite]** or **[DietPi]**
 seem to be good starting points, as they have a reasonably minimal
 configuration to begin with. Raspbian Lite is not as lite anymore
-as it used to be; I prefer DietPi these days.
+as it used to be; I prefer DietPi these days. Note that any of the above
+changes to `/boot/...` must be applied to `/boot/firmware/...` if you are on a
+non-Raspbian distro (e.g. Ubuntu for ARM).
 
 ### Bad interaction with Sound
 If sound is enabled on your Pi, this will not work together with the LED matrix,
