@@ -168,6 +168,11 @@ This documentation is split into parts that help you through the process
     a command line option [described below](#if-you-have-an-adafruit-hat-or-bonnet)
 - [All the command line options you can give to demo and in turn use in your library code](./examples-api-use).
 
+Python Support
+--------------
+The python bindings are work in progress and being updated as of 2025/11, please subscribe to this bug and help out if you can:
+https://github.com/hzeller/rpi-rgb-led-matrix/issues/1749
+
 
 Let's do it
 ------------
