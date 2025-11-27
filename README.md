@@ -173,6 +173,13 @@ Python Support
 The python bindings are work in progress and being updated as of 2025/11, please subscribe to this bug and help out if you can:
 https://github.com/hzeller/rpi-rgb-led-matrix/issues/1749
 
+Rpi Hardware Support
+--------------------
+While this code should still work on rPi1 or Rpi0, those are underpowered and not recommended. An ESP32 is cheaper and faster.  
+Rpi2 is honestly old and slow too.  
+Rpi3 / Rpi3a / Rpi0 2wl will work for most displays but will be slow if you are rotating a huge display in a mapper (Rpi0 2wl is a slightly faster version of Rpi3)
+Rpi4 is the fastest supported chip which will need a higher slowdown gpio value to avoid overwhelming panels (if they display garbage)
+Rpi5 is not officially supported as of 2025/11, but see https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603
 
 Let's do it
 ------------
