@@ -493,6 +493,61 @@ public:
   }
 };
 
+class DoubleZMultiplexMapper : public MultiplexMapperBase {
+  public:
+    DoubleZMultiplexMapper() : MultiplexMapperBase("DoubleZ", 2) {}
+       
+    void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+      const int quarter_rows  = panel_rows_ / 4;
+      const int quarter_cols  = panel_cols_ / 4;
+  
+      const int y_quarter = y / quarter_rows;   // 0..3
+      const int x_quarter = x / quarter_cols;   // 0..3
+  
+      const int offset_y  = y % quarter_rows;
+      int offset_x        = x % quarter_cols;
+  
+      const bool flip_quarter = (y_quarter == 1 || y_quarter == 3);
+      if (flip_quarter)
+          offset_x = quarter_cols - 1 - offset_x;
+  
+      const bool is_top_stripe = !((y % (panel_rows_ / 2)) < quarter_rows);
+  
+      // Compute matrix_x: mirrors within half panels depending on stripe position
+      const int base_x = 2 * x_quarter * quarter_cols;
+      const int top_offset = is_top_stripe
+          ? (quarter_cols - 1 - offset_x)
+          : (quarter_cols + offset_x);
+  
+      *matrix_x = base_x + top_offset;
+      *matrix_y = (y_quarter / 2) * quarter_rows + offset_y;
+    }    
+  };
+
+/*
+ * P4 Outdoor panel 80x40 pixels
+ * https://nl.aliexpress.com/item/1005003999341251.html?spm=a2g0o.order_list.order_list_main.11.408679d2q5LwTb&gatewayAdapt=glo2nld
+ */
+class P4Outdoor80x40Mapper : public MultiplexMapperBase {
+public:
+  P4Outdoor80x40Mapper() : MultiplexMapperBase("P4Outdoor80x40Mapper", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+
+    const int tile_width_ = 8;
+    const int tile_height_ = 10;
+    const int vblock_is_odd = (y / tile_height_) % 2;
+    const int hblock = x / tile_width_;
+
+    if (vblock_is_odd) {
+      *matrix_x = (x % tile_width_) + (2 * tile_width_ * hblock) + tile_width_;
+    } else {
+      // even tiles have reverse x-order
+      *matrix_x = -((x % tile_width_) - tile_width_ + 1) + (2 * tile_width_ * hblock);
+    }
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
 
 /*
  * Here is where the registration happens.
@@ -523,6 +578,8 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P10Outdoor32x16HalfScanMapper());
   result->push_back(new P10Outdoor32x16QuarterScanMapper());
   result->push_back(new P3Outdoor64x64MultiplexMapper());
+  result->push_back(new DoubleZMultiplexMapper());
+  result->push_back(new P4Outdoor80x40Mapper());
   return result;
 }
 

@@ -11,6 +11,7 @@ pkgs.mkShell {
       ffmpeg
       pkg-config
       python311
+      python311Packages.setuptools
       python311Packages.cython
       python311Packages.distutils-extra
     ];

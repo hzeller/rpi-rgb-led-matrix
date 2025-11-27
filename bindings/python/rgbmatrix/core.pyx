@@ -4,6 +4,22 @@ from libcpp cimport bool
 from libc.stdint cimport uint8_t, uint32_t, uintptr_t
 import cython
 
+cdef extern from "Python.h":
+    void* PyCapsule_GetPointer(object capsule, const char* name)
+    const char* PyCapsule_GetName(object capsule)
+
+cdef extern from "shims/pillow.h":
+    cdef int** get_image32(void* im)
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef int** get_pillow_buffer(object capsule):
+    cdef void *image
+
+    image = PyCapsule_GetPointer(capsule, PyCapsule_GetName(capsule))
+
+    return get_image32(image)
+
 cdef class Canvas:
     cdef cppinc.Canvas* _getCanvas(self) except *:
         raise Exception("Not implemented")
@@ -18,7 +34,7 @@ cdef class Canvas:
             #however it's super fast and seems to work fine
             #https://groups.google.com/forum/#!topic/cython-users/Dc1ft5W6KM4
             img_width, img_height = image.size
-            self.SetPixelsPillow(offset_x, offset_y, img_width, img_height, image)
+            self.SetPixelsPillow(offset_x, offset_y, img_width, img_height, image.getim())
         else:
             # First implementation of a SetImage(). OPTIMIZE_ME: A more native
             # implementation that directly reads the buffer and calls the underlying
@@ -32,21 +48,20 @@ cdef class Canvas:
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def SetPixelsPillow(self, int xstart, int ystart, int width, int height, image):
+    def SetPixelsPillow(self, int xstart, int ystart, int width, int height, object image_capsule):
         cdef cppinc.FrameCanvas* my_canvas = <cppinc.FrameCanvas*>self._getCanvas()
         cdef int frame_width = my_canvas.width()
         cdef int frame_height = my_canvas.height()
         cdef int row, col
         cdef uint8_t r, g, b
-        cdef uint32_t **image_ptr
-        cdef uint32_t pixel
-        image.load()
-        ptr_tmp = dict(image.im.unsafe_ptrs)['image32']
-        image_ptr = (<uint32_t **>(<uintptr_t>ptr_tmp))
+        cdef int **buffer
+        cdef int pixel
+
+        buffer = get_pillow_buffer(image_capsule)
 
         for col in range(max(0, -xstart), min(width, frame_width - xstart)):
             for row in range(max(0, -ystart), min(height, frame_height - ystart)):
-                pixel = image_ptr[row][col]
+                pixel = buffer[row][col]
                 r = (pixel ) & 0xFF
                 g = (pixel >> 8) & 0xFF
                 b = (pixel >> 16) & 0xFF
