@@ -1,3 +1,8 @@
+---
+name: Open an Issue
+about: Feel free to report bugs, suggest features, or submit proposals here
+---
+
 Before filing an issue, please keep in mind that developer time is extremely limited.  
 We are happy that you are excited to use this project :) but we do not have the time or
 resources to help users with their programming or debugging questions.  
@@ -24,9 +29,13 @@ many of you and only one of them :)
 For panel support issues, you want to refer to https://github.com/hzeller/rpi-rgb-led-matrix/blob/master/README.md#panels-supported .
 The bugs working on chip support are for development, not "I bought this panel and I want you to make it work"
 (it is on you to research which panels are supported before you buy).  
-If you have a commercial application where you need support for a new panel and are willing to pay
-consulting rates for that work, then it is ok to state so in the panel support bug and someone may
-be able to work something out with you, but again be mindful this is not a commercial or paid project.
+If you have a commercial application where you need support for a new panel and are 
+willing to pay consulting rates for that work, then it is ok to state so in the panel 
+support bug and someone may be able to work something out with you, but again be mindful 
+this is not a commercial or paid project.
+
+It is of course always ok to suggest a new feature that is different from supporting new
+panels.
 
 A few master bugs that may help:
 - Pi5 support: https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603
@@ -35,7 +44,7 @@ A few master bugs that may help:
 - Python bindings: https://github.com/hzeller/rpi-rgb-led-matrix/issues/1749
 - C# bindings: https://github.com/hzeller/rpi-rgb-led-matrix/issues/1828
 
-For language bindings, note that the main developers are not using them, so they will lag. Your
-patience is appreciated, and help is welcome :)
+For language bindings, note that the main developers are not using them, so they will lag.
+Your patience is appreciated, and help is welcome :)
 
 Once you have read all this, if you still have a bug to file, you can delete this text and go ahead.
