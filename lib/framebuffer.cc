@@ -631,29 +631,38 @@ void Framebuffer::Clear() {
   }
 }
 
-// Do CIE1931 luminance correction and scale to output bitplanes
-static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
-  float out_factor = ((1 << internal::Framebuffer::kBitPlanes) - 1);
-  float v = (float) c * brightness / 255.0;
-  return roundf(out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3)));
-}
-
 struct ColorLookup {
   uint16_t color[256];
 };
-static ColorLookup *CreateLuminanceCIE1931LookupTable() {
-  ColorLookup *for_brightness = new ColorLookup[100];
-  for (int c = 0; c < 256; ++c)
-    for (int b = 0; b < 100; ++b)
-      for_brightness[b].color[c] = luminance_cie1931(c, b + 1);
 
-  return for_brightness;
-}
+class ColorLookupTable {
+  public:
+    static const ColorLookup &GetLookup(uint8_t brightness) {
+      static ColorLookupTable instance;
+      return instance.lookups_[brightness - 1];
+    }
 
-static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
-  static ColorLookup *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-  return luminance_lookup[brightness - 1].color[c];
-}
+    
+  private:
+    // Do CIE1931 luminance correction and scale to output bitplanes
+    static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
+      float out_factor = ((1 << internal::Framebuffer::kBitPlanes) - 1);
+      float v = (float) c * brightness / 255.0;
+      return roundf(out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3)));
+    }
+
+    ColorLookupTable() {
+      for (int c = 0; c < 256; ++c)
+        for (int b = 0; b < 100; ++b)
+          lookups_[b].color[c] = luminance_cie1931(c, b + 1);
+    }
+
+    ColorLookup lookups_[100]{};
+  };
+  
+  static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
+    return ColorLookupTable::GetLookup(brightness).color[c];
+  }
 
 // Non luminance correction. TODO: consider getting rid of this.
 static inline uint16_t DirectMapColor(uint8_t brightness, uint8_t c) {
