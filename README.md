@@ -794,8 +794,12 @@ third-party 64x64 matrices…check datasheet).
 
 ### Old Adafruit HAT/Bonnet (without)
 
-It is a little more advanced hack, so it is only really for people who are
-comfortable with this kind of thing.
+Newer HAT/Bonnet versions have a special pad for the E-line next to the IDC socket
+which makes this mod easily doable with a bit of solder. For details, refer to 
+[the Adafruit page on driving matrices](https://learn.adafruit.com/adafruit-rgb-matrix-plus-real-time-clock-hat-for-raspberry-pi/driving-matrices).
+
+For older HATs, the only option is a little more advanced hack, so it's only really 
+for people who are comfortable with this kind of thing.
 First, you have to figure out which is the input of the E-Line on your matrix
 (they seem to be either on Pin 4 or Pin 8 of the IDC connector).
 You need to disconnect that Pin from the ground plane (e.g. with an Exacto
