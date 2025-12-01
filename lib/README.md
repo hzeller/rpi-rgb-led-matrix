@@ -226,7 +226,7 @@ in the options struct in C++ or Python.
   options.pixel_mapper_config = "Rotate:90";
 ```
 
-#### Feature remap mapper (experimental)
+### Feature remap mapper (experimental)
 
 Please look at https://github.com/hzeller/rpi-rgb-led-matrix/pull/1478 
 This is a placeholder until we have more documentation.
@@ -262,6 +262,12 @@ Last panel on second chain is not used
 8 8 9 9
 ```
 
+<img width="400" height="587" alt="image" src="https://github.com/user-attachments/assets/8e50dfba-cb2c-4554-9038-73b5bb19fcfd" />
+
+```
+That's how it should work. You need to map all panels (end of chain 3), so you must discard last 6 panels:
+ --led-pixel-mapper='Remap:192,128|0,0s|0,32s|...|112,32n|112,0n|0,0x|0,0x|0,0x|0,0x|0,0x|0,0x'
+```
 
 ### Writing your own mappers
 
@@ -301,7 +307,7 @@ Please see https://github.com/hzeller/rpi-rgb-led-matrix/issues/1732
 
 
 
-#### Multiplex Mappers
+### Multiplex Mappers
 
 Sometimes you even need this for the panel itself: In some panels
 (typically the 'outdoor panels', often with 1:4 multiplexing) the pixels
