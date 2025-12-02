@@ -49,7 +49,7 @@ class SlackStatus:
             )
             raw = r.json()["profile"]
 
-            if raw["status_text"] and raw["status_text"] != "":
+            if raw["status_text"]:
                 self.status = raw["status_text"]
                 self.active = True
                 for substring in self.exclude:

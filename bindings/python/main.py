@@ -17,7 +17,7 @@ from secrets import SLACK_USER_ID, SLACK_TOKEN, LAT, LON
 path = os.path.dirname(__file__) + "/"
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.INFO,
     filename=path + "log.txt",
     format="[%(asctime)s] %(levelname)-8s (%(name)s) %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
@@ -63,10 +63,8 @@ if __name__ == "__main__":
     main_app = SlackStatus(matrix.CreateFrameCanvas(), SLACK_USER_ID, SLACK_TOKEN)
     apps = list()
     apps.append(DVD(matrix.CreateFrameCanvas()))
-    apps.append(BinaryClock(matrix.CreateFrameCanvas()))
     apps.append(Stocks(matrix.CreateFrameCanvas(), "NVDA"))
     apps.append(Stocks(matrix.CreateFrameCanvas(), "VTI"))
-    apps.append(Weather(matrix.CreateFrameCanvas(), LAT, LON))
     apps.append(Earth(matrix.CreateFrameCanvas()))
     apps.append(ImageViewer(matrix.CreateFrameCanvas(), path + "images/nvidia.png"))
     t1.join()
