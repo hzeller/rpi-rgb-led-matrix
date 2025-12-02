@@ -1,31 +1,16 @@
-﻿C# bindings for RGB Matrix library
+C# bindings for RGB Matrix library
 ======================================
 
 Building
 --------
 
-To build the C# wrapper for the RGB Matrix C library you need to first have mono installed. 
+To build the C# wrapper for the RGB Matrix C library you need to first have __.NET SDK__ installed. 
 
-### Install Mono
+### Install .NET SDK
 
-```shell
-$ sudo apt-get update
-$ sudo apt-get install mono-complete
-```
+`sudo apt install dotnet6` should work in most cases.  
+For some old distributions, read [docs](https://learn.microsoft.com/dotnet/core/install/linux)
 
-Then, in the root directory for the matrix library type
+Then, in the `bindings/c#` directory type: `dotnet build`
 
-```shell
-make build-csharp
-```
-
-To run the example applications in the c#\examples folder
-
-```shell
-sudo mono minimal-example.exe
-```
-
-Notes
---------
-
-C# applications look for libraries in the working directory of the application. To use this library for your own projects you will need to ensure you have RGBLedMatrix.dll and librgbmatrix.so in the same folder as your exe.
+To run the example applications in the c#\examples\EXAMPLE folder: `sudo dotnet run`
