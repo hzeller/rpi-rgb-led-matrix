@@ -93,7 +93,7 @@ If you only connect one panel or have one chain, connect it to
 To make things quicker to navigate visually, each chain is marked with a
 separate icon:
 
-`[1]`=:smile:, `[2]`=:boom: and `[3]`=:droplet: ; signals that go to all
+`[1]`= :smile:, `[2]`= :boom: and `[3]`= :droplet: ; signals that go to all
 chains have all icons.
 
 |Connection                        | Pin | Pin |  Connection
