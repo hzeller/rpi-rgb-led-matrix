@@ -3,7 +3,7 @@ namespace RPiRgbLEDMatrix;
 /// <summary>
 /// Represents a canvas whose pixels can be manipulated.
 /// </summary>
-public class RGBLedCanvas
+public class RGBLedCanvas : IRGBLedCanvas
 {
     // This is a wrapper for canvas no need to implement IDisposable here 
     // because RGBLedMatrix has ownership and takes care of disposing canvases
@@ -102,6 +102,13 @@ public class RGBLedCanvas
     /// <param name="spacing">Additional spacing between characters.</param>
     /// <param name="vertical">Whether to draw the text vertically.</param>
     /// <returns>How many pixels was advanced on the screen.</returns>
-    public int DrawText(RGBLedFont font, int x, int y, Color color, string text, int spacing = 0, bool vertical = false) =>
-        font.DrawText(_canvas, x, y, color, text, spacing, vertical);
+    public int DrawText(RGBLedFont font, int x, int y, Color color, string text, int spacing = 0, bool vertical = false)
+    {
+        if (font is not RGBLedFont rgbLedFont)
+        {
+            throw new ArgumentException("RGBLedFont only supported");
+        }
+
+        return rgbLedFont.DrawText(_canvas, x, y, color, text, spacing, vertical);
+    }
 }

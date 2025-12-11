@@ -6,7 +6,7 @@ namespace RPiRgbLEDMatrix;
 /// <summary>
 /// Represents a RGB matrix.
 /// </summary>
-public class RGBLedMatrix : IDisposable
+public class RGBLedMatrix : IDisposable, IRGBLedMatrix
 {
     private IntPtr matrix;
     private bool disposedValue = false;
@@ -54,10 +54,10 @@ public class RGBLedMatrix : IDisposable
         }
         finally
         {
-            if(options.HardwareMapping is not null) Marshal.FreeHGlobal(opt.hardware_mapping);
-            if(options.LedRgbSequence is not null) Marshal.FreeHGlobal(opt.led_rgb_sequence);
-            if(options.PixelMapperConfig is not null) Marshal.FreeHGlobal(opt.pixel_mapper_config);
-            if(options.PanelType is not null) Marshal.FreeHGlobal(opt.panel_type);
+            if (options.HardwareMapping is not null) Marshal.FreeHGlobal(opt.hardware_mapping);
+            if (options.LedRgbSequence is not null) Marshal.FreeHGlobal(opt.led_rgb_sequence);
+            if (options.PixelMapperConfig is not null) Marshal.FreeHGlobal(opt.pixel_mapper_config);
+            if (options.PanelType is not null) Marshal.FreeHGlobal(opt.panel_type);
         }
     }
 
@@ -65,14 +65,14 @@ public class RGBLedMatrix : IDisposable
     /// Creates a new backbuffer canvas for drawing on.
     /// </summary>
     /// <returns>An instance of <see cref="RGBLedCanvas"/> representing the canvas.</returns>
-    public RGBLedCanvas CreateOffscreenCanvas() => new(led_matrix_create_offscreen_canvas(matrix));
+    public IRGBLedCanvas CreateOffscreenCanvas() => new RGBLedCanvas(led_matrix_create_offscreen_canvas(matrix));
 
     /// <summary>
     /// Returns a canvas representing the current frame buffer.
     /// </summary>
     /// <returns>An instance of <see cref="RGBLedCanvas"/> representing the canvas.</returns>
     /// <remarks>Consider using <see cref="CreateOffscreenCanvas"/> instead.</remarks>
-    public RGBLedCanvas GetCanvas() => new(led_matrix_get_canvas(matrix));
+    public IRGBLedCanvas GetCanvas() => new RGBLedCanvas(led_matrix_get_canvas(matrix));
 
     /// <summary>
     /// Swaps this canvas with the currently active canvas. The active canvas
@@ -81,8 +81,17 @@ public class RGBLedMatrix : IDisposable
     /// This operation guarantees vertical synchronization.
     /// </summary>
     /// <param name="canvas">Backbuffer canvas to swap.</param>
-    public void SwapOnVsync(RGBLedCanvas canvas) =>
-        canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
+    public void SwapOnVsync(IRGBLedCanvas canvas)
+    {
+        if (canvas is RGBLedCanvas ca)
+        {
+            ca._canvas = led_matrix_swap_on_vsync(matrix, ca._canvas);
+        }
+        else
+        {
+            throw new ArgumentException("Does not support implementation other than RGBLedCanvas");
+        }
+    }
 
     /// <summary>
     /// The general brightness of the matrix.
