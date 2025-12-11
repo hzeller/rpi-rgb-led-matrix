@@ -9,12 +9,21 @@ string text = "Hello World!";
 if (args.Length > 1)
     text = args[1];
 
+// Set this to apropriate settings for your matrix
+var options = new RGBLedMatrixOptions()
+{
+    Brightness= 80,
+    Cols= 64,
+    Rows= 64,
+    GpioSlowdown= 4
+};
 
-using var matrix = new RGBLedMatrix(32, 2, 1);
+using var matrix = new RGBLedMatrix(options);
+
 var canvas = matrix.CreateOffscreenCanvas();
 using var font = new RGBLedFont(args[0]);
 
-canvas.DrawText(font, 1, 6, new Color(0, 255, 0), text);
+canvas.DrawText(font, 1, 16, new Color(0, 255, 0), text);
 matrix.SwapOnVsync(canvas);
 
 // run until user presses Ctrl+C
