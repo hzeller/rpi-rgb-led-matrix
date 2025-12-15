@@ -172,8 +172,8 @@ struct RGBLedRuntimeOptions {
   // even offered via the command line flags.
   // ----------
 
-  // Thre are three possible values here
-  //   -1 : don't leave choise of becoming daemon to the command line parsing.
+  // There are three possible values here
+  //   -1 : don't leave choice of becoming daemon to the command line parsing.
   //        If set to -1, the --led-daemon option is not offered.
   //    0 : do not becoma a daemon, run in forgreound (default value)
   //    1 : become a daemon, run in background.
@@ -333,6 +333,9 @@ void led_canvas_clear(struct LedCanvas *canvas);
 /** Fill matrix with given color. */
 void led_canvas_fill(struct LedCanvas *canvas, uint8_t r, uint8_t g, uint8_t b);
 
+/** Fill subsection of matrix with given color. */
+void led_canvas_subfill(struct LedCanvas *canvas, int x, int y,
+                           int width, int height, uint8_t r, uint8_t g, uint8_t b);
 /*** API to provide double-buffering. ***/
 
 /**
@@ -359,7 +362,7 @@ struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
 uint8_t led_matrix_get_brightness(struct RGBLedMatrix *matrix);
 void led_matrix_set_brightness(struct RGBLedMatrix *matrix, uint8_t brightness);
 
-// Utility function: set an image from the given buffer containting pixels.
+// Utility function: set an image from the given buffer containing pixels.
 //
 // Draw image of size "image_width" and "image_height" from pixel at
 // canvas-offset "canvas_offset_x", "canvas_offset_y". Image will be shown

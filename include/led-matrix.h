@@ -207,7 +207,7 @@ public:
   // -- Double- and Multibuffering.
 
   // Create a new buffer to be used for multi-buffering. The returned new
-  // Buffer implements a Canvas with the same size of thie RGBMatrix.
+  // Buffer implements a Canvas with the same size as this RGBMatrix.
   // You can use it to draw off-screen on it, then swap it with the active
   // buffer using SwapOnVSync(). That would be classic double-buffering.
   //
@@ -386,7 +386,8 @@ public:
                          Color *colors);
   virtual void Clear();
   virtual void Fill(uint8_t red, uint8_t green, uint8_t blue);
-
+  virtual void SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue);
+  
 private:
   friend class RGBMatrix;
 
@@ -409,8 +410,8 @@ struct RuntimeOptions {
   // even offered via the command line flags.
   // ----------
 
-  // Thre are three possible values here
-  //   -1 : don't leave choise of becoming daemon to the command line
+  // There are three possible values here
+  //   -1 : don't leave choice of becoming daemon to the command line
   //        parsing. If set to -1, the --led-daemon option is not offered.
   //    0 : do not becoma a daemon, run in forgreound (default value)
   //    1 : become a daemon, run in background.
@@ -481,7 +482,7 @@ int main(int argc, char **argv) {
 // This parses the flags from argv and updates the structs with the parsed-out
 // values. Structs can be NULL if you are not interested in it.
 //
-// The recongized flags are removed from argv if "remove_consumed_flags" is
+// The recognized flags are removed from argv if "remove_consumed_flags" is
 // true; this simplifies your command line processing for the remaining options.
 //
 // Returns 'true' on success, 'false' if there was flag parsing problem.

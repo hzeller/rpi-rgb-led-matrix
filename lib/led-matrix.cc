@@ -585,20 +585,51 @@ bool RGBMatrix::Impl::ApplyPixelMapper(const PixelMapper *mapper) {
   }
   PixelDesignatorMap *new_mapper = new PixelDesignatorMap(
     new_width, new_height, shared_pixel_mapper_->GetFillColorBits());
-  for (int y = 0; y < new_height; ++y) {
-    for (int x = 0; x < new_width; ++x) {
-      int orig_x = -1, orig_y = -1;
-      mapper->MapVisibleToMatrix(old_width, old_height,
-                                 x, y, &orig_x, &orig_y);
-      if (orig_x < 0 || orig_y < 0 ||
-          orig_x >= old_width || orig_y >= old_height) {
-        fprintf(stderr, "Error in PixelMapper: (%d, %d) -> (%d, %d) [range: "
-                "%dx%d]\n", x, y, orig_x, orig_y, old_width, old_height);
-        continue;
+  switch (mapper->GetMappingType()) {
+    case PixelMapper::VisibleToMatrix:
+      for (int y = 0; y < new_height; ++y) {
+        for (int x = 0; x < new_width; ++x) {
+          int orig_x = -1, orig_y = -1;
+          mapper->MapVisibleToMatrix(old_width, old_height,
+                                     x, y, &orig_x, &orig_y);
+          if (orig_x < 0 || orig_y < 0 ||
+              orig_x >= old_width || orig_y >= old_height) {
+            fprintf(stderr, "Error in PixelMapper: (%d, %d) -> (%d, %d) [range: "
+                    "%dx%d]\n", x, y, orig_x, orig_y, old_width, old_height);
+            continue;
+          }
+          const internal::PixelDesignator *orig_designator;
+          orig_designator = shared_pixel_mapper_->get(orig_x, orig_y);
+          *new_mapper->get(x, y) = *orig_designator;
+        }
       }
-      const internal::PixelDesignator *orig_designator;
-      orig_designator = shared_pixel_mapper_->get(orig_x, orig_y);
-      *new_mapper->get(x, y) = *orig_designator;
+      break;
+    case PixelMapper::MatrixToVisible: {
+      bool collision_reported = false;
+      for (int y = 0; y < old_height; ++y) {
+        for (int x = 0; x < old_width; ++x) {
+          int new_x = -1, new_y = -1;
+          if (mapper->MapMatrixToVisible(old_width, old_height,
+                                         x, y, &new_x, &new_y)) {
+            if (new_x < 0 || new_y < 0 ||
+                new_x >= new_width || new_y >= new_height) {
+              fprintf(stderr, "Error in PixelMapper MapMatrixToVisible: (%d, %d) "
+                      "-> (%d, %d) [range: %dx%d]\n",
+                      x, y, new_x, new_y, new_width, new_height);
+              continue;
+            }
+            const internal::PixelDesignator *orig_designator;
+            orig_designator = shared_pixel_mapper_->get(x, y);
+            internal::PixelDesignator *new_designator = new_mapper->get(new_x, new_y);
+            if (new_designator->gpio_word >= 0 && !collision_reported) {
+              fprintf(stderr, "Warning: MapMatrixToVisible: %s mapped twice to the same pixel (%d, %d) -> (%d, %d)\n", mapper->GetName(), x, y, new_x, new_y);
+              collision_reported = true;
+            }
+            *new_designator = *orig_designator;
+          }
+        }
+      }
+      break;
     }
   }
   delete shared_pixel_mapper_;
@@ -657,7 +688,7 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
   }
 
   // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
-  // on supproted architectures, -1 will emit memory barier (DSB ST) after GPIO write
+  // on supported architectures, -1 will emit memory barier (DSB ST) after GPIO write
   if (runtime_options.gpio_slowdown < (LED_MATRIX_ALLOW_BARRIER_DELAY ? -1 : 0)
       || runtime_options.gpio_slowdown > 10) {
     fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
@@ -786,6 +817,9 @@ void FrameCanvas::SetPixels(int x, int y, int width, int height,
 void FrameCanvas::Clear() { return frame_->Clear(); }
 void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   frame_->Fill(red, green, blue);
+}
+void FrameCanvas::SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue) {
+  frame_->SubFill(x, y, width, height, red, green, blue);
 }
 bool FrameCanvas::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
 uint8_t FrameCanvas::pwmbits() { return frame_->pwmbits(); }

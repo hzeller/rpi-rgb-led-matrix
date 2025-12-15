@@ -172,7 +172,7 @@ DEFINES+=$(USER_DEFINES)
 
 DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
-CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES) -march=native
+CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES)
 CXXFLAGS=$(CFLAGS) -fno-exceptions -std=c++11
 
 all : $(TARGET).a $(TARGET).so.1

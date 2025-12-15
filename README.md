@@ -63,8 +63,17 @@ Until this wiki has its own confirmed list of working panels, you can refer to
 this list: https://github.com/board707/DMD_STM32/wiki/Led_drivers and assume
 that all supported panels there should work with this library, or could work
 with minimal work to create a pixel mapper.  
-Please do refer to --led-multiplexing=<0..17> mentioned below and try all values.
+Please do refer to --led-multiplexing=<0..17> mentioned below and try all values. \
+2025/11 update: DMD_STM32 has started adding experimental support for some PWM panels.
+These should be labelled as "special" in the table above. They are not supported by this
+lib, as it only supports non PWM panels (until someone contributes PWM support).
 
+PWM/E-PWM/S-PWM Panels
+----------------------
+Newer PWM panels are not currently supported by this lib, but support would really be appreciated.
+- https://github.com/hzeller/rpi-rgb-led-matrix/pull/1353 is one early attempt that needs testing/updating
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/466 is a list of spec sheets
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/1825 is the master bug tracking PWM efforts
 
 Raspberry Pi up to 4 supported
 ------------------------------
@@ -80,7 +89,7 @@ and https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
 The Compute Module can drive **up to 6 chains in parallel**.
-The Raspberry Pi 2 and 3 are faster and generally perferred to the older
+The Raspberry Pi 2 and 3 are faster and generally preferred to the older
 models (and the Pi Zero). With the faster models, the panels sometimes
 can't keep up with the speed; check out
 this [troubleshooting section](#troubleshooting) what to do.
@@ -113,7 +122,7 @@ Flag                                | Descriptio
 `--led-cols`          | Columns in the LED matrix, the 'width'.
 `--led-rows`          | Rows in the LED matrix, the 'height'.
 `--led-multiplexing`  | In particular bright outdoor panels with small multiplex ratios require this. Often an indicator: if there are fewer address lines than expected: ABC (instead of ABCD) for 32 high panels and ABCD (instead of ABCDE) for 64 high panels.
-`--led-row-addr-type` | Adressing of rows; in particular panels with only AB address lines might indicate that this is needed.
+`--led-row-addr-type` | Addressing of rows; in particular panels with only AB address lines might indicate that this is needed.
 `--led-panel-type`    | Chipset of the panel. In particular if it doesn't light up at all, you might need to play with this option because it indicates that the panel requires a particular initialization sequence.
 
 Panels can be chained by connecting the output of one panel to the input of
@@ -159,6 +168,30 @@ This documentation is split into parts that help you through the process
     a command line option [described below](#if-you-have-an-adafruit-hat-or-bonnet)
 - [All the command line options you can give to demo and in turn use in your library code](./examples-api-use).
 
+Python Support
+--------------
+The python bindings are work in progress and being updated as of 2025/11, please subscribe to this bug and help out if you can:
+https://github.com/hzeller/rpi-rgb-led-matrix/issues/1749.
+
+The entire repository itself is PIP-able and can be installed as a package directly.
+```
+pip install git+https://github.com/hzeller/rpi-rgb-led-matrix
+```
+While convenient, this won't install the demo executables (discussed below) which can be helpful for testing hardware.
+If you want to have `demo` available, clone the repo, build, then run pip against the local clone.
+```
+git clone https://github.com/hzeller/rpi-rgb-led-matrix
+cd rpi-rgb-led-matrix; make
+pip install .
+```
+
+Rpi Hardware Support
+--------------------
+While this code should still work on rPi1 or Rpi0, those are underpowered and not recommended. An ESP32 is cheaper and faster.  
+Rpi2 is honestly old and slow too.  
+Rpi3 / Rpi3a / Rpi0 2wl will work for most displays but will be slow if you are rotating a huge display in a mapper (Rpi0 2wl is a slightly faster version of Rpi3)
+Rpi4 is the fastest supported chip which will need a higher slowdown gpio value to avoid overwhelming panels (if they display garbage)
+Rpi5 is not officially supported as of 2025/11, but see https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603
 
 Let's do it
 ------------
@@ -545,8 +578,8 @@ This will allow higher refresh rate (or same refresh rate with increased
 `--led-pwm-lsb-nanoseconds`).
 The disadvantage could be slightly lower brightness, in particular for longer
 chains, and higher CPU use.
-CPU use is not of concern for Rasbperry Pi 2 or 3 (as we run on a dedicated
-core anyway) but proably for Raspberry Pi 1 or Pi Zero.
+CPU use is not of concern for Raspberry Pi 2 or 3 (as we run on a dedicated
+core anyway) but probably for Raspberry Pi 1 or Pi Zero.
 Default: no dithering; if you have a Pi 3 and struggle with low frame-rate due
 to high multiplexing panels (1:16 or 1:32) or long chains, it might be
 worthwhile to try.
@@ -654,10 +687,20 @@ In general, run a minimal configuration on your Pi.
     happening that would be very appreciated. Also, you might know a minimal
     Linux distribution that is more suited for near realtime applications ?
 
+  * When attempting to connect sensors like the DHT22 to available GPIO pins
+    and display their results on your LED panel, you might encounter an issue
+    where the sensors fail to provide any data due to the Raspberry Pi resource
+    limitations. This situation is particularly evident on older models like the
+    Raspberry Pi 1 B. To address this, it is advisable to select a Raspberry Pi
+    model with higher resources to ensure proper functionality.
+
+
 The default install of **[Raspbian Lite][raspbian-lite]** or **[DietPi]**
 seem to be good starting points, as they have a reasonably minimal
 configuration to begin with. Raspbian Lite is not as lite anymore
-as it used to be; I prefer DietPi these days.
+as it used to be; I prefer DietPi these days. Note that any of the above
+changes to `/boot/...` must be applied to `/boot/firmware/...` if you are on a
+non-Raspbian distro (e.g. Ubuntu for ARM).
 
 ### Bad interaction with Sound
 If sound is enabled on your Pi, this will not work together with the LED matrix,
@@ -777,8 +820,12 @@ third-party 64x64 matrices…check datasheet).
 
 ### Old Adafruit HAT/Bonnet (without)
 
-It is a little more advanced hack, so it is only really for people who are
-comfortable with this kind of thing.
+Newer HAT/Bonnet versions have a special pad for the E-line next to the IDC socket
+which makes this mod easily doable with a bit of solder. For details, refer to 
+[the Adafruit page on driving matrices](https://learn.adafruit.com/adafruit-rgb-matrix-plus-real-time-clock-hat-for-raspberry-pi/driving-matrices).
+
+For older HATs, the only option is a little more advanced hack, so it's only really 
+for people who are comfortable with this kind of thing.
 First, you have to figure out which is the input of the E-Line on your matrix
 (they seem to be either on Pin 4 or Pin 8 of the IDC connector).
 You need to disconnect that Pin from the ground plane (e.g. with an Exacto
@@ -794,7 +841,7 @@ with traces under the chip, this involves lifting a leg from the
 HCT245 (figure out a free bus driver from the schematic). If all of the
 above makes sense to you, you have the Ninja level to do it!
 
-It might be more convienent at this point to consider the [Active3 adapter](./adapter/active-3)
+It might be more convenient at this point to consider the [Active3 adapter](./adapter/active-3)
 that has that covered already.
 
 Running as root
@@ -829,11 +876,11 @@ about 1'000'000 write operations have to happen every second!
 We can't use hardware support for writing these as DMA is too slow,
 thus the constant CPU use on an RPi is roughly 30-40% of one core.
 Keep that in mind if you plan to run other things on this computer (This
-is less noticable on Raspberry Pi, Version 2 or 3 that has more cores).
+is less noticeable on Raspberry Pi, Version 2 or 3 that has more cores).
 
 Also, the output quality is susceptible to other heavy tasks running on that
-computer - there might be changes in the overall brigthness when this affects
-the referesh rate.
+computer - there might be changes in the overall brightness when this affects
+the refresh rate.
 
 If you have a loaded system and one of the newer Pis with 4 cores, you can
 reserve one core just for the refresh of the display. Add:

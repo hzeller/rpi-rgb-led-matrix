@@ -88,12 +88,12 @@ Then for each first panel of a chain there is a set of
 They are marked `[1]`, `[2]` and `[3]` for chain 1, 2, and 3 below.
 
 If you only connect one panel or have one chain, connect it to
-`[1]` (:smile:); if you use parallel chains, add the other `[2]` and `[3]`.
+`[1]` ( :smile: ); if you use parallel chains, add the other `[2]` and `[3]`.
 
 To make things quicker to navigate visually, each chain is marked with a
 separate icon:
 
-`[1]`=:smile:, `[2]`=:boom: and `[3]`=:droplet: ; signals that go to all
+`[1]`= :smile:, `[2]`= :boom: and `[3]`= :droplet: ; signals that go to all
 chains have all icons.
 
 |Connection                        | Pin | Pin |  Connection
@@ -256,7 +256,7 @@ guidelines:
      at the board are a good choice (two, because lower parallel ESR; also
      fits easier under board).
      (In reality, we need of course less, as the highest ripple comes with
-      50% duty cyle thus half the current; also the input is recharching all
+      50% duty cycle thus half the current; also the input is recharching all
       the time. But: as engineer plan for maximum and then some; in the picture
       above I am using 1x3300uF per panel and it works fine).
 

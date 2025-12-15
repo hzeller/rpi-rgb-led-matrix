@@ -226,6 +226,49 @@ in the options struct in C++ or Python.
   options.pixel_mapper_config = "Rotate:90";
 ```
 
+### Feature remap mapper (experimental)
+
+Please look at https://github.com/hzeller/rpi-rgb-led-matrix/pull/1478 
+This is a placeholder until we have more documentation.
+
+each segment is mapped to arbitrary position and orientation on canvas
+
+My use case is two separate displays connected as chains, each with different geometry. But it shall handle almost all possible panel configuration
+
+Syntax is:
+```
+--led-pixel-mapper='Remap:<new_width>,<new_height>|<panel0_x>,<panel0_y><panel0_orientation>|<panel1_x>,<panel1_y><panel1_orientation>'
+```
+new_width, new_height - size of created canvas. It can be both larger and smaller than old canvas.
+panel0_x, panel0_y - upper-left corner of remapped panel
+panel0_orientation - `n`,`s`,`e`,`w` for panel orientation, `x` to discard panel
+
+Exactly one entry must be specified for each LED panel (chain * parallel entries). 
+Mapping may be partially outside new canvas (maybe useful for something?)
+Unused positions must be discarded (`0,0x`) - useful if chains are of different length
+It is possible let some canvas space unused (no panel mapped to it). Writes to this area will be ignored.
+
+For example:
+```
+ --led-cols=16 --led-rows=8 --led-chain=5 --led-parallel=2 --led-pixel-mapper='Remap:40,32|0,0e|8,0e|16,0e|24,0e|32,0e|0,16n|16,16n|0,24n|16,24n|0,0x'
+```
+First chain is 5 panels in line, top of the panel is pointing right, 40x16 pixels
+Second chain is 2x2 square, panels pointing up, 32x16 pixels, top-left is 0,16 in canvas
+Last panel on second chain is not used
+```
+1 2 3 4 5
+1 2 3 4 5
+6 6 7 7 
+8 8 9 9
+```
+
+<img width="400" height="587" alt="image" src="https://github.com/user-attachments/assets/8e50dfba-cb2c-4554-9038-73b5bb19fcfd" />
+
+```
+That's how it should work. You need to map all panels (end of chain 3), so you must discard last 6 panels:
+ --led-pixel-mapper='Remap:192,128|0,0s|0,32s|...|112,32n|112,0n|0,0x|0,0x|0,0x|0,0x|0,0x|0,0x'
+```
+
 ### Writing your own mappers
 
 If you want to write your own mappers, e.g. if you have a fancy panel
@@ -256,7 +299,15 @@ as-is to your `SetParameters()` implementation
 (e.g. using `--led-pixel-mapper="Rotate:90"`, the `Rotate` mapper
 gets a parameter string `"90"` as parameter).
 
-#### Multiplex Mappers
+#### Custom mapper example from barryVDs
+
+Please see https://github.com/hzeller/rpi-rgb-led-matrix/issues/1732
+
+![446766687-ef343583-fcf4-47f8-b784-abc83c458c7f](https://github.com/user-attachments/assets/f337e39b-9264-4e4d-bb97-f54686a6e086)
+
+
+
+### Multiplex Mappers
 
 Sometimes you even need this for the panel itself: In some panels
 (typically the 'outdoor panels', often with 1:4 multiplexing) the pixels

@@ -201,7 +201,7 @@ public:
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     // Now we have a 128x4 matrix
-    int offset = ((y%4)/2) == 0 ? -1 : 1;// Add o substract
+    int offset = ((y%4)/2) == 0 ? -1 : 1;// Add or substract
     int deltaOffset = offset < 0 ? 7:8;
     int deltaColumn = ((y%8)/4)== 0 ? 64 : 0;
 
@@ -293,7 +293,7 @@ public:
 
 
 /*
- * Vairous P10 1R1G1B Outdoor implementations for 16x16 modules with separate
+ * Various P10 1R1G1B Outdoor implementations for 16x16 modules with separate
  * RGB LEDs, e.g.:
  * https://www.ledcontrollercard.com/english/p10-outdoor-rgb-led-module-160x160mm-dip.html
  *
@@ -525,6 +525,31 @@ class DoubleZMultiplexMapper : public MultiplexMapperBase {
   };
 
 /*
+ * P4 Outdoor panel 80x40 pixels
+ * https://nl.aliexpress.com/item/1005003999341251.html?spm=a2g0o.order_list.order_list_main.11.408679d2q5LwTb&gatewayAdapt=glo2nld
+ */
+class P4Outdoor80x40Mapper : public MultiplexMapperBase {
+public:
+  P4Outdoor80x40Mapper() : MultiplexMapperBase("P4Outdoor80x40Mapper", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+
+    const int tile_width_ = 8;
+    const int tile_height_ = 10;
+    const int vblock_is_odd = (y / tile_height_) % 2;
+    const int hblock = x / tile_width_;
+
+    if (vblock_is_odd) {
+      *matrix_x = (x % tile_width_) + (2 * tile_width_ * hblock) + tile_width_;
+    } else {
+      // even tiles have reverse x-order
+      *matrix_x = -((x % tile_width_) - tile_width_ + 1) + (2 * tile_width_ * hblock);
+    }
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
+
+/*
  * Here is where the registration happens.
  * If you add an instance of the mapper here, it will automatically be
  * made available in the --led-multiplexing commandline option.
@@ -554,6 +579,7 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P10Outdoor32x16QuarterScanMapper());
   result->push_back(new P3Outdoor64x64MultiplexMapper());
   result->push_back(new DoubleZMultiplexMapper());
+  result->push_back(new P4Outdoor80x40Mapper());
   return result;
 }
 
