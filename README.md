@@ -71,9 +71,7 @@ lib, as it only supports non PWM panels (until someone contributes PWM support).
 PWM/E-PWM/S-PWM Panels
 ----------------------
 Newer PWM panels are not currently supported by this lib, but support would really be appreciated.
-- https://github.com/hzeller/rpi-rgb-led-matrix/pull/1353 is one early attempt that needs testing/updating
-- https://github.com/hzeller/rpi-rgb-led-matrix/issues/466 is a list of spec sheets
-- https://github.com/hzeller/rpi-rgb-led-matrix/issues/1825 is the master bug tracking PWM efforts
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/466 is the master bug tracking PWM efforts
 
 Raspberry Pi up to 4 supported
 ------------------------------
