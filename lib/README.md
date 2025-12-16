@@ -232,6 +232,24 @@ The flip usage (`StackToRow:F`) is mapped to:
 
 The modifiers can be combined if necessary.
 
+##### Example layout
+
+Using 64x32px panels, the following arrangement is a 64x256px display
+(visualized from the LED-side):
+```
+ ⌈I⌉\ ⌈I⌉\ ⌈I⌉\ ⌈I⌉<#1 |    ⌈O⌉\ ⌈O⌉\ ⌈O⌉\ ⌈O⌉
+ ⌊O⌋ \⌊O⌋ \⌊O⌋ \⌊O⌋    | #2>⌊I⌋ \⌊I⌋ \⌊I⌋ \⌊I⌋
+```
+
+This layout can be configured with:
+```
+V-mapper;Rotate:90;StackToRow:F;Rotate:180
+```
+The remap mapper can be used to describe this layout:
+```
+Remap:256,64|96,0w|64,0w|32,0w|0,0w|128,0e|160,0e|192,0e|224,0e
+```
+
 #### Combining Mappers
 
 You can chain multiple mappers in the configuration, by separating them
