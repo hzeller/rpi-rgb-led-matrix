@@ -283,6 +283,81 @@ private:
   int parallel_;
 };
 
+// Takes a vertically stacked parallel strands and display rearranges it into a
+// horizontal row of the same bands, optionally flipping every other band for
+// symmetry.
+//
+// Parameters (optional):
+//   - "Z": flip every other band (serpentine)
+//   - "F": flip the right half by 180° (for windmill symmetry)
+class StackToRowMapper : public PixelMapper {
+public:
+  StackToRowMapper() : z_(false), flip_right_(false), bands_(2) {}
+
+  virtual const char *GetName() const { return "StackToRow"; }
+
+  virtual bool SetParameters(int chain, int parallel, const char *param) {
+    bands_ = parallel;
+    z_ = false;
+    flip_right_ = false;
+    if (param && *param) {
+      for (const char *p = param; *p; ++p) {
+        const char c = *p;
+        if (c == ',' || c == ' ')
+          continue;
+        switch (c) {
+        case 'Z': case 'z': z_ = true; break;
+        case 'F': case 'f': flip_right_ = true; break;
+        default:
+          fprintf(stderr, "StackToRow: unknown parameter '%c' (use Z and/or F)\n", c);
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  virtual bool GetSizeMapping(int matrix_width, int matrix_height,
+                              int *visible_width, int *visible_height) const {
+    *visible_width = matrix_width * bands_;
+    *visible_height = matrix_height / bands_;
+    return true;
+  }
+
+  virtual void MapVisibleToMatrix(int matrix_width, int matrix_height, int x, int y,
+                                  int *matrix_x, int *matrix_y) const {
+    const int band_width = matrix_width;
+    const int band_height = matrix_height / bands_;
+    const int band = x / band_width;
+    const int x_in_band = x % band_width;
+    const int y_in_band = y;
+
+    int src_band = band;
+    int src_x = x_in_band;
+    int src_y = y_in_band;
+
+    // Optionally flip every other band (serpentine)
+    if (z_ && (band % 2 == 1)) {
+      src_x = band_width - 1 - src_x;
+      src_y = band_height - 1 - src_y;
+    }
+
+    // Optionally flip the right half by 180deg
+    if (flip_right_ && band >= bands_ / 2) {
+      src_x = band_width - 1 - src_x;
+      src_y = band_height - 1 - src_y;
+    }
+
+    *matrix_x = src_x;
+    *matrix_y = src_band * band_height + src_y;
+  }
+
+private:
+  bool z_;
+  bool flip_right_;
+  int bands_;
+};
+
 class RemapMapper : public PixelMapper {
 public:
   RemapMapper() {}
@@ -446,7 +521,6 @@ private:
 };
 
 
-
 typedef std::map<std::string, PixelMapper*> MapperByName;
 static void RegisterPixelMapperInternal(MapperByName *registry,
                                         PixelMapper *mapper) {
@@ -464,6 +538,7 @@ static MapperByName *CreateMapperMap() {
   RegisterPixelMapperInternal(result, new RotatePixelMapper());
   RegisterPixelMapperInternal(result, new UArrangementMapper());
   RegisterPixelMapperInternal(result, new VerticalMapper());
+  RegisterPixelMapperInternal(result, new StackToRowMapper());
   RegisterPixelMapperInternal(result, new MirrorPixelMapper());
   RegisterPixelMapperInternal(result, new RemapMapper());
   return result;
