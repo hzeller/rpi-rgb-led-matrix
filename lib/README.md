@@ -201,6 +201,55 @@ Without parameter, it mirrors horizontally. The parameter is a single character
   ./demo --led-pixel-mapper="Mirror:H"
 ```
 
+#### StackToRow
+
+The `StackToRow` mapper allows parallel strands to subsequently be mapped end-to-end.
+
+After using a combination of the other mappers, you may end up with a virtual
+layout similar to the following, where x and y increase to the right and down:
+```
+[ STRAND #1 ]
+[ STRAND #2 ]
+[ STRAND #3 ]
+[ STRAND #4 ]
+```
+The mapper can then be used to form the final end-to-end arrangement.
+
+The standard usage (`StackToRow`) is mapped to:
+```
+[ STRAND #1 ][ STRAND #2 ][ STRAND #3 ][ STRAND #4 ]
+```
+
+The serpentine usage (`StackToRow:Z`) is mapped to:
+```
+[ STRAND #1 ][ 2# ꓷNꓯꓤꓕS ][ STRAND #3 ][ ᔭ# ꓷNꓯꓤꓕS ]
+```
+
+The flip usage (`StackToRow:F`) is mapped to:
+```
+[ STRAND #1 ][ STRAND #2 ][ Ɛ# ꓷNꓯꓤꓕS ][ ᔭ# ꓷNꓯꓤꓕS ]
+```
+
+The modifiers can be combined if necessary.
+
+##### Example layout
+
+Using 64x32px panels, the following arrangement is a 64x256px display
+(visualized from the LED-side):
+```
+ ⌈I⌉\ ⌈I⌉\ ⌈I⌉\ ⌈I⌉<#1 |    ⌈O⌉\ ⌈O⌉\ ⌈O⌉\ ⌈O⌉
+ ⌊O⌋ \⌊O⌋ \⌊O⌋ \⌊O⌋    | #2>⌊I⌋ \⌊I⌋ \⌊I⌋ \⌊I⌋
+```
+
+This layout can be configured with:
+```
+V-mapper;Rotate:90;StackToRow:F;Rotate:180
+```
+The remap mapper can be used to describe this layout:
+```
+Remap:256,64|96,0w|64,0w|32,0w|0,0w|128,0e|160,0e|192,0e|224,0e
+```
+
 #### Combining Mappers
 
 You can chain multiple mappers in the configuration, by separating them
