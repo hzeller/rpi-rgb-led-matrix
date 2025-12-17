@@ -21,8 +21,13 @@ with the wiring when using the `rpi-rgb-led-matrix` code.
        support for an optional RTC (real time clock) which had to be disabled for most users 
        who wanted 3 channels instead of an RTC.
      * The new HD board with angled connectors (thinner footprint), is here: https://www.electrodragon.com/product/rgb-matrix-panel-drive-board-for-raspberry-pi-v2/ << **this is the recommended board for most users today**
-       
 ![399914418-713e2414-04f9-4fc3-86a2-cb576e29e057](https://github.com/user-attachments/assets/2bf3b1b9-aa24-4a0c-a587-842b92fdc5a0)
+    
+     * If you have an rpi0 2wl, this passive board was made specifically to be as small as possible: https://www.electrodragon.com/product/rpi-passive-3ch-rgb-matrix-drive-board-v0/
+       <img width="1000" height="606" alt="image" src="https://github.com/user-attachments/assets/f1d84ac5-a713-49b1-920d-603061b10bdd" />
+       <img width="1000" height="670" alt="image" src="https://github.com/user-attachments/assets/61e17396-6948-4510-a6a2-fb0e6da8fb0a" />
+
+
 
    * Another ready-to-use active-3 adapter is available also from Acme Systems ( https://www.acmesystems.it/HAT-A3 )
 
