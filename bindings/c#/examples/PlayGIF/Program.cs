@@ -6,6 +6,15 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
+var options = new RGBLedMatrixOptions()
+{
+    Cols = 128,
+    Rows = 64,
+    Parallel = 2,
+    GpioSlowdown = 2,
+    RowAddressType = 5
+};
+
 string path;
 
 // Check if the last command-line argument is provided and is a valid file
@@ -48,14 +57,7 @@ void PlayMedia(string mediaPath)
     using var image = Image.Load<Rgb24>(mediaPath);
 
     UserLogger.LogUser("Before matrix initialization:");
-    using var matrix = new RGBLedMatrix(new RGBLedMatrixOptions()
-    {
-        Cols = 128,
-        Rows = 64,
-        Parallel = 2,
-        GpioSlowdown = 2,
-        RowAddressType = 5
-    });
+    using var matrix = new RGBLedMatrix(options);
     var canvas = matrix.CreateOffscreenCanvas();
 
     image.Mutate(o => o.Resize(canvas.Width, canvas.Height));
@@ -97,14 +99,7 @@ void PlayStream(string streamPath)
         throw new InvalidOperationException("Failed to create FileStreamIO.");
 
     using var reader = new StreamReaderWrapper(io);
-    using var matrix = new RGBLedMatrix(new RGBLedMatrixOptions()
-    {
-        Cols = 128,
-        Rows = 64,
-        Parallel = 2,
-        GpioSlowdown = 2,
-        RowAddressType = 5
-    });
+    using var matrix = new RGBLedMatrix(options);
     var canvas = matrix.CreateOffscreenCanvas();
 
     var running = true;
