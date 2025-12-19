@@ -15,15 +15,11 @@ if (args.Length > 0 && File.Exists(args[^1]))
 }
 else
 {
-    Console.WriteLine("Invalid or missing file path. Please enter the path to a valid file:");
-    path = Console.ReadLine()!;
-
-    // Keep prompting until a valid file is provided
-    while (!File.Exists(path))
+    do
     {
-        Console.WriteLine("File does not exist. Please enter a valid file path:");
+        Console.WriteLine("Enter a path to a media file (GIF, PNG etc), or a stream file:");
         path = Console.ReadLine()!;
-    }
+    } while (!File.Exists(path));
 }
 
 // Check if the file is a stream
