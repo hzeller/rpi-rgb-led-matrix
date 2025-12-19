@@ -12,7 +12,7 @@ Keep this in mind when changing the C/C++ side.
 
 https://learn.microsoft.com/dotnet/api/system.runtime.interopservices.suppressgctransitionattribute
 */
-internal static class Bindings
+public static class Bindings
 {
     private const string Lib = "librgbmatrix.so.1";
 
@@ -85,4 +85,23 @@ internal static class Bindings
 
     [DllImport(Lib)]
     public static extern void draw_line(IntPtr canvas, int x0, int y0, int x1, int y1, byte r, byte g, byte b);
+
+    [DllImport(Lib)]
+    public static extern IntPtr stream_reader_create(IntPtr io);
+
+    [DllImport(Lib)]
+    public static extern void stream_reader_delete(IntPtr reader);
+
+    [DllImport(Lib)]
+    public static extern void stream_reader_rewind(IntPtr reader);
+
+    [DllImport(Lib)]
+    [return: MarshalAs(UnmanagedType.I1)]
+    public static extern bool stream_reader_get_next(IntPtr reader, IntPtr frame, out uint hold_time_us);
+
+    [DllImport(Lib)]
+    public static extern IntPtr file_stream_io_create(int fd);
+
+    [DllImport(Lib)]
+    public static extern void file_stream_io_delete(IntPtr io);
 }

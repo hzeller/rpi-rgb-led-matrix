@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 namespace RPiRgbLEDMatrix;
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-internal struct InternalRGBLedMatrixOptions
+public struct InternalRGBLedMatrixOptions // Change from 'internal' to 'public'
 {
     public IntPtr hardware_mapping;
     public int rows;
