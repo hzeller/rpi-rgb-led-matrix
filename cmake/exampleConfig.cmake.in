@@ -1,0 +1,14 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+include("${CMAKE_CURRENT_LIST_DIR}/exampleTargets.cmake")
+
+include(CMakePrintHelpers)
+
+cmake_print_variables(CMAKE_CURRENT_LIST_FILE)
+
+get_filename_component(EXAMPLE_CONFIG_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+set(example_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+set(example_LIBDIR "@PACKAGE_LIB_INSTALL_DIR@")

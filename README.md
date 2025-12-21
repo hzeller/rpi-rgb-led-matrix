@@ -1,3 +1,5 @@
+# **Working fork for testing updated Python binding build.**
+
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
@@ -20,9 +22,9 @@ The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org>, licensed with
 [GNU General Public License Version 2.0 (or any later version)](http://www.gnu.org/licenses/gpl-2.0.txt)
 (which means, if you use it in a product somewhere, you need to make the
 source and all your modifications available to the receiver of such product so
-that they have the freedom to adapt and improve). 
+that they have the freedom to adapt and improve).
 Yes, you are also allowed to use
-this code under the [GNU General Public License Version 3.0](http://www.gnu.org/licenses/gpl-3.0.txt) 
+this code under the [GNU General Public License Version 3.0](http://www.gnu.org/licenses/gpl-3.0.txt)
 which allows linking with Apache 2.0 code and LGPL-3.0 code.
 
 ## Discourse discussion group
@@ -49,11 +51,11 @@ you want to get started programming your own utils.
 
 Panels supported
 ----------------
-This library does not support PWM panels (which actually are better, but need 
+This library does not support PWM panels (which actually are better, but need
 a completely different driver).\
 It should support most other panels with direct addressing (3 to 5 address lines,
-ABC for 8x2=16 lines, ABCD for 16x2=32 lines, and ABCDE for 32x2=64 lines). 
-It also supports panels using shift registers for line addressing, also called ABC 
+ABC for 8x2=16 lines, ABCD for 16x2=32 lines, and ABCDE for 32x2=64 lines).
+It also supports panels using shift registers for line addressing, also called ABC
 panels up to 64 lines.\
 However some amount of panels have uncommon pixel layouts, especially the brighter
 panels and may require special pixel mappers (some are called zigzag or zagzig, see
@@ -62,7 +64,7 @@ https://rpi-rgb-led-matrix.discourse.group/t/p10rgb-3535-4s-zaggiz-1-4scan-abc-p
 Until this wiki has its own confirmed list of working panels, you can refer to
 this list: https://github.com/board707/DMD_STM32/wiki/Led_drivers and assume
 that all supported panels there should work with this library, or could work
-with minimal work to create a pixel mapper.  
+with minimal work to create a pixel mapper.
 Please do refer to --led-multiplexing=<0..17> mentioned below and try all values. \
 2025/11 update: DMD_STM32 has started adding experimental support for some PWM panels.
 These should be labelled as "special" in the table above. They are not supported by this
@@ -185,8 +187,8 @@ pip install .
 
 Rpi Hardware Support
 --------------------
-While this code should still work on rPi1 or Rpi0, those are underpowered and not recommended. An ESP32 is cheaper and faster.  
-Rpi2 is honestly old and slow too.  
+While this code should still work on rPi1 or Rpi0, those are underpowered and not recommended. An ESP32 is cheaper and faster.
+Rpi2 is honestly old and slow too.
 Rpi3 / Rpi3a / Rpi0 2wl will work for most displays but will be slow if you are rotating a huge display in a mapper (Rpi0 2wl is a slightly faster version of Rpi3)
 Rpi4 is the fastest supported chip which will need a higher slowdown gpio value to avoid overwhelming panels (if they display garbage)
 Rpi5 is not officially supported as of 2025/11, but see https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603
@@ -207,7 +209,7 @@ sudo examples-api-use/demo -D0
 
 ### Wiring / Boards
 
-Please see the [Adadpter Boards or Self Wiring](./adapter). 
+Please see the [Adadpter Boards or Self Wiring](./adapter).
 
 Summary is:
 - Yes you can self wire without level shifters and it will work most of the time, but if you're not in a hurry get a board
@@ -286,7 +288,7 @@ The default 1 (one) typically works fine, but often you have to even go further
 by setting it to 2 (two). If you have a Raspberry Pi with a slower processor
 (Model A, A+, B+, Zero), then a value of 0 (zero) might work and is desirable.
 
-If you find yourself needing very high values of slowdown like 8 for ABC 128x64 panels, 
+If you find yourself needing very high values of slowdown like 8 for ABC 128x64 panels,
 do try --led-row-addr-type=5 instead of --led-row-addr-type=3. Details in this bug:
 https://github.com/hzeller/rpi-rgb-led-matrix/issues/1773
 
@@ -386,7 +388,7 @@ Basic performance tips:
 will also go faster, although as you tune more options given above, their advantage will decrease.
 - 32x16 ABC panels are faster than ABCD which are faster than ABCDE, which are faster than 128x64 ABC panels
 (which do use 5 address lines, but over only 3 wires)
-- For 128x64 ABC speed on shift registers vs ABCDE 
+- For 128x64 ABC speed on shift registers vs ABCDE
 - Use at least an rPi3 (rPi4 is still slightly faster but may need --led-slowdown-gpio=2)
 
 Maximizing refresh rate to 300 or even 400Mhz refresh for 3x 128x64 panels:
@@ -397,7 +399,7 @@ by needing smaller slowdowns
 - To achieve 410Hz refresh for 3x 128x64 direct ABCDE panels, use this "~/rpi-rgb-led-matrix/examples-api-use/demo --led-rows=64 --led-cols=128 --led-chain=1 --led-parallel=3 --led-show-refresh --led-scan-mode=0 --led-pwm-bits=7 --led-pwm-lsb-nanoseconds=50 --led-pwm-dither-bits=1 -D0  --led-row-addr-type=0 --led-slowdown-gpio=1"
 - To achieve 350hz refresh for 3x 128x64 shift register panels, use this: "~/rpi-rgb-led-matrix/examples-api-use/demo --led-rows=64 --led-cols=128 --led-chain=1 --led-parallel=3 --led-show-refresh --led-scan-mode=0 --led-pwm-bits=7 --led-pwm-lsb-nanoseconds=50 --led-pwm-dither-bits=1 -D0  --led-row-addr-type=5 --led-slowdown-gpio=2"
 
-Please see this bug for discussion of ABC vs ABCDE and using --led-row-addr-type=5 instead of --led-row-addr-type=3: 
+Please see this bug for discussion of ABC vs ABCDE and using --led-row-addr-type=5 instead of --led-row-addr-type=3:
 https://github.com/hzeller/rpi-rgb-led-matrix/issues/1774#issuecomment-2860617056
 
 Maximum resolutions reasonably achievable:
@@ -819,10 +821,10 @@ third-party 64x64 matrices…check datasheet).
 ### Old Adafruit HAT/Bonnet (without)
 
 Newer HAT/Bonnet versions have a special pad for the E-line next to the IDC socket
-which makes this mod easily doable with a bit of solder. For details, refer to 
+which makes this mod easily doable with a bit of solder. For details, refer to
 [the Adafruit page on driving matrices](https://learn.adafruit.com/adafruit-rgb-matrix-plus-real-time-clock-hat-for-raspberry-pi/driving-matrices).
 
-For older HATs, the only option is a little more advanced hack, so it's only really 
+For older HATs, the only option is a little more advanced hack, so it's only really
 for people who are comfortable with this kind of thing.
 First, you have to figure out which is the input of the E-Line on your matrix
 (they seem to be either on Pin 4 or Pin 8 of the IDC connector).
@@ -932,7 +934,7 @@ A a few pictures from  https://github.com/marcmerlin :
 ![prev1280_140_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/2a621c91-4a84-4b4e-a9d2-092073cdee41)
 
 And probably the highest resolution build (384x256):
-![thumb1024_429_20200310_FastLED_RPIRGBPanel_GFX_384x256](https://github.com/user-attachments/assets/60114825-efc4-4fef-88b0-749b53fa17b8)  
+![thumb1024_429_20200310_FastLED_RPIRGBPanel_GFX_384x256](https://github.com/user-attachments/assets/60114825-efc4-4fef-88b0-749b53fa17b8)
 ![prev1280_551_20200310_FastLED_RPIRGBPanel_GFX_TableME_384x256](https://github.com/user-attachments/assets/94ea3c99-b751-4d12-8709-ef8b2bd197b9)
 
 https://www.youtube.com/watch?v=85PI2C6oBsQ
@@ -957,7 +959,7 @@ https://www.youtube.com/watch?v=85PI2C6oBsQ
 
 Maintenance
 -----------
-Henner as of 2025, isn't actively maintaining this project due to plenty of other projects that keep him busy :)  
+Henner as of 2025, isn't actively maintaining this project due to plenty of other projects that keep him busy :)
 A few people have stepped him to help:
 - https://github.com/marcmerlin is no expert on the codebase but is willing to merge safe looking and well tested patches
 - https://github.com/board707 has provided valuable technical expertise on new panel types and chips as well as ABC mode 5 code for newer panels
