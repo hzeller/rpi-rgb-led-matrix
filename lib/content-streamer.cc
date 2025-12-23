@@ -237,3 +237,37 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
   return true;
 }
 }  // namespace rgb_matrix
+
+extern "C" {
+
+// Create a new StreamReader instance
+rgb_matrix::StreamReader* stream_reader_create(rgb_matrix::StreamIO* io) {
+    return new rgb_matrix::StreamReader(io);
+}
+
+// Delete a StreamReader instance
+void stream_reader_delete(rgb_matrix::StreamReader* reader) {
+    delete reader;
+}
+
+// Rewind the StreamReader
+void stream_reader_rewind(rgb_matrix::StreamReader* reader) {
+    reader->Rewind();
+}
+
+// Get the next frame and its delay
+bool stream_reader_get_next(rgb_matrix::StreamReader* reader, rgb_matrix::FrameCanvas* frame, uint32_t* hold_time_us) {
+    return reader->GetNext(frame, hold_time_us);
+}
+
+// Create a new FileStreamIO instance
+rgb_matrix::FileStreamIO* file_stream_io_create(int fd) {
+    return new rgb_matrix::FileStreamIO(fd);
+}
+
+// Delete a FileStreamIO instance
+void file_stream_io_delete(rgb_matrix::FileStreamIO* io) {
+    delete io;
+}
+
+}
