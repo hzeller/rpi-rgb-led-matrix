@@ -24,7 +24,7 @@ These instructions are primarily aimed at those wishing to work on the C# bindin
 - Use the `Deploy C++` task to make sure that the linked library is in place
 - Install this extension: https://marketplace.visualstudio.com/items?itemName=rioj7.command-variable  
   This allows us to get variables in the task in a linux (/ separator) format  
-  ie normally, `${relativeFileDirname}` in tasks would resolve to like `bindings\c#\examples\BoxesBoxesBoxes`
+  ie normally, `${relativeFileDirname}` in tasks would resolve to like `bindings\c#\examples\BoxesBoxesBoxes`  
   This extensions allows us to do `${command:extension.commandvariable.file.relativeFileDirnamePosix}`...  
   Which will resolve to `bindings/c#/examples/BoxesBoxesBoxes`  
   This is very useful as it allows us to build rsync commands etc using the folder name of the example in linux format
