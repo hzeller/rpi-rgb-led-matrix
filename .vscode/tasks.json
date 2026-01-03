@@ -1,0 +1,85 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // ========================================= C# Tasks =========================================
+        {
+            "label": "deploy current C#",
+            "type": "shell",
+            "command": "wsl",
+            "args": [
+                "bash",
+                "-c",
+                "rsync -avz --delete \"${command:extension.commandvariable.file.relativeFileDirnamePosix}/bin/pi-publish/\" ${env:RGBLEDMATRIX_REMOTE_MACHINE}:\"${env:RGBLEDMATRIX_REMOTE_DIR}/${command:extension.commandvariable.file.relativeFileDirnamePosix}/bin\""
+            ],
+            "problemMatcher": [],
+            "dependsOn": [
+                "publish current C#"
+            ]
+        },
+        {
+            "label": "publish current C#",
+            "type": "shell",
+            "command": "dotnet",
+            "args": [
+                "publish",
+                "${relativeFileDirname}",
+                "-c",
+                "Debug",
+                "-r",
+                "linux-arm64",
+                "-o",
+                "${relativeFileDirname}/bin/pi-publish"
+            ],
+            "problemMatcher": [],
+            "group": "build"
+        },
+        // ========================================= C++ Tasks =========================================
+        {
+            "label": "Sync C++",
+            "type": "shell",
+            "command": "wsl",
+            "args": [
+                "bash",
+                "-c",
+                "rsync -avz . --exclude bindings/ --exclude bin/ --exclude obj/ ${env:RGBLEDMATRIX_REMOTE_MACHINE}:${env:RGBLEDMATRIX_REMOTE_DIR}"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Build C++",
+            "type": "shell",
+            "command": "ssh",
+            "args": [
+                "${env:RGBLEDMATRIX_REMOTE_MACHINE}",
+                "cd ${env:RGBLEDMATRIX_REMOTE_DIR}&&",
+                "make"
+            ],
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": [
+                "Sync C++"
+            ]
+        },
+        {
+            "label": "Deploy C++",
+            "type": "shell",
+            "command": "ssh",
+            "args": [
+                "${env:RGBLEDMATRIX_REMOTE_MACHINE}",
+                "cd ${env:RGBLEDMATRIX_REMOTE_DIR}&&",
+                "cp lib/librgbmatrix.so.1 /usr/lib"
+            ],
+            "problemMatcher": [],
+            "dependsOn": [
+                "Build C++"
+            ]
+        },
+        // ========================================= Utility Tasks =========================================
+        {
+            "label": "echo",
+            "type": "shell",
+            "command": "echo ${command:extension.commandvariable.file.relativeFileDirnamePosix}",
+            "problemMatcher": []
+        }
+    ]
+}
