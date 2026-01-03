@@ -237,3 +237,35 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
   return true;
 }
 }  // namespace rgb_matrix
+// Minimal C API for StreamReader (content-streamer)
+extern "C" {
+StreamIO* file_stream_io_create(const char* filename) {
+  return new FileStreamIO(open(filename, O_RDONLY));
+}
+
+void file_stream_io_delete(StreamIO* io) {
+  delete io;
+}
+
+#include "content-streamer-c.h"
+using namespace rgb_matrix;
+
+ContentStreamReaderHandle content_stream_reader_create(StreamIO* io) {
+  return reinterpret_cast<ContentStreamReaderHandle>(new StreamReader(io));
+}
+
+void content_stream_reader_destroy(ContentStreamReaderHandle reader) {
+  delete reinterpret_cast<StreamReader*>(reader);
+}
+
+int content_stream_reader_get_next(ContentStreamReaderHandle reader, FrameCanvas* frame, uint32_t* hold_time_us) {
+  auto r = reinterpret_cast<StreamReader*>(reader);
+  return r->GetNext(frame, hold_time_us) ? 1 : 0;
+}
+
+void content_stream_reader_rewind(ContentStreamReaderHandle reader) {
+  auto r = reinterpret_cast<StreamReader*>(reader);
+  r->Rewind();
+}
+
+} // extern "C"
