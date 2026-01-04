@@ -5,7 +5,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
-    <ItemGroup>
-        <ProjectReference Include="..\..\RPiRgbLEDMatrix.csproj"/>
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\RPiRgbLEDMatrix.csproj"/>
+		<Compile Include="..\MatrixOptions.cs" Link="MatrixOptions.cs" />
+	</ItemGroup>
 </Project>

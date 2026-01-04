@@ -8,5 +8,6 @@
     <ItemGroup>
         <ProjectReference Include="..\..\RPiRgbLEDMatrix.csproj" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+        <Compile Include="..\MatrixOptions.cs" Link="MatrixOptions.cs" />
     </ItemGroup>
 </Project>
