@@ -53,16 +53,6 @@ namespace RPiRgbLEDMatrix
             return result != 0;
         }
 
-        /// <summary>
-        /// Checks if the stream file has a valid header.
-        /// </summary>
-        /// <param name="frameCanvas">The canvas to use for checking the header.</param>
-        /// <returns>True if the header is valid; otherwise, false.</returns>
-        public bool CheckFileHeader(IntPtr frameCanvas)
-        {
-            int result = ContentStreamerBindings.content_stream_reader_check_file_header(_reader, frameCanvas);
-            return result != 0;
-        }
 
         /// <summary>
         /// Disposes the resources used by the <see cref="ContentStreamer"/> instance.
