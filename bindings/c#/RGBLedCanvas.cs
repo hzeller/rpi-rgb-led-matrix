@@ -30,6 +30,11 @@ public class RGBLedCanvas
     public int Height { get; private set; }
 
     /// <summary>
+    /// Gets the native handle for interop.
+    /// </summary>
+    public IntPtr Handle => _canvas;
+
+    /// <summary>
     /// Sets the color of a specific pixel.
     /// </summary>
     /// <param name="x">The X coordinate of the pixel.</param>
