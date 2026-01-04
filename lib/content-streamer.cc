@@ -239,32 +239,32 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
 }  // namespace rgb_matrix
 // Minimal C API for StreamReader (content-streamer)
 extern "C" {
+#include "content-streamer-c.h"
+
+// Bridge C API to C++ implementation with proper type casting
 StreamIO* file_stream_io_create(const char* filename) {
-  return new FileStreamIO(open(filename, O_RDONLY));
+  return reinterpret_cast<StreamIO*>(new rgb_matrix::FileStreamIO(open(filename, O_RDONLY)));
 }
 
 void file_stream_io_delete(StreamIO* io) {
-  delete io;
+  delete reinterpret_cast<rgb_matrix::StreamIO*>(io);
 }
 
-#include "content-streamer-c.h"
-using namespace rgb_matrix;
-
 ContentStreamReaderHandle content_stream_reader_create(StreamIO* io) {
-  return reinterpret_cast<ContentStreamReaderHandle>(new StreamReader(io));
+  return reinterpret_cast<ContentStreamReaderHandle>(new rgb_matrix::StreamReader(reinterpret_cast<rgb_matrix::StreamIO*>(io)));
 }
 
 void content_stream_reader_destroy(ContentStreamReaderHandle reader) {
-  delete reinterpret_cast<StreamReader*>(reader);
+  delete reinterpret_cast<rgb_matrix::StreamReader*>(reader);
 }
 
-int content_stream_reader_get_next(ContentStreamReaderHandle reader, FrameCanvas* frame, uint32_t* hold_time_us) {
-  auto r = reinterpret_cast<StreamReader*>(reader);
-  return r->GetNext(frame, hold_time_us) ? 1 : 0;
+int content_stream_reader_get_next(ContentStreamReaderHandle reader, struct FrameCanvas* frame, uint32_t* hold_time_us) {
+  auto r = reinterpret_cast<rgb_matrix::StreamReader*>(reader);
+  return r->GetNext(reinterpret_cast<rgb_matrix::FrameCanvas*>(frame), hold_time_us) ? 1 : 0;
 }
 
 void content_stream_reader_rewind(ContentStreamReaderHandle reader) {
-  auto r = reinterpret_cast<StreamReader*>(reader);
+  auto r = reinterpret_cast<rgb_matrix::StreamReader*>(reader);
   r->Rewind();
 }
 

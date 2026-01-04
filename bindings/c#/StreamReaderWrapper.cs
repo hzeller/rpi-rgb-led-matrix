@@ -10,26 +10,26 @@ namespace RPiRgbLEDMatrix
 
         public StreamReaderWrapper(string filename)
         {
-            _streamIO = ContentStreamerBindings.FileStreamIOCreate(filename);
+            _streamIO = ContentStreamerBindings.file_stream_io_create(filename);
             if (_streamIO == IntPtr.Zero)
                 throw new InvalidOperationException($"Failed to open stream file: {filename}");
-            _reader = ContentStreamerBindings.ContentStreamReaderCreate(_streamIO);
+            _reader = ContentStreamerBindings.content_stream_reader_create(_streamIO);
             if (_reader == IntPtr.Zero)
             {
-                ContentStreamerBindings.FileStreamIODelete(_streamIO);
+                ContentStreamerBindings.file_stream_io_delete(_streamIO);
                 throw new InvalidOperationException("Failed to create stream reader");
             }
         }
 
         public void Rewind()
         {
-            ContentStreamerBindings.ContentStreamReaderRewind(_reader);
+            ContentStreamerBindings.content_stream_reader_rewind(_reader);
         }
 
         public bool GetNext(IntPtr frameCanvas, out uint holdTimeUs)
         {
             holdTimeUs = 0;
-            int result = ContentStreamerBindings.ContentStreamReaderGetNext(_reader, frameCanvas, ref holdTimeUs);
+            int result = ContentStreamerBindings.content_stream_reader_get_next(_reader, frameCanvas, ref holdTimeUs);
             return result != 0;
         }
 
@@ -39,12 +39,12 @@ namespace RPiRgbLEDMatrix
             {
                 if (_reader != IntPtr.Zero)
                 {
-                    ContentStreamerBindings.ContentStreamReaderDestroy(_reader);
+                    ContentStreamerBindings.content_stream_reader_destroy(_reader);
                     _reader = IntPtr.Zero;
                 }
                 if (_streamIO != IntPtr.Zero)
                 {
-                    ContentStreamerBindings.FileStreamIODelete(_streamIO);
+                    ContentStreamerBindings.file_stream_io_delete(_streamIO);
                     _streamIO = IntPtr.Zero;
                 }
                 _disposed = true;
