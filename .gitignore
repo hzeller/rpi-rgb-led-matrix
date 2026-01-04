@@ -4,3 +4,4 @@
 *.so
 .envrc
 .direnv
+**/*.sln
