@@ -11,8 +11,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Remove="examples\**" />
-        <None Remove="examples\**" />
+        <Compile Remove="examples\**\*.cs" />
+        <None Remove="examples\**\*.cs" />
         <None Condition="$(SkipNative) != 'true'" Pack="true" 
               Include="..\..\lib\librgbmatrix.so.1"
               PackagePath="\runtimes\linux-arm64\native" >
