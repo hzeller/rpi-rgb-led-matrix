@@ -41,7 +41,7 @@
             "args": [
                 "bash",
                 "-c",
-                "rsync -avz . --exclude bindings/ --exclude bin/ --exclude obj/ ${env:RGBLEDMATRIX_REMOTE_MACHINE}:${env:RGBLEDMATRIX_REMOTE_DIR}"
+                "rsync -avz . --delete --exclude bin/ --exclude obj/ ${env:RGBLEDMATRIX_REMOTE_MACHINE}:${env:RGBLEDMATRIX_REMOTE_DIR}"
             ],
             "problemMatcher": []
         },
