@@ -2,7 +2,7 @@ using RPiRgbLEDMatrix;
 
 if (args.Length < 1)
 {
-    Console.WriteLine("font-example.exe [font_path] <text>");
+    Console.WriteLine("Usage: FontEExample [font_path] <text>\nWere [font_path] is the path to a BDF font file.");
     return -1;
 }
 string text = "Hello World!";
