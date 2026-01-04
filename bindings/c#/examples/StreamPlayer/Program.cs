@@ -1,5 +1,4 @@
 ﻿using RPiRgbLEDMatrix;
-using System.Runtime.InteropServices;
 
 var options = new RGBLedMatrixOptions()
 {
@@ -22,27 +21,19 @@ else
     path = "/root/sample.stream"; // default path
 }
 
-// Create an instance of MediaPlayer and play the file
-var mediaPlayer = new MediaPlayer(options);
-mediaPlayer.Play(path);
+// Create an instance of StreamPlayer and play the file
+var streamPlayer = new StreamPlayer(options);
+streamPlayer.PlayStream(path);
 
-public class MediaPlayer
+public class StreamPlayer
 {
     private readonly RGBLedMatrix _matrix;
 
-    public MediaPlayer(RGBLedMatrixOptions options)
+    public StreamPlayer(RGBLedMatrixOptions options)
     {
         _matrix = new RGBLedMatrix(options);
     }
 
-    public void Play(string path)
-    {
-        if (!IsStream(path))
-        {
-            throw new NotSupportedException("Only stream files are supported in this example.");
-        }
-        PlayStream(path);
-    }
 
     private bool IsStream(string path)
     {
@@ -56,10 +47,14 @@ public class MediaPlayer
         return BitConverter.ToUInt32(magicBytes, 0) == 0xED0C5A48; // kFileMagicValue
     }
 
-    private void PlayStream(string streamPath)
+    public void PlayStream(string streamPath)
     {
+        if (!IsStream(streamPath))
+        {
+            throw new NotSupportedException("Only stream files are supported in this example.");
+        }
         // Replace manual FileStreamIO and Bindings usage with ContentStreamer
-        using var reader = new ContentStreamer(streamPath);
+        using var contentStreamer = new ContentStreamer(streamPath);
         var canvas = _matrix.CreateOffscreenCanvas();
 
         var running = true;
@@ -72,9 +67,9 @@ public class MediaPlayer
         while (running)
         {
             uint delay;
-            if (!reader.GetNext(canvas.Handle, out delay))
+            if (!contentStreamer.GetNext(canvas.Handle, out delay))
             {
-                reader.Rewind();
+                contentStreamer.Rewind();
                 continue;
             }
 
