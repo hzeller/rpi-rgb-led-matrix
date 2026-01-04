@@ -118,13 +118,14 @@ public:
   // or end of stream reached..
   bool GetNext(FrameCanvas *frame, uint32_t* hold_time_us);
 
+  bool ReadFileHeader(const FrameCanvas &frame);
+
 private:
   enum State {
     STREAM_AT_BEGIN,
     STREAM_READING,
     STREAM_ERROR,
   };
-  bool ReadFileHeader(const FrameCanvas &frame);
 
   StreamIO *io_;
   size_t frame_buf_size_;

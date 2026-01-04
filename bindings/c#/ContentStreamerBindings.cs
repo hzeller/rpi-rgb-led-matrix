@@ -24,5 +24,8 @@ namespace RPiRgbLEDMatrix
 
         [DllImport(Lib, EntryPoint = "content_stream_reader_rewind")]
         public static extern void content_stream_reader_rewind(IntPtr reader);
+
+        [DllImport(Lib, EntryPoint = "content_stream_reader_check_file_header")]
+        public static extern int content_stream_reader_check_file_header(IntPtr reader, IntPtr frameCanvas);
     }
 }

@@ -4,34 +4,28 @@ public class StreamPlayer
 {
     private readonly RGBLedMatrix _matrix;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="StreamPlayer"/> class.
+    /// </summary>
+    /// <param name="options">The matrix options.</param>
     public StreamPlayer(RGBLedMatrixOptions options)
     {
         _matrix = new RGBLedMatrix(options);
     }
 
-
-    private bool IsStream(string path)
-    {
-        // ToDo: Should this not be moved into ContentStreamer?
-        // At the very least, use kFileMagicValue from content-streamer.cc
-        // There appears to be code in there (ReadFileHeader) that does this already...
-        // ... but it appears to log to stderr on failure, which may not be desired.
-        using var fileStream = new FileStream(path, FileMode.Open, FileAccess.Read);
-        byte[] magicBytes = new byte[4];
-        fileStream.Read(magicBytes, 0, 4);
-        return BitConverter.ToUInt32(magicBytes, 0) == 0xED0C5A48; // kFileMagicValue
-    }
-
+    /// <summary>
+    /// Plays a stream file on the LED matrix.
+    /// </summary>
+    /// <param name="streamPath">The path to the stream file.</param>
+    /// <exception cref="InvalidOperationException"></exception>
     public void PlayStream(string streamPath)
     {
-        if (!IsStream(streamPath))
-        {
-            throw new NotSupportedException("Only stream files are supported in this example.");
-        }
-        // Replace manual FileStreamIO and Bindings usage with ContentStreamer
         using var contentStreamer = new ContentStreamer(streamPath);
         var canvas = _matrix.CreateOffscreenCanvas();
-
+        if (!contentStreamer.CheckFileHeader(canvas.Handle))
+        {
+            throw new InvalidOperationException("Invalid stream file header.");
+        }
         var running = true;
         Console.CancelKeyPress += (s, e) =>
         {
