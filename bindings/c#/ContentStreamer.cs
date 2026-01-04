@@ -2,13 +2,13 @@ using System;
 
 namespace RPiRgbLEDMatrix
 {
-    public class StreamReaderWrapper : IDisposable
+    public class ContentStreamer : IDisposable
     {
         private IntPtr _streamIO;
         private IntPtr _reader;
         private bool _disposed;
 
-        public StreamReaderWrapper(string filename)
+        public ContentStreamer(string filename)
         {
             _streamIO = ContentStreamerBindings.file_stream_io_create(filename);
             if (_streamIO == IntPtr.Zero)
