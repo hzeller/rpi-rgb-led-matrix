@@ -1,5 +1,3 @@
-using System;
-
 namespace RPiRgbLEDMatrix
 {
     public class ContentStreamer : IDisposable
