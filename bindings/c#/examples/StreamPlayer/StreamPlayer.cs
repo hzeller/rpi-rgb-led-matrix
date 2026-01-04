@@ -22,10 +22,6 @@ public class StreamPlayer
     {
         using var contentStreamer = new ContentStreamer(streamPath);
         var canvas = _matrix.CreateOffscreenCanvas();
-        if (!contentStreamer.CheckFileHeader(canvas.Handle))
-        {
-            throw new InvalidOperationException("Invalid stream file header.");
-        }
         var running = true;
         Console.CancelKeyPress += (s, e) =>
         {

@@ -267,8 +267,3 @@ void content_stream_reader_rewind(ContentStreamReaderHandle reader) {
   r->Rewind();
 }
 
-// Returns 1 if header is valid for the given frame, 0 otherwise
-int content_stream_reader_check_file_header(ContentStreamReaderHandle reader, struct FrameCanvas* frame) {
-  auto r = reinterpret_cast<rgb_matrix::StreamReader*>(reader);
-  return r->ReadFileHeader(*reinterpret_cast<rgb_matrix::FrameCanvas*>(frame)) ? 1 : 0;
-}
