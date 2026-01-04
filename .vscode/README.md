@@ -34,7 +34,7 @@ These instructions are primarily aimed at those wishing to work on the C# bindin
 ### Working on the C# bindings
 - Make your changes to the code  
 - Run an example to test it  
-  ToDo: verify this works
+  Note that if you also have to make changes to the C library, you will need to Deploy the C++ too
 
 ### Working on C# examples
 - To debug an example:
