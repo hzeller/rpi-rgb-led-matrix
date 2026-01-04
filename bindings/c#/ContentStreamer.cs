@@ -24,15 +24,6 @@ namespace RPiRgbLEDMatrix
         }
 
         /// <summary>
-        /// Clears the given canvas (sets all pixels to black).
-        /// </summary>
-        /// <param name="frameCanvas">The canvas to clear.</param>
-        public static void ClearCanvas(IntPtr frameCanvas)
-        {
-            ContentStreamerBindings.led_canvas_clear(frameCanvas);
-        }
-
-        /// <summary>
         /// Rewinds the stream to the beginning.
         /// </summary>
         public void Rewind()

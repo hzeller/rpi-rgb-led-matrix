@@ -71,9 +71,12 @@ public class RGBLedCanvas
         led_canvas_subfill(_canvas, x, y, width, height, color.R, color.G, color.B);
 
     /// <summary>
-    /// Cleans the entire canvas.
+    /// Clears the canvas (sets all pixels to black).
     /// </summary>
-    public void Clear() => led_canvas_clear(_canvas);
+    public void Clear()
+    {
+        Bindings.led_canvas_clear(_canvas);
+    }
 
     /// <summary>
     /// Draws a circle of the specified color.
