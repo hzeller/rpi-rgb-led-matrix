@@ -1,14 +1,5 @@
 ﻿using RPiRgbLEDMatrix;
 
-var options = new RGBLedMatrixOptions()
-{
-    Cols = 128,
-    Rows = 64,
-    Parallel = 2,
-    GpioSlowdown = 2,
-    RowAddressType = 5
-};
-
 string path;
 
 // Check if the last command-line argument is provided and is a valid file
@@ -22,5 +13,5 @@ else
 }
 
 // Create an instance of StreamPlayer and play the file
-var streamPlayer = new StreamPlayer(options);
+var streamPlayer = new StreamPlayer(MatrixOptions.Load());
 streamPlayer.PlayStream(path);

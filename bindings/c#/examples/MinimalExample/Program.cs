@@ -1,6 +1,6 @@
 using RPiRgbLEDMatrix;
 
-using var matrix = new RGBLedMatrix(32, 2, 1);
+using var matrix = new RGBLedMatrix(MatrixOptions.Load());
 var canvas = matrix.CreateOffscreenCanvas();
 
 var centerX = canvas.Width / 2;

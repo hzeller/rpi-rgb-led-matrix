@@ -4,7 +4,7 @@ const int MaxHeight = 16;
 const int ColorStep = 15;
 const int FrameStep = 1;
 
-using var matrix = new RGBLedMatrix(new RGBLedMatrixOptions { ChainLength = 2 });
+using var matrix = new RGBLedMatrix(MatrixOptions.Load());
 var canvas = matrix.CreateOffscreenCanvas();
 
 var rnd = new Random();

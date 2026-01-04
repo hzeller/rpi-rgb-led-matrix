@@ -7,7 +7,7 @@ const float Scale = 1.1f;
 const float LerpPow = 0.002f;
 const int ChangePerFrames = 50;
 
-using var leds = new RGBLedMatrix(32, 1, 1);
+using var leds = new RGBLedMatrix(MatrixOptions.Load());
 var canvas = leds.CreateOffscreenCanvas();
 
 var (centerX, centerY) = (canvas.Width / 2, canvas.Height / 2);
