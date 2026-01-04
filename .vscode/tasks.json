@@ -22,7 +22,7 @@
             "command": "dotnet",
             "args": [
                 "publish",
-                "${relativeFileDirname}",
+                "${relativeFileDirname}/${fileDirnameBasename}.csproj",
                 "-c",
                 "Debug",
                 "-r",
