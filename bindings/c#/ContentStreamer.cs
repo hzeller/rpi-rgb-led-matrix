@@ -40,7 +40,7 @@ namespace RPiRgbLEDMatrix
         public bool GetNext(IntPtr frameCanvas, out uint holdTimeUs)
         {
             holdTimeUs = 0;
-            int result = ContentStreamerBindings.content_stream_reader_get_next(_reader, frameCanvas, ref holdTimeUs);
+            int result = ContentStreamerBindings.content_stream_reader_get_next(_reader, frameCanvas, out holdTimeUs);
             return result != 0;
         }
 
