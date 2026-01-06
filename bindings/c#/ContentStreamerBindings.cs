@@ -19,7 +19,8 @@ namespace RPiRgbLEDMatrix
         public static extern void content_stream_reader_destroy(IntPtr reader);
 
         [DllImport(Lib, EntryPoint = "content_stream_reader_get_next")]
-        public static extern int content_stream_reader_get_next(IntPtr reader, IntPtr frameCanvas, out uint holdTimeUs);
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool content_stream_reader_get_next(IntPtr reader, IntPtr frameCanvas, out uint holdTimeUs);
 
         [DllImport(Lib, EntryPoint = "content_stream_reader_rewind")]
         public static extern void content_stream_reader_rewind(IntPtr reader);
