@@ -38,5 +38,13 @@ else
 }
 
 // Create an instance of StreamPlayer and play the file
-var streamPlayer = new StreamPlayer(MatrixOptions.Load());
+var matrixOptions = new RGBLedMatrixOptions
+    {
+        Cols = 128,
+        Rows = 64,
+        Parallel = 2,
+        GpioSlowdown = 2,
+        RowAddressType = 5
+    };
+var streamPlayer = new StreamPlayer(matrixOptions);
 streamPlayer.PlayStream(path);
