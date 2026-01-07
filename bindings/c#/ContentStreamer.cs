@@ -12,13 +12,13 @@ namespace RPiRgbLEDMatrix
         /// <param name="filename">The path to the stream file.</param>
         public ContentStreamer(string filename)
         {
-            _streamIO = ContentStreamerBindings.file_stream_io_create(filename);
+            _streamIO = Bindings.file_stream_io_create(filename);
             if (_streamIO == IntPtr.Zero)
                 throw new InvalidOperationException($"Failed to open stream file: {filename}");
-            _reader = ContentStreamerBindings.content_stream_reader_create(_streamIO);
+            _reader = Bindings.content_stream_reader_create(_streamIO);
             if (_reader == IntPtr.Zero)
             {
-                ContentStreamerBindings.file_stream_io_delete(_streamIO);
+                Bindings.file_stream_io_delete(_streamIO);
                 throw new InvalidOperationException("Failed to create stream reader");
             }
         }
@@ -28,7 +28,7 @@ namespace RPiRgbLEDMatrix
         /// </summary>
         public void Rewind()
         {
-            ContentStreamerBindings.content_stream_reader_rewind(_reader);
+            Bindings.content_stream_reader_rewind(_reader);
         }
 
         /// <summary>
@@ -40,7 +40,7 @@ namespace RPiRgbLEDMatrix
         public bool GetNext(IntPtr frameCanvas, out uint holdTimeUs)
         {
             holdTimeUs = 0;
-            return ContentStreamerBindings.content_stream_reader_get_next(_reader, frameCanvas, out holdTimeUs);
+            return Bindings.content_stream_reader_get_next(_reader, frameCanvas, out holdTimeUs);
         }
 
 
@@ -53,12 +53,12 @@ namespace RPiRgbLEDMatrix
             {
                 if (_reader != IntPtr.Zero)
                 {
-                    ContentStreamerBindings.content_stream_reader_destroy(_reader);
+                    Bindings.content_stream_reader_destroy(_reader);
                     _reader = IntPtr.Zero;
                 }
                 if (_streamIO != IntPtr.Zero)
                 {
-                    ContentStreamerBindings.file_stream_io_delete(_streamIO);
+                    Bindings.file_stream_io_delete(_streamIO);
                     _streamIO = IntPtr.Zero;
                 }
                 _disposed = true;
