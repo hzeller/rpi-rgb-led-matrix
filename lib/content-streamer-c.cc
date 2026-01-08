@@ -4,6 +4,7 @@
 #include "content-streamer.h"
 #include "content-streamer-c.h"
 #include <fcntl.h>
+#include <unistd.h>
 
 extern "C" {
 
