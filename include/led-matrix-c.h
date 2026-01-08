@@ -418,22 +418,6 @@ void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1,
                uint8_t r, uint8_t g, uint8_t b);
 
 /* ------------------ Content-streamer C API ------------------ */
-/* Opaque type for StreamReader */
-typedef void* ContentStreamReaderHandle;
-
-/* Forward declarations */
-struct FrameCanvas;
-struct StreamIO;
-
-/* Stream reader control */
-ContentStreamReaderHandle content_stream_reader_create(struct StreamIO* io);
-void content_stream_reader_destroy(ContentStreamReaderHandle reader);
-int content_stream_reader_get_next(ContentStreamReaderHandle reader, struct FrameCanvas* frame, uint32_t* hold_time_us);
-void content_stream_reader_rewind(ContentStreamReaderHandle reader);
-
-/* FileStreamIO management */
-struct StreamIO* file_stream_io_create(const char* filename);
-void file_stream_io_delete(struct StreamIO* io);
 
 #ifdef  __cplusplus
 }  // extern C

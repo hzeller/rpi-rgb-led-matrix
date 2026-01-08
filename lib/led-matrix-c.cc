@@ -18,8 +18,6 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <fcntl.h>
-#include "content-streamer.h"
 
 #include "led-matrix.h"
 #include "graphics.h"
@@ -326,29 +324,3 @@ void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1, uint8_t r, u
   DrawLine(to_canvas(c), x0, y0, x1, y1, col);
 }
 
-// C API for StreamReader (content-streamer).
-StreamIO* file_stream_io_create(const char* filename) {
-  return reinterpret_cast<StreamIO*>(new rgb_matrix::FileStreamIO(open(filename, O_RDONLY)));
-}
-
-void file_stream_io_delete(StreamIO* io) {
-  delete reinterpret_cast<rgb_matrix::StreamIO*>(io);
-}
-
-ContentStreamReaderHandle content_stream_reader_create(StreamIO* io) {
-  return reinterpret_cast<ContentStreamReaderHandle>(new rgb_matrix::StreamReader(reinterpret_cast<rgb_matrix::StreamIO*>(io)));
-}
-
-void content_stream_reader_destroy(ContentStreamReaderHandle reader) {
-  delete reinterpret_cast<rgb_matrix::StreamReader*>(reader);
-}
-
-int content_stream_reader_get_next(ContentStreamReaderHandle reader, struct FrameCanvas* frame, uint32_t* hold_time_us) {
-  auto r = reinterpret_cast<rgb_matrix::StreamReader*>(reader);
-  return r->GetNext(reinterpret_cast<rgb_matrix::FrameCanvas*>(frame), hold_time_us) ? 1 : 0;
-}
-
-void content_stream_reader_rewind(ContentStreamReaderHandle reader) {
-  auto r = reinterpret_cast<rgb_matrix::StreamReader*>(reader);
-  r->Rewind();
-}
