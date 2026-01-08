@@ -236,7 +236,4 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
     header_frame_buffer_ = new char [ sizeof(FrameHeader) + header.buf_size ];
   return true;
 }
-
 }  // namespace rgb_matrix
-
-

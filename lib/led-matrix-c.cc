@@ -323,4 +323,3 @@ void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1, uint8_t r, u
   const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
   DrawLine(to_canvas(c), x0, y0, x1, y1, col);
 }
-

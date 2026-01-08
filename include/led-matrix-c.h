@@ -417,8 +417,6 @@ void draw_circle(struct LedCanvas *c, int x, int y, int radius,
 void draw_line(struct LedCanvas *c, int x0, int y0, int x1, int y1,
                uint8_t r, uint8_t g, uint8_t b);
 
-/* ------------------ Content-streamer C API ------------------ */
-
 #ifdef  __cplusplus
 }  // extern C
 #endif
