@@ -12,13 +12,13 @@ namespace RPiRgbLEDMatrix
         /// <param name="filename">The path to the stream file.</param>
         public ContentStreamer(string filename)
         {
-            _streamIO = Bindings.file_stream_io_create(filename);
+            _streamIO = file_stream_io_create(filename);
             if (_streamIO == IntPtr.Zero)
                 throw new InvalidOperationException($"Failed to open stream file: {filename}");
-            _reader = Bindings.content_stream_reader_create(_streamIO);
+            _reader = content_stream_reader_create(_streamIO);
             if (_reader == IntPtr.Zero)
             {
-                Bindings.file_stream_io_delete(_streamIO);
+                file_stream_io_delete(_streamIO);
                 throw new InvalidOperationException("Failed to create stream reader");
             }
         }
@@ -28,7 +28,7 @@ namespace RPiRgbLEDMatrix
         /// </summary>
         public void Rewind()
         {
-            Bindings.content_stream_reader_rewind(_reader);
+            content_stream_reader_rewind(_reader);
         }
 
         /// <summary>
@@ -39,8 +39,7 @@ namespace RPiRgbLEDMatrix
         /// <returns>True if a frame was retrieved; otherwise, false.</returns
         public bool GetNext(IntPtr frameCanvas, out uint holdTimeUs)
         {
-            holdTimeUs = 0;
-            return Bindings.content_stream_reader_get_next(_reader, frameCanvas, out holdTimeUs);
+            return content_stream_reader_get_next(_reader, frameCanvas, out holdTimeUs);
         }
 
 
@@ -53,12 +52,12 @@ namespace RPiRgbLEDMatrix
             {
                 if (_reader != IntPtr.Zero)
                 {
-                    Bindings.content_stream_reader_destroy(_reader);
+                    content_stream_reader_destroy(_reader);
                     _reader = IntPtr.Zero;
                 }
                 if (_streamIO != IntPtr.Zero)
                 {
-                    Bindings.file_stream_io_delete(_streamIO);
+                    file_stream_io_delete(_streamIO);
                     _streamIO = IntPtr.Zero;
                 }
                 _disposed = true;
