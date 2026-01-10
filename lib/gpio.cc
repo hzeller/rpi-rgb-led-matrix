@@ -203,6 +203,15 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
   return outputs;
 }
 
+void GPIO::ResetState() {
+  output_bits_ = 0;
+  input_bits_ = 0;
+  reserved_bits_ = 0;
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+  uses_64_bit_ = false;
+#endif
+}
+
 gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init inputs but not yet Init()-ialized.\n");
