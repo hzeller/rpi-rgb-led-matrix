@@ -18,10 +18,14 @@ public class StreamPlayer
     /// </summary>
     /// <param name="streamPath">The path to the stream file.</param>
     /// <exception cref="InvalidOperationException"></exception>
-    public void PlayStream(string streamPath)
+    public bool PlayStream(string streamPath)
     {
         using var contentStreamer = new ContentStreamer(streamPath);
         var canvas = _matrix.CreateOffscreenCanvas();
+        if (!contentStreamer.IsCompatible(canvas.Handle))
+        {
+            return false;
+        }
         var running = true;
         Console.CancelKeyPress += (s, e) =>
         {
@@ -42,5 +46,6 @@ public class StreamPlayer
             Thread.Sleep((int)(delay / 1000)); // Convert microseconds to milliseconds
         }
         canvas.Clear();
+        return true;
     }
 }

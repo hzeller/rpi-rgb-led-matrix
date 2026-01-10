@@ -32,6 +32,18 @@ namespace RPiRgbLEDMatrix
         }
 
         /// <summary>
+        /// Checks whether the underlying stream is compatible with the given canvas.
+        /// </summary>
+        public bool IsCompatible(IntPtr frameCanvas)
+        {
+            if (_streamIO == IntPtr.Zero)
+                throw new InvalidOperationException("Stream IO not initialized");
+            if (frameCanvas == IntPtr.Zero)
+                throw new ArgumentNullException(nameof(frameCanvas));
+            return Bindings.file_stream_io_is_compatible_with_canvas(_streamIO, frameCanvas);
+        }
+
+        /// <summary>
         /// Gets the next frame from the stream.
         /// </summary>
         /// <param name="frameCanvas">The canvas to render the frame onto.</param>

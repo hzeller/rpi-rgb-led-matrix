@@ -236,4 +236,21 @@ bool StreamReader::ReadFileHeader(const FrameCanvas &frame) {
     header_frame_buffer_ = new char [ sizeof(FrameHeader) + header.buf_size ];
   return true;
 }
+// Namespace-scoped helper for canvas-aware compatibility so it can access
+// anonymous constants like kFileMagicValue and FullRead.
+bool StreamIOIsCompatibleWithCanvas(StreamIO* io, FrameCanvas* frame) {
+  if (!io || !frame) return false;
+  io->Rewind();
+  FileHeader header;
+  if (!FullRead(io, &header, sizeof(header))) { io->Rewind(); return false; }
+  if (header.magic != kFileMagicValue) { io->Rewind(); return false; }
+  if ((int)header.width != frame->width() || (int)header.height != frame->height()) { io->Rewind(); return false; }
+  if (header.is_wide_gpio != (sizeof(gpio_bits_t) == 8)) { io->Rewind(); return false; }
+  const char* data = nullptr;
+  size_t len = 0;
+  frame->Serialize(&data, &len);
+  if (header.buf_size != len) { io->Rewind(); return false; }
+  io->Rewind();
+  return true;
+}
 }  // namespace rgb_matrix

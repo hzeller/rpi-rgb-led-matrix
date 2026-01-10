@@ -34,4 +34,9 @@ void content_stream_reader_rewind(ContentStreamReaderHandle reader) {
   r->Rewind();
 }
 
+// C API wrapper for canvas-aware compatibility check.
+int file_stream_io_is_compatible_with_canvas(StreamIO* io, struct FrameCanvas* frame) {
+  return rgb_matrix::StreamIOIsCompatibleWithCanvas(reinterpret_cast<rgb_matrix::StreamIO*>(io), reinterpret_cast<rgb_matrix::FrameCanvas*>(frame)) ? 1 : 0;
+}
+
 }  // extern "C"

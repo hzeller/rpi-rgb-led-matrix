@@ -92,6 +92,9 @@ internal static class Bindings
 
     [DllImport(Lib, EntryPoint = "file_stream_io_delete")]
     public static extern void file_stream_io_delete(IntPtr streamIO);
+    [DllImport(Lib, EntryPoint = "file_stream_io_is_compatible_with_canvas")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool file_stream_io_is_compatible_with_canvas(IntPtr streamIO, IntPtr frameCanvas);
 
     [DllImport(Lib, EntryPoint = "content_stream_reader_create")]
     public static extern IntPtr content_stream_reader_create(IntPtr streamIO);
