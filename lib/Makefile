@@ -172,7 +172,7 @@ DEFINES+=$(USER_DEFINES)
 
 DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
-CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -g -fPIC $(DEFINES)
+CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -march=native -mtune=native -flto=2 -g -fPIC $(DEFINES)
 CXXFLAGS=$(CFLAGS) -fno-exceptions -std=c++11
 
 all : $(TARGET).a $(TARGET).so.1
@@ -181,7 +181,7 @@ $(TARGET).a : $(OBJECTS)
 	$(AR) rcs $@ $^
 
 $(TARGET).so.1 : $(OBJECTS)
-	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ -lpthread  -lrt -lm -lpthread
+	$(CXX) -shared -flto=2 -Wl,-soname,$@ -o $@ $^ -lpthread  -lrt -lm -lpthread
 
 led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
 thread.o : thread.cc $(INCDIR)/thread.h
