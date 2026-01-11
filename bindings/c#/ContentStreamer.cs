@@ -36,8 +36,7 @@ namespace RPiRgbLEDMatrix
         /// </summary>
         public bool IsCompatible(IntPtr frameCanvas)
         {
-            if (_streamIO == IntPtr.Zero)
-                throw new InvalidOperationException("Stream IO not initialized");
+            ObjectDisposedException.ThrowIf(_streamIO == IntPtr.Zero, GetType());
             if (frameCanvas == IntPtr.Zero)
                 throw new ArgumentNullException(nameof(frameCanvas));
             return Bindings.file_stream_io_is_compatible_with_canvas(_streamIO, frameCanvas);
