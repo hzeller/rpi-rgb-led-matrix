@@ -19,6 +19,7 @@
 
 #include "framebuffer-internal.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <ctype.h>
 #include <math.h>
@@ -52,8 +53,10 @@ PixelDesignator *PixelDesignatorMap::get(int x, int y) {
 
 PixelDesignatorMap::PixelDesignatorMap(int width, int height,
                                        const PixelDesignator &fill_bits)
-  : width_(width), height_(height), fill_bits_(fill_bits),
-    buffer_(new PixelDesignator[width * height]) {
+  : width_(std::max(width, 1)),
+    height_(std::max(height, 1)), 
+    fill_bits_(fill_bits),
+    buffer_(new PixelDesignator[std::max(width, 1) * std::max(height, 1)]) {
 }
 
 PixelDesignatorMap::~PixelDesignatorMap() {
