@@ -21,6 +21,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <random>
 
 using std::min;
 using std::max;
@@ -992,8 +993,6 @@ public:
     delete [] parents_;
   }
 
-  static int rnd (int i) { return rand() % i; }
-
   void Run() override {
     // Set a random target_
     target_ = rand() & 0xFFFFFF;
@@ -1007,7 +1006,7 @@ public:
       swap();
       sort();
       mate();
-      std::random_shuffle (children_, children_ + popSize_, rnd);
+      std::shuffle (children_, children_ + popSize_, rng_);
 
       // Draw citizens to canvas
       for(int i=0; i < popSize_; i++) {
@@ -1042,6 +1041,8 @@ private:
 
     int dna;
   };
+
+  std::mt19937 rng_;
 
   /// for sorting by fitness
   class comparer {
