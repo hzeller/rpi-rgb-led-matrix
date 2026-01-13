@@ -1,6 +1,16 @@
 using RPiRgbLEDMatrix;
 
-using var matrix = new RGBLedMatrix(new RGBLedMatrixOptions { Rows = 32, Cols = 64 });
+// Set this to apropriate settings for your matrix
+var options = new RGBLedMatrixOptions()
+{
+    Brightness= 80,
+    Cols= 64,
+    Rows= 64,
+    GpioSlowdown= 4
+};
+
+using var matrix = new RGBLedMatrix(options);
+
 var canvas = matrix.CreateOffscreenCanvas();
 
 var maxBrightness = matrix.Brightness;

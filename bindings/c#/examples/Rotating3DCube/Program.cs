@@ -7,7 +7,17 @@ const float Scale = 1.1f;
 const float LerpPow = 0.002f;
 const int ChangePerFrames = 50;
 
-using var leds = new RGBLedMatrix(32, 1, 1);
+// Set this to apropriate settings for your matrix
+var options = new RGBLedMatrixOptions()
+{
+    Brightness= 80,
+    Cols= 64,
+    Rows= 64,
+    GpioSlowdown= 4
+};
+
+using var leds = new RGBLedMatrix(options);
+
 var canvas = leds.CreateOffscreenCanvas();
 
 var (centerX, centerY) = (canvas.Width / 2, canvas.Height / 2);
