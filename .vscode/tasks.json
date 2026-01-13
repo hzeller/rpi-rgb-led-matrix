@@ -1,7 +1,38 @@
 {
     "version": "2.0.0",
+    // All of the C# tasks depend on the example to be built being the CURRENTLY ACTIVE tab in VSCode
+    // These tasks require the "Command Variable" extension to function:
+    // https://marketplace.visualstudio.com/items?itemName=rioj7.command-variable
+    // This lets ${command:extension.commandvariable.file.relativeFileDirnamePosix} refer to the folder of the currently open file *IN A LINUX-STYLE PATH* (Forward slashes)
     "tasks": [
-        // ========================================= C# Tasks =========================================
+        {
+            "label": "!Local C# build and deploy",
+            "dependsOn": [
+                "publish current C#",
+                "deploy current C#"
+            ],
+            "dependsOrder": "sequence"
+        },
+        {
+            "label": "!Full deploy (C# + C++)",
+            "dependsOn": [
+                "WSL: Cross-build native (arm64)",
+                "publish current C#",
+                "Copy .so to publish",
+                "deploy current C#"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
+        {
+            "label": "!Remote build C++",
+            "dependsOn": [
+                "Build C++",
+                "Deploy C++"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": []
+        },
         {
             "label": "deploy current C#",
             "type": "shell",
@@ -11,10 +42,7 @@
                 "-c",
                 "rsync -avz --delete \"${command:extension.commandvariable.file.relativeFileDirnamePosix}/bin/pi-publish/\" ${env:RGBLEDMATRIX_REMOTE_MACHINE}:\"${env:RGBLEDMATRIX_REMOTE_DIR}/${command:extension.commandvariable.file.relativeFileDirnamePosix}/bin\""
             ],
-            "problemMatcher": [],
-            "dependsOn": [
-                "publish current C#"
-            ]
+            "problemMatcher": []
         },
         {
             "label": "publish current C#",
@@ -33,7 +61,28 @@
             "problemMatcher": [],
             "group": "build"
         },
-        // ========================================= C++ Tasks =========================================
+        {
+            "label": "WSL: Cross-build native (arm64)",
+            "type": "shell",
+            "command": "wsl",
+            "args": [
+                "bash",
+                "-lc",
+                "make -C lib CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ AR=aarch64-linux-gnu-ar"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Copy .so to publish",
+            "type": "shell",
+            "command": "wsl",
+            "args": [
+                "bash",
+                "-c",
+                "cp lib/librgbmatrix.so.1 \"${command:extension.commandvariable.file.relativeFileDirnamePosix}/bin/pi-publish/\""
+            ],
+            "problemMatcher": []
+        },
         {
             "label": "Sync C++",
             "type": "shell",
@@ -69,12 +118,8 @@
                 "cd ${env:RGBLEDMATRIX_REMOTE_DIR}&&",
                 "cp lib/librgbmatrix.so.1 /usr/lib"
             ],
-            "problemMatcher": [],
-            "dependsOn": [
-                "Build C++"
-            ]
+            "problemMatcher": []
         },
-        // ========================================= Utility Tasks =========================================
         {
             "label": "echo",
             "type": "shell",
