@@ -1,6 +1,6 @@
 # Build environment.
 [envs.hatch-build]
-dependencies = ["cython"]
+dependencies = ["cython", "python3-pil"]
 
 # Wheel build configuration
 [build.targets.wheel]
@@ -9,7 +9,7 @@ exclude = [
     "*.cpp",
     "*.pyd",
     "*.pyx"
-    ]
+]
 artifacts = ["*.so"]
 
 # External hook script which invokes the makefile to build C library.
@@ -25,4 +25,4 @@ src = "src/bindings/python/rgbmatrix"
 includes = ["../../include"]
 libraries = "rgbmatrix"
 library_dirs = ["../../lib"]
-compile_args = ["-O3", "-Wall"]
+compile_args = ["-O3", "-march=native", "-mtune=native", "-flto=2", "-Wall"]

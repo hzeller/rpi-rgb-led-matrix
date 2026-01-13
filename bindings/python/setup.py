@@ -8,7 +8,7 @@ core_ext = Extension(
     include_dirs        = ['../../include', 'rgbmatrix/shims'],
     library_dirs        = ['../../lib'],
     libraries           = ['rgbmatrix'],
-    extra_compile_args  = ["-O3", "-Wall"],
+    extra_compile_args  = ["-O3", "-march=native", "-mtune=native", "-flto=2", "-Wall"],
     language            = 'c++'
 )
 
@@ -18,7 +18,7 @@ graphics_ext = Extension(
     include_dirs        = ['../../include'],
     library_dirs        = ['../../lib'],
     libraries           = ['rgbmatrix'],
-    extra_compile_args  = ["-O3", "-Wall"],
+    extra_compile_args  = ["-O3", "-march=native", "-mtune=native", "-flto=2", "-Wall"],
     language            = 'c++'
 )
 
