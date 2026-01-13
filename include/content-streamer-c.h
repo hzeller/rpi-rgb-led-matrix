@@ -25,6 +25,8 @@ void content_stream_reader_rewind(ContentStreamReaderHandle reader);
 struct StreamIO* file_stream_io_create(const char* filename);
 void file_stream_io_delete(struct StreamIO* io);
 
+int file_stream_io_is_compatible_with_canvas(struct StreamIO* io, struct FrameCanvas* frame);
+
 #ifdef __cplusplus
 }
 #endif

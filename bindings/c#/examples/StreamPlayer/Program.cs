@@ -47,4 +47,6 @@ var matrixOptions = new RGBLedMatrixOptions
         RowAddressType = 5
     };
 var streamPlayer = new StreamPlayer(matrixOptions);
-streamPlayer.PlayStream(path);
+if (!streamPlayer.PlayStream(path)){
+    Console.WriteLine("The stream file is not compatible with the current matrix configuration.");
+}
