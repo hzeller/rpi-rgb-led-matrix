@@ -172,7 +172,17 @@ DEFINES+=$(USER_DEFINES)
 
 DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
-CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 -march=native -mtune=native -flto=2 -g -fPIC $(DEFINES)
+
+# When cross-compiling for aarch64 (e.g. using aarch64-linux-gnu-g++),
+# the compiler does not accept '-march=native' or '-mtune=native'. Detect
+# that situation and avoid those flags. For native builds keep the flags.
+ifneq (,$(findstring aarch64-linux-gnu,$(CXX)))
+CPU_ARCH_FLAGS=
+else
+CPU_ARCH_FLAGS=-march=native -mtune=native
+endif
+
+CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 $(CPU_ARCH_FLAGS) -flto=2 -g -fPIC $(DEFINES)
 CXXFLAGS=$(CFLAGS) -fno-exceptions -std=c++11
 
 all : $(TARGET).a $(TARGET).so.1
