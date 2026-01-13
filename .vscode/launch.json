@@ -1,0 +1,35 @@
+{
+    // See https://code.visualstudio.com/docs/editor/debugging#_launch-configurations
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // Debugs the currently open C# file on the remote Raspberry Pi
+            // See the README in the .vscode folder for setup instructions
+            "name": "Debug Current C#",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${fileDirnameBasename}.dll",
+            "args": [],
+            "cwd": "${env:RGBLEDMATRIX_REMOTE_DIR}/${command:extension.commandvariable.file.relativeFileDirnamePosix}/bin",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "pipeTransport": {
+                "pipeCwd": "${workspaceFolder}",
+                "pipeProgram": "wsl",
+                "pipeArgs": ["ssh", "${env:RGBLEDMATRIX_REMOTE_MACHINE}"],
+                "debuggerPath": "~/vsdbg/vsdbg"
+            },
+            "env": {
+                // This environment variable tells the app to use the Pi-specific configuration
+                // It affects:
+                // - Which path the PathConfig returns (eg ../playlists)
+                // - Program.cs will load Pi-specific services (e.g., RPiStreamPlayer)
+                "ASPNETCORE_ENVIRONMENT": "Pi"
+            },
+            "sourceFileMap": {
+                "/root/dev/${workspaceFolderBasename}": "${workspaceFolder}"
+            },
+            "preLaunchTask": "deploy current C#"
+        }
+    ]
+}
