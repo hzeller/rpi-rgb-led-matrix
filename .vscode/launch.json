@@ -4,8 +4,9 @@
     "configurations": [
         {
             // Debugs the currently open C# file on the remote Raspberry Pi
+            // librgbmatrix.so.1 must be built on the Pi beforehand, and in a visible path (eg /usr/lib)
             // See the README in the .vscode folder for setup instructions
-            "name": "Debug Current C#",
+            "name": "Debug Current C# (No C++ build)",
             "type": "coreclr",
             "request": "launch",
             "program": "${fileDirnameBasename}.dll",
@@ -29,7 +30,38 @@
             "sourceFileMap": {
                 "/root/dev/${workspaceFolderBasename}": "${workspaceFolder}"
             },
-            "preLaunchTask": "deploy current C#"
-        }
+            "preLaunchTask": "!Local C# build and deploy"
+        },
+        {
+            // Debugs the currently open C# file on the remote Raspberry Pi
+            // See the README in the .vscode folder for setup instructions
+            // librgbmatrix.so.1 will be built locally and placed in the bin/ folder alongside the C# DLL
+            "name": "Debug Current C# (Local C++ build)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${fileDirnameBasename}.dll",
+            "args": [],
+            "cwd": "${env:RGBLEDMATRIX_REMOTE_DIR}/${command:extension.commandvariable.file.relativeFileDirnamePosix}/bin",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "pipeTransport": {
+                "pipeCwd": "${workspaceFolder}",
+                "pipeProgram": "wsl",
+                "pipeArgs": ["ssh", "${env:RGBLEDMATRIX_REMOTE_MACHINE}"],
+                "debuggerPath": "~/vsdbg/vsdbg"
+            },
+            "env": {
+                // This environment variable tells the app to use the Pi-specific configuration
+                // It affects:
+                // - Which path the PathConfig returns (eg ../playlists)
+                // - Program.cs will load Pi-specific services (e.g., RPiStreamPlayer)
+                "ASPNETCORE_ENVIRONMENT": "Pi"
+            },
+            "sourceFileMap": {
+                "/root/dev/${workspaceFolderBasename}": "${workspaceFolder}"
+            },
+            "preLaunchTask": "!Full deploy (C# + C++)"
+        },
+
     ]
 }
