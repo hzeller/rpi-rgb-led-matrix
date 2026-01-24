@@ -3,7 +3,7 @@ namespace RPiRgbLEDMatrix;
 /// <summary>
 /// Represents a <c>.BDF</c> font.
 /// </summary>
-public class RGBLedFont : IDisposable, IRGBLedFont
+public class RGBLedFont : IDisposable
 {
     internal IntPtr _font;
     private bool disposedValue = false;
@@ -16,10 +16,7 @@ public class RGBLedFont : IDisposable, IRGBLedFont
     /// <exception cref="FileNotFoundException">Thrown when the specified file does not exist.</exception>"
     public RGBLedFont(string bdfFontPath)
     {
-        if (string.IsNullOrEmpty(bdfFontPath))
-            throw new ArgumentException("Font path cannot be null or empty.", nameof(bdfFontPath));
-
-        if (File.Exists(bdfFontPath) == false)
+        if (!File.Exists(bdfFontPath))
             throw new FileNotFoundException("The specified font file was not found.", bdfFontPath);
 
         _font = load_font(bdfFontPath);
