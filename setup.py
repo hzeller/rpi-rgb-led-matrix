@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from skbuild import setup
-
+#
 # core_ext = Extension(
 #     name                = 'core',
 #     sources             = ['rgbmatrix/core.cpp', 'rgbmatrix/shims/pillow.c'],
@@ -21,7 +21,7 @@ from skbuild import setup
 #     extra_compile_args  = ["-O3", "-Wall"],
 #     language            = 'c++'
 # )
-
+#
 setup(
     name                = 'rgbmatrix',
     version             = '0.0.1',

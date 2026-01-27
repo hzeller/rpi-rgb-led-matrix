@@ -59,9 +59,7 @@ set(RGBMATRIX_SOURCES
 )
 cmake_print_variables(RGBMATRIX_SOURCES)
 
-add_library(rgbmatrix SHARED
-    ${RGBMATRIX_SOURCES}
-)
+add_library(rgbmatrix SHARED ${RGBMATRIX_SOURCES})
 
 # see https://stackoverflow.com/questions/25676277/cmake-target-include-directories-prints-an-error-when-i-try-to-add-the-source
 # for more on these generator expressions, $<INSTALL_INTERFACE, etc.
@@ -87,7 +85,7 @@ install(
 )
 
 install(
-    FILES ${LIBRGBMATRIX_CORE_HEADERS}
+    FILES ${RGBMATRIX_CORE_HEADERS}
     DESTINATION "../include"
 )
 

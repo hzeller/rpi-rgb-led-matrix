@@ -1,12 +1,21 @@
 [build-system]
-requires = ["scikit-build-core"]
+requires = ["scikit-build-core", "cython", "cython-cmake"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "rgbmatrix"
-version = "0.0.1+20250323"
+version = "0.0.1+20260125"
 description = "Packaged version of Christoph Friedrich's rpi-rgb-led-matrix library."
 authors = [{name="Christoph Friedrich", email="christoph.friedrich@vonaffenfels.de"}]
 license = "GPL-2.0-or-later"
 readme = "README.md"
 requires-python = ">=3.11"
+
+#[tool.scikit-build]
+#build.verbose = true
+#logging.level = "DEBUG"
+#
+#ext-modules = [
+#    {name = "core_ext", sources=["bindings/python/rgbmatrix/core.cpp"]},
+#    {name = "graphics_ext", sources=["bindings/python/rgbmatrix/graphics.cpp"]}
+#]

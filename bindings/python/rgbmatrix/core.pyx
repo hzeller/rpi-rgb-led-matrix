@@ -8,7 +8,7 @@ cdef extern from "Python.h":
     void* PyCapsule_GetPointer(object capsule, const char* name)
     const char* PyCapsule_GetName(object capsule)
 
-cdef extern from "shims/pillow.h":
+cdef extern from "pillow.h":
     cdef int** get_image32(void* im)
 
 @cython.boundscheck(False)
