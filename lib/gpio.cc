@@ -321,6 +321,7 @@ static RaspberryPiModel DetermineRaspberryModel() {
   case 0x11: /* Pi 4 */
   case 0x13: /* Pi 400 */
   case 0x14: /* CM4 */
+  case 0x15: /* CM4S */
     return PI_MODEL_4;
 
   default:  /* a bunch of versions representing Pi 3 */
