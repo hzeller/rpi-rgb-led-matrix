@@ -72,6 +72,16 @@ public class RGBLedMatrix : IDisposable
     /// <returns>An instance of <see cref="RGBLedCanvas"/> representing the canvas.</returns>
     public RGBLedCanvas CreateOffscreenCanvas() => new(led_matrix_create_offscreen_canvas(matrix));
 
+    [System.Runtime.InteropServices.DllImport("librgbmatrix.so.1")]
+    private static extern void framebuffer_reset_globals();
+
+    /// <summary>
+    /// Reset native framebuffer globals so that GPIO/row-address state will be
+    /// reinitialized on the next matrix creation. Useful when changing
+    /// hardware-mapping critical options at runtime.
+    /// </summary>
+    public static void ResetFramebufferGlobals() => framebuffer_reset_globals();
+
     /// <summary>
     /// Returns a canvas representing the current frame buffer.
     /// </summary>

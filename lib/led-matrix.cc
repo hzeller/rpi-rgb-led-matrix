@@ -34,6 +34,18 @@
 #include "framebuffer-internal.h"
 #include "multiplex-mappers-internal.h"
 
+// C wrapper to reset global GPIO bookkeeping from external callers.
+extern "C" void ledmatrix_reset_global_gpio();
+
+// Global GPIO instance used by the library. Previously this was a function-
+// local static inside CreateFromOptions; move it to file-scope so the C
+// wrapper can access and reset it.
+static rgb_matrix::GPIO s_global_io;  // file-scope global
+
+// Implement the C wrapper here so it has file scope and can access
+// the file-scope GPIO instance.
+extern "C" void ledmatrix_reset_global_gpio() { s_global_io.ResetState(); }
+
 // Leave this in here for a while. Setting things from old defines.
 #if defined(ADAFRUIT_RGBMATRIX_HAT)
 #  error "ADAFRUIT_RGBMATRIX_HAT has long been deprecated. Please use the Options struct or --led-gpio-mapping=adafruit-hat commandline flag"
@@ -696,7 +708,10 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
     return NULL;
   }
 
-  static GPIO io;  // This static var is a little bit icky.
+  // Use file-scope GPIO instance.
+  GPIO &io = s_global_io;
+
+  // C wrapper implementation is at file scope; use local reference `io`.
   if (runtime_options.do_gpio_init
       && !io.Init(runtime_options.gpio_slowdown)) {
     fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
