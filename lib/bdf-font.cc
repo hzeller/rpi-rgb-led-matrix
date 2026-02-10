@@ -98,7 +98,7 @@ bool Font::LoadFont(const char *path) {
 bool Font::ReadFont(const char *font_file_as_string) {
   if (!font_file_as_string || !*font_file_as_string) return false;
   uint32_t codepoint;
-  uint32_t BUFFER_SIZE = 1024;
+  constexpr uint32_t BUFFER_SIZE = 1024;
   char buffer[BUFFER_SIZE];
   Glyph tmp;
   Glyph *current_glyph = NULL;

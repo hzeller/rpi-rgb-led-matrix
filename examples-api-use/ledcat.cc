@@ -13,6 +13,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <memory>
+
 #define FPS 60
 
 using rgb_matrix::RGBMatrix;
@@ -40,8 +42,8 @@ int main(int argc, char *argv[]) {
   signal(SIGTERM, InterruptHandler);
   signal(SIGINT, InterruptHandler);
 
-  ssize_t frame_size = (ssize_t)canvas->width() * (ssize_t)canvas->height() * 3;
-  uint8_t buf[frame_size];
+  const ssize_t frame_size = (ssize_t)canvas->width() * (ssize_t)canvas->height() * 3;
+  std::unique_ptr<uint8_t[]> buf(new uint8_t[frame_size]);
 
   while (1) {
     struct timespec start;
