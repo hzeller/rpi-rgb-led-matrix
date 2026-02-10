@@ -1,4 +1,6 @@
-CXXFLAGS=-O3 -march=native -mtune=native -flto=2 -W -Wall -Wextra -Wno-unused-parameter -D_FILE_OFFSET_BITS=64
+include ../config.mk
+
+CXXFLAGS=-O3 $(CPU_ARCH_FLAGS) $(LTO_FLAGS) -W -Wall -Wextra -Wno-unused-parameter -D_FILE_OFFSET_BITS=64
 OBJECTS=led-image-viewer.o text-scroller.o
 BINARIES=led-image-viewer text-scroller
 
@@ -12,7 +14,7 @@ RGB_INCDIR=$(RGB_LIB_DISTRIBUTION)/include
 RGB_LIBDIR=$(RGB_LIB_DISTRIBUTION)/lib
 RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
-RGB_LDFLAGS+= -flto=2 -L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+RGB_LDFLAGS+=$(CPU_ARCH_FLAGS) $(LTO_FLAGS) -L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
 # Imagemagic flags, only needed if actually compiled.
 MAGICK_CXXFLAGS?=$(shell GraphicsMagick++-config --cppflags --cxxflags)
