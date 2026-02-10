@@ -6,7 +6,7 @@ ifneq (,$(findstring clang,$(COMPILER_VERSION)))
   LTO_FLAGS=-flto=thin
   AR=llvm-ar
 else
-  LTO_FLAGS=-flto
+  LTO_FLAGS=-flto=2
   AR=gcc-ar
 endif
 
