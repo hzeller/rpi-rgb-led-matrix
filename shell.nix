@@ -4,8 +4,8 @@
 
 { pkgs ? import <nixpkgs> {} }:
 let
-  #build_used_stdenv = pkgs.stdenv;
-  build_used_stdenv = pkgs.clang19Stdenv;
+  build_used_stdenv = pkgs.stdenv;
+  #build_used_stdenv = pkgs.clang19Stdenv;
 in
 build_used_stdenv.mkDerivation {
   name = "build-environment";
