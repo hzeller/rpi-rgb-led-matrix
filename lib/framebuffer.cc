@@ -48,19 +48,15 @@ static PinPulser *sOutputEnablePulser = NULL;
 PixelDesignator *PixelDesignatorMap::get(int x, int y) {
   if (x < 0 || y < 0 || x >= width_ || y >= height_)
     return NULL;
-  return buffer_ + (y*width_) + x;
+  return &buffer_[(y*width_) + x];
 }
 
 PixelDesignatorMap::PixelDesignatorMap(int width, int height,
                                        const PixelDesignator &fill_bits)
-  : width_(std::max(width, 1)),
-    height_(std::max(height, 1)), 
+  : width_(width),
+    height_(height),
     fill_bits_(fill_bits),
-    buffer_(new PixelDesignator[std::max(width, 1) * std::max(height, 1)]) {
-}
-
-PixelDesignatorMap::~PixelDesignatorMap() {
-  delete [] buffer_;
+    buffer_(width * height) {
 }
 
 // Different panel types use different techniques to set the row address.
@@ -645,7 +641,7 @@ class ColorLookupTable {
       return instance.lookups_[brightness - 1];
     }
 
-    
+
   private:
     // Do CIE1931 luminance correction and scale to output bitplanes
     static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
@@ -662,7 +658,7 @@ class ColorLookupTable {
 
     ColorLookup lookups_[100]{};
   };
-  
+
   static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
     return ColorLookupTable::GetLookup(brightness).color[c];
   }

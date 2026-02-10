@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <vector>
+
 #include "hardware-mapping.h"
 #include "../include/graphics.h"
 
@@ -41,7 +43,6 @@ struct PixelDesignator {
 class PixelDesignatorMap {
 public:
   PixelDesignatorMap(int width, int height, const PixelDesignator &fill_bits);
-  ~PixelDesignatorMap();
 
   // Get a writable version of the PixelDesignator. Outside Framebuffer used
   // by the RGBMatrix to re-assign mappings to new PixelDesignatorMappers.
@@ -57,7 +58,7 @@ private:
   const int width_;
   const int height_;
   const PixelDesignator fill_bits_;  // Precalculated for fill.
-  PixelDesignator *const buffer_;
+  std::vector<PixelDesignator> buffer_;
 };
 
 // Internal representation of the frame-buffer that as well can
