@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <random>
 #include <algorithm>
 #include <map>
 #include <string>
@@ -503,7 +504,9 @@ int main(int argc, char *argv[]) {
 
   do {
     if (do_shuffle) {
-      std::random_shuffle(file_imgs.begin(), file_imgs.end());
+      std::random_device rd;
+      std::mt19937 g(rd());
+      std::shuffle(file_imgs.begin(), file_imgs.end(), g);
     }
     for (size_t i = 0; i < file_imgs.size() && !interrupt_received; ++i) {
       DisplayAnimation(file_imgs[i], matrix, offscreen_canvas);
