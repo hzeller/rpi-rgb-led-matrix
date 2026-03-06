@@ -6,7 +6,8 @@ RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
 
 # Some language bindings.
-PYTHON_LIB_DIR=bindings/python
+# Python is now handled by scikit-build-core and cmake, not here.
+# PYTHON_LIB_DIR=bindings/python
 CSHARP_LIB_DIR=bindings/c\#
 
 all : $(RGB_LIBRARY)
@@ -19,7 +20,7 @@ clean:
 	$(MAKE) -C lib clean
 	$(MAKE) -C utils clean
 	$(MAKE) -C examples-api-use clean
-	$(MAKE) -C $(PYTHON_LIB_DIR) clean
+	# $(MAKE) -C $(PYTHON_LIB_DIR) clean
 
 build-csharp:
 	$(MAKE) -C $(CSHARP_LIB_DIR) nuget
