@@ -16,7 +16,7 @@ jobs:
       run: |
         sudo apt-get update && sudo apt-get install -y ${{ matrix.cython }}
         cython3 --version
-    - name: regenerate python bindings
-      run: make -B -C bindings/python/rgbmatrix
+    #- name: regenerate python bindings
+    #  run: make -B -C bindings/python/rgbmatrix
     - name: make
       run: make
