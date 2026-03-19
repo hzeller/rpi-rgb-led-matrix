@@ -481,7 +481,7 @@ int main(int argc, char **argv) {
 */
 // This parses the flags from argv and updates the structs with the parsed-out
 // values. Structs can be NULL if you are not interested in it.
-//
+// The recognized flags are removed from argv if "remove_consumed_flags" is
 // The recognized flags are removed from argv if "remove_consumed_flags" is
 // true; this simplifies your command line processing for the remaining options.
 //
