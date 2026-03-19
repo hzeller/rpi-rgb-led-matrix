@@ -410,9 +410,9 @@ struct RuntimeOptions {
   // even offered via the command line flags.
   // ----------
 
-  // There are three possible values here
   //   -1 : don't leave choice of becoming daemon to the command line
   //        parsing. If set to -1, the --led-daemon option is not offered.
+  //    0 : do not become a daemon, run in foreground (default value)
   //    0 : do not becoma a daemon, run in forgreound (default value)
   //    1 : become a daemon, run in background.
   //
