@@ -975,3 +975,26 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
 }
 }  // namespace internal
 }  // namespace rgb_matrix
+namespace rgb_matrix {
+namespace internal {
+  void Framebuffer::ResetGlobals() {
+    if (sOutputEnablePulser != NULL) {
+      delete sOutputEnablePulser;
+      sOutputEnablePulser = NULL;
+    }
+    if (row_setter_ != NULL) {
+      delete row_setter_;
+      row_setter_ = NULL;
+    }
+  }
+}
+}
+
+extern "C" {
+  void framebuffer_reset_globals() {
+    rgb_matrix::internal::Framebuffer::ResetGlobals();
+    // Also reset global GPIO bookkeeping in led-matrix's static GPIO object
+    extern void ledmatrix_reset_global_gpio();
+    ledmatrix_reset_global_gpio();
+  }
+}

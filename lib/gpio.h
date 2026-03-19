@@ -49,6 +49,12 @@ public:
   // Returns the bits that were available and could be reserved.
   gpio_bits_t RequestInputs(gpio_bits_t inputs);
 
+  // Reset internal bookkeeping about which GPIOs have been claimed.
+  // This does not touch the hardware registers directly; it clears the
+  // tracked masks so subsequent InitOutputs/RequestInputs will reconfigure
+  // GPIO pins as needed.
+  void ResetState();
+
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(gpio_bits_t value) {
     if (!value) return;
