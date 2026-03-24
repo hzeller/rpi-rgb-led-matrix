@@ -1,7 +1,7 @@
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
-A library to control commonly available 64x64, 32x32 or 16x32 RGB LED panels
+A library to control commonly available 128x64, 64x64, 32x32 or 16x32 RGB LED panels
 with the Raspberry Pi. Can support PWM up to 11Bit per channel, providing
 true 24bpp color with CIE1931 profile.
 
@@ -264,7 +264,7 @@ choose these here:
 This can have values such as
   - `--led-gpio-mapping=regular` The standard mapping of this library, described in the [wiring](./wiring.md) page.
   - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT/Bonnet, that uses this library or
-  - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti- hardware mod [described below](#improving-).
+  - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti- hardware mod [described below](#improving-flicker-hardware-patch).
   - `--led-gpio-mapping=compute-module` Additional 3 parallel chains can be used with the Compute Module.
 
 Learn more about the mappings in the [wiring documentation](wiring.md#alternative-hardware-mappings).
@@ -884,7 +884,7 @@ the refresh rate.
 If you have a loaded system and one of the newer Pis with 4 cores, you can
 reserve one core just for the refresh of the display. Add:
 ```
-isolcpus=3
+isolcpus=domain,managed_irq,3 nohz_full=3 rcu_nocbs=3 irqaffinity=0,1,2
 ```
 
 to the end of the line in `/boot/cmdline.txt` (pre-bookworm) or
