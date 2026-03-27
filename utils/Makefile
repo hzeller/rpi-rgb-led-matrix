@@ -18,6 +18,9 @@ RGB_LDFLAGS+=$(CPU_ARCH_FLAGS) $(LTO_FLAGS) -L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME
 
 # Imagemagic flags, only needed if actually compiled.
 MAGICK_CXXFLAGS?=$(shell GraphicsMagick++-config --cppflags --cxxflags)
+# GraphicsMagick may export C-only warning flags (e.g. -Werror=implicit-function-declaration)
+# which are invalid for C++. Filter those out for C++ compilation.
+MAGICK_CXXFLAGS := $(filter-out -Werror=implicit-function-declaration,$(MAGICK_CXXFLAGS))
 MAGICK_LDFLAGS?=$(shell GraphicsMagick++-config --ldflags --libs)
 AV_CXXFLAGS=$(shell pkg-config --cflags  libavcodec libavformat libswscale libavutil libavdevice)
 AV_LDFLAGS=$(shell pkg-config --cflags --libs  libavcodec libavformat libswscale libavutil libavdevice)
