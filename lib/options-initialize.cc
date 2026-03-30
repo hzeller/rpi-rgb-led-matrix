@@ -401,7 +401,7 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   }
 
   if (cols < 16) {
-    err->append("Invlid number of columns for panel (--led-cols). "
+    err->append("Invalid number of columns for panel (--led-cols). "
                 "Typically that is something like 32 or 64\n");
     success = false;
   }
@@ -419,8 +419,8 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
     success = false;
   }
 
-  if (row_address_type < 0 || row_address_type > 4) {
-    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 (ABC address), 4 (ABC Shift + DE direct).\n");
+  if (row_address_type < 0 || row_address_type > 5) {
+    err->append("Row address type values can be 0 (default), 1 (AB addressing), 2 (direct row select), 3 (ABC address), 4 (ABC Shift + DE direct), 5 (Test row select).\n");
     success = false;
   }
 
@@ -463,7 +463,7 @@ bool RGBMatrix::Options::Validate(std::string *err_in) const {
   }
 
   if (pwm_dither_bits < 0 || pwm_dither_bits > 2) {
-    err->append("Inavlid range of pwm-dither-bits (0..2 allowed).\n");
+    err->append("Invalid range of pwm-dither-bits (0..2 allowed).\n");
     success = false;
   }
 

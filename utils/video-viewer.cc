@@ -305,7 +305,7 @@ int main(int argc, char *argv[]) {
         }
       }
       if (videoStream == -1)
-        return false;
+        return 1;
 
       // Frames per second; calculate wait time between frames.
       AVStream *const stream = format_context->streams[videoStream];
@@ -449,7 +449,6 @@ int main(int argc, char *argv[]) {
 
       av_frame_free(&output_frame);
       av_frame_free(&decode_frame);
-      avcodec_close(codec_context);
       avformat_close_input(&format_context);
     }
   } while (multiple_video_forever && !interrupt_received);

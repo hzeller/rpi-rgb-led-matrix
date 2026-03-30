@@ -132,6 +132,7 @@ private:
 
   char *header_frame_buffer_;
 };
-}
-
+// Helpers for external C bridge wrappers.
+bool StreamIOIsCompatibleWithCanvas(StreamIO* io, FrameCanvas* frame);
+}  // namespace rgb_matrix
 #endif

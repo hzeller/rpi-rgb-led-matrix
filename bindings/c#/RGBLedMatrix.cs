@@ -43,10 +43,15 @@ public class RGBLedMatrix : IDisposable
             // users' commandline.
             // As always, as the _very_ first, we need to provide the
             // program name argv[0].
-            var argv = new string[args.Length + 1];
+            // --led-no-drop-privs is also added as there seems to be no other way to do it
+            // other than passing it via command-line, and if you call the bindings from a library,
+            // you cannot do that unless you also pass that argument to your app, which just seems silly.
+            // Without no-drop-privs, dotnet cannot load any libraries, so it seems essential
+            var argv = new string[args.Length + 2];
             argv[0] = args[0];
             argv[1] = $"--led-slowdown-gpio={options.GpioSlowdown}";
-            Array.Copy(args, 1, argv, 2, args.Length - 1);
+            argv[2] = "--led-no-drop-privs";
+            Array.Copy(args, 1, argv, 3, args.Length - 1);
 
             matrix = led_matrix_create_from_options_const_argv(ref opt, argv.Length, argv);
             if (matrix == (IntPtr)0)

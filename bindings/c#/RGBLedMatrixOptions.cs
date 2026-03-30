@@ -94,7 +94,7 @@ public struct RGBLedMatrixOptions
 
     /// <summary>
     /// Panel type. Typically just empty, but certain panels (FM6126)
-    /// requie an initialization sequence
+    /// require an initialization sequence
     /// </summary>
     public string? PanelType = null;
 

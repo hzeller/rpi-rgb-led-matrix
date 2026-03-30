@@ -1,4 +1,6 @@
-CXXFLAGS=-O3 -W -Wall -Wextra -Wno-unused-parameter -D_FILE_OFFSET_BITS=64
+include ../config.mk
+
+CXXFLAGS=-O3 $(CPU_ARCH_FLAGS) $(LTO_FLAGS) -W -Wall -Wextra -Wno-unused-parameter -D_FILE_OFFSET_BITS=64
 OBJECTS=led-image-viewer.o text-scroller.o
 BINARIES=led-image-viewer text-scroller
 
@@ -12,10 +14,13 @@ RGB_INCDIR=$(RGB_LIB_DISTRIBUTION)/include
 RGB_LIBDIR=$(RGB_LIB_DISTRIBUTION)/lib
 RGB_LIBRARY_NAME=rgbmatrix
 RGB_LIBRARY=$(RGB_LIBDIR)/lib$(RGB_LIBRARY_NAME).a
-RGB_LDFLAGS+=-L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
+RGB_LDFLAGS+=$(CPU_ARCH_FLAGS) $(LTO_FLAGS) -L$(RGB_LIBDIR) -l$(RGB_LIBRARY_NAME) -lrt -lm -lpthread
 
 # Imagemagic flags, only needed if actually compiled.
 MAGICK_CXXFLAGS?=$(shell GraphicsMagick++-config --cppflags --cxxflags)
+# GraphicsMagick may export C-only warning flags (e.g. -Werror=implicit-function-declaration)
+# which are invalid for C++. Filter those out for C++ compilation.
+MAGICK_CXXFLAGS := $(filter-out -Werror=implicit-function-declaration,$(MAGICK_CXXFLAGS))
 MAGICK_LDFLAGS?=$(shell GraphicsMagick++-config --ldflags --libs)
 AV_CXXFLAGS=$(shell pkg-config --cflags  libavcodec libavformat libswscale libavutil libavdevice)
 AV_LDFLAGS=$(shell pkg-config --cflags --libs  libavcodec libavformat libswscale libavutil libavdevice)

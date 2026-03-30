@@ -30,6 +30,11 @@ public class RGBLedCanvas
     public int Height { get; private set; }
 
     /// <summary>
+    /// Gets the native handle for interop.
+    /// </summary>
+    public IntPtr Handle => _canvas;
+
+    /// <summary>
     /// Sets the color of a specific pixel.
     /// </summary>
     /// <param name="x">The X coordinate of the pixel.</param>
@@ -57,6 +62,13 @@ public class RGBLedCanvas
     /// </summary>
     /// <param name="color">New canvas color.</param>
     public void Fill(Color color) => led_canvas_fill(_canvas, color.R, color.G, color.B);
+
+    /// <summary>
+    /// Sets the color of the given section of the canvas.
+    /// </summary>
+    /// <param name="color">New canvas color.</param>
+    public void SubFill(int x, int y, int width, int height, Color color) =>
+        led_canvas_subfill(_canvas, x, y, width, height, color.R, color.G, color.B);
 
     /// <summary>
     /// Cleans the entire canvas.

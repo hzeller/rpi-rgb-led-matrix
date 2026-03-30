@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <vector>
+
 #include "hardware-mapping.h"
 #include "../include/graphics.h"
 
@@ -41,7 +43,6 @@ struct PixelDesignator {
 class PixelDesignatorMap {
 public:
   PixelDesignatorMap(int width, int height, const PixelDesignator &fill_bits);
-  ~PixelDesignatorMap();
 
   // Get a writable version of the PixelDesignator. Outside Framebuffer used
   // by the RGBMatrix to re-assign mappings to new PixelDesignatorMappers.
@@ -57,7 +58,7 @@ private:
   const int width_;
   const int height_;
   const PixelDesignator fill_bits_;  // Precalculated for fill.
-  PixelDesignator *const buffer_;
+  std::vector<PixelDesignator> buffer_;
 };
 
 // Internal representation of the frame-buffer that as well can
@@ -75,8 +76,8 @@ public:
   // TODO(hzeller): make the default 15 bit or so, but slide the use of
   //  timing to lower bits if fewer bits requested to not affect the overall
   //  refresh in that case.
-  //  This needs to be balanced to not create too agressive timing however.
-  //  To be explored in a separete commit.
+  //  This needs to be balanced to not create too aggressive timing however.
+  //  To be explored in a separate commit.
   //
   // For now, if someone needs very low level of light, change this to
   // say 13 and recompile. Run with --led-pwm-bits=13. Also, consider
@@ -130,6 +131,7 @@ public:
   void SetPixels(int x, int y, int width, int height, Color *colors);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  void SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue);
 
 private:
   static const struct HardwareMapping *hardware_mapping_;

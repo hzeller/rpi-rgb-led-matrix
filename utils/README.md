@@ -142,6 +142,26 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-out.stream
 ```
 
+##### Stream Notes
+When creating a stream (Using the `-O` option), some options are ignored.  
+When viewing a stream, some options are also ignored.  
+Furthermore, when viewing a stream, some options must match those used when the stream was created.  
+This table lists (Currently incomplete) those options.  
+IS = Ignored on create, IP = ignored on play, MM = must match
+
+| Option  | IC | IP | MM |
+| ------------- | ------------- | --- | --- |
+| --led-rows  | | | X |
+| --led-columns  | | | X |
+| --led-chain  | | | X |
+| --led-parallel | | | X |
+| -l | X | | |
+| --led-row-addr-type | X | | |
+| --led-pwm-dither-bits | X | | |
+| --led-pwm-lsb-nanoseconds | X | | |
+| --led-pwm-bits | X | | |
+| --led-brightness |  | X | |
+
 ### Text Scroller ###
 
 The text scroller allows to show some scrolling text.

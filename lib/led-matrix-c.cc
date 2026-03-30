@@ -242,6 +242,9 @@ void led_canvas_fill(struct LedCanvas *canvas, uint8_t r, uint8_t g, uint8_t b) 
   to_canvas(canvas)->Fill(r, g, b);
 }
 
+void led_canvas_subfill(struct LedCanvas *canvas, int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b) {
+  to_canvas(canvas)->SubFill(x, y, width, height, r, g, b);
+}
 struct LedFont *load_font(const char *bdf_font_file) {
   rgb_matrix::Font* font = new rgb_matrix::Font();
   font->LoadFont(bdf_font_file);
@@ -254,6 +257,10 @@ int baseline_font(struct LedFont * font) {
 
 int height_font(struct LedFont * font) {
   return to_font(font)->height();
+}
+
+int character_width_font(struct LedFont *font, uint32_t unicode_codepoint) {
+  return to_font(font)->CharacterWidth(unicode_codepoint);
 }
 
 struct LedFont *create_outline_font(struct LedFont * font) {

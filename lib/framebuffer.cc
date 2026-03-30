@@ -19,6 +19,7 @@
 
 #include "framebuffer-internal.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <ctype.h>
 #include <math.h>
@@ -47,17 +48,15 @@ static PinPulser *sOutputEnablePulser = NULL;
 PixelDesignator *PixelDesignatorMap::get(int x, int y) {
   if (x < 0 || y < 0 || x >= width_ || y >= height_)
     return NULL;
-  return buffer_ + (y*width_) + x;
+  return &buffer_[(y*width_) + x];
 }
 
 PixelDesignatorMap::PixelDesignatorMap(int width, int height,
                                        const PixelDesignator &fill_bits)
-  : width_(width), height_(height), fill_bits_(fill_bits),
-    buffer_(new PixelDesignator[width * height]) {
-}
-
-PixelDesignatorMap::~PixelDesignatorMap() {
-  delete [] buffer_;
+  : width_(width),
+    height_(height),
+    fill_bits_(fill_bits),
+    buffer_(width * height) {
 }
 
 // Different panel types use different techniques to set the row address.
@@ -168,6 +167,43 @@ private:
   const gpio_bits_t dck_;
   gpio_bits_t row_lookup_[32];
 };
+
+class B707ShiftRegisterRowAddressSetter : public RowAddressSetter {
+public:
+  B707ShiftRegisterRowAddressSetter(int double_rows, const HardwareMapping &h)
+    : row_mask_(h.a | h.b | h.c),
+      last_row_(-1),
+      bk_(h.b),
+      din_(h.c),
+      dck_(h.a) {
+    assert(double_rows <= 32); // designed for up to 1/32 panel
+  }
+
+  virtual gpio_bits_t need_bits() const { return row_mask_; }
+
+  virtual void SetRowAddress(GPIO *io, int row) {
+    if (row == last_row_) return;
+    io->SetBits(bk_);  // Enable serial input for the shifter
+    if (row == 0) {
+        io->SetBits(din_);
+      } else {
+        io->ClearBits(din_);
+      }
+    io->SetBits(dck_);
+    io->SetBits(dck_);  // Longer clock time; tested with Pi3
+    io->ClearBits(dck_);
+    io->ClearBits(bk_);  // Disable serial input to keep unwanted bits out of the shifters
+    last_row_ = row;
+  }
+
+private:
+  gpio_bits_t row_mask_;
+  int last_row_;
+  const gpio_bits_t bk_;
+  const gpio_bits_t din_;
+  const gpio_bits_t dck_;
+};
+
 
 class ShiftRegisterRowAddressSetter : public RowAddressSetter {
 public:
@@ -440,6 +476,11 @@ Framebuffer::~Framebuffer() {
   case 4:
     row_setter_ = new SM5266RowAddressSetter(double_rows, h);
     break;
+  case 5:
+    row_setter_ = new B707ShiftRegisterRowAddressSetter(double_rows, h);
+    break;
+
+
   default:
     assert(0);  // unexpected type.
   }
@@ -508,7 +549,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
 }
 
 // The FM6217 is very similar to the FM6216.
-// FM6217 adds Register 3 to allow for automatic bad pixel supression.
+// FM6217 adds Register 3 to allow for automatic bad pixel suppression.
 static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   const gpio_bits_t bits_r_on= h.p0_r1 | h.p0_r2;
   const gpio_bits_t bits_g_on= h.p0_g1 | h.p0_g2;
@@ -589,29 +630,38 @@ void Framebuffer::Clear() {
   }
 }
 
-// Do CIE1931 luminance correction and scale to output bitplanes
-static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
-  float out_factor = ((1 << internal::Framebuffer::kBitPlanes) - 1);
-  float v = (float) c * brightness / 255.0;
-  return roundf(out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3)));
-}
-
 struct ColorLookup {
   uint16_t color[256];
 };
-static ColorLookup *CreateLuminanceCIE1931LookupTable() {
-  ColorLookup *for_brightness = new ColorLookup[100];
-  for (int c = 0; c < 256; ++c)
-    for (int b = 0; b < 100; ++b)
-      for_brightness[b].color[c] = luminance_cie1931(c, b + 1);
 
-  return for_brightness;
-}
+class ColorLookupTable {
+  public:
+    static const ColorLookup &GetLookup(uint8_t brightness) {
+      static ColorLookupTable instance;
+      return instance.lookups_[brightness - 1];
+    }
 
-static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
-  static ColorLookup *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-  return luminance_lookup[brightness - 1].color[c];
-}
+
+  private:
+    // Do CIE1931 luminance correction and scale to output bitplanes
+    static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
+      float out_factor = ((1 << internal::Framebuffer::kBitPlanes) - 1);
+      float v = (float) c * brightness / 255.0;
+      return roundf(out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3)));
+    }
+
+    ColorLookupTable() {
+      for (int c = 0; c < 256; ++c)
+        for (int b = 0; b < 100; ++b)
+          lookups_[b].color[c] = luminance_cie1931(c, b + 1);
+    }
+
+    ColorLookup lookups_[100]{};
+  };
+
+  static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
+    return ColorLookupTable::GetLookup(brightness).color[c];
+  }
 
 // Non luminance correction. TODO: consider getting rid of this.
 static inline uint16_t DirectMapColor(uint8_t brightness, uint8_t c) {
@@ -661,6 +711,46 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
       for (int col = 0; col < columns_; ++col) {
         *row_data++ = plane_bits;
       }
+    }
+  }
+}
+
+void Framebuffer::SubFill(int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b) {
+
+  uint16_t red, green, blue;
+  MapColors(r, g, b, &red, &green, &blue);
+
+  int safe_y = std::max(0, y);
+  int safe_y_max = std::min((*shared_mapper_)->height(), y + height);
+  int safe_x = std::max(0, x);
+  int safe_x_max = std::min((*shared_mapper_)->width(), x + width);
+
+  for (int row = safe_y; row < safe_y_max; row++)
+  {
+    const PixelDesignator* designator = (*shared_mapper_)->get(safe_x, row);
+
+    for (int col = safe_x; col < safe_x_max; col++)
+    {
+      if (designator == NULL) continue;
+      const long pos = designator->gpio_word;
+      if (pos < 0) continue;  // non-used pixel marker.
+
+      gpio_bits_t* bits = bitplane_buffer_ + pos;
+      const int min_bit_plane = kBitPlanes - pwm_bits_;
+      bits += (columns_ * min_bit_plane);
+      const gpio_bits_t r_bits = designator->r_bit;
+      const gpio_bits_t g_bits = designator->g_bit;
+      const gpio_bits_t b_bits = designator->b_bit;
+      const gpio_bits_t designator_mask = designator->mask;
+      for (uint16_t mask = 1 << min_bit_plane; mask != 1 << kBitPlanes; mask <<= 1) {
+        gpio_bits_t color_bits = 0;
+        if (red & mask)   color_bits |= r_bits;
+        if (green & mask) color_bits |= g_bits;
+        if (blue & mask)  color_bits |= b_bits;
+        *bits = (*bits & designator_mask) | color_bits;
+        bits += columns_;
+      }
+      designator++;
     }
   }
 }
