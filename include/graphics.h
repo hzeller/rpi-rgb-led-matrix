@@ -137,6 +137,12 @@ int VerticalDrawText(Canvas *c, const Font &font, int x, int y,
                      const Color &color, const Color *background_color,
                      const char *utf8_text, int kerning_offset = 0);
 
+// Figure out how many pixels long a bit of text will be when drawn
+// Useful for aligning text to the center or right
+// Return value will be the length of the text in pixels
+//     (ie. the width for normal horizontal text)
+int MeasureText(const Font &font, const char *utf8_text, int kerning_offset = 0);
+
 // Draw a circle centered at "x", "y", with a radius of "radius" and with "color"
 void DrawCircle(Canvas *c, int x, int y, int radius, const Color &color);
 

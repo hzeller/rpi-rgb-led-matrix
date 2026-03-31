@@ -117,6 +117,19 @@ int VerticalDrawText(Canvas *c, const Font &font, int x, int y,
   return y - start_y;
 }
 
+int MeasureText(const Font &font, const char *utf8_text, int kerning_offset) {
+  int result = 0;
+  while (*utf8_text) {
+    const uint32_t cp = utf8_next_codepoint(utf8_text);
+    int width = font.CharacterWidth(cp);
+    if (width > 0)
+      result += width;
+    if (*utf8_text)
+      result += kerning_offset;
+  }
+  return result;
+}
+
 void DrawCircle(Canvas *c, int x0, int y0, int radius, const Color &color) {
   int x = radius, y = 0;
   int radiusError = 1 - x;
