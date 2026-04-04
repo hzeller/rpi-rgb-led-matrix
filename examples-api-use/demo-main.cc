@@ -76,7 +76,7 @@ public:
          1, 1, 1  //7         2---------6
       };
 
-      uint16_t edges[12*4] = {
+      uint16_t edges[12*2] = {
         0,1,  1,3,  3,2,  2,0,
         0,4,  1,5,  2,6,  3,7,
         4,5,  5,7,  7,6,  6,4,
@@ -88,8 +88,9 @@ public:
       int blu = sin(freq*k + rad/3*3) * 128 + 127;
 
       // draw complete mesh with rotated vertices and color
+      int vertSize = sizeof(verts)/sizeof(verts[0]);
       int edgeSize = sizeof(edges)/sizeof(edges[0]);
-      drawMesh(rotate(verts,8,k,k/3,k/2), edges, edgeSize/2, red, grn, blu);
+      drawMesh(rotate(verts,vertSize/3,k,k/3,k/2), edges, edgeSize/2, red, grn, blu);
 
       // sleep and then clear canvas
       usleep(20*1000);
