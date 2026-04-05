@@ -75,7 +75,6 @@ Newer PWM panels are not currently supported by this lib, but support would real
 
 Raspberry Pi up to 4 supported
 ------------------------------
-
 This library supports the old Raspberry Pi's Version 1 with 26 pin header and
 also the B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well
 as the Compute Modules which have 44 GPIOs.
@@ -95,6 +94,20 @@ this [troubleshooting section](#troubleshooting) what to do.
 A lightweight, non-GUI, distribution such as [DietPi] is recommended.
 [Raspbian Lite][raspbian-lite] is a bit easier to get started with and
 is a good second choice.
+
+Raspberry Pi5
+-------------
+At this time of this writing, this library does not support Pi5. Latest update is
+in https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603 but please don't ask 
+"is it ready yet" or "I need this" as it will only be added if someone who
+needs/wants it (including you) writes and contributes the code.  
+However, Adafruit wrote their own driver for Pi5. It is entirely different from
+this one and we can't help you or provide support for it, however if you buy
+hardware from Adafruit, including their active-3 low profile board 
+( https://www.adafruit.com/product/6358 ), they do support users of the hardware
+they sold. Please go to 
+* https://learn.adafruit.com/adafruit-triple-led-matrix-bonnet-for-raspberry-pi-with-hub75/raspberry-pi-5-setup
+* code here: https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter/tree/main/src
 
 Types of Displays
 -----------------
