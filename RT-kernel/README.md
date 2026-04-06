@@ -215,6 +215,88 @@ CONFIG_TASK_XACCT=n
 CONFIG_TIMERLAT_TRACER=n
 CONFIG_TRACING=n
 ```
+---
+
+**Pi 3 / Zero 2W - Additional Step**
+This chipset needs an additional change to reduce interrupts when checking with cat /proc/interrupts.
+
+Changes based on kernel 6.18 - Should be similar on others.
+Just replace the functions
+
+drivers/irqchip/irq-bcm2835.c
+
+```    
+    void bcm2836_arm_irqchip_spin_gpu_irq(void);
+
+    static void armctrl_ack_irq(struct irq_data *d)
+    {
+        /* GPU IRQ rotation is now handled in bcm2836_chained_handle_irq */
+    }
+
+-----------------------------------------------------------------------
+
+    static void bcm2836_chained_handle_irq(struct irq_desc *desc)
+    {
+        u32 hwirq;
+
+        hwirq = get_next_armctrl_hwirq();
+        if (hwirq != ~0) {
+            generic_handle_domain_irq(intc.domain, hwirq);
+    #if defined(CONFIG_SMP)
+            bcm2836_arm_irqchip_spin_gpu_irq();
+    #endif
+        }
+    }
+
+```
+
+<br>
+drivers/irqchip/irq-bcm2836.c
+<br><br>
+
+```
+
+    void bcm2836_arm_irqchip_spin_gpu_irq(void)
+    {
+        static const u32 gpu_irq_cpus[] = { 0, 1 };
+        static u32 rr_cpu;
+        static DEFINE_RAW_SPINLOCK(gpu_route_lock);
+        unsigned long flags;
+        u32 tries;
+        u32 next;
+        u32 fiq_bits;
+        void __iomem *gpurouting = intc.base + LOCAL_GPU_ROUTING;
+        u32 routing_val;
+
+        raw_spin_lock_irqsave(&gpu_route_lock, flags);
+
+        routing_val = readl(gpurouting);
+        fiq_bits = routing_val & ~0x3;
+
+        /* Keep GPU IRQs on cores 0/1 so cores 2/3 stay free. */
+        for (tries = 0; tries < 2; tries++) {
+            next = gpu_irq_cpus[rr_cpu];
+            rr_cpu = (rr_cpu + 1) % 2;
+
+            if (cpu_online(next)) {
+                writel(fiq_bits | next, gpurouting);
+
+                /* Flush posted write so next IRQ sees the new route */
+                readl(gpurouting);
+
+                raw_spin_unlock_irqrestore(&gpu_route_lock, flags);
+                return;
+            }
+        }
+
+        writel(fiq_bits | 0, gpurouting);
+        readl(gpurouting);
+        raw_spin_unlock_irqrestore(&gpu_route_lock, flags);
+    }
+
+```
+
+---
 
 
 ```
