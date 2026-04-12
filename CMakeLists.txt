@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(rgbmatrix VERSION 0.0.1)
 include(CMakePrintHelpers) # so we can print cmake variable values, useful for debugging
 include(GNUInstallDirs)  # so that `CMAKE_INSTALL_LIBDIR` is not blank
-find_package(Python 3.13 REQUIRED COMPONENTS Interpreter Development.Module Development.Embed)
+find_package(Python 3.11 REQUIRED COMPONENTS Interpreter Development.Module Development.Embed)
 
 # Build the core library
 # Set some convenience variables
