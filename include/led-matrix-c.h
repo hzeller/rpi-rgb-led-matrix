@@ -166,6 +166,7 @@ struct RGBLedMatrixOptions {
  */
 struct RGBLedRuntimeOptions {
   int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
+  int rp1_rio;          // 0 = default PIO. 1 = RP1 RIO. Flag: --led-rp1-rio
 
   // ----------
   // If the following options are set to disabled with -1, they are not

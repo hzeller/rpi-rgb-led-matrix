@@ -71,17 +71,34 @@ lib, as it only supports non PWM panels (until someone contributes PWM support).
 PWM/E-PWM/S-PWM Panels
 ----------------------
 Newer PWM panels are not currently supported by this lib, but support would really be appreciated.
-- https://github.com/hzeller/rpi-rgb-led-matrix/issues/466 is the master bug tracking PWM efforts
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/466 - Master bug tracking PWM efforts
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/1866 - Continued discussion
 
-Raspberry Pi up to 4 supported
+Some experimentation and success has been made with the following fork. Some panel support with FM6373, FM6363, SM16380SH
+- https://github.com/kingdo9/rpi-rgb-led-matrix_pwm_experiment
+
+
+Raspberry Pi 1-5 supported
 ------------------------------
 This library supports the old Raspberry Pi's Version 1 with 26 pin header and
-also the B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well
+also the B+ models, the Pi Zero, Raspberry Pi 2,3,4 and 5 with 40 pins, as well
 as the Compute Modules which have 44 GPIOs.
 
-The Raspberry Pi 5 still needs some research into the vastly changed peripherals
-and is not yet supported. See https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603#issuecomment-2624713250
-and https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter
+#### Raspberry Pi 5 support has now been added.
+There are two modes to run this on the Pi 5 
+
+**--led-rp1-rio=0** - Uses the Pi 5 coprocessor RP1 to perform the work (default) - Very minimal CPU usage
+
+**--led-rp1-rio=1** - Uses Registered IO block of RP1 to communicate with the GPIO - Higher CPU usage but much faster performance.\
+**NOTE: --led-slowdown-gpio** can have the opposite effect in this mode, so going from 2 to 3 may increase performance slightly with --led-rp1-rio=1.
+
+Pi 5 Discussion -  https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603
+
+
+Thanks to contributions from the following libraries to help implement this.
+https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter \
+https://github.com/bitslip6/rpi-gpu-hub75-matrix \
+https://www.i-programmer.info/programming/148-hardware/16887-raspberry-pi-iot-in-c-pi-5-memory-mapped-gpio.html
 
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
@@ -94,20 +111,6 @@ this [troubleshooting section](#troubleshooting) what to do.
 A lightweight, non-GUI, distribution such as [DietPi] is recommended.
 [Raspbian Lite][raspbian-lite] is a bit easier to get started with and
 is a good second choice.
-
-Raspberry Pi5
--------------
-At this time of this writing, this library does not support Pi5. Latest update is
-in https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603 but please don't ask 
-"is it ready yet" or "I need this" as it will only be added if someone who
-needs/wants it (including you) writes and contributes the code.  
-However, Adafruit wrote their own driver for Pi5. It is entirely different from
-this one and we can't help you or provide support for it, however if you buy
-hardware from Adafruit, including their active-3 low profile board 
-( https://www.adafruit.com/product/6358 ), they do support users of the hardware
-they sold. Please go to 
-* https://learn.adafruit.com/adafruit-triple-led-matrix-bonnet-for-raspberry-pi-with-hub75/raspberry-pi-5-setup
-* code here: https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter/tree/main/src
 
 Types of Displays
 -----------------

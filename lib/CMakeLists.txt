@@ -11,6 +11,9 @@
 
 # cmake_print_variables(CMAKE_CURRENT_SOURCE_DIR)
 
+set(RGBMATRIX_RP1_PIO_VENDOR_DIR
+    ${CMAKE_CURRENT_SOURCE_DIR}/rp1/rp1_pio_vendor)
+
 # Define the RGBMATRIX headers.
 set(RGBMATRIX_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/canvas.h
@@ -37,6 +40,9 @@ set(RGBMATRIX_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/multiplex-mappers.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/options-initialize.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/pixel-mapper.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/rp1/rp1_pio_backend.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/rp1/rp1_pio_support.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/rp1/rp1_rio_backend.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/thread.cc
 )
 cmake_print_variables(RGBMATRIX_SOURCES)
@@ -52,6 +58,10 @@ target_sources(rgbmatrix PRIVATE ${RGBMATRIX_SOURCES})
 # Add include directories
 target_include_directories(rgbmatrix PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include> )
+target_include_directories(rgbmatrix PRIVATE
+    ${RGBMATRIX_RP1_PIO_VENDOR_DIR}/piolib/include
+    ${RGBMATRIX_RP1_PIO_VENDOR_DIR}/include
+)
 
 # Install the library.
 #install(

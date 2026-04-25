@@ -31,6 +31,8 @@
 #include <algorithm>
 
 #include "gpio.h"
+#include "rp1/rp1_pio_backend.h"
+#include "rp1/rp1_rio_backend.h"
 #include "../include/graphics.h"
 
 namespace rgb_matrix {
@@ -437,6 +439,20 @@ Framebuffer::~Framebuffer() {
     return;  // already initialized.
 
   const struct HardwareMapping &h = *hardware_mapping_;
+  const int double_rows = rows / SUB_PANELS_;
+
+  if (Rp1RioShouldActivate(h.name, row_address_type, parallel)) {
+    Rp1RioInitOrDie(h, double_rows, parallel, pwm_lsb_nanoseconds, dither_bits,
+                    row_address_type);
+    return;
+  }
+
+  if (Rp1PioShouldActivate(h.name, row_address_type, parallel)) {
+    Rp1PioInitOrDie(h, double_rows, parallel, pwm_lsb_nanoseconds, dither_bits,
+                    row_address_type);
+    return;
+  }
+
   // Tell GPIO about all bits we intend to use.
   gpio_bits_t all_used_bits = 0;
 
@@ -459,7 +475,6 @@ Framebuffer::~Framebuffer() {
     all_used_bits |= h.p5_r1 | h.p5_g1 | h.p5_b1 | h.p5_r2 | h.p5_g2 | h.p5_b2;
   }
 
-  const int double_rows = rows / SUB_PANELS_;
   switch (row_address_type) {
   case 0:
     row_setter_ = new DirectRowAddressSetter(double_rows, h);
@@ -595,6 +610,14 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
                                               const char *panel_type,
                                               int columns) {
   if (!panel_type || panel_type[0] == '\0') return;
+  if (Rp1RioIsActive()) {
+    Rp1RioInitializePanels(*hardware_mapping_, panel_type, columns);
+    return;
+  }
+  if (Rp1PioIsActive()) {
+    Rp1PioInitializePanels(*hardware_mapping_, panel_type, columns);
+    return;
+  }
   if (strncasecmp(panel_type, "fm6126", 6) == 0) {
     InitFM6126(io, *hardware_mapping_, columns);
   }
@@ -907,6 +930,15 @@ void Framebuffer::CopyFrom(const Framebuffer *other) {
 }
 
 void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
+  if (Rp1RioIsActive()) {
+    Rp1RioDumpFramebuffer(this, pwm_low_bit);
+    return;
+  }
+  if (Rp1PioIsActive()) {
+    Rp1PioDumpFramebuffer(this, pwm_low_bit);
+    return;
+  }
+
   const struct HardwareMapping &h = *hardware_mapping_;
   gpio_bits_t color_clk_mask = 0;  // Mask of bits while clocking in.
   color_clk_mask |= h.p0_r1 | h.p0_g1 | h.p0_b1 | h.p0_r2 | h.p0_g2 | h.p0_b2;
@@ -982,6 +1014,8 @@ namespace internal {
       delete sOutputEnablePulser;
       sOutputEnablePulser = NULL;
     }
+    Rp1RioDeinit();
+    Rp1PioDeinit();
     if (row_setter_ != NULL) {
       delete row_setter_;
       row_setter_ = NULL;

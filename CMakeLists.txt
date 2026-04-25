@@ -12,6 +12,8 @@ find_package(Python 3.11 REQUIRED COMPONENTS Interpreter Development.Module Deve
 # Set some convenience variables
 set(RGBMATRIX_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 set(RGBMATRIX_SOURCE_DIR ${CMAKE_SOURCE_DIR}/lib)
+set(RGBMATRIX_RP1_PIO_VENDOR_DIR
+    ${CMAKE_SOURCE_DIR}/lib/rp1/rp1_pio_vendor)
 
 # Define the RGBMATRIX headers.
 set(RGBMATRIX_HEADERS
@@ -39,6 +41,9 @@ set(RGBMATRIX_SOURCES
     ${RGBMATRIX_SOURCE_DIR}/multiplex-mappers.cc
     ${RGBMATRIX_SOURCE_DIR}/options-initialize.cc
     ${RGBMATRIX_SOURCE_DIR}/pixel-mapper.cc
+    ${RGBMATRIX_SOURCE_DIR}/rp1/rp1_pio_backend.cc
+    ${RGBMATRIX_SOURCE_DIR}/rp1/rp1_pio_support.c
+    ${RGBMATRIX_SOURCE_DIR}/rp1/rp1_rio_backend.cc
     ${RGBMATRIX_SOURCE_DIR}/thread.cc
 )
 cmake_print_variables(RGBMATRIX_SOURCES)
@@ -52,6 +57,10 @@ target_sources(rgbmatrix PRIVATE ${RGBMATRIX_SOURCES})
 
 # Add the includes to the library
 target_include_directories(rgbmatrix PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(rgbmatrix PRIVATE
+    ${RGBMATRIX_RP1_PIO_VENDOR_DIR}/piolib/include
+    ${RGBMATRIX_RP1_PIO_VENDOR_DIR}/include
+)
 
 # Install location changes depending if called by scikit-build-core
 install(TARGETS rgbmatrix DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -91,6 +100,8 @@ IF(DEFINED SKBUILD)
     target_include_directories(core PRIVATE
         ${PYBINDING_SOURCE_DIR}/shims
         ${CMAKE_SOURCE_DIR}/include
+        ${RGBMATRIX_RP1_PIO_VENDOR_DIR}/piolib/include
+        ${RGBMATRIX_RP1_PIO_VENDOR_DIR}/include
     )
     # target_link_libraries(core PRIVATE rgbmatrix)
     # target_link_options(core PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wl,--whole-archive>)
@@ -106,6 +117,8 @@ IF(DEFINED SKBUILD)
         ${CMAKE_SOURCE_DIR}/include
         ${PYBINDING_SOURCE_DIR}/shims
         ${CMAKE_SOURCE_DIR}/include
+        ${RGBMATRIX_RP1_PIO_VENDOR_DIR}/piolib/include
+        ${RGBMATRIX_RP1_PIO_VENDOR_DIR}/include
     )
     # target_link_libraries(graphics PRIVATE rgbmatrix)
     # target_link_options(graphics PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wl,--whole-archive>)
