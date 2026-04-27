@@ -27,12 +27,14 @@ isolcpus=domain,managed_irq,2,3 nohz_full=2,3 rcu_nocbs=2,3 irqaffinity=0,1 idle
 
 Full image with Hzeller library installed + RT Kernel.
 
-<a href="https://mega.nz/file/GAMEyDzS#9MvAs_ffPo4cROvovjziP0neAxOb1h7nzIK7DXxaYHo">Raspberry Pi 4 Lite Trixie 64-Bit - RT Kernel Preinstalled image</a>
+<a href="https://mega.nz/file/GIV3GDLT#iKld0ksdm9_DLyfXxmwsLUGSX-MUSiR_OlDA7YLemrM">Raspberry Pi 4 Lite Trixie 64-Bit - RT Kernel Preinstalled image</a>
 
-<a href="https://mega.nz/file/OMtgRKhS#o5Wf4Gj1_YgTWME3bG5F_eVfDQyjr_iBGwGkOgsJiUc">Raspberry Pi 3 Lite Trixie 64-Bit - RT Kernel Preinstalled image</a>
+Raspberry Pi 3 Trixie 64-Bit - RT Kernel Preinstalled image (update soon)</a>
 
-<a href="https://mega.nz/file/HclGUIRB#r0uKTZQDuR_AVmVPV3GOcuWbR5tM3lmVFJ4m1YO-wGg">Raspberry Pi Zero 2W Lite Trixie 64-Bit - RT Kernel Preinstalled image</a>
+<a href="https://mega.nz/file/GMEi3TjL#mWLY3-WOkyQ61l7Npd5_LRvrowKYY6kGFY_AdX-o8H4">Raspberry Pi Zero 2W Lite Trixie 64-Bit - RT Kernel Preinstalled image</a>
 <br><br>
+**Note: first boot can take a moment to unpack image to the size of your SD card**
+
 To access via SSH, either use Ethernet / USB Ethernet. \
 user / password \
 Then if you need to set up Wi-Fi, use the command - **nmtui**
@@ -58,9 +60,9 @@ Download and copy the below kernel files to your Raspberry Pi in the /tmp direct
 The kernel version compiled is 6.18.18-rt
 So its best your OS image is already close to it.
 
-[raspberry_kernel_rt_trixie_120425_v2_boot.tar.gz](./raspberry_kernel_rt_trixie_120425_v2_boot.tar.gz)
+[raspberry_kernel_rt_trixie_042126_v3_boot.tar.gz](./raspberry_kernel_rt_trixie_042126_v3_boot.tar.gz)
 
-[raspberry_kernel_rt_trixie_120425_v2_root.tar.gz](./raspberry_kernel_rt_trixie_120425_v2_root.tar.gz)
+[raspberry_kernel_rt_trixie_042126_v3_root.tar.gz](./raspberry_kernel_rt_trixie_042126_v3_root.tar.gz)
 
 
 ```
@@ -83,9 +85,10 @@ apt-get update; apt-get install --reinstall firmware-brcm80211
 ```
 Alternatively if using Pi 4, extract it from below. \
 Kernel firmware \
-https://mega.nz/file/rRcQDBqC#yhaByUa1z-TEmLc1joEF6QEZvDfirOIKrFf_yzoFOcA
+[raspberry4_kernel_rt_trixie_042126_firmware.tar.gz](https://mega.nz/file/DdN3wAZK#FCYCSCuUvn7_p_8c8e-fSeSyJwL5Fm1Wim2NqbAF8q4)
+
 ```
-tar -xzf /tmp/raspberry4_kernel_rt_trixie_120425_firmware.tar.gz -C /
+tar -xzf /tmp/raspberry4_kernel_rt_trixie_*_firmware.tar.gz -C /
 ```
 Depending on what your original kernel/os image was, you may see some dmesg prompts like the below which should be fine.
 
@@ -126,7 +129,7 @@ cd linux
  **OPTIONAL** - Below will show the current kernel version currently checked out. Run the below to change kernel version by using git checkout. To find kernel version branches available, navigate to https://github.com/raspberrypi/linux
 ```
 head -n 4 Makefile
-git checkout rpi-6.12.y
+git checkout rpi-6.18.y
 ```
 
 <img alt="Image" src="./img/kernel_guide_3.png" />
@@ -182,23 +185,18 @@ CONFIG_BSD_PROCESS_ACCT=n
 CONFIG_BSD_PROCESS_ACCT_V3=n
 CONFIG_CFG80211_DEFAULT_PS=n
 CONFIG_CHECKPOINT_RESTORE=n
-CONFIG_DEBUG_BUGVERBOSE=n
 CONFIG_DEBUG_FS=n
 CONFIG_DEBUG_MISC=n
-CONFIG_DETECT_HUNG_TASK=n
 CONFIG_FTRACE=n
 CONFIG_HOTPLUG_CPU=n
-CONFIG_KALLSYMS_ALL=n
 CONFIG_KGDB=n
 CONFIG_KGDB_KDB=n
 CONFIG_KPROBES=n
 CONFIG_LATENCYTOP=n
-CONFIG_MAGIC_SYSRQ=n
 CONFIG_NETFILTER_XT_TARGET_AUDIT=n
 CONFIG_OSNOISE_TRACER=n
 CONFIG_PERF_EVENTS=n
 CONFIG_PM_DEBUG=n
-CONFIG_PRINTK_TIME=n
 CONFIG_PROFILING=n
 CONFIG_PSI=n
 CONFIG_RCU_TRACE=n
@@ -223,32 +221,6 @@ This chipset needs an additional change to reduce interrupts when checking with 
 Changes based on kernel 6.18 - Should be similar on others.
 Just replace the functions
 
-drivers/irqchip/irq-bcm2835.c
-
-```    
-    void bcm2836_arm_irqchip_spin_gpu_irq(void);
-
-    static void armctrl_ack_irq(struct irq_data *d)
-    {
-        /* GPU IRQ rotation is now handled in bcm2836_chained_handle_irq */
-    }
-
------------------------------------------------------------------------
-
-    static void bcm2836_chained_handle_irq(struct irq_desc *desc)
-    {
-        u32 hwirq;
-
-        hwirq = get_next_armctrl_hwirq();
-        if (hwirq != ~0) {
-            generic_handle_domain_irq(intc.domain, hwirq);
-    #if defined(CONFIG_SMP)
-            bcm2836_arm_irqchip_spin_gpu_irq();
-    #endif
-        }
-    }
-
-```
 
 <br>
 drivers/irqchip/irq-bcm2836.c
@@ -256,43 +228,45 @@ drivers/irqchip/irq-bcm2836.c
 
 ```
 
-    void bcm2836_arm_irqchip_spin_gpu_irq(void)
-    {
-        static const u32 gpu_irq_cpus[] = { 0, 1 };
-        static u32 rr_cpu;
-        static DEFINE_RAW_SPINLOCK(gpu_route_lock);
-        unsigned long flags;
-        u32 tries;
-        u32 next;
-        u32 fiq_bits;
-        void __iomem *gpurouting = intc.base + LOCAL_GPU_ROUTING;
-        u32 routing_val;
+#include <linux/kernel.h>
 
-        raw_spin_lock_irqsave(&gpu_route_lock, flags);
+--------------------------------
 
-        routing_val = readl(gpurouting);
-        fiq_bits = routing_val & ~0x3;
+void bcm2836_arm_irqchip_spin_gpu_irq(void)
+{
+	static const u32 gpu_irq_cpus[] = { 0, 1 };
+	static DEFINE_RAW_SPINLOCK(gpu_route_lock);
+	unsigned long flags;
+	u32 i;
+	u32 irq_route;
+	u32 fiq_bits;
+	void __iomem *gpurouting = intc.base + LOCAL_GPU_ROUTING;
+	u32 routing_val;
 
-        /* Keep GPU IRQs on cores 0/1 so cores 2/3 stay free. */
-        for (tries = 0; tries < 2; tries++) {
-            next = gpu_irq_cpus[rr_cpu];
-            rr_cpu = (rr_cpu + 1) % 2;
+	raw_spin_lock_irqsave(&gpu_route_lock, flags);
 
-            if (cpu_online(next)) {
-                writel(fiq_bits | next, gpurouting);
+	routing_val = readl(gpurouting);
+	irq_route = routing_val & 0x3;
+	fiq_bits = routing_val & ~0x3;
 
-                /* Flush posted write so next IRQ sees the new route */
-                readl(gpurouting);
+	/* Keep GPU IRQs on cores 0/1 so cores 2/3 stay free. */
+	for (i = 0; i < ARRAY_SIZE(gpu_irq_cpus); i++) {
+		u32 next = gpu_irq_cpus[(irq_route + 1 + i) %
+					 ARRAY_SIZE(gpu_irq_cpus)];
 
-                raw_spin_unlock_irqrestore(&gpu_route_lock, flags);
-                return;
-            }
-        }
+		if (cpu_active(next)) {
+			writel(fiq_bits | next, gpurouting);
 
-        writel(fiq_bits | 0, gpurouting);
-        readl(gpurouting);
-        raw_spin_unlock_irqrestore(&gpu_route_lock, flags);
-    }
+			/* Flush posted write so next IRQ sees the new route */
+			readl(gpurouting);
+
+			raw_spin_unlock_irqrestore(&gpu_route_lock, flags);
+			return;
+		}
+	}
+
+	raw_spin_unlock_irqrestore(&gpu_route_lock, flags);
+}
 
 ```
 
@@ -350,6 +324,7 @@ cp arch/arm64/boot/Image.gz /media/user/bootfs/${KERNEL}.img
 cp arch/arm64/boot/dts/broadcom/*.dtb /media/user/bootfs
 cp arch/arm64/boot/dts/overlays/*.dtb* /media/user/bootfs/overlays
 sudo make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=/media/user/rootfs modules_install
+sync
 ```
 
  **Add the Kernel parameters for RT at the end of the line - CTRL+S , CTRL+X to save in nano**
