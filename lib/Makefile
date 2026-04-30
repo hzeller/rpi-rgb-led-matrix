@@ -8,7 +8,8 @@ include ../config.mk
 OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
 	thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o \
 	pixel-mapper.o multiplex-mappers.o \
-	content-streamer.o content-streamer-c.o
+	content-streamer.o content-streamer-c.o \
+	rp1/rp1_pio_backend.o rp1/rp1_pio_support.o rp1/rp1_rio_backend.o
 
 TARGET=librgbmatrix
 
@@ -174,8 +175,10 @@ DEFINES+=$(USER_DEFINES)
 
 DEFINES+=-DDEFAULT_HARDWARE='"$(HARDWARE_DESC)"'
 INCDIR=../include
+RP1_PIO_VENDOR_DIR=./rp1/rp1_pio_vendor
+RP1_PIO_INCLUDES=-I$(RP1_PIO_VENDOR_DIR)/piolib/include -I$(RP1_PIO_VENDOR_DIR)/include
 
-CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 $(CPU_ARCH_FLAGS) $(LTO_FLAGS) -g -fPIC $(DEFINES)
+CFLAGS=-W -Wall -Wextra -Wno-unused-parameter -O3 $(CPU_ARCH_FLAGS) $(LTO_FLAGS) -g -fPIC $(DEFINES) $(RP1_PIO_INCLUDES)
 CXXFLAGS=$(CFLAGS) -fno-exceptions -std=c++11
 
 all : $(TARGET).a $(TARGET).so.1

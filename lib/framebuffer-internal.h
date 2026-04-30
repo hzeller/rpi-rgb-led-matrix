@@ -135,6 +135,17 @@ public:
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
   void SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue);
 
+  const struct HardwareMapping &hardware_mapping() const {
+    return *hardware_mapping_;
+  }
+  int columns() const { return columns_; }
+  int scan_mode() const { return scan_mode_; }
+  int double_rows() const { return double_rows_; }
+  const gpio_bits_t *RowDataAt(int double_row, int bit) const {
+    return &bitplane_buffer_[double_row * (columns_ * kBitPlanes)
+                             + bit * columns_];
+  }
+
 private:
   static const struct HardwareMapping *hardware_mapping_;
   static RowAddressSetter *row_setter_;

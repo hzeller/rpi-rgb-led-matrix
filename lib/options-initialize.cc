@@ -37,6 +37,7 @@ RuntimeOptions::RuntimeOptions() :
 #else
   gpio_slowdown(GPIO::IsPi4() ? 2 : 1),
 #endif
+  rp1_rio(0),
   daemon(0),            // Don't become a daemon by default.
   drop_privileges(1),   // Encourage good practice: drop privileges by default.
   do_gpio_init(true),
@@ -225,6 +226,16 @@ static bool FlagInit(int &argc, char **&argv,
       //-- Runtime options.
       if (ConsumeIntFlag("slowdown-gpio", it, end, &ropts->gpio_slowdown, &err))
         continue;
+      const int err_before_rp1_rio = err;
+      if (ConsumeIntFlag("rp1-rio", it, end, &ropts->rp1_rio, &err)) {
+        if (err == err_before_rp1_rio
+            && ropts->rp1_rio != 0 && ropts->rp1_rio != 1) {
+          fprintf(stderr, "%s%s=%d is outside usable range 0..1\n",
+                  OPTION_PREFIX, "rp1-rio", ropts->rp1_rio);
+          ++err;
+        }
+        continue;
+      }
       if (ropts->daemon >= 0 && ConsumeBoolFlag("daemon", it, &bool_scratch)) {
         ropts->daemon = bool_scratch ? 1 : 0;
         continue;
@@ -368,6 +379,11 @@ void PrintMatrixFlags(FILE *out, const RGBMatrix::Options &d,
           (LED_MATRIX_ALLOW_BARRIER_DELAY ? -1 : 0), r.gpio_slowdown,
           LED_MATRIX_ALLOW_BARRIER_DELAY ? "Use -1 for memory barrier approach"
                                          : "");
+  fprintf(out,
+          "\t--led-rp1-rio=<0|1>       : On Raspberry Pi 5-family boards, choose the "
+          "experimental RP1 RIO backend instead of RP1 PIO.\n"
+          "\t                            0=PIO, 1=RIO (Default: %d).\n",
+          r.rp1_rio);
   if (r.daemon >= 0) {
     const bool on = (r.daemon > 0);
     fprintf(out,

@@ -80,8 +80,10 @@ public:
 
   inline gpio_bits_t Read() const { return ReadRegisters() & input_bits_; }
 
-  // Return if this is appears to be a Pi4
+  // Return if this appears to be a Pi 4-class board.
   static bool IsPi4();
+  // Return if this appears to be a Pi 5-family board with RP1 I/O.
+  static bool IsPi5Family();
 
 private:
   inline void delay() const {

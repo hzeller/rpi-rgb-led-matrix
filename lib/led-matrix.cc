@@ -30,6 +30,8 @@
 #include <unistd.h>
 
 #include "gpio.h"
+#include "rp1/rp1_pio_backend.h"
+#include "rp1/rp1_rio_backend.h"
 #include "thread.h"
 #include "framebuffer-internal.h"
 #include "multiplex-mappers-internal.h"
@@ -199,12 +201,14 @@ public:
       }
 
       // Read input bits.
-      const gpio_bits_t inputs = io_->Read();
-      if (inputs != last_gpio_bits) {
-        last_gpio_bits = inputs;
-        MutexLock l(&input_sync_);
-        gpio_inputs_ = inputs;
-        pthread_cond_signal(&input_change_);
+      if (!Rp1PioIsActive() && !Rp1RioIsActive()) {
+        const gpio_bits_t inputs = io_->Read();
+        if (inputs != last_gpio_bits) {
+          last_gpio_bits = inputs;
+          MutexLock l(&input_sync_);
+          gpio_inputs_ = inputs;
+          pthread_cond_signal(&input_change_);
+        }
       }
 
       ++frame_count;
@@ -424,6 +428,8 @@ RGBMatrix::Impl::~Impl() {
   // Make sure LEDs are off.
   active_->Clear();
   if (io_) active_->framebuffer()->DumpToMatrix(io_, 0);
+  internal::Rp1RioDeinit();
+  internal::Rp1PioDeinit();
 
   for (size_t i = 0; i < created_frames_.size(); ++i) {
     delete created_frames_[i];
@@ -436,16 +442,19 @@ RGBMatrix::~RGBMatrix() {
 }
 
 uint64_t RGBMatrix::Impl::RequestInputs(uint64_t bits) {
+  if (Rp1PioIsActive() || Rp1RioIsActive()) return 0;
   return io_->RequestInputs(static_cast<gpio_bits_t>(bits));
 }
 
 uint64_t RGBMatrix::Impl::RequestOutputs(uint64_t output_bits) {
+  if (Rp1PioIsActive() || Rp1RioIsActive()) return 0;
   uint64_t success_bits = io_->InitOutputs(static_cast<gpio_bits_t>(output_bits));
   user_output_bits_ |= success_bits;
   return success_bits;
 }
 
 void RGBMatrix::Impl::OutputGPIO(uint64_t output_bits) {
+  if (Rp1PioIsActive() || Rp1RioIsActive()) return;
   io_->WriteMaskedBits(static_cast<gpio_bits_t>(output_bits), static_cast<gpio_bits_t>(user_output_bits_));
 }
 
@@ -554,6 +563,7 @@ FrameCanvas *RGBMatrix::Impl::SwapOnVSync(FrameCanvas *other,
 
 uint64_t RGBMatrix::Impl::AwaitInputChange(int timeout_ms) {
   if (!updater_) return 0;
+  if (Rp1PioIsActive() || Rp1RioIsActive()) return 0;
   return updater_->AwaitInputChange(timeout_ms);
 }
 
@@ -707,12 +717,55 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
             runtime_options.gpio_slowdown);
     return NULL;
   }
+  if (runtime_options.rp1_rio != 0 && runtime_options.rp1_rio != 1) {
+    fprintf(stderr, "--led-rp1-rio=%d is outside usable range 0..1\n",
+            runtime_options.rp1_rio);
+    return NULL;
+  }
 
   // Use file-scope GPIO instance.
   GPIO &io = s_global_io;
+  Rp1RioSetEnabled(runtime_options.rp1_rio > 0);
+  const bool use_rp1_rio = runtime_options.do_gpio_init
+      && Rp1RioShouldActivate(options.hardware_mapping,
+                              options.row_address_type,
+                              options.parallel);
+  const bool use_rp1_pio = !use_rp1_rio && runtime_options.do_gpio_init
+      && Rp1PioShouldActivate(options.hardware_mapping,
+                              options.row_address_type,
+                              options.parallel);
+  if (use_rp1_rio) {
+    Rp1RioSetGpioSlowdown(runtime_options.gpio_slowdown);
+  }
+  if (use_rp1_pio) {
+    Rp1PioSetGpioSlowdown(runtime_options.gpio_slowdown);
+  }
+
+  const bool pi5_backend_available =
+      Rp1PioPlatformDetected() || Rp1RioPlatformDetected();
+  if (runtime_options.do_gpio_init && pi5_backend_available
+      && !use_rp1_pio && !use_rp1_rio) {
+    if (Rp1RioBackendRequested()) {
+      fprintf(stderr,
+              "Pi 5-family RP1 RIO backend was requested via "
+              "--led-rp1-rio=1, but this configuration is not "
+              "supported yet.\n"
+              "Supported for now: mappings "
+              "regular/adafruit-hat/adafruit-hat-pwm/classic and "
+              "--led-row-addr-type=0 or 2.\n");
+    } else {
+      fprintf(stderr,
+              "Pi 5-family RP1 backend is available, but this configuration is not "
+              "supported yet.\n"
+              "Supported for now: mappings "
+              "regular/adafruit-hat/adafruit-hat-pwm/classic and "
+              "--led-row-addr-type=0 or 2.\n");
+    }
+    return NULL;
+  }
 
   // C wrapper implementation is at file scope; use local reference `io`.
-  if (runtime_options.do_gpio_init
+  if (runtime_options.do_gpio_init && !use_rp1_pio && !use_rp1_rio
       && !io.Init(runtime_options.gpio_slowdown)) {
     fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
             "Prepend 'sudo' to the command\n");
