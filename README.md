@@ -181,7 +181,7 @@ This documentation is split into parts that help you through the process
     If you have an [Adafruit HAT] or [Adafruit Bonnet], you can choose that with
     a command line option [described below](#if-you-have-an-adafruit-hat-or-bonnet)
 - [All the command line options you can give to demo and in turn use in your library code](./examples-api-use).
-- [Installing an RT Kernel to fix most flickering issues](./RT-kernel)
+- [Installing an Optimized Kernel to fix most flickering issues](./optimized-kernel)
 
 Python Support
 --------------
@@ -642,6 +642,13 @@ Here are some tips in case things don't work as expected.
 
 ### Use minimal Raspbian distribution
 In general, run a minimal configuration on your Pi.
+  
+  * Common cause for flickering \
+    **Ensure 5V is getting to LED Display and Raspberry Pi devices !!** \
+    Use a Multimeter to check, also use dmesg command to check for any Raspberry Pi undervolt messages.\
+    It may be best to power the LED Display externally especially if using Raspberry Pi 4.
+
+    Additionally see [Installing an Optimized Kernel to fix most flickering issues](./optimized-kernel)
 
   * Do not use a graphical user interface (Even though the
     Raspberry Pi foundation makes you believe that you can do that: don't.
@@ -656,7 +663,13 @@ In general, run a minimal configuration on your Pi.
     so that is recommended if you happen to need sound. The on-board sound
     uses a timing circuit that the RGB-Matrix needs (it seems in some
     distributions, such as arch-linux, this is not enough and you need
-    to explicitly blacklist the snd_bcm2835 module).
+    to explicitly blacklist the snd_bcm2835 module).\     
+    
+    post-bookworm \
+    nano /etc/modprobe.d/blacklist-audio.conf \
+    blacklist snd_bcm2835 \
+    CTRL+S CTRL+X to Save File and Exit
+
 
   * Don't run anything that messes in parallel with the GPIO pins, e.g.
     PiGPIO library/daemon or devices that use the i2c or 1-wire interface if
@@ -690,13 +703,6 @@ In general, run a minimal configuration on your Pi.
     here.
     In general: This is why starting with a minimal installation is a good
     idea: there is simply less cruft that you have to disable.
-
-  * It seems that more recent version of Raspbian Lite result in some faint
-    brightness fluctuations of the displays and it is not quite clear why (see
-    issue [#483](https://github.com/hzeller/rpi-rgb-led-matrix/issues/483)).
-    If you are a Kernel person and can help figuring out what is
-    happening that would be very appreciated. Also, you might know a minimal
-    Linux distribution that is more suited for near realtime applications ?
 
   * When attempting to connect sensors like the DHT22 to available GPIO pins
     and display their results on your LED panel, you might encounter an issue
@@ -810,8 +816,8 @@ Then, start your programs with `--led-gpio-mapping=adafruit-hat-pwm`.
 Now you should have less visible flicker. This essentially
 switches on the hardware pulses feature for the Adafruit HAT/Bonnet.
 
-### Improving flicker: Real Time Kernel
-See [Installing an RT Kernel to fix most flickering issues](./RT-kernel)
+### Improving flicker: Optimized Kernel
+See [Installing an Optimized Kernel to fix most flickering issues](./optimized-kernel)
 
 
 ### 64x64 with E-line on Adafruit HAT/Bonnet
@@ -910,7 +916,7 @@ only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
 
 This is just a partial fix, if you need better, please look at
-[installing an RT Kernel to fix most flickering issues](./RT-kernel)
+[installing an Optimized Kernel to fix most flickering issues](./optimized-kernel)
 
 Limitations
 -----------
@@ -929,10 +935,8 @@ limits the frame-rate. Raspberry Pi 2's and newer are generally faster.
 
 Even with everything in place, you might see faint brightness fluctuations
 in particular if there is something going on on the network or in a terminal
-on the Pi; this could probably be mitigated with some more real-time
-kernel for the Pi; maybe there are also hardware limitations (memory bus
-contention?). Anyway, if you have a realtime kernel configuration that you
-have optimized for this application, let me know.
+on the Pi; maybe there are also hardware limitations (memory bus
+contention?).
 
 To address the brightness fluctuations, you might experiment with the
 `FIXED_FRAME_MICROSECONDS` compile time option in [lib/Makefile](lib/Makefile)
