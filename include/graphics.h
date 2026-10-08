@@ -38,6 +38,9 @@ public:
   // Return height of font in pixels. Returns -1 if font has not been loaded.
   int height() const { return font_height_; }
 
+  // Return width of font in pixels. Returns -1 if font has not been loaded.
+  int width() const { return font_width_; }
+
   // Return baseline. Pixels from the topline to the baseline.
   int baseline() const { return base_line_; }
 
@@ -80,6 +83,7 @@ private:
   void parseLine(const char* buffer, Glyph* &current_glyph, uint32_t &codepoint, Glyph &tmp, int &row);
 
   int font_height_;
+  int font_width_;
   int base_line_;
   CodepointGlyphMap glyphs_;
 };
