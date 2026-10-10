@@ -22,9 +22,15 @@ clean:
 	$(MAKE) -C examples-api-use clean
 	# $(MAKE) -C $(PYTHON_LIB_DIR) clean
 
+install:
+	$(MAKE) -C $(RGB_LIBDIR) install
+
+uninstall:
+	$(MAKE) -C $(RGB_LIBDIR) uninstall
+
 build-csharp:
 	$(MAKE) -C $(CSHARP_LIB_DIR) nuget
 	$(MAKE) -C $(CSHARP_LIB_DIR) build
 
 FORCE:
-.PHONY: FORCE
+.PHONY: FORCE install uninstall

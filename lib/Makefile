@@ -203,7 +203,30 @@ graphics.o: graphics.cc utf8-internal.h
 clean:
 	rm -f $(OBJECTS) $(TARGET).a $(TARGET).so.1
 
+# `sudo make install` puts the shared library, the headers and a pkg-config
+# file under PREFIX, so other projects can build against it with
+#   pkg-config --cflags --libs rgbmatrix
+# Headers go to $(INCLUDEDIR)/rgbmatrix/ since names like graphics.h are generic.
+PREFIX?=/usr/local
+LIBDIR?=$(PREFIX)/lib
+INCLUDEDIR?=$(PREFIX)/include
+PKGCONFIGDIR?=$(LIBDIR)/pkgconfig
+
+install: $(TARGET).so.1
+	install -d $(DESTDIR)$(LIBDIR) $(DESTDIR)$(INCLUDEDIR)/rgbmatrix $(DESTDIR)$(PKGCONFIGDIR)
+	install -m 644 $(TARGET).so.1 $(DESTDIR)$(LIBDIR)/
+	ln -sf $(TARGET).so.1 $(DESTDIR)$(LIBDIR)/$(TARGET).so
+	install -m 644 $(INCDIR)/*.h $(DESTDIR)$(INCLUDEDIR)/rgbmatrix/
+	sed -e 's|@PREFIX@|$(PREFIX)|' -e 's|@LIBDIR@|$(LIBDIR)|' \
+	    -e 's|@INCLUDEDIR@|$(INCLUDEDIR)|' rgbmatrix.pc.in > $(DESTDIR)$(PKGCONFIGDIR)/rgbmatrix.pc
+	if [ -z "$(DESTDIR)" ]; then ldconfig || true; fi
+
+uninstall:
+	rm -f $(DESTDIR)$(LIBDIR)/$(TARGET).so.1 $(DESTDIR)$(LIBDIR)/$(TARGET).so
+	rm -rf $(DESTDIR)$(INCLUDEDIR)/rgbmatrix
+	rm -f $(DESTDIR)$(PKGCONFIGDIR)/rgbmatrix.pc
+
 compiler-flags: FORCE
 	@echo '$(CXX) $(CXXFLAGS)' | cmp -s - $@ || echo '$(CXX) $(CXXFLAGS)' > $@
 
-.PHONY: FORCE
+.PHONY: FORCE install uninstall
