@@ -68,7 +68,7 @@ static bool parseBitmap(const char *buffer, rowbitmap_t* result) {
   return true;
 }
 
-Font::Font() : font_height_(-1), base_line_(0) {}
+Font::Font() : font_height_(-1), font_width_(-1), base_line_(0) {}
 Font::~Font() {
   for (CodepointGlyphMap::iterator it = glyphs_.begin();
        it != glyphs_.end(); ++it) {
@@ -123,7 +123,7 @@ bool Font::ReadFont(const char *font_file_as_string) {
   int dummy;
 
   if (sscanf(buffer, "FONTBOUNDINGBOX %d %d %d %d",
-             &dummy, &font_height_, &dummy, &base_line_) == 4) {
+             &font_width_, &font_height_, &dummy, &base_line_) == 4) {
     base_line_ += font_height_;
              }
   else if (sscanf(buffer, "ENCODING %ud", &codepoint) == 1) {
