@@ -83,6 +83,7 @@ cdef extern from "graphics.h" namespace "rgb_matrix":
         Font() except +
         bool LoadFont(const char*)
         int height()
+        int width()
         int baseline()
         int CharacterWidth(uint32_t)
         int DrawGlyph(Canvas*, int, int, const Color, uint32_t);
