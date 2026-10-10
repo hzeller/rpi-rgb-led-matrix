@@ -37,7 +37,7 @@ cdef class Font:
     property height:
         def __get__(self): return self.__font.height()
 
-    property width;
+    property width:
         def __get__(self): return self.__font.width()
 
     property baseline:
