@@ -94,7 +94,7 @@ public struct RGBLedMatrixOptions
 
     /// <summary>
     /// Panel type. Typically just empty, but certain panels (FM6126)
-    /// requie an initialization sequence
+    /// require an initialization sequence
     /// </summary>
     public string? PanelType = null;
 
@@ -116,6 +116,12 @@ public struct RGBLedMatrixOptions
     /// Slowdown GPIO. Needed for faster Pis/slower panels.
     /// </summary>
     public int GpioSlowdown = 1;
+
+    /// <summary>
+    /// On Raspberry Pi 5-family boards, force the RP1 PIO backend.
+    /// 0 = default RP1 RIO, 1 = PIO.
+    /// </summary>
+    public int Rp1Pio = 0;
 
     /// <summary>
     /// Creates default matrix settings.

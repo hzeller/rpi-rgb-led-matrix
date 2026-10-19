@@ -7,8 +7,18 @@ const float Scale = 1.1f;
 const float LerpPow = 0.002f;
 const int ChangePerFrames = 50;
 
-using var leds = new RGBLedMatrix(32, 1, 1);
-var canvas = leds.CreateOffscreenCanvas();
+// Set this to apropriate settings for your matrix
+var options = new RGBLedMatrixOptions()
+{
+    Brightness= 80,
+    Cols= 64,
+    Rows= 64,
+    GpioSlowdown= 4
+};
+
+using var matrix = new RGBLedMatrix(options);
+
+var canvas = matrix.CreateOffscreenCanvas();
 
 var (centerX, centerY) = (canvas.Width / 2, canvas.Height / 2);
 
@@ -48,18 +58,18 @@ while (running)
     rotateMatrix *= Matrix4x4.CreateRotationX(angleSpeed.X);
     rotateMatrix *= Matrix4x4.CreateRotationY(angleSpeed.Y);
     rotateMatrix *= Matrix4x4.CreateRotationZ(angleSpeed.Z);
-    var matrix = scaleMatrix * rotateMatrix * cameraMatrix * projectMatrix;
+    var transformMatrix = scaleMatrix * rotateMatrix * cameraMatrix * projectMatrix;
 
     // calculate points
-    var top1 = Vector4.Transform(new Vector3( 1,  1,  1), matrix);
-    var top2 = Vector4.Transform(new Vector3(-1,  1,  1), matrix);
-    var top3 = Vector4.Transform(new Vector3(-1,  1, -1), matrix);
-    var top4 = Vector4.Transform(new Vector3( 1,  1, -1), matrix);
+    var top1 = Vector4.Transform(new Vector3( 1,  1,  1), transformMatrix);
+    var top2 = Vector4.Transform(new Vector3(-1,  1,  1), transformMatrix);
+    var top3 = Vector4.Transform(new Vector3(-1,  1, -1), transformMatrix);
+    var top4 = Vector4.Transform(new Vector3( 1,  1, -1), transformMatrix);
 
-    var bot1 = Vector4.Transform(new Vector3( 1, -1,  1), matrix);
-    var bot2 = Vector4.Transform(new Vector3(-1, -1,  1), matrix);
-    var bot3 = Vector4.Transform(new Vector3(-1, -1, -1), matrix);
-    var bot4 = Vector4.Transform(new Vector3( 1, -1, -1), matrix);
+    var bot1 = Vector4.Transform(new Vector3( 1, -1,  1), transformMatrix);
+    var bot2 = Vector4.Transform(new Vector3(-1, -1,  1), transformMatrix);
+    var bot3 = Vector4.Transform(new Vector3(-1, -1, -1), transformMatrix);
+    var bot4 = Vector4.Transform(new Vector3( 1, -1, -1), transformMatrix);
 
     // draw
     canvas.Fill(new(0, 0, 0));
@@ -78,7 +88,7 @@ while (running)
     DrawLine(top3, bot3);
     DrawLine(top4, bot4);
 
-    leds.SwapOnVsync(canvas);
+    matrix.SwapOnVsync(canvas);
     // force 30 FPS
     var elapsed = Environment.TickCount64 - frameStart;
     if (elapsed < 33) Thread.Sleep(33 - (int)elapsed);

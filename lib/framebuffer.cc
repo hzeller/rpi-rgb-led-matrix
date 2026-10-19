@@ -19,6 +19,7 @@
 
 #include "framebuffer-internal.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <ctype.h>
 #include <math.h>
@@ -30,6 +31,8 @@
 #include <algorithm>
 
 #include "gpio.h"
+#include "rp1/rp1_pio_backend.h"
+#include "rp1/rp1_rio_backend.h"
 #include "../include/graphics.h"
 
 namespace rgb_matrix {
@@ -47,17 +50,15 @@ static PinPulser *sOutputEnablePulser = NULL;
 PixelDesignator *PixelDesignatorMap::get(int x, int y) {
   if (x < 0 || y < 0 || x >= width_ || y >= height_)
     return NULL;
-  return buffer_ + (y*width_) + x;
+  return &buffer_[(y*width_) + x];
 }
 
 PixelDesignatorMap::PixelDesignatorMap(int width, int height,
                                        const PixelDesignator &fill_bits)
-  : width_(width), height_(height), fill_bits_(fill_bits),
-    buffer_(new PixelDesignator[width * height]) {
-}
-
-PixelDesignatorMap::~PixelDesignatorMap() {
-  delete [] buffer_;
+  : width_(width),
+    height_(height),
+    fill_bits_(fill_bits),
+    buffer_(width * height) {
 }
 
 // Different panel types use different techniques to set the row address.
@@ -438,6 +439,20 @@ Framebuffer::~Framebuffer() {
     return;  // already initialized.
 
   const struct HardwareMapping &h = *hardware_mapping_;
+  const int double_rows = rows / SUB_PANELS_;
+
+  if (Rp1RioShouldActivate(h.name, row_address_type, parallel)) {
+    Rp1RioInitOrDie(h, double_rows, parallel, pwm_lsb_nanoseconds, dither_bits,
+                    row_address_type);
+    return;
+  }
+
+  if (Rp1PioShouldActivate(h.name, row_address_type, parallel)) {
+    Rp1PioInitOrDie(h, double_rows, parallel, pwm_lsb_nanoseconds, dither_bits,
+                    row_address_type);
+    return;
+  }
+
   // Tell GPIO about all bits we intend to use.
   gpio_bits_t all_used_bits = 0;
 
@@ -460,7 +475,6 @@ Framebuffer::~Framebuffer() {
     all_used_bits |= h.p5_r1 | h.p5_g1 | h.p5_b1 | h.p5_r2 | h.p5_g2 | h.p5_b2;
   }
 
-  const int double_rows = rows / SUB_PANELS_;
   switch (row_address_type) {
   case 0:
     row_setter_ = new DirectRowAddressSetter(double_rows, h);
@@ -550,7 +564,7 @@ static void InitFM6126(GPIO *io, const struct HardwareMapping &h, int columns) {
 }
 
 // The FM6217 is very similar to the FM6216.
-// FM6217 adds Register 3 to allow for automatic bad pixel supression.
+// FM6217 adds Register 3 to allow for automatic bad pixel suppression.
 static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
   const gpio_bits_t bits_r_on= h.p0_r1 | h.p0_r2;
   const gpio_bits_t bits_g_on= h.p0_g1 | h.p0_g2;
@@ -596,6 +610,14 @@ static void InitFM6127(GPIO *io, const struct HardwareMapping &h, int columns) {
                                               const char *panel_type,
                                               int columns) {
   if (!panel_type || panel_type[0] == '\0') return;
+  if (Rp1RioIsActive()) {
+    Rp1RioInitializePanels(*hardware_mapping_, panel_type, columns);
+    return;
+  }
+  if (Rp1PioIsActive()) {
+    Rp1PioInitializePanels(*hardware_mapping_, panel_type, columns);
+    return;
+  }
   if (strncasecmp(panel_type, "fm6126", 6) == 0) {
     InitFM6126(io, *hardware_mapping_, columns);
   }
@@ -631,29 +653,38 @@ void Framebuffer::Clear() {
   }
 }
 
-// Do CIE1931 luminance correction and scale to output bitplanes
-static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
-  float out_factor = ((1 << internal::Framebuffer::kBitPlanes) - 1);
-  float v = (float) c * brightness / 255.0;
-  return roundf(out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3)));
-}
-
 struct ColorLookup {
   uint16_t color[256];
 };
-static ColorLookup *CreateLuminanceCIE1931LookupTable() {
-  ColorLookup *for_brightness = new ColorLookup[100];
-  for (int c = 0; c < 256; ++c)
-    for (int b = 0; b < 100; ++b)
-      for_brightness[b].color[c] = luminance_cie1931(c, b + 1);
 
-  return for_brightness;
-}
+class ColorLookupTable {
+  public:
+    static const ColorLookup &GetLookup(uint8_t brightness) {
+      static ColorLookupTable instance;
+      return instance.lookups_[brightness - 1];
+    }
 
-static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
-  static ColorLookup *luminance_lookup = CreateLuminanceCIE1931LookupTable();
-  return luminance_lookup[brightness - 1].color[c];
-}
+
+  private:
+    // Do CIE1931 luminance correction and scale to output bitplanes
+    static uint16_t luminance_cie1931(uint8_t c, uint8_t brightness) {
+      float out_factor = ((1 << internal::Framebuffer::kBitPlanes) - 1);
+      float v = (float) c * brightness / 255.0;
+      return roundf(out_factor * ((v <= 8) ? v / 902.3 : pow((v + 16) / 116.0, 3)));
+    }
+
+    ColorLookupTable() {
+      for (int c = 0; c < 256; ++c)
+        for (int b = 0; b < 100; ++b)
+          lookups_[b].color[c] = luminance_cie1931(c, b + 1);
+    }
+
+    ColorLookup lookups_[100]{};
+  };
+
+  static inline uint16_t CIEMapColor(uint8_t brightness, uint8_t c) {
+    return ColorLookupTable::GetLookup(brightness).color[c];
+  }
 
 // Non luminance correction. TODO: consider getting rid of this.
 static inline uint16_t DirectMapColor(uint8_t brightness, uint8_t c) {
@@ -703,6 +734,46 @@ void Framebuffer::Fill(uint8_t r, uint8_t g, uint8_t b) {
       for (int col = 0; col < columns_; ++col) {
         *row_data++ = plane_bits;
       }
+    }
+  }
+}
+
+void Framebuffer::SubFill(int x, int y, int width, int height, uint8_t r, uint8_t g, uint8_t b) {
+
+  uint16_t red, green, blue;
+  MapColors(r, g, b, &red, &green, &blue);
+
+  int safe_y = std::max(0, y);
+  int safe_y_max = std::min((*shared_mapper_)->height(), y + height);
+  int safe_x = std::max(0, x);
+  int safe_x_max = std::min((*shared_mapper_)->width(), x + width);
+
+  for (int row = safe_y; row < safe_y_max; row++)
+  {
+    const PixelDesignator* designator = (*shared_mapper_)->get(safe_x, row);
+
+    for (int col = safe_x; col < safe_x_max; col++)
+    {
+      if (designator == NULL) continue;
+      const long pos = designator->gpio_word;
+      if (pos < 0) continue;  // non-used pixel marker.
+
+      gpio_bits_t* bits = bitplane_buffer_ + pos;
+      const int min_bit_plane = kBitPlanes - pwm_bits_;
+      bits += (columns_ * min_bit_plane);
+      const gpio_bits_t r_bits = designator->r_bit;
+      const gpio_bits_t g_bits = designator->g_bit;
+      const gpio_bits_t b_bits = designator->b_bit;
+      const gpio_bits_t designator_mask = designator->mask;
+      for (uint16_t mask = 1 << min_bit_plane; mask != 1 << kBitPlanes; mask <<= 1) {
+        gpio_bits_t color_bits = 0;
+        if (red & mask)   color_bits |= r_bits;
+        if (green & mask) color_bits |= g_bits;
+        if (blue & mask)  color_bits |= b_bits;
+        *bits = (*bits & designator_mask) | color_bits;
+        bits += columns_;
+      }
+      designator++;
     }
   }
 }
@@ -859,6 +930,15 @@ void Framebuffer::CopyFrom(const Framebuffer *other) {
 }
 
 void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
+  if (Rp1RioIsActive()) {
+    Rp1RioDumpFramebuffer(this, pwm_low_bit);
+    return;
+  }
+  if (Rp1PioIsActive()) {
+    Rp1PioDumpFramebuffer(this, pwm_low_bit);
+    return;
+  }
+
   const struct HardwareMapping &h = *hardware_mapping_;
   gpio_bits_t color_clk_mask = 0;  // Mask of bits while clocking in.
   color_clk_mask |= h.p0_r1 | h.p0_g1 | h.p0_b1 | h.p0_r2 | h.p0_g2 | h.p0_b2;
@@ -927,3 +1007,28 @@ void Framebuffer::DumpToMatrix(GPIO *io, int pwm_low_bit) {
 }
 }  // namespace internal
 }  // namespace rgb_matrix
+namespace rgb_matrix {
+namespace internal {
+  void Framebuffer::ResetGlobals() {
+    if (sOutputEnablePulser != NULL) {
+      delete sOutputEnablePulser;
+      sOutputEnablePulser = NULL;
+    }
+    Rp1RioDeinit();
+    Rp1PioDeinit();
+    if (row_setter_ != NULL) {
+      delete row_setter_;
+      row_setter_ = NULL;
+    }
+  }
+}
+}
+
+extern "C" {
+  void framebuffer_reset_globals() {
+    rgb_matrix::internal::Framebuffer::ResetGlobals();
+    // Also reset global GPIO bookkeeping in led-matrix's static GPIO object
+    extern void ledmatrix_reset_global_gpio();
+    ledmatrix_reset_global_gpio();
+  }
+}

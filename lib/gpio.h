@@ -49,6 +49,12 @@ public:
   // Returns the bits that were available and could be reserved.
   gpio_bits_t RequestInputs(gpio_bits_t inputs);
 
+  // Reset internal bookkeeping about which GPIOs have been claimed.
+  // This does not touch the hardware registers directly; it clears the
+  // tracked masks so subsequent InitOutputs/RequestInputs will reconfigure
+  // GPIO pins as needed.
+  void ResetState();
+
   // Set the bits that are '1' in the output. Leave the rest untouched.
   inline void SetBits(gpio_bits_t value) {
     if (!value) return;
@@ -74,8 +80,10 @@ public:
 
   inline gpio_bits_t Read() const { return ReadRegisters() & input_bits_; }
 
-  // Return if this is appears to be a Pi4
+  // Return if this appears to be a Pi 4-class board.
   static bool IsPi4();
+  // Return if this appears to be a Pi 5-family board with RP1 I/O.
+  static bool IsPi5Family();
 
 private:
   inline void delay() const {

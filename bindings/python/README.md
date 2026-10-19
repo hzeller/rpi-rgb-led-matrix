@@ -14,8 +14,7 @@ Then, in the root directory for the matrix library simply type:
 
 ```shell
 sudo apt-get update && sudo apt-get install python3-dev cython3 -y
-make build-python 
-sudo make install-python 
+pip install .
 ```
 
 ### PyPy
@@ -117,7 +116,7 @@ options.hardware_mapping = 'regular'  # If you have an Adafruit HAT: 'adafruit-h
 matrix = RGBMatrix(options = options)
 
 # Make image fit our screen.
-image.thumbnail((matrix.width, matrix.height), Image.ANTIALIAS)
+image.thumbnail((matrix.width, matrix.height), Image.LANCZOS)
 
 matrix.SetImage(image.convert('RGB'))
 

@@ -142,6 +142,26 @@ sudo ./led-image-viewer -f -w3 -t5 image.png animated.gif
 sudo ./led-image-viewer --led-rows=32 --led-chain=4 --led-parallel=3 animation-out.stream
 ```
 
+##### Stream Notes
+When creating a stream (Using the `-O` option), some options are ignored.  
+When viewing a stream, some options are also ignored.  
+Furthermore, when viewing a stream, some options must match those used when the stream was created.  
+This table lists (Currently incomplete) those options.  
+IS = Ignored on create, IP = ignored on play, MM = must match
+
+| Option  | IC | IP | MM |
+| ------------- | ------------- | --- | --- |
+| --led-rows  | | | X |
+| --led-columns  | | | X |
+| --led-chain  | | | X |
+| --led-parallel | | | X |
+| -l | X | | |
+| --led-row-addr-type | X | | |
+| --led-pwm-dither-bits | X | | |
+| --led-pwm-lsb-nanoseconds | X | | |
+| --led-pwm-bits | X | | |
+| --led-brightness |  | X | |
+
 ### Text Scroller ###
 
 The text scroller allows to show some scrolling text.
@@ -221,6 +241,56 @@ sudo ./text-scroller -f ../fonts/9x18.bdf -B0,0,255 -O0,0,100 -C255,0,0 --led-ch
 # (move up 11 pixels: a negative y shift) to fit nicely on a panel.
 sudo ./text-scroller -f ../fonts/texgyre-27.bdf --led-chain=4 -y-11 "Large Font"
 ```
+
+### Frame Sequence Player ###
+
+`frame-sequence-player` can either:
+
+1. Load and play an image/animation through the in-memory FrameSequence API.
+2. Export an image/animation to a `.fseq` file for fast later playback.
+3. Load and play an existing `.fseq` file.
+
+##### Building
+
+The utility requires GraphicsMagick, similar to `led-image-viewer`:
+
+```bash
+sudo apt-get update
+sudo apt-get install libgraphicsmagick++-dev libwebp-dev -y
+make frame-sequence-player
+```
+
+##### Usage
+
+```bash
+./frame-sequence-player [led-matrix-options] <image-or-fseq> [-O<output.fseq> | -O <output.fseq>]
+```
+
+##### Examples
+
+```bash
+# Play an image or animated gif
+sudo ./frame-sequence-player animation.gif
+
+# Convert gif to .fseq (no root needed for file conversion)
+./frame-sequence-player animation.gif -Oanimation.fseq
+
+# Play a prebuilt .fseq
+sudo ./frame-sequence-player animation.fseq
+```
+
+While playing, keyboard controls are available when stdin is a tty:
+
+- `+` / `=` increase brightness
+- `-` / `_` decrease brightness
+- `q` quit
+
+#### FrameSequence notes
+When outputting an `.fseq` file (Using `-O`), only options which govern geometry are important, ie  
+--led-cols  
+--led-rows  
+--led-chain  
+--led-parallel  
 
 ### Video Viewer ###
 

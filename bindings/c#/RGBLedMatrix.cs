@@ -11,6 +11,8 @@ public class RGBLedMatrix : IDisposable
     private IntPtr matrix;
     private bool disposedValue = false;
 
+    internal IntPtr NativeHandle => matrix;
+
     /// <summary>
     /// Initializes a new matrix.
     /// </summary>
@@ -43,10 +45,17 @@ public class RGBLedMatrix : IDisposable
             // users' commandline.
             // As always, as the _very_ first, we need to provide the
             // program name argv[0].
-            var argv = new string[args.Length + 1];
-            argv[0] = args[0];
-            argv[1] = $"--led-slowdown-gpio={options.GpioSlowdown}";
-            Array.Copy(args, 1, argv, 2, args.Length - 1);
+            // --led-no-drop-privs is also added as there seems to be no other way to do it
+            // other than passing it via command-line, and if you call the bindings from a library,
+            // you cannot do that unless you also pass that argument to your app, which just seems silly.
+            // Without no-drop-privs, dotnet cannot load any libraries, so it seems essential
+            var argv = new string[args.Length + 3];
+            var argIndex = 0;
+            argv[argIndex++] = args[0];
+            argv[argIndex++] = $"--led-slowdown-gpio={options.GpioSlowdown}";
+            argv[argIndex++] = $"--led-rp1-pio={options.Rp1Pio}";
+            argv[argIndex++] = "--led-no-drop-privs";
+            Array.Copy(args, 1, argv, argIndex, args.Length - 1);
 
             matrix = led_matrix_create_from_options_const_argv(ref opt, argv.Length, argv);
             if (matrix == (IntPtr)0)
@@ -54,10 +63,10 @@ public class RGBLedMatrix : IDisposable
         }
         finally
         {
-            if(options.HardwareMapping is not null) Marshal.FreeHGlobal(opt.hardware_mapping);
-            if(options.LedRgbSequence is not null) Marshal.FreeHGlobal(opt.led_rgb_sequence);
-            if(options.PixelMapperConfig is not null) Marshal.FreeHGlobal(opt.pixel_mapper_config);
-            if(options.PanelType is not null) Marshal.FreeHGlobal(opt.panel_type);
+            if (options.HardwareMapping is not null) Marshal.FreeHGlobal(opt.hardware_mapping);
+            if (options.LedRgbSequence is not null) Marshal.FreeHGlobal(opt.led_rgb_sequence);
+            if (options.PixelMapperConfig is not null) Marshal.FreeHGlobal(opt.pixel_mapper_config);
+            if (options.PanelType is not null) Marshal.FreeHGlobal(opt.panel_type);
         }
     }
 
@@ -66,6 +75,16 @@ public class RGBLedMatrix : IDisposable
     /// </summary>
     /// <returns>An instance of <see cref="RGBLedCanvas"/> representing the canvas.</returns>
     public RGBLedCanvas CreateOffscreenCanvas() => new(led_matrix_create_offscreen_canvas(matrix));
+
+    [System.Runtime.InteropServices.DllImport("librgbmatrix.so.1")]
+    private static extern void framebuffer_reset_globals();
+
+    /// <summary>
+    /// Reset native framebuffer globals so that GPIO/row-address state will be
+    /// reinitialized on the next matrix creation. Useful when changing
+    /// hardware-mapping critical options at runtime.
+    /// </summary>
+    public static void ResetFramebufferGlobals() => framebuffer_reset_globals();
 
     /// <summary>
     /// Returns a canvas representing the current frame buffer.
@@ -81,8 +100,17 @@ public class RGBLedMatrix : IDisposable
     /// This operation guarantees vertical synchronization.
     /// </summary>
     /// <param name="canvas">Backbuffer canvas to swap.</param>
-    public void SwapOnVsync(RGBLedCanvas canvas) =>
-        canvas._canvas = led_matrix_swap_on_vsync(matrix, canvas._canvas);
+    public void SwapOnVsync(RGBLedCanvas canvas)
+    {
+        if (canvas is RGBLedCanvas ca)
+        {
+            ca._canvas = led_matrix_swap_on_vsync(matrix, ca._canvas);
+        }
+        else
+        {
+            throw new ArgumentException("Does not support implementation other than RGBLedCanvas");
+        }
+    }
 
     /// <summary>
     /// The general brightness of the matrix.

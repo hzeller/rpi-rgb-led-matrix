@@ -30,7 +30,7 @@
 
 namespace rgb_matrix {
 //
-// Typically, your programs will crate a canvas and then updating the image
+// Typically, your programs will create a canvas and then updating the image
 // in a loop. If you want to do stuff in parallel, then this utility class
 // helps you doing that. Also a demo for how to use the Thread class.
 //
@@ -59,7 +59,7 @@ namespace rgb_matrix {
   MyCrazyDemo *demo = new MyCrazyDemo(matrix);
   demo->Start();   // Start doing things.
   // This now runs in the background, you can do other things here,
-  // e.g. aquiring new data or simply wait. But for waiting, you wouldn't
+  // e.g. acquiring new data or simply wait. But for waiting, you wouldn't
   // need a thread in the first place.
   demo->Stop();
   delete demo;

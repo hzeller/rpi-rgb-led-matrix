@@ -1,0 +1,11 @@
+prefix=@PREFIX@
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
+
+Name: rgbmatrix
+Description: Library to control HUB75 RGB LED matrix panels on the Raspberry Pi
+URL: https://github.com/hzeller/rpi-rgb-led-matrix
+Version: 0.0.1
+Cflags: -I${includedir}/rgbmatrix
+Libs: -L${libdir} -lrgbmatrix
+Libs.private: -lrt -lm -lpthread

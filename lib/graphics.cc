@@ -53,7 +53,7 @@ bool SetImage(Canvas *c, int canvas_offset_x, int canvas_offset_y,
     ? (canvas_offset_x + image_display_w - w) * 3
     : 0;
 
-  // Let's make this a combined skip per row and ajust where we start.
+  // Let's make this a combined skip per row and adjust where we start.
   const size_t next_row_skip = skip_start_row + skip_end_row;
   buffer += skip_start_row;
 
@@ -115,6 +115,19 @@ int VerticalDrawText(Canvas *c, const Font &font, int x, int y,
     y += font.height() + extra_spacing;
   }
   return y - start_y;
+}
+
+int MeasureText(const Font &font, const char *utf8_text, int kerning_offset) {
+  int result = 0;
+  while (*utf8_text) {
+    const uint32_t cp = utf8_next_codepoint(utf8_text);
+    int width = font.CharacterWidth(cp);
+    if (width > 0)
+      result += width;
+    if (*utf8_text)
+      result += kerning_offset;
+  }
+  return result;
 }
 
 void DrawCircle(Canvas *c, int x0, int y0, int radius, const Color &color) {

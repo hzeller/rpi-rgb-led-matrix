@@ -30,9 +30,23 @@
 #include <unistd.h>
 
 #include "gpio.h"
+#include "rp1/rp1_pio_backend.h"
+#include "rp1/rp1_rio_backend.h"
 #include "thread.h"
 #include "framebuffer-internal.h"
 #include "multiplex-mappers-internal.h"
+
+// C wrapper to reset global GPIO bookkeeping from external callers.
+extern "C" void ledmatrix_reset_global_gpio();
+
+// Global GPIO instance used by the library. Previously this was a function-
+// local static inside CreateFromOptions; move it to file-scope so the C
+// wrapper can access and reset it.
+static rgb_matrix::GPIO s_global_io;  // file-scope global
+
+// Implement the C wrapper here so it has file scope and can access
+// the file-scope GPIO instance.
+extern "C" void ledmatrix_reset_global_gpio() { s_global_io.ResetState(); }
 
 // Leave this in here for a while. Setting things from old defines.
 #if defined(ADAFRUIT_RGBMATRIX_HAT)
@@ -187,12 +201,14 @@ public:
       }
 
       // Read input bits.
-      const gpio_bits_t inputs = io_->Read();
-      if (inputs != last_gpio_bits) {
-        last_gpio_bits = inputs;
-        MutexLock l(&input_sync_);
-        gpio_inputs_ = inputs;
-        pthread_cond_signal(&input_change_);
+      if (!Rp1PioIsActive() && !Rp1RioIsActive()) {
+        const gpio_bits_t inputs = io_->Read();
+        if (inputs != last_gpio_bits) {
+          last_gpio_bits = inputs;
+          MutexLock l(&input_sync_);
+          gpio_inputs_ = inputs;
+          pthread_cond_signal(&input_change_);
+        }
       }
 
       ++frame_count;
@@ -412,6 +428,8 @@ RGBMatrix::Impl::~Impl() {
   // Make sure LEDs are off.
   active_->Clear();
   if (io_) active_->framebuffer()->DumpToMatrix(io_, 0);
+  internal::Rp1RioDeinit();
+  internal::Rp1PioDeinit();
 
   for (size_t i = 0; i < created_frames_.size(); ++i) {
     delete created_frames_[i];
@@ -424,16 +442,19 @@ RGBMatrix::~RGBMatrix() {
 }
 
 uint64_t RGBMatrix::Impl::RequestInputs(uint64_t bits) {
+  if (Rp1PioIsActive() || Rp1RioIsActive()) return 0;
   return io_->RequestInputs(static_cast<gpio_bits_t>(bits));
 }
 
 uint64_t RGBMatrix::Impl::RequestOutputs(uint64_t output_bits) {
+  if (Rp1PioIsActive() || Rp1RioIsActive()) return 0;
   uint64_t success_bits = io_->InitOutputs(static_cast<gpio_bits_t>(output_bits));
   user_output_bits_ |= success_bits;
   return success_bits;
 }
 
 void RGBMatrix::Impl::OutputGPIO(uint64_t output_bits) {
+  if (Rp1PioIsActive() || Rp1RioIsActive()) return;
   io_->WriteMaskedBits(static_cast<gpio_bits_t>(output_bits), static_cast<gpio_bits_t>(user_output_bits_));
 }
 
@@ -542,6 +563,7 @@ FrameCanvas *RGBMatrix::Impl::SwapOnVSync(FrameCanvas *other,
 
 uint64_t RGBMatrix::Impl::AwaitInputChange(int timeout_ms) {
   if (!updater_) return 0;
+  if (Rp1PioIsActive() || Rp1RioIsActive()) return 0;
   return updater_->AwaitInputChange(timeout_ms);
 }
 
@@ -585,20 +607,51 @@ bool RGBMatrix::Impl::ApplyPixelMapper(const PixelMapper *mapper) {
   }
   PixelDesignatorMap *new_mapper = new PixelDesignatorMap(
     new_width, new_height, shared_pixel_mapper_->GetFillColorBits());
-  for (int y = 0; y < new_height; ++y) {
-    for (int x = 0; x < new_width; ++x) {
-      int orig_x = -1, orig_y = -1;
-      mapper->MapVisibleToMatrix(old_width, old_height,
-                                 x, y, &orig_x, &orig_y);
-      if (orig_x < 0 || orig_y < 0 ||
-          orig_x >= old_width || orig_y >= old_height) {
-        fprintf(stderr, "Error in PixelMapper: (%d, %d) -> (%d, %d) [range: "
-                "%dx%d]\n", x, y, orig_x, orig_y, old_width, old_height);
-        continue;
+  switch (mapper->GetMappingType()) {
+    case PixelMapper::VisibleToMatrix:
+      for (int y = 0; y < new_height; ++y) {
+        for (int x = 0; x < new_width; ++x) {
+          int orig_x = -1, orig_y = -1;
+          mapper->MapVisibleToMatrix(old_width, old_height,
+                                     x, y, &orig_x, &orig_y);
+          if (orig_x < 0 || orig_y < 0 ||
+              orig_x >= old_width || orig_y >= old_height) {
+            fprintf(stderr, "Error in PixelMapper: (%d, %d) -> (%d, %d) [range: "
+                    "%dx%d]\n", x, y, orig_x, orig_y, old_width, old_height);
+            continue;
+          }
+          const internal::PixelDesignator *orig_designator;
+          orig_designator = shared_pixel_mapper_->get(orig_x, orig_y);
+          *new_mapper->get(x, y) = *orig_designator;
+        }
       }
-      const internal::PixelDesignator *orig_designator;
-      orig_designator = shared_pixel_mapper_->get(orig_x, orig_y);
-      *new_mapper->get(x, y) = *orig_designator;
+      break;
+    case PixelMapper::MatrixToVisible: {
+      bool collision_reported = false;
+      for (int y = 0; y < old_height; ++y) {
+        for (int x = 0; x < old_width; ++x) {
+          int new_x = -1, new_y = -1;
+          if (mapper->MapMatrixToVisible(old_width, old_height,
+                                         x, y, &new_x, &new_y)) {
+            if (new_x < 0 || new_y < 0 ||
+                new_x >= new_width || new_y >= new_height) {
+              fprintf(stderr, "Error in PixelMapper MapMatrixToVisible: (%d, %d) "
+                      "-> (%d, %d) [range: %dx%d]\n",
+                      x, y, new_x, new_y, new_width, new_height);
+              continue;
+            }
+            const internal::PixelDesignator *orig_designator;
+            orig_designator = shared_pixel_mapper_->get(x, y);
+            internal::PixelDesignator *new_designator = new_mapper->get(new_x, new_y);
+            if (new_designator->gpio_word >= 0 && !collision_reported) {
+              fprintf(stderr, "Warning: MapMatrixToVisible: %s mapped twice to the same pixel (%d, %d) -> (%d, %d)\n", mapper->GetName(), x, y, new_x, new_y);
+              collision_reported = true;
+            }
+            *new_designator = *orig_designator;
+          }
+        }
+      }
+      break;
     }
   }
   delete shared_pixel_mapper_;
@@ -657,16 +710,62 @@ RGBMatrix *RGBMatrix::CreateFromOptions(const RGBMatrix::Options &options,
   }
 
   // For the Pi4, we might need 2, maybe up to 4. Let's open up to 5.
-  // on supproted architectures, -1 will emit memory barier (DSB ST) after GPIO write
+  // on supported architectures, -1 will emit memory barier (DSB ST) after GPIO write
   if (runtime_options.gpio_slowdown < (LED_MATRIX_ALLOW_BARRIER_DELAY ? -1 : 0)
-      || runtime_options.gpio_slowdown > 10) {
+      || runtime_options.gpio_slowdown > 60) {
     fprintf(stderr, "--led-slowdown-gpio=%d is outside usable range\n",
             runtime_options.gpio_slowdown);
     return NULL;
   }
+  if (runtime_options.rp1_pio != 0 && runtime_options.rp1_pio != 1) {
+    fprintf(stderr, "--led-rp1-pio=%d is outside usable range 0..1\n",
+            runtime_options.rp1_pio);
+    return NULL;
+  }
 
-  static GPIO io;  // This static var is a little bit icky.
-  if (runtime_options.do_gpio_init
+  // Use file-scope GPIO instance.
+  GPIO &io = s_global_io;
+  Rp1RioSetEnabled(runtime_options.rp1_pio == 0);
+  const bool use_rp1_rio = runtime_options.do_gpio_init
+      && Rp1RioShouldActivate(options.hardware_mapping,
+                              options.row_address_type,
+                              options.parallel);
+  const bool use_rp1_pio = !use_rp1_rio && runtime_options.do_gpio_init
+      && Rp1PioShouldActivate(options.hardware_mapping,
+                              options.row_address_type,
+                              options.parallel);
+  if (use_rp1_rio) {
+    Rp1RioSetGpioSlowdown(runtime_options.gpio_slowdown);
+  }
+  if (use_rp1_pio) {
+    Rp1PioSetGpioSlowdown(runtime_options.gpio_slowdown);
+  }
+
+  const bool pi5_backend_available =
+      Rp1PioPlatformDetected() || Rp1RioPlatformDetected();
+  if (runtime_options.do_gpio_init && pi5_backend_available
+      && !use_rp1_pio && !use_rp1_rio) {
+    if (Rp1RioBackendRequested()) {
+      fprintf(stderr,
+              "Pi 5-family RP1 RIO backend is selected, but this "
+              "configuration is not supported yet.\n"
+              "RIO supports mappings "
+              "regular/adafruit-hat/adafruit-hat-pwm/classic and "
+              "--led-row-addr-type=0, 1, 2, 3, 4, or 5.\n"
+              "For configurations supported by PIO, use --led-rp1-pio=1.\n");
+    } else {
+      fprintf(stderr,
+              "Pi 5-family RP1 PIO backend is selected, but this "
+              "configuration is not supported yet.\n"
+              "Supported in PIO mode for now: mappings "
+              "regular/regular-pi1/adafruit-hat/adafruit-hat-pwm/classic and "
+              "--led-row-addr-type=0, 1, 2, 3, 4, or 5.\n");
+    }
+    return NULL;
+  }
+
+  // C wrapper implementation is at file scope; use local reference `io`.
+  if (runtime_options.do_gpio_init && !use_rp1_pio && !use_rp1_rio
       && !io.Init(runtime_options.gpio_slowdown)) {
     fprintf(stderr, "Must run as root to be able to access /dev/mem\n"
             "Prepend 'sudo' to the command\n");
@@ -786,6 +885,9 @@ void FrameCanvas::SetPixels(int x, int y, int width, int height,
 void FrameCanvas::Clear() { return frame_->Clear(); }
 void FrameCanvas::Fill(uint8_t red, uint8_t green, uint8_t blue) {
   frame_->Fill(red, green, blue);
+}
+void FrameCanvas::SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue) {
+  frame_->SubFill(x, y, width, height, red, green, blue);
 }
 bool FrameCanvas::SetPWMBits(uint8_t value) { return frame_->SetPWMBits(value); }
 uint8_t FrameCanvas::pwmbits() { return frame_->pwmbits(); }

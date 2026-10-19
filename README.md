@@ -1,7 +1,7 @@
 Controlling RGB LED display with Raspberry Pi GPIO
 ==================================================
 
-A library to control commonly available 64x64, 32x32 or 16x32 RGB LED panels
+A library to control commonly available 128x64, 64x64, 32x32 or 16x32 RGB LED panels
 with the Raspberry Pi. Can support PWM up to 11Bit per channel, providing
 true 24bpp color with CIE1931 profile.
 
@@ -20,9 +20,9 @@ The LED-matrix library is (c) Henner Zeller <h.zeller@acm.org>, licensed with
 [GNU General Public License Version 2.0 (or any later version)](http://www.gnu.org/licenses/gpl-2.0.txt)
 (which means, if you use it in a product somewhere, you need to make the
 source and all your modifications available to the receiver of such product so
-that they have the freedom to adapt and improve). 
+that they have the freedom to adapt and improve).
 Yes, you are also allowed to use
-this code under the [GNU General Public License Version 3.0](http://www.gnu.org/licenses/gpl-3.0.txt) 
+this code under the [GNU General Public License Version 3.0](http://www.gnu.org/licenses/gpl-3.0.txt)
 which allows linking with Apache 2.0 code and LGPL-3.0 code.
 
 ## Discourse discussion group
@@ -49,11 +49,11 @@ you want to get started programming your own utils.
 
 Panels supported
 ----------------
-This library does not support PWM panels (which actually are better, but need 
+This library does not support PWM panels (which actually are better, but need
 a completely different driver).\
 It should support most other panels with direct addressing (3 to 5 address lines,
-ABC for 8x2=16 lines, ABCD for 16x2=32 lines, and ABCDE for 32x2=64 lines). 
-It also supports panels using shift registers for line addressing, also called ABC 
+ABC for 8x2=16 lines, ABCD for 16x2=32 lines, and ABCDE for 32x2=64 lines).
+It also supports panels using shift registers for line addressing, also called ABC
 panels up to 64 lines.\
 However some amount of panels have uncommon pixel layouts, especially the brighter
 panels and may require special pixel mappers (some are called zigzag or zagzig, see
@@ -63,22 +63,47 @@ Until this wiki has its own confirmed list of working panels, you can refer to
 this list: https://github.com/board707/DMD_STM32/wiki/Led_drivers and assume
 that all supported panels there should work with this library, or could work
 with minimal work to create a pixel mapper.
+Please do refer to --led-multiplexing=<0..17> mentioned below and try all values. \
+2025/11 update: DMD_STM32 has started adding experimental support for some PWM panels.
+These should be labelled as "special" in the table above. They are not supported by this
+lib, as it only supports non PWM panels (until someone contributes PWM support).
 
-Raspberry Pi up to 4 supported
+PWM/E-PWM/S-PWM Panels
+----------------------
+Newer PWM panels are not currently supported by this lib, but support would really be appreciated.
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/466 - Master bug tracking PWM efforts
+- https://github.com/hzeller/rpi-rgb-led-matrix/issues/1866 - Continued discussion
+
+Some experimentation and success has been made with the following fork. Some panel support with FM6373, FM6363, SM16380SH
+- https://github.com/kingdo9/rpi-rgb-led-matrix_pwm_experiment
+
+
+Raspberry Pi 1-5 supported
 ------------------------------
-
 This library supports the old Raspberry Pi's Version 1 with 26 pin header and
-also the B+ models, the Pi Zero, Raspberry Pi 2 and 3 with 40 pins, as well
+also the B+ models, the Pi Zero, Raspberry Pi 2,3,4 and 5 with 40 pins, as well
 as the Compute Modules which have 44 GPIOs.
 
-The Raspberry Pi 5 still needs some research into the vastly changed peripherals
-and is not yet supported. See https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603#issuecomment-2624713250
-and https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter
+#### Raspberry Pi 5 support has now been added.
+There are two modes to run this on the Pi 5
+
+**--led-rp1-pio=0** - Uses the Pi 5 RP1 RIO backend (default) - Higher CPU usage but much faster performance.
+
+**--led-rp1-pio=1** - Uses the Pi 5 RP1 PIO backend - Very minimal CPU usage.
+**NOTE: --led-slowdown-gpio** can have the opposite effect in RIO mode, so going from 2 to 3 may increase performance slightly with --led-rp1-pio=0.
+
+Pi 5 Discussion -  https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603
+
+
+Thanks to contributions from the following libraries to help implement this.
+https://github.com/adafruit/Adafruit_Blinka_Raspberry_Pi5_Piomatter \
+https://github.com/bitslip6/rpi-gpu-hub75-matrix \
+https://www.i-programmer.info/programming/148-hardware/16887-raspberry-pi-iot-in-c-pi-5-memory-mapped-gpio.html
 
 The 26 pin models can drive one chain of RGB panels, the 40 pin models
 **up to three** chains in parallel (each chain 12 or more panels long).
 The Compute Module can drive **up to 6 chains in parallel**.
-The Raspberry Pi 2 and 3 are faster and generally perferred to the older
+The Raspberry Pi 2 and 3 are faster and generally preferred to the older
 models (and the Pi Zero). With the faster models, the panels sometimes
 can't keep up with the speed; check out
 this [troubleshooting section](#troubleshooting) what to do.
@@ -111,7 +136,7 @@ Flag                                | Descriptio
 `--led-cols`          | Columns in the LED matrix, the 'width'.
 `--led-rows`          | Rows in the LED matrix, the 'height'.
 `--led-multiplexing`  | In particular bright outdoor panels with small multiplex ratios require this. Often an indicator: if there are fewer address lines than expected: ABC (instead of ABCD) for 32 high panels and ABCD (instead of ABCDE) for 64 high panels.
-`--led-row-addr-type` | Adressing of rows; in particular panels with only AB address lines might indicate that this is needed.
+`--led-row-addr-type` | Addressing of rows; in particular panels with only AB address lines might indicate that this is needed.
 `--led-panel-type`    | Chipset of the panel. In particular if it doesn't light up at all, you might need to play with this option because it indicates that the panel requires a particular initialization sequence.
 
 Panels can be chained by connecting the output of one panel to the input of
@@ -143,31 +168,59 @@ use `--led-row-addr-type=2` parameter. Also the matrix Qiangli Q10(1/4)
 have "Z"-stripe pixel mapping and in this case, you'd use two parameters
 at the same time `--led-row-addr-type=2 --led-multiplexing=4`.
 
-Let's do it
-------------
+Sub-Pages
+---------
 This documentation is split into parts that help you through the process
 
-  1. <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
+- <a href="wiring.md"><img src="img/wire-up-icon.png"></a>
     [**Wire up the matrix to your Pi**](./wiring.md). This document describes
-    what goes where. You might also be interested
-    in [breakout boards](./adapter) for that.
+    what goes where.
+- [How to map pixels between panels or within panels](./lib). This is crucial for figuring out pixel mappers,
+  matrix mappers and so forth. This is where you will learn about panel layout with U-Mapper, V-Mapper, V-Mapper:Z
+- [Adapter GPIO boards output to up to 3 channels (electrodragon board recommended)](./adapter).
     If you have an [Adafruit HAT] or [Adafruit Bonnet], you can choose that with
     a command line option [described below](#if-you-have-an-adafruit-hat-or-bonnet)
-  2. Run a demo. You find that in the
+- [All the command line options you can give to demo and in turn use in your library code](./examples-api-use).
+- [Installing an Optimized Kernel to fix most flickering issues](./optimized-kernel)
+
+Python Support
+--------------
+The python bindings have been overhauled as of February 2026 and are now built with scikit-build-core and cmake. While
+this update has been tested there are likely edge cases that have not been caught. Please subscribe to the master Python
+bug to assist or check for the latest updates.
+https://github.com/hzeller/rpi-rgb-led-matrix/issues/1749.
+
+The entire repository itself is PIP-able and can be installed as a package directly. Python dev packages are required.
+```
+sudo apt-get install python-dev-is-python3 python3-pil cython3
+pip install git+https://github.com/hzeller/rpi-rgb-led-matrix
+```
+
+Rpi Hardware Support
+--------------------
+While this code should still work on rPi1 or Rpi0, those are underpowered and not recommended. An ESP32 is cheaper and faster.
+Rpi2 is honestly old and slow too.
+Rpi3 / Rpi3a / Rpi0 2wl will work for most displays but will be slow if you are rotating a huge display in a mapper (Rpi0 2wl is a slightly faster version of Rpi3)
+Rpi4 is the fastest supported chip which will need a higher slowdown gpio value to avoid overwhelming panels (if they display garbage)
+Rpi5 is not officially supported as of 2025/11, but see https://github.com/hzeller/rpi-rgb-led-matrix/issues/1603
+
+Let's do it
+------------
+  1. Run a demo. You find that in the
      [examples-api-use/](./examples-api-use#running-some-demos) directory:
 ```
 make -C examples-api-use
 sudo examples-api-use/demo -D0
 ```
-  3. Use the utilities. The [utils](./utils) directory has some ready-made
+  2. Use the utilities. The [utils](./utils) directory has some ready-made
     useful utilities to show content. [Go there](./utils) to see how to
     compile and run these.
-  4. Write your own programs using the Matrix in C++ or one of the
+  3. Write your own programs using the Matrix in C++ or one of the
      bindings such as Python or C#.
 
 ### Wiring / Boards
 
-Please see the [Adadpter Boards or Self Wiring](./adapter). 
+Please see the [Adadpter Boards or Self Wiring](./adapter).
 
 Summary is:
 - Yes you can self wire without level shifters and it will work most of the time, but if you're not in a hurry get a board
@@ -227,7 +280,7 @@ choose these here:
 This can have values such as
   - `--led-gpio-mapping=regular` The standard mapping of this library, described in the [wiring](./wiring.md) page.
   - `--led-gpio-mapping=adafruit-hat` The Adafruit HAT/Bonnet, that uses this library or
-  - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti-flicker hardware mod [described below](#improving-flicker).
+  - `--led-gpio-mapping=adafruit-hat-pwm` Adafruit HAT with the anti- hardware mod [described below](#improving-flicker-hardware-patch).
   - `--led-gpio-mapping=compute-module` Additional 3 parallel chains can be used with the Compute Module.
 
 Learn more about the mappings in the [wiring documentation](wiring.md#alternative-hardware-mappings).
@@ -246,7 +299,7 @@ The default 1 (one) typically works fine, but often you have to even go further
 by setting it to 2 (two). If you have a Raspberry Pi with a slower processor
 (Model A, A+, B+, Zero), then a value of 0 (zero) might work and is desirable.
 
-If you find yourself needing very high values of slowdown like 8 for ABC 128x64 panels, 
+If you find yourself needing very high values of slowdown like 8 for ABC 128x64 panels,
 do try --led-row-addr-type=5 instead of --led-row-addr-type=3. Details in this bug:
 https://github.com/hzeller/rpi-rgb-led-matrix/issues/1773
 
@@ -346,7 +399,7 @@ Basic performance tips:
 will also go faster, although as you tune more options given above, their advantage will decrease.
 - 32x16 ABC panels are faster than ABCD which are faster than ABCDE, which are faster than 128x64 ABC panels
 (which do use 5 address lines, but over only 3 wires)
-- For 128x64 ABC speed on shift registers vs ABCDE 
+- For 128x64 ABC speed on shift registers vs ABCDE
 - Use at least an rPi3 (rPi4 is still slightly faster but may need --led-slowdown-gpio=2)
 
 Maximizing refresh rate to 300 or even 400Mhz refresh for 3x 128x64 panels:
@@ -357,7 +410,7 @@ by needing smaller slowdowns
 - To achieve 410Hz refresh for 3x 128x64 direct ABCDE panels, use this "~/rpi-rgb-led-matrix/examples-api-use/demo --led-rows=64 --led-cols=128 --led-chain=1 --led-parallel=3 --led-show-refresh --led-scan-mode=0 --led-pwm-bits=7 --led-pwm-lsb-nanoseconds=50 --led-pwm-dither-bits=1 -D0  --led-row-addr-type=0 --led-slowdown-gpio=1"
 - To achieve 350hz refresh for 3x 128x64 shift register panels, use this: "~/rpi-rgb-led-matrix/examples-api-use/demo --led-rows=64 --led-cols=128 --led-chain=1 --led-parallel=3 --led-show-refresh --led-scan-mode=0 --led-pwm-bits=7 --led-pwm-lsb-nanoseconds=50 --led-pwm-dither-bits=1 -D0  --led-row-addr-type=5 --led-slowdown-gpio=2"
 
-Please see this bug for discussion of ABC vs ABCDE and using --led-row-addr-type=5 instead of --led-row-addr-type=3: 
+Please see this bug for discussion of ABC vs ABCDE and using --led-row-addr-type=5 instead of --led-row-addr-type=3:
 https://github.com/hzeller/rpi-rgb-led-matrix/issues/1774#issuecomment-2860617056
 
 Maximum resolutions reasonably achievable:
@@ -536,8 +589,8 @@ This will allow higher refresh rate (or same refresh rate with increased
 `--led-pwm-lsb-nanoseconds`).
 The disadvantage could be slightly lower brightness, in particular for longer
 chains, and higher CPU use.
-CPU use is not of concern for Rasbperry Pi 2 or 3 (as we run on a dedicated
-core anyway) but proably for Raspberry Pi 1 or Pi Zero.
+CPU use is not of concern for Raspberry Pi 2 or 3 (as we run on a dedicated
+core anyway) but probably for Raspberry Pi 1 or Pi Zero.
 Default: no dithering; if you have a Pi 3 and struggle with low frame-rate due
 to high multiplexing panels (1:16 or 1:32) or long chains, it might be
 worthwhile to try.
@@ -589,6 +642,13 @@ Here are some tips in case things don't work as expected.
 
 ### Use minimal Raspbian distribution
 In general, run a minimal configuration on your Pi.
+  
+  * Common cause for flickering \
+    **Ensure 5V is getting to LED Display and Raspberry Pi devices !!** \
+    Use a Multimeter to check, also use dmesg command to check for any Raspberry Pi undervolt messages.\
+    It may be best to power the LED Display externally especially if using Raspberry Pi 4.
+
+    Additionally see [Installing an Optimized Kernel to fix most flickering issues](./optimized-kernel)
 
   * Do not use a graphical user interface (Even though the
     Raspberry Pi foundation makes you believe that you can do that: don't.
@@ -603,7 +663,13 @@ In general, run a minimal configuration on your Pi.
     so that is recommended if you happen to need sound. The on-board sound
     uses a timing circuit that the RGB-Matrix needs (it seems in some
     distributions, such as arch-linux, this is not enough and you need
-    to explicitly blacklist the snd_bcm2835 module).
+    to explicitly blacklist the snd_bcm2835 module).\     
+    
+    post-bookworm \
+    nano /etc/modprobe.d/blacklist-audio.conf \
+    blacklist snd_bcm2835 \
+    CTRL+S CTRL+X to Save File and Exit
+
 
   * Don't run anything that messes in parallel with the GPIO pins, e.g.
     PiGPIO library/daemon or devices that use the i2c or 1-wire interface if
@@ -638,17 +704,20 @@ In general, run a minimal configuration on your Pi.
     In general: This is why starting with a minimal installation is a good
     idea: there is simply less cruft that you have to disable.
 
-  * It seems that more recent version of Raspbian Lite result in some faint
-    brightness fluctuations of the displays and it is not quite clear why (see
-    issue [#483](https://github.com/hzeller/rpi-rgb-led-matrix/issues/483)).
-    If you are a Kernel person and can help figuring out what is
-    happening that would be very appreciated. Also, you might know a minimal
-    Linux distribution that is more suited for near realtime applications ?
+  * When attempting to connect sensors like the DHT22 to available GPIO pins
+    and display their results on your LED panel, you might encounter an issue
+    where the sensors fail to provide any data due to the Raspberry Pi resource
+    limitations. This situation is particularly evident on older models like the
+    Raspberry Pi 1 B. To address this, it is advisable to select a Raspberry Pi
+    model with higher resources to ensure proper functionality.
+
 
 The default install of **[Raspbian Lite][raspbian-lite]** or **[DietPi]**
 seem to be good starting points, as they have a reasonably minimal
 configuration to begin with. Raspbian Lite is not as lite anymore
-as it used to be; I prefer DietPi these days.
+as it used to be; I prefer DietPi these days. Note that any of the above
+changes to `/boot/...` must be applied to `/boot/firmware/...` if you are on a
+non-Raspbian distro (e.g. Ubuntu for ARM).
 
 ### Bad interaction with Sound
 If sound is enabled on your Pi, this will not work together with the LED matrix,
@@ -734,7 +803,7 @@ flag.
 Just pass the option `--led-gpio-mapping=adafruit-hat`. This works on the C++
 and Python examples.
 
-### Improving flicker
+### Improving flicker: hardware patch
 
 To improve flicker, we need to do a little hardware modification,
 but it is very simple: solder a wire between GPIO 4 and 18 as shown in the
@@ -746,6 +815,10 @@ Then, start your programs with `--led-gpio-mapping=adafruit-hat-pwm`.
 
 Now you should have less visible flicker. This essentially
 switches on the hardware pulses feature for the Adafruit HAT/Bonnet.
+
+### Improving flicker: Optimized Kernel
+See [Installing an Optimized Kernel to fix most flickering issues](./optimized-kernel)
+
 
 ### 64x64 with E-line on Adafruit HAT/Bonnet
 There are LED panels that have 64x64 LEDs packed, but they need 5 address lines,
@@ -768,8 +841,12 @@ third-party 64x64 matrices…check datasheet).
 
 ### Old Adafruit HAT/Bonnet (without)
 
-It is a little more advanced hack, so it is only really for people who are
-comfortable with this kind of thing.
+Newer HAT/Bonnet versions have a special pad for the E-line next to the IDC socket
+which makes this mod easily doable with a bit of solder. For details, refer to
+[the Adafruit page on driving matrices](https://learn.adafruit.com/adafruit-rgb-matrix-plus-real-time-clock-hat-for-raspberry-pi/driving-matrices).
+
+For older HATs, the only option is a little more advanced hack, so it's only really
+for people who are comfortable with this kind of thing.
 First, you have to figure out which is the input of the E-Line on your matrix
 (they seem to be either on Pin 4 or Pin 8 of the IDC connector).
 You need to disconnect that Pin from the ground plane (e.g. with an Exacto
@@ -785,7 +862,7 @@ with traces under the chip, this involves lifting a leg from the
 HCT245 (figure out a free bus driver from the schematic). If all of the
 above makes sense to you, you have the Ninja level to do it!
 
-It might be more convienent at this point to consider the [Active3 adapter](./adapter/active-3)
+It might be more convenient at this point to consider the [Active3 adapter](./adapter/active-3)
 that has that covered already.
 
 Running as root
@@ -820,17 +897,16 @@ about 1'000'000 write operations have to happen every second!
 We can't use hardware support for writing these as DMA is too slow,
 thus the constant CPU use on an RPi is roughly 30-40% of one core.
 Keep that in mind if you plan to run other things on this computer (This
-is less noticable on Raspberry Pi, Version 2 or 3 that has more cores).
+is less noticeable on Raspberry Pi, Version 2 or 3 that has more cores).
 
 Also, the output quality is susceptible to other heavy tasks running on that
-computer - there might be changes in the overall brigthness when this affects
-the referesh rate.
+computer - there might be changes in the overall brightness when this affects
+the refresh rate.
 
 If you have a loaded system and one of the newer Pis with 4 cores, you can
 reserve one core just for the refresh of the display. Add:
-
 ```
-isolcpus=3
+isolcpus=domain,managed_irq,3 nohz_full=3 rcu_nocbs=3 irqaffinity=0,1,2
 ```
 
 to the end of the line in `/boot/cmdline.txt` (pre-bookworm) or
@@ -838,6 +914,9 @@ to the end of the line in `/boot/cmdline.txt` (pre-bookworm) or
 line as the existing arguments -- no newline. This will use the last core
 only to refresh the display then, but it also means, that no other process can
 utilize it then. Still, I'd typically recommend it.
+
+This is just a partial fix, if you need better, please look at
+[installing an Optimized Kernel to fix most flickering issues](./optimized-kernel)
 
 Limitations
 -----------
@@ -856,10 +935,8 @@ limits the frame-rate. Raspberry Pi 2's and newer are generally faster.
 
 Even with everything in place, you might see faint brightness fluctuations
 in particular if there is something going on on the network or in a terminal
-on the Pi; this could probably be mitigated with some more real-time
-kernel for the Pi; maybe there are also hardware limitations (memory bus
-contention?). Anyway, if you have a realtime kernel configuration that you
-have optimized for this application, let me know.
+on the Pi; maybe there are also hardware limitations (memory bus
+contention?).
 
 To address the brightness fluctuations, you might experiment with the
 `FIXED_FRAME_MICROSECONDS` compile time option in [lib/Makefile](lib/Makefile)
@@ -871,6 +948,17 @@ I am always happy to see users successfully using the software for wonderful
 things, like this installation by Dirk in Scharbeutz, Germany:
 
 ![](./img/user-action-shot.jpg)
+
+A a few pictures from  https://github.com/marcmerlin :
+![thumb1024_102_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/2adbef86-96bf-4ff8-afb4-493aa9174de7)
+![thumb1024_137_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/d87ca86c-2804-4aee-b6f2-f4c88145908c)
+![prev1280_140_20240629_288x192_RGBPanels_Google](https://github.com/user-attachments/assets/2a621c91-4a84-4b4e-a9d2-092073cdee41)
+
+And probably the highest resolution build (384x256):
+![thumb1024_429_20200310_FastLED_RPIRGBPanel_GFX_384x256](https://github.com/user-attachments/assets/60114825-efc4-4fef-88b0-749b53fa17b8)
+![prev1280_551_20200310_FastLED_RPIRGBPanel_GFX_TableME_384x256](https://github.com/user-attachments/assets/94ea3c99-b751-4d12-8709-ef8b2bd197b9)
+
+https://www.youtube.com/watch?v=85PI2C6oBsQ
 
 [led-image-viewer]: ./utils#image-viewer
 [video-viewer]: ./utils#video-viewer
@@ -888,3 +976,12 @@ things, like this installation by Dirk in Scharbeutz, Germany:
 [Rust binding]: https://crates.io/crates/rpi-led-matrix
 [Nodejs/Typescript binding]: https://github.com/alexeden/rpi-led-matrix
 [headless]: https://www.raspberrypi.com/documentation/computers/configuration.html#setting-up-a-headless-raspberry-pi
+[how to build bigger displays]: https://marc.merlins.org/perso/arduino/post_2020-03-13_RGB-Panels_-from-192x80_-to-384x192_-to-384x256-and-maybe-not-much-beyond.html
+
+Maintenance
+-----------
+Henner as of 2025, isn't actively maintaining this project due to plenty of other projects that keep him busy :)
+A few people have stepped him to help:
+- https://github.com/marcmerlin is no expert on the codebase but is willing to merge safe looking and well tested patches
+- https://github.com/board707 has provided valuable technical expertise on new panel types and chips as well as ABC mode 5 code for newer panels
+- https://github.com/ty-porter and https://github.com/chrisgilldc have provided python binding expertise and help

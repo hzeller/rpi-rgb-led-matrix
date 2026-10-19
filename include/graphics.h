@@ -21,6 +21,7 @@ struct Color {
   uint8_t r;
   uint8_t g;
   uint8_t b;
+  void setColor(uint8_t rr, uint8_t gg, uint8_t bb) {r = rr; g = gg; b = bb;}
 };
 
 // Font loading bdf files. If this ever becomes more types, just make virtual
@@ -32,9 +33,13 @@ public:
   ~Font();
 
   bool LoadFont(const char *path);
+  bool ReadFont(const char *font_file_as_string);
 
   // Return height of font in pixels. Returns -1 if font has not been loaded.
   int height() const { return font_height_; }
+
+  // Return width of font in pixels. Returns -1 if font has not been loaded.
+  int width() const { return font_width_; }
 
   // Return baseline. Pixels from the topline to the baseline.
   int baseline() const { return base_line_; }
@@ -50,7 +55,7 @@ public:
   // If we don't have it in the font, draws the replacement character "�" if
   // available.
   // Returns how much we advance on the screen, which is the width of the
-  // character or 0 if we didn't draw any chracter.
+  // character or 0 if we didn't draw any character.
   int DrawGlyph(Canvas *c, int x, int y,
                 const Color &color, const Color *background_color,
                 uint32_t unicode_codepoint) const;
@@ -75,14 +80,17 @@ private:
 
   const Glyph *FindGlyph(uint32_t codepoint) const;
 
+  void parseLine(const char* buffer, Glyph* &current_glyph, uint32_t &codepoint, Glyph &tmp, int &row);
+
   int font_height_;
+  int font_width_;
   int base_line_;
   CodepointGlyphMap glyphs_;
 };
 
 // -- Some utility functions.
 
-// Utility function: set an image from the given buffer containting pixels.
+// Utility function: set an image from the given buffer containing pixels.
 //
 // Draw image of size "image_width" and "image_height" from pixel at
 // canvas-offset "canvas_offset_x", "canvas_offset_y". Image will be shown
@@ -132,6 +140,12 @@ int DrawText(Canvas *c, const Font &font, int x, int y, const Color &color,
 int VerticalDrawText(Canvas *c, const Font &font, int x, int y,
                      const Color &color, const Color *background_color,
                      const char *utf8_text, int kerning_offset = 0);
+
+// Figure out how many pixels long a bit of text will be when drawn
+// Useful for aligning text to the center or right
+// Return value will be the length of the text in pixels
+//     (ie. the width for normal horizontal text)
+int MeasureText(const Font &font, const char *utf8_text, int kerning_offset = 0);
 
 // Draw a circle centered at "x", "y", with a radius of "radius" and with "color"
 void DrawCircle(Canvas *c, int x, int y, int radius, const Color &color);

@@ -24,7 +24,7 @@ namespace rgb_matrix {
 // This abstraction also allows you to e.g. create delegating
 // implementations that do a particular transformation, e.g. re-map
 // pixels (as you might lay out the physical RGB matrix in a different way),
-// compose images (OR, XOR, transparecy), scale, rotate, anti-alias or
+// compose images (OR, XOR, transparency), scale, rotate, anti-alias or
 // translate coordinates in a funky way.
 //
 // It is a good idea to have your applications use the concept of

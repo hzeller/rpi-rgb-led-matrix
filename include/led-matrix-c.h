@@ -165,15 +165,16 @@ struct RGBLedMatrixOptions {
  * dropping privileges and becoming a daemon.
  */
 struct RGBLedRuntimeOptions {
-  int gpio_slowdown;    // 0 = no slowdown.          Flag: --led-slowdown-gpio
+  int gpio_slowdown;    // 0 = no slowdown.            Flag: --led-slowdown-gpio
+  int rp1_pio;          // 0 = default RP1 RIO. 1 = RP1 PIO. Flag: --led-rp1-pio
 
   // ----------
   // If the following options are set to disabled with -1, they are not
   // even offered via the command line flags.
   // ----------
 
-  // Thre are three possible values here
-  //   -1 : don't leave choise of becoming daemon to the command line parsing.
+  // There are three possible values here
+  //   -1 : don't leave choice of becoming daemon to the command line parsing.
   //        If set to -1, the --led-daemon option is not offered.
   //    0 : do not becoma a daemon, run in forgreound (default value)
   //    1 : become a daemon, run in background.
@@ -266,6 +267,8 @@ struct RGBLedMatrix *led_matrix_create_from_options_const_argv(
  *   options.rows = 32;            // You can set defaults if you want.
  *   options.chain_length = 1;
  *   rt_options.gpio_slowdown = 4;
+ *   // To force Pi 5-family PIO from the C API:
+ *   // rt_options.rp1_pio = 1;
  *   struct RGBLedMatrix *matrix = led_matrix_create_from_options_and_rt_options(&options, &rt_options);
  *   if (matrix == NULL) {
  *      return 1;
@@ -333,6 +336,9 @@ void led_canvas_clear(struct LedCanvas *canvas);
 /** Fill matrix with given color. */
 void led_canvas_fill(struct LedCanvas *canvas, uint8_t r, uint8_t g, uint8_t b);
 
+/** Fill subsection of matrix with given color. */
+void led_canvas_subfill(struct LedCanvas *canvas, int x, int y,
+                           int width, int height, uint8_t r, uint8_t g, uint8_t b);
 /*** API to provide double-buffering. ***/
 
 /**
@@ -359,7 +365,7 @@ struct LedCanvas *led_matrix_swap_on_vsync(struct RGBLedMatrix *matrix,
 uint8_t led_matrix_get_brightness(struct RGBLedMatrix *matrix);
 void led_matrix_set_brightness(struct RGBLedMatrix *matrix, uint8_t brightness);
 
-// Utility function: set an image from the given buffer containting pixels.
+// Utility function: set an image from the given buffer containing pixels.
 //
 // Draw image of size "image_width" and "image_height" from pixel at
 // canvas-offset "canvas_offset_x", "canvas_offset_y". Image will be shown
@@ -390,6 +396,9 @@ int baseline_font(struct LedFont *font);
 
 // Read the height of a font
 int height_font(struct LedFont *font);
+
+// Get the width of a specific codepoint in the given font
+int character_width_font(struct LedFont *font, uint32_t unicode_codepoint);
 
 // Creates an outline font based on an existing font instance
 struct LedFont *create_outline_font(struct LedFont *font);

@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <random>
 #include <algorithm>
 #include <map>
 #include <string>
@@ -271,7 +272,7 @@ int main(int argc, char *argv[]) {
   // there is a flag modifying them. This map keeps track of filenames
   // and their image params (also for unrelated elements of argv[], but doesn't
   // matter).
-  // We map the pointer instad of the string of the argv parameter so that
+  // We map the pointer instead of the string of the argv parameter so that
   // we can have two times the same image on the commandline list with different
   // parameters.
   std::map<const void *, struct ImageParams> filename_params;
@@ -503,7 +504,9 @@ int main(int argc, char *argv[]) {
 
   do {
     if (do_shuffle) {
-      std::random_shuffle(file_imgs.begin(), file_imgs.end());
+      std::random_device rd;
+      std::mt19937 g(rd());
+      std::shuffle(file_imgs.begin(), file_imgs.end(), g);
     }
     for (size_t i = 0; i < file_imgs.size() && !interrupt_received; ++i) {
       DisplayAnimation(file_imgs[i], matrix, offscreen_canvas);

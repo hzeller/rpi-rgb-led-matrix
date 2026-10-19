@@ -1,0 +1,4 @@
+# Run your display executables through this centralized bash script to reduce flicker from:
+#   1. Improved linux process priority
+#   2. Optimizing execution by pinning CPU to one thread (prevent thread-switching and kernel-interupts)
+chrt -f 90 taskset -c 3 "$@"

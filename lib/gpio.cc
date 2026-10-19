@@ -31,7 +31,7 @@
  * nanosleep() takes longer than requested because of OS jitter.
  * In about 99.9% of the cases, this is <= 25 microcseconds on
  * the Raspberry Pi (empirically determined with a Raspbian kernel), so
- * we substract this value whenever we do nanosleep(); the remaining time
+ * we subtract this value whenever we do nanosleep(); the remaining time
  * we then busy wait to get a good accurate result.
  *
  * You can measure the overhead using DEBUG_SLEEP_JITTER below.
@@ -203,6 +203,15 @@ gpio_bits_t GPIO::InitOutputs(gpio_bits_t outputs,
   return outputs;
 }
 
+void GPIO::ResetState() {
+  output_bits_ = 0;
+  input_bits_ = 0;
+  reserved_bits_ = 0;
+#ifdef ENABLE_WIDE_GPIO_COMPUTE_MODULE
+  uses_64_bit_ = false;
+#endif
+}
+
 gpio_bits_t GPIO::RequestInputs(gpio_bits_t inputs) {
   if (s_GPIO_registers == NULL) {
     fprintf(stderr, "Attempt to init inputs but not yet Init()-ialized.\n");
@@ -231,7 +240,8 @@ enum RaspberryPiModel {
   PI_MODEL_1,
   PI_MODEL_2,
   PI_MODEL_3,
-  PI_MODEL_4
+  PI_MODEL_4,
+  PI_MODEL_5
 };
 
 static int ReadBinaryFileToBuffer(uint8_t *buffer, size_t size,
@@ -321,7 +331,14 @@ static RaspberryPiModel DetermineRaspberryModel() {
   case 0x11: /* Pi 4 */
   case 0x13: /* Pi 400 */
   case 0x14: /* CM4 */
+  case 0x15: /* CM4S */
     return PI_MODEL_4;
+
+  case 0x17: /* Pi 5 */
+  case 0x18: /* CM5 */
+  case 0x19: /* Pi 500 / 500+ */
+  case 0x1a: /* CM5 Lite */
+    return PI_MODEL_5;
 
   default:  /* a bunch of versions representing Pi 3 */
     return PI_MODEL_3;
@@ -344,6 +361,11 @@ static uint32_t *mmap_bcm_register(off_t register_offset) {
   case PI_MODEL_2: base = BCM2709_PERI_BASE; break;
   case PI_MODEL_3: base = BCM2709_PERI_BASE; break;
   case PI_MODEL_4: base = BCM2711_PERI_BASE; break;
+  case PI_MODEL_5:
+    fprintf(stderr,
+            "Pi 5-family boards use the RP1 backends instead of the legacy "
+            "BCM GPIO mapping.\n");
+    return NULL;
   }
 
   int mem_fd;
@@ -363,7 +385,7 @@ static uint32_t *mmap_bcm_register(off_t register_offset) {
   }
 
   uint32_t *result =
-    (uint32_t*) mmap(NULL,                  // Any adddress in our space will do
+    (uint32_t*) mmap(NULL,                  // Any address in our space will do
                      REGISTER_BLOCK_SIZE,   // Map length
                      PROT_READ|PROT_WRITE,  // Enable r/w on GPIO registers.
                      MAP_SHARED,
@@ -382,7 +404,7 @@ static uint32_t *mmap_bcm_register(off_t register_offset) {
 }
 
 static bool mmap_all_bcm_registers_once() {
-  if (s_GPIO_registers != NULL) return true;  // alrady done.
+  if (s_GPIO_registers != NULL) return true;  // already done.
 
   // The common GPIO registers.
   s_GPIO_registers = mmap_bcm_register(GPIO_REGISTER_OFFSET);
@@ -427,6 +449,10 @@ bool GPIO::Init(int slowdown) {
 
 bool GPIO::IsPi4() {
   return GetPiModel() == PI_MODEL_4;
+}
+
+bool GPIO::IsPi5Family() {
+  return GetPiModel() == PI_MODEL_5;
 }
 
 /*
@@ -487,7 +513,7 @@ static void (*busy_wait_impl)(long) = busy_wait_nanos_rpi_3;
 static void WriteTo(const char *filename, const char *str) {
   const int fd = open(filename, O_WRONLY);
   if (fd < 0) return;
-  (void) write(fd, str, strlen(str));  // Best effort. Ignore return value.
+  if (write(fd, str, strlen(str))) {}  // Best effort. Ignore return value.
   close(fd);
 }
 
@@ -514,6 +540,7 @@ bool Timers::Init() {
   case PI_MODEL_2: busy_wait_impl = busy_wait_nanos_rpi_2; break;
   case PI_MODEL_3: busy_wait_impl = busy_wait_nanos_rpi_3; break;
   case PI_MODEL_4: busy_wait_impl = busy_wait_nanos_rpi_4; break;
+  case PI_MODEL_5: busy_wait_impl = busy_wait_nanos_rpi_4; break;
   }
 
   DisableRealtimeThrottling();
@@ -539,6 +566,7 @@ static uint32_t JitterAllowanceMicroseconds() {
   case PI_MODEL_2: case PI_MODEL_3:
     return EMPIRICAL_NANOSLEEP_OVERHEAD_US + 35;  // 99.999%-ile
   case PI_MODEL_4:
+  case PI_MODEL_5:
     return EMPIRICAL_NANOSLEEP_OVERHEAD_US + 10;  // this one is fast.
   }
   return EMPIRICAL_NANOSLEEP_OVERHEAD_US;
@@ -551,7 +579,7 @@ void Timers::sleep_nanos(long nanos) {
   // a chance to do something else.
 
   // However, these timings have a lot of jitter, so if we have the 1Mhz timer
-  // available, we use that to accurately mesure time spent and do the
+  // available, we use that to accurately measure time spent and do the
   // remaining time with busy wait. If we don't have the timer available
   // (not running as root), we just use nanosleep() for larger values.
 

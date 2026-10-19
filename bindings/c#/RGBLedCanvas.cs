@@ -3,7 +3,7 @@ namespace RPiRgbLEDMatrix;
 /// <summary>
 /// Represents a canvas whose pixels can be manipulated.
 /// </summary>
-public class RGBLedCanvas
+public class RGBLedCanvas 
 {
     // This is a wrapper for canvas no need to implement IDisposable here 
     // because RGBLedMatrix has ownership and takes care of disposing canvases
@@ -28,6 +28,11 @@ public class RGBLedCanvas
     /// The height of the canvas in pixels.
     /// </summary>
     public int Height { get; private set; }
+
+    /// <summary>
+    /// Gets the native handle for interop.
+    /// </summary>
+    public IntPtr Handle => _canvas;
 
     /// <summary>
     /// Sets the color of a specific pixel.
@@ -57,6 +62,13 @@ public class RGBLedCanvas
     /// </summary>
     /// <param name="color">New canvas color.</param>
     public void Fill(Color color) => led_canvas_fill(_canvas, color.R, color.G, color.B);
+
+    /// <summary>
+    /// Sets the color of the given section of the canvas.
+    /// </summary>
+    /// <param name="color">New canvas color.</param>
+    public void SubFill(int x, int y, int width, int height, Color color) =>
+        led_canvas_subfill(_canvas, x, y, width, height, color.R, color.G, color.B);
 
     /// <summary>
     /// Cleans the entire canvas.
@@ -95,6 +107,8 @@ public class RGBLedCanvas
     /// <param name="spacing">Additional spacing between characters.</param>
     /// <param name="vertical">Whether to draw the text vertically.</param>
     /// <returns>How many pixels was advanced on the screen.</returns>
-    public int DrawText(RGBLedFont font, int x, int y, Color color, string text, int spacing = 0, bool vertical = false) =>
-        font.DrawText(_canvas, x, y, color, text, spacing, vertical);
+    public int DrawText(RGBLedFont font, int x, int y, Color color, string text, int spacing = 0, bool vertical = false)
+    {
+        return font.DrawText(_canvas, x, y, color, text, spacing, vertical);
+    }
 }

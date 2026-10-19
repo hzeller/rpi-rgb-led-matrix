@@ -17,10 +17,10 @@ internal struct InternalRGBLedMatrixOptions
     public int scan_mode;
     public int row_address_type;
     public int multiplexing;
-    public IntPtr led_rgb_sequence;
+    public byte disable_hardware_pulsing;
     public IntPtr pixel_mapper_config;
     public IntPtr panel_type;
-    public byte disable_hardware_pulsing;
+    public IntPtr led_rgb_sequence;
     public byte show_refresh_rate;
     public byte inverse_colors;
     public int limit_refresh_rate_hz;

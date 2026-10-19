@@ -153,14 +153,18 @@ public:
 
 class ZStripeMultiplexMapper : public MultiplexMapperBase {
 public:
-  ZStripeMultiplexMapper(const char *name, int even_vblock_offset, int odd_vblock_offset)
+  // tile_height is 4 for the common 1:4 scan panels; 1:5 scan panels
+  // (e.g. 40x20 outdoor modules) use 5.
+  ZStripeMultiplexMapper(const char *name, int even_vblock_offset, int odd_vblock_offset,
+                         int tile_height = 4)
   : MultiplexMapperBase(name, 2),
     even_vblock_offset_(even_vblock_offset),
-    odd_vblock_offset_(odd_vblock_offset) {}
+    odd_vblock_offset_(odd_vblock_offset),
+    tile_height_(tile_height) {}
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     static const int tile_width = 8;
-    static const int tile_height = 4;
+    const int tile_height = tile_height_;
 
     const int vert_block_is_odd = ((y / tile_height) % 2);
 
@@ -174,6 +178,7 @@ public:
 private:
   const int even_vblock_offset_;
   const int odd_vblock_offset_;
+  const int tile_height_;
 };
 
 class CoremanMapper : public MultiplexMapperBase {
@@ -201,7 +206,7 @@ public:
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     // Now we have a 128x4 matrix
-    int offset = ((y%4)/2) == 0 ? -1 : 1;// Add o substract
+    int offset = ((y%4)/2) == 0 ? -1 : 1;// Add or substract
     int deltaOffset = offset < 0 ? 7:8;
     int deltaColumn = ((y%8)/4)== 0 ? 64 : 0;
 
@@ -293,15 +298,17 @@ public:
 
 
 /*
- * Vairous P10 1R1G1B Outdoor implementations for 16x16 modules with separate
+ * Various P10 1R1G1B Outdoor implementations for 16x16 modules with separate
  * RGB LEDs, e.g.:
  * https://www.ledcontrollercard.com/english/p10-outdoor-rgb-led-module-160x160mm-dip.html
  *
  */
 class P10Outdoor1R1G1BMultiplexBase : public MultiplexMapperBase {
 public:
-  P10Outdoor1R1G1BMultiplexBase(const char *name)
-    : MultiplexMapperBase(name, 2) {}
+  // tile_height is 4 for the common 16x16 1:4 scan modules; 1:5 scan
+  // modules (e.g. 40x20) use 5.
+  P10Outdoor1R1G1BMultiplexBase(const char *name, int tile_height = 4)
+    : MultiplexMapperBase(name, 2), tile_height_(tile_height) {}
 
   void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
     const int vblock_is_odd = (y / tile_height_) % 2;
@@ -320,7 +327,7 @@ protected:
                         int even_vblock_shift, int odd_vblock_shift) const = 0;
 
   static const int tile_width_ = 8;
-  static const int tile_height_ = 4;
+  const int tile_height_;
   static const int even_vblock_offset_ = 0;
   static const int odd_vblock_offset_ = 8;
 };
@@ -342,8 +349,9 @@ protected:
 
 class P10Outdoor1R1G1BMultiplexMapper2 : public P10Outdoor1R1G1BMultiplexBase {
 public:
-  P10Outdoor1R1G1BMultiplexMapper2()
-    : P10Outdoor1R1G1BMultiplexBase("P10Outdoor1R1G1-2") {}
+  P10Outdoor1R1G1BMultiplexMapper2(const char *name = "P10Outdoor1R1G1-2",
+                                   int tile_height = 4)
+    : P10Outdoor1R1G1BMultiplexBase(name, tile_height) {}
 
 protected:
   void MapPanel(int x, int y, int *matrix_x, int *matrix_y,
@@ -493,6 +501,61 @@ public:
   }
 };
 
+class DoubleZMultiplexMapper : public MultiplexMapperBase {
+  public:
+    DoubleZMultiplexMapper() : MultiplexMapperBase("DoubleZ", 2) {}
+       
+    void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+      const int quarter_rows  = panel_rows_ / 4;
+      const int quarter_cols  = panel_cols_ / 4;
+  
+      const int y_quarter = y / quarter_rows;   // 0..3
+      const int x_quarter = x / quarter_cols;   // 0..3
+  
+      const int offset_y  = y % quarter_rows;
+      int offset_x        = x % quarter_cols;
+  
+      const bool flip_quarter = (y_quarter == 1 || y_quarter == 3);
+      if (flip_quarter)
+          offset_x = quarter_cols - 1 - offset_x;
+  
+      const bool is_top_stripe = !((y % (panel_rows_ / 2)) < quarter_rows);
+  
+      // Compute matrix_x: mirrors within half panels depending on stripe position
+      const int base_x = 2 * x_quarter * quarter_cols;
+      const int top_offset = is_top_stripe
+          ? (quarter_cols - 1 - offset_x)
+          : (quarter_cols + offset_x);
+  
+      *matrix_x = base_x + top_offset;
+      *matrix_y = (y_quarter / 2) * quarter_rows + offset_y;
+    }    
+  };
+
+/*
+ * P4 Outdoor panel 80x40 pixels
+ * https://nl.aliexpress.com/item/1005003999341251.html?spm=a2g0o.order_list.order_list_main.11.408679d2q5LwTb&gatewayAdapt=glo2nld
+ */
+class P4Outdoor80x40Mapper : public MultiplexMapperBase {
+public:
+  P4Outdoor80x40Mapper() : MultiplexMapperBase("P4Outdoor80x40Mapper", 2) {}
+
+  void MapSinglePanel(int x, int y, int *matrix_x, int *matrix_y) const {
+
+    const int tile_width_ = 8;
+    const int tile_height_ = 10;
+    const int vblock_is_odd = (y / tile_height_) % 2;
+    const int hblock = x / tile_width_;
+
+    if (vblock_is_odd) {
+      *matrix_x = (x % tile_width_) + (2 * tile_width_ * hblock) + tile_width_;
+    } else {
+      // even tiles have reverse x-order
+      *matrix_x = -((x % tile_width_) - tile_width_ + 1) + (2 * tile_width_ * hblock);
+    }
+    *matrix_y = (y % tile_height_) + tile_height_ * (y / (tile_height_ * 2));
+  }
+};
 
 /*
  * Here is where the registration happens.
@@ -523,6 +586,12 @@ static MuxMapperList *CreateMultiplexMapperList() {
   result->push_back(new P10Outdoor32x16HalfScanMapper());
   result->push_back(new P10Outdoor32x16QuarterScanMapper());
   result->push_back(new P3Outdoor64x64MultiplexMapper());
+  result->push_back(new DoubleZMultiplexMapper());
+  result->push_back(new P4Outdoor80x40Mapper());
+  // 40x20 P10 outdoor modules with 1:5 scan: same wiring as ZnMirrorZStripe
+  // and P10Outdoor1R1G1-2 respectively, but with 5 row high tiles.
+  result->push_back(new ZStripeMultiplexMapper("ZnMirrorZStripe40x20", 4, 4, 5));
+  result->push_back(new P10Outdoor1R1G1BMultiplexMapper2("P10Outdoor1R1G1-2-40x20", 5));
   return result;
 }
 

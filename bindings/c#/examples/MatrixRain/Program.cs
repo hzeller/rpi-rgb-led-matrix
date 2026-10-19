@@ -4,7 +4,17 @@ const int MaxHeight = 16;
 const int ColorStep = 15;
 const int FrameStep = 1;
 
-using var matrix = new RGBLedMatrix(new RGBLedMatrixOptions { ChainLength = 2 });
+// Set this to apropriate settings for your matrix
+var options = new RGBLedMatrixOptions()
+{
+    Brightness= 80,
+    Cols= 64,
+    Rows= 64,
+    GpioSlowdown= 4
+};
+
+using var matrix = new RGBLedMatrix(options);
+
 var canvas = matrix.CreateOffscreenCanvas();
 
 var rnd = new Random();

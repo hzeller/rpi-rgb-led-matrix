@@ -18,6 +18,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <vector>
+
 #include "hardware-mapping.h"
 #include "../include/graphics.h"
 
@@ -41,7 +43,6 @@ struct PixelDesignator {
 class PixelDesignatorMap {
 public:
   PixelDesignatorMap(int width, int height, const PixelDesignator &fill_bits);
-  ~PixelDesignatorMap();
 
   // Get a writable version of the PixelDesignator. Outside Framebuffer used
   // by the RGBMatrix to re-assign mappings to new PixelDesignatorMappers.
@@ -57,7 +58,7 @@ private:
   const int width_;
   const int height_;
   const PixelDesignator fill_bits_;  // Precalculated for fill.
-  PixelDesignator *const buffer_;
+  std::vector<PixelDesignator> buffer_;
 };
 
 // Internal representation of the frame-buffer that as well can
@@ -75,8 +76,8 @@ public:
   // TODO(hzeller): make the default 15 bit or so, but slide the use of
   //  timing to lower bits if fewer bits requested to not affect the overall
   //  refresh in that case.
-  //  This needs to be balanced to not create too agressive timing however.
-  //  To be explored in a separete commit.
+  //  This needs to be balanced to not create too aggressive timing however.
+  //  To be explored in a separate commit.
   //
   // For now, if someone needs very low level of light, change this to
   // say 13 and recompile. Run with --led-pwm-bits=13. Also, consider
@@ -98,6 +99,8 @@ public:
                        int dither_bits,
                        int row_address_type);
   static void InitializePanels(GPIO *io, const char *panel_type, int columns);
+  // Reset internal static globals so InitGPIO() can re-run with new params.
+  static void ResetGlobals();
 
   // Set PWM bits used for output. Default is 11, but if you only deal with
   // simple comic-colors, 1 might be sufficient. Lower require less CPU.
@@ -130,6 +133,18 @@ public:
   void SetPixels(int x, int y, int width, int height, Color *colors);
   void Clear();
   void Fill(uint8_t red, uint8_t green, uint8_t blue);
+  void SubFill(int x, int y, int width, int height, uint8_t red, uint8_t green, uint8_t blue);
+
+  const struct HardwareMapping &hardware_mapping() const {
+    return *hardware_mapping_;
+  }
+  int columns() const { return columns_; }
+  int scan_mode() const { return scan_mode_; }
+  int double_rows() const { return double_rows_; }
+  const gpio_bits_t *RowDataAt(int double_row, int bit) const {
+    return &bitplane_buffer_[double_row * (columns_ * kBitPlanes)
+                             + bit * columns_];
+  }
 
 private:
   static const struct HardwareMapping *hardware_mapping_;
