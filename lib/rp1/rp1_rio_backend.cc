@@ -1,4 +1,9 @@
 // -*- mode: c++; c-basic-offset: 2; indent-tabs-mode: nil; -*-
+// RP1 physical addresses exceed 32 bits, including on 32-bit userspace.
+#ifndef _LARGEFILE64_SOURCE
+#define _LARGEFILE64_SOURCE
+#endif
+
 #include "rp1_rio_backend.h"
 
 #include <algorithm>
@@ -39,7 +44,7 @@ static const uint32_t kRioOutputPinCount = 28;
 static const uint32_t kGpioFunctionSysRio = 5;
 static const uint32_t kPadFastDrive = 0x15;
 static const uint32_t kPadSlowDrive = 0x01;
-static const off_t kPi5PeripheralBase = 0x1f000d0000ll;
+static const off64_t kPi5PeripheralBase = 0x1f000d0000ll;
 static const size_t kMapSizeBytes = 0x40000;
 static const uint32_t kGpioOffsetWords = 0x00000 / 4;
 static const uint32_t kRioOffsetWords = 0x10000 / 4;
@@ -60,7 +65,7 @@ struct RioRegs {
 
 struct RioMapCandidate {
   const char *path;
-  off_t offset;
+  off64_t offset;
 };
 
 struct Rp1RioState {
@@ -444,7 +449,7 @@ static volatile uint32_t *TryMmapGpio(const RioMapCandidate &candidate) {
   const int fd = open(candidate.path, O_RDWR | O_SYNC);
   if (fd < 0) return NULL;
 
-  void *map = mmap(NULL, kMapSizeBytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
+  void *map = mmap64(NULL, kMapSizeBytes, PROT_READ | PROT_WRITE, MAP_SHARED, fd,
                    candidate.offset);
   close(fd);
   if (map == MAP_FAILED) return NULL;

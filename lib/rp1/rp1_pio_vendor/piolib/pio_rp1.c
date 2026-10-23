@@ -98,7 +98,8 @@ static inline void check_sm_mask(__unused uint mask)
     valid_params_if(PIO, mask < (1u << RP1_PIO_SM_COUNT));
 }
 
-static pio_sm_config rp1_pio_get_default_sm_config(PIO)
+/* Name unused PIO parameters so these definitions also compile with older C compilers. */
+static pio_sm_config rp1_pio_get_default_sm_config(__unused PIO pio)
 {
     pio_sm_config c = { { 0 } };
     sm_config_set_clkdiv_int_frac(&c, 1, 0);
@@ -108,132 +109,132 @@ static pio_sm_config rp1_pio_get_default_sm_config(PIO)
     return c;
 }
 
-static uint rp1_pio_encode_delay(PIO, uint cycles)
+static uint rp1_pio_encode_delay(__unused PIO pio, uint cycles)
 {
     return _pio_encode_delay(cycles);
 }
 
-static uint rp1_pio_encode_sideset(PIO, uint sideset_bit_count, uint value)
+static uint rp1_pio_encode_sideset(__unused PIO pio, uint sideset_bit_count, uint value)
 {
     return _pio_encode_sideset(sideset_bit_count, value);
 }
 
-static uint rp1_pio_encode_sideset_opt(PIO, uint sideset_bit_count, uint value)
+static uint rp1_pio_encode_sideset_opt(__unused PIO pio, uint sideset_bit_count, uint value)
 {
     return _pio_encode_sideset_opt(sideset_bit_count, value);
 }
 
-static uint rp1_pio_encode_jmp(PIO, uint addr)
+static uint rp1_pio_encode_jmp(__unused PIO pio, uint addr)
 {
     return _pio_encode_jmp(addr);
 }
 
-static uint rp1_pio_encode_jmp_not_x(PIO, uint addr)
+static uint rp1_pio_encode_jmp_not_x(__unused PIO pio, uint addr)
 {
     return _pio_encode_jmp_not_x(addr);
 }
 
-static uint rp1_pio_encode_jmp_x_dec(PIO, uint addr)
+static uint rp1_pio_encode_jmp_x_dec(__unused PIO pio, uint addr)
 {
     return _pio_encode_jmp_x_dec(addr);
 }
 
-static uint rp1_pio_encode_jmp_not_y(PIO, uint addr)
+static uint rp1_pio_encode_jmp_not_y(__unused PIO pio, uint addr)
 {
     return _pio_encode_jmp_not_y(addr);
 }
 
-static uint rp1_pio_encode_jmp_y_dec(PIO, uint addr)
+static uint rp1_pio_encode_jmp_y_dec(__unused PIO pio, uint addr)
 {
     return _pio_encode_jmp_y_dec(addr);
 }
 
-static uint rp1_pio_encode_jmp_x_ne_y(PIO, uint addr)
+static uint rp1_pio_encode_jmp_x_ne_y(__unused PIO pio, uint addr)
 {
     return _pio_encode_jmp_x_ne_y(addr);
 }
 
-static uint rp1_pio_encode_jmp_pin(PIO, uint addr)
+static uint rp1_pio_encode_jmp_pin(__unused PIO pio, uint addr)
 {
     return _pio_encode_jmp_pin(addr);
 }
 
-static uint rp1_pio_encode_jmp_not_osre(PIO, uint addr)
+static uint rp1_pio_encode_jmp_not_osre(__unused PIO pio, uint addr)
 {
     return _pio_encode_jmp_not_osre(addr);
 }
 
-static uint rp1_pio_encode_wait_gpio(PIO, bool polarity, uint gpio)
+static uint rp1_pio_encode_wait_gpio(__unused PIO pio, bool polarity, uint gpio)
 {
     return _pio_encode_wait_gpio(polarity, gpio);
 }
 
-static uint rp1_pio_encode_wait_pin(PIO, bool polarity, uint pin)
+static uint rp1_pio_encode_wait_pin(__unused PIO pio, bool polarity, uint pin)
 {
     return _pio_encode_wait_pin(polarity, pin);
 }
 
-static uint rp1_pio_encode_wait_irq(PIO, bool polarity, bool relative, uint irq)
+static uint rp1_pio_encode_wait_irq(__unused PIO pio, bool polarity, bool relative, uint irq)
 {
     return _pio_encode_wait_irq(polarity, relative, irq);
 }
 
-static uint rp1_pio_encode_in(PIO, enum pio_src_dest src, uint count)
+static uint rp1_pio_encode_in(__unused PIO pio, enum pio_src_dest src, uint count)
 {
     return _pio_encode_in(src, count);
 }
 
-static uint rp1_pio_encode_out(PIO, enum pio_src_dest dest, uint count)
+static uint rp1_pio_encode_out(__unused PIO pio, enum pio_src_dest dest, uint count)
 {
     return _pio_encode_out(dest, count);
 }
 
-static uint rp1_pio_encode_push(PIO, bool if_full, bool block)
+static uint rp1_pio_encode_push(__unused PIO pio, bool if_full, bool block)
 {
     return _pio_encode_push(if_full, block);
 }
 
-static uint rp1_pio_encode_pull(PIO, bool if_empty, bool block)
+static uint rp1_pio_encode_pull(__unused PIO pio, bool if_empty, bool block)
 {
     return _pio_encode_pull(if_empty, block);
 }
 
-static uint rp1_pio_encode_mov(PIO, enum pio_src_dest dest, enum pio_src_dest src)
+static uint rp1_pio_encode_mov(__unused PIO pio, enum pio_src_dest dest, enum pio_src_dest src)
 {
     return _pio_encode_mov(dest, src);
 }
 
-static uint rp1_pio_encode_mov_not(PIO, enum pio_src_dest dest, enum pio_src_dest src)
+static uint rp1_pio_encode_mov_not(__unused PIO pio, enum pio_src_dest dest, enum pio_src_dest src)
 {
     return _pio_encode_mov_not(dest, src);
 }
 
-static uint rp1_pio_encode_mov_reverse(PIO, enum pio_src_dest dest, enum pio_src_dest src)
+static uint rp1_pio_encode_mov_reverse(__unused PIO pio, enum pio_src_dest dest, enum pio_src_dest src)
 {
     return _pio_encode_mov_reverse(dest, src);
 }
 
-static uint rp1_pio_encode_irq_set(PIO, bool relative, uint irq)
+static uint rp1_pio_encode_irq_set(__unused PIO pio, bool relative, uint irq)
 {
     return _pio_encode_irq_set(relative, irq);
 }
 
-static uint rp1_pio_encode_irq_wait(PIO, bool relative, uint irq)
+static uint rp1_pio_encode_irq_wait(__unused PIO pio, bool relative, uint irq)
 {
     return _pio_encode_irq_wait(relative, irq);
 }
 
-static uint rp1_pio_encode_irq_clear(PIO, bool relative, uint irq)
+static uint rp1_pio_encode_irq_clear(__unused PIO pio, bool relative, uint irq)
 {
     return _pio_encode_irq_clear(relative, irq);
 }
 
-static uint rp1_pio_encode_set(PIO, enum pio_src_dest dest, uint value)
+static uint rp1_pio_encode_set(__unused PIO pio, enum pio_src_dest dest, uint value)
 {
     return _pio_encode_set(dest, value);
 }
 
-static uint rp1_pio_encode_nop(PIO)
+static uint rp1_pio_encode_nop(__unused PIO pio)
 {
     return _pio_encode_nop();
 }
@@ -599,7 +600,7 @@ static void rp1_pio_sm_drain_tx_fifo(PIO pio, uint sm)
     (void)rp1_ioctl(pio, PIO_IOC_SM_DRAIN_TX, &args);
 }
 
-static void rp1_smc_set_out_pins(PIO, pio_sm_config *config, uint out_base, uint out_count)
+static void rp1_smc_set_out_pins(__unused PIO pio, pio_sm_config *config, uint out_base, uint out_count)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, out_base < RP1_PIO_GPIO_COUNT);
@@ -609,7 +610,7 @@ static void rp1_smc_set_out_pins(PIO, pio_sm_config *config, uint out_base, uint
                  (out_count << PROC_PIO_SM0_PINCTRL_OUT_COUNT_LSB);
 }
 
-static void rp1_smc_set_set_pins(PIO, pio_sm_config *config, uint set_base, uint set_count)
+static void rp1_smc_set_set_pins(__unused PIO pio, pio_sm_config *config, uint set_base, uint set_count)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, set_base < RP1_PIO_GPIO_COUNT);
@@ -620,7 +621,7 @@ static void rp1_smc_set_set_pins(PIO, pio_sm_config *config, uint set_base, uint
 }
 
 
-static void rp1_smc_set_in_pins(PIO, pio_sm_config *config, uint in_base)
+static void rp1_smc_set_in_pins(__unused PIO pio, pio_sm_config *config, uint in_base)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, in_base < RP1_PIO_GPIO_COUNT);
@@ -628,7 +629,7 @@ static void rp1_smc_set_in_pins(PIO, pio_sm_config *config, uint in_base)
                  (in_base << PROC_PIO_SM0_PINCTRL_IN_BASE_LSB);
 }
 
-static void rp1_smc_set_sideset_pins(PIO, pio_sm_config *config, uint sideset_base)
+static void rp1_smc_set_sideset_pins(__unused PIO pio, pio_sm_config *config, uint sideset_base)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, sideset_base < RP1_PIO_GPIO_COUNT);
@@ -636,7 +637,7 @@ static void rp1_smc_set_sideset_pins(PIO, pio_sm_config *config, uint sideset_ba
                  (sideset_base << PROC_PIO_SM0_PINCTRL_SIDESET_BASE_LSB);
 }
 
-static void rp1_smc_set_sideset(PIO, pio_sm_config *config, uint bit_count, bool optional, bool pindirs)
+static void rp1_smc_set_sideset(__unused PIO pio, pio_sm_config *config, uint bit_count, bool optional, bool pindirs)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, bit_count <= 5);
@@ -649,7 +650,7 @@ static void rp1_smc_set_sideset(PIO, pio_sm_config *config, uint bit_count, bool
                   (bool_to_bit(pindirs) << PROC_PIO_SM0_EXECCTRL_SIDE_PINDIR_LSB);
 }
 
-static void rp1_smc_set_clkdiv_int_frac(PIO, pio_sm_config *config, uint16_t div_int, uint8_t div_frac)
+static void rp1_smc_set_clkdiv_int_frac(__unused PIO pio, pio_sm_config *config, uint16_t div_int, uint8_t div_frac)
 {
     smc_to_rp1(config, c);
     invalid_params_if(PIO, div_int == 0 && div_frac != 0);
@@ -658,7 +659,7 @@ static void rp1_smc_set_clkdiv_int_frac(PIO, pio_sm_config *config, uint16_t div
             (((uint)div_int) << PROC_PIO_SM0_CLKDIV_INT_LSB);
 }
 
-static void rp1_smc_set_clkdiv(PIO, pio_sm_config *config, float div)
+static void rp1_smc_set_clkdiv(__unused PIO pio, pio_sm_config *config, float div)
 {
     uint16_t div_int;
     uint8_t div_frac;
@@ -666,7 +667,7 @@ static void rp1_smc_set_clkdiv(PIO, pio_sm_config *config, float div)
     sm_config_set_clkdiv_int_frac(config, div_int, div_frac);
 }
 
-static void rp1_smc_set_wrap(PIO, pio_sm_config *config, uint wrap_target, uint wrap)
+static void rp1_smc_set_wrap(__unused PIO pio, pio_sm_config *config, uint wrap_target, uint wrap)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, wrap < RP1_PIO_INSTRUCTION_COUNT);
@@ -676,7 +677,7 @@ static void rp1_smc_set_wrap(PIO, pio_sm_config *config, uint wrap_target, uint 
                   (wrap << PROC_PIO_SM0_EXECCTRL_WRAP_TOP_LSB);
 }
 
-static void rp1_smc_set_jmp_pin(PIO, pio_sm_config *config, uint pin)
+static void rp1_smc_set_jmp_pin(__unused PIO pio, pio_sm_config *config, uint pin)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, pin < RP1_PIO_GPIO_COUNT);
@@ -684,7 +685,7 @@ static void rp1_smc_set_jmp_pin(PIO, pio_sm_config *config, uint pin)
                   (pin << PROC_PIO_SM0_EXECCTRL_JMP_PIN_LSB);
 }
 
-static void rp1_smc_set_in_shift(PIO, pio_sm_config *config, bool shift_right, bool autopush, uint push_threshold)
+static void rp1_smc_set_in_shift(__unused PIO pio, pio_sm_config *config, bool shift_right, bool autopush, uint push_threshold)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, push_threshold <= 32);
@@ -697,7 +698,7 @@ static void rp1_smc_set_in_shift(PIO, pio_sm_config *config, bool shift_right, b
                    ((push_threshold & 0x1fu) << PROC_PIO_SM0_SHIFTCTRL_PUSH_THRESH_LSB);
 }
 
-static void rp1_smc_set_out_shift(PIO, pio_sm_config *config, bool shift_right, bool autopull, uint pull_threshold)
+static void rp1_smc_set_out_shift(__unused PIO pio, pio_sm_config *config, bool shift_right, bool autopull, uint pull_threshold)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, pull_threshold <= 32);
@@ -710,7 +711,7 @@ static void rp1_smc_set_out_shift(PIO, pio_sm_config *config, bool shift_right, 
                    ((pull_threshold & 0x1fu) << PROC_PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB);
 }
 
-static void rp1_smc_set_fifo_join(PIO, pio_sm_config *config, enum pio_fifo_join join)
+static void rp1_smc_set_fifo_join(__unused PIO pio, pio_sm_config *config, enum pio_fifo_join join)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, join == PIO_FIFO_JOIN_NONE || join == PIO_FIFO_JOIN_TX || join == PIO_FIFO_JOIN_RX);
@@ -718,7 +719,7 @@ static void rp1_smc_set_fifo_join(PIO, pio_sm_config *config, enum pio_fifo_join
                    (((uint)join) << PROC_PIO_SM0_SHIFTCTRL_FJOIN_TX_LSB);
 }
 
-static void rp1_smc_set_out_special(PIO, pio_sm_config *config, bool sticky, bool has_enable_pin, uint enable_pin_index)
+static void rp1_smc_set_out_special(__unused PIO pio, pio_sm_config *config, bool sticky, bool has_enable_pin, uint enable_pin_index)
 {
     smc_to_rp1(config, c);
     c->execctrl = (c->execctrl &
@@ -729,7 +730,7 @@ static void rp1_smc_set_out_special(PIO, pio_sm_config *config, bool sticky, boo
                   ((enable_pin_index << PROC_PIO_SM0_EXECCTRL_OUT_EN_SEL_LSB) & PROC_PIO_SM0_EXECCTRL_OUT_EN_SEL_BITS);
 }
 
-static void rp1_smc_set_mov_status(PIO, pio_sm_config *config, enum pio_mov_status_type status_sel, uint status_n)
+static void rp1_smc_set_mov_status(__unused PIO pio, pio_sm_config *config, enum pio_mov_status_type status_sel, uint status_n)
 {
     smc_to_rp1(config, c);
     valid_params_if(PIO, status_sel == STATUS_TX_LESSTHAN || status_sel == STATUS_RX_LESSTHAN);
@@ -739,7 +740,7 @@ static void rp1_smc_set_mov_status(PIO, pio_sm_config *config, enum pio_mov_stat
                   | ((status_n << PROC_PIO_SM0_EXECCTRL_STATUS_N_LSB) & PROC_PIO_SM0_EXECCTRL_STATUS_N_BITS);
 }
 
-static uint32_t rp1_clock_get_hz(PIO, enum clock_index clk_index)
+static uint32_t rp1_clock_get_hz(__unused PIO pio, enum clock_index clk_index)
 {
     const uint32_t MHZ = 1000000;
 
