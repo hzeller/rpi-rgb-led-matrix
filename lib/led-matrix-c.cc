@@ -21,6 +21,7 @@
 
 #include "led-matrix.h"
 #include "graphics.h"
+#include "typesetting.h"
 
 // Make sure C++ is in sync with C
 static_assert(sizeof(rgb_matrix::RGBMatrix::Options) == sizeof(RGBLedMatrixOptions), "C and C++ out of sync");
@@ -312,6 +313,27 @@ int vertical_draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
                        const char *utf8_text, int kerning_offset = 0) {
   const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
   return VerticalDrawText(to_canvas(c), *to_font(font), x, y, col, NULL, utf8_text, kerning_offset);
+}
+
+// Draw text, a standard NUL-terminated C-string encoded in UTF-8, with optimal
+// line wrapping using an algorithm that minimizes raggedness and gaps at the
+// ends of lines.
+// 
+// Draws the text with the given "font" at "x","y" (upper left corner) with
+// color "r", "g", "b".
+// 
+// "kerning_offset" allows additional horizontal spacing between characters
+// (can be negative).
+// "leading" allows additional vertical spacing between lines (can be negative).
+//
+// Returns the height of the drawn paragraph in pixels
+// (line height times number of lines).
+int draw_text_wrapped(struct LedCanvas *c, struct LedFont *font, int x, int y,
+                      int line_width, uint8_t r, uint8_t g, uint8_t b,
+                      const char *utf8_text, int kerning_offset = 0, int leading = 0) {
+  const rgb_matrix::Color col = rgb_matrix::Color(r, g, b);
+  return DrawTextWrapped(to_canvas(c), *to_font(font), x, y,
+                         line_width, col, NULL, utf8_text, kerning_offset, leading);
 }
 
 // Draw a circle centered at "x", "y", with a radius of "radius" and with "color"

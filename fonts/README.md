@@ -9,6 +9,8 @@ from the utils/ directory.
 
 Tom-Thumb.bdf is included in this directory under [MIT license](http://vt100.tarunz.org/LICENSE). Tom-thumb.bdf was created by [@robey](http://twitter.com/robey) and originally published at https://robey.lag.net/2010/01/23/tiny-monospace-font.html
 
+Grand9K Pixel.bdf is included in this directory under Creative Commons (CC-BY-SA 3.0) license. The Grand9K Pixel font was created by [Jayvee D. Enaguas](https://tilde.club/~harvettfox96/). The ttf version was published at https://www.dafont.com/grand9k-pixel.font and converted with the [otf2bdf] conversion tool.
+
 The texguire-27.bdf font was created using the [otf2bdf] tool from the TeX Gyre font.
 ```
 otf2bdf -v -o texgyre-27.bdf -r 72 -p 27 texgyreadventor-regular.otf
