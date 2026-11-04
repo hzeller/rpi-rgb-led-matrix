@@ -60,7 +60,9 @@ struct Rp1PioState {
         gpio_slowdown(1),
         output_enable_bit(0),
         latch_bit(0),
-        used_mask(0) {
+        used_mask(0),
+        program_offset(0),
+        frame_seconds(0) {
   }
 
   bool active;
@@ -75,6 +77,10 @@ struct Rp1PioState {
   uint32_t output_enable_bit;
   uint32_t latch_bit;
   uint32_t used_mask;
+  uint program_offset;
+  // About how long the last frame takes the state machine to clock out,
+  // so teardown knows how long queued words can take to drain.
+  double frame_seconds;
   std::vector<int> bitplane_active_words;
   std::vector<uint32_t> transfer_buffer;
 };
@@ -423,6 +429,13 @@ static void PrepareBitplaneActiveWords(int pwm_lsb_nanoseconds, int dither_bits,
   }
 }
 
+static const struct pio_program kProgram = {
+    protomatter,
+    32,
+    -1,
+    0,
+};
+
 static void ConfigureStateMachineOrDie(const HardwareMapping &mapping) {
   Rp1PioState &state = s_pio_state;
   // One state machine drives the whole display. All GPIO samples are expanded
@@ -448,17 +461,12 @@ static void ConfigureStateMachineOrDie(const HardwareMapping &mapping) {
     abort();
   }
 
-  static const struct pio_program kProgram = {
-      protomatter,
-      32,
-      -1,
-      0,
-  };
   const uint offset = pio_add_program(state.pio, &kProgram);
   if (offset == PIO_ORIGIN_INVALID) {
     fprintf(stderr, "Loading the HUB75 RP1 PIO program failed.\n");
     abort();
   }
+  state.program_offset = offset;
 
   pio_sm_clear_fifos(state.pio, state.sm);
   pio_sm_set_clkdiv(state.pio, state.sm, 1.0f);
@@ -671,6 +679,14 @@ void Rp1PioDumpFramebuffer(Framebuffer *framebuffer, int pwm_low_bit) {
       Rp1ShiftsRowAddressEveryBitplane(state.row_address_type);
 
   const int plane_count = Framebuffer::kBitPlanes - start_bit;
+  // Each plane shifts its columns while the previous plane is lit, so it
+  // takes at most both, in data words.
+  long frame_words = 0;
+  for (int bit = start_bit; bit < Framebuffer::kBitPlanes; ++bit) {
+    frame_words += columns + state.bitplane_active_words[bit];
+  }
+  state.frame_seconds = static_cast<double>(double_rows) * frame_words *
+                        kClocksPerDataWord / TargetPioClockHz();
   state.transfer_buffer.clear();
   state.transfer_buffer.reserve(
       double_rows * plane_count * (columns + 8) + 8);
@@ -746,17 +762,34 @@ void Rp1PioDeinit() {
   Rp1PioState &state = s_pio_state;
   if (!state.active) return;
 
-  // Let in-flight DMA drain into the running state machine first: disabling
-  // it with words still queued leaves the transfer unfinished, and the next
-  // PIO session blocks on it forever. Wait until the TX FIFO has stayed
-  // empty for 5 ms, at most 0.5 s.
-  for (int quiet = 0, waited = 0; quiet < 50 && waited < 5000; waited++) {
+  // 1. Wait for the transfer to finish: disabling the state machine with
+  // words still queued leaves the transfer unfinished, and the next PIO
+  // session blocks on it forever. Newer kernels return from
+  // pio_sm_xfer_data() before the DMA completes, and neither the bundled
+  // piolib nor older kernels offer a completion wait (pio_sm_wait_flags), so
+  // poll until the TX FIFO has stayed empty for 5 ms. The three transfer
+  // buffers hold at most three frames: wait at most that long, and at least
+  // 0.5 s.
+  const int limit = std::max(5000, static_cast<int>(3e4 * state.frame_seconds));
+  int quiet = 0;
+  for (int waited = 0; quiet < 50 && waited < limit; waited++) {
     quiet = pio_sm_is_tx_fifo_empty(state.pio, state.sm) ? quiet + 1 : 0;
     usleep(100);
   }
+  if (quiet < 50) {
+    fprintf(stderr, "RP1 PIO: transfer still draining after %.1f s; the next "
+            "PIO session may hang.\n", limit * 1e-4);
+  }
+  // 2. Blank: the last pulse has finished once the FIFO is empty; disabling
+  // stops the program but leaves the pins as they are.
+  pio_sm_set_pins_with_mask(state.pio, state.sm, state.output_enable_bit,
+                            state.output_enable_bit);
+  // 3. Stop and release, in this order: the program goes before the state
+  // machine is unclaimed, so no other client claims it while ours is loaded.
   pio_sm_set_enabled(state.pio, state.sm, false);
   pio_sm_clear_fifos(state.pio, state.sm);
   ReleasePinDirection(state.pio, state.sm, state.used_mask);
+  pio_remove_program(state.pio, &kProgram, state.program_offset);
   pio_sm_unclaim(state.pio, state.sm);
   pio_close(state.pio);
 
@@ -770,6 +803,8 @@ void Rp1PioDeinit() {
   state.output_enable_bit = 0;
   state.latch_bit = 0;
   state.used_mask = 0;
+  state.program_offset = 0;
+  state.frame_seconds = 0;
   state.bitplane_active_words.clear();
   state.transfer_buffer.clear();
 }
