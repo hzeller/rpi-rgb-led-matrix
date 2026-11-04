@@ -746,6 +746,14 @@ void Rp1PioDeinit() {
   Rp1PioState &state = s_pio_state;
   if (!state.active) return;
 
+  // Let in-flight DMA drain into the running state machine first: disabling
+  // it with words still queued leaves the transfer unfinished, and the next
+  // PIO session blocks on it forever. Wait until the TX FIFO has stayed
+  // empty for 5 ms, at most 0.5 s.
+  for (int quiet = 0, waited = 0; quiet < 50 && waited < 5000; waited++) {
+    quiet = pio_sm_is_tx_fifo_empty(state.pio, state.sm) ? quiet + 1 : 0;
+    usleep(100);
+  }
   pio_sm_set_enabled(state.pio, state.sm, false);
   pio_sm_clear_fifos(state.pio, state.sm);
   ReleasePinDirection(state.pio, state.sm, state.used_mask);
