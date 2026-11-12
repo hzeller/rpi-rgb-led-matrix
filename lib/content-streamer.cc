@@ -77,7 +77,8 @@ ssize_t MemStreamIO::Append(const void *buf, size_t count) {
   return count;
 }
 
-MemMapViewInput::MemMapViewInput(int fd) : buffer_(nullptr) {
+MemMapViewInput::MemMapViewInput(int fd)
+  : buffer_(nullptr), end_(nullptr), pos_(nullptr) {
   struct stat s;
   if (fstat(fd, &s) < 0) {
     close(fd);
@@ -89,10 +90,12 @@ MemMapViewInput::MemMapViewInput(int fd) : buffer_(nullptr) {
   buffer_ = (char*)mmap(nullptr, file_size, PROT_READ, MAP_SHARED, fd, 0);
   close(fd);
   if (buffer_ == MAP_FAILED) {
+    buffer_ = nullptr;  // Report as not initialized.
     perror("Can't mmmap()");
     return;
   }
   end_ = buffer_ + file_size;
+  pos_ = buffer_;
 #ifdef POSIX_MADV_WILLNEED
   // Trigger read-ahead if possible.
   posix_madvise(buffer_, file_size, POSIX_MADV_WILLNEED);
@@ -101,7 +104,8 @@ MemMapViewInput::MemMapViewInput(int fd) : buffer_(nullptr) {
 
 void MemMapViewInput::Rewind() { pos_ = buffer_; }
 ssize_t MemMapViewInput::Read(void *buf, size_t count) {
-  if (pos_ + count >= end_) return -1;
+  // Reading up to and including the last byte is fine.
+  if (count > (size_t)(end_ - pos_)) return -1;
   memcpy(buf, pos_, count);
   pos_ += count;
   return count;

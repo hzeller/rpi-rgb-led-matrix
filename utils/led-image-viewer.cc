@@ -424,10 +424,14 @@ int main(int argc, char *argv[]) {
         file_info = new FileInfo();
         file_info->params = filename_params[filename];
         if (do_mmap) {
+          // MemMapViewInput always closes the descriptor it is given, so
+          // hand it a duplicate and keep fd for the FileStreamIO fallback.
+          const int mmap_fd = dup(fd);
           rgb_matrix::MemMapViewInput *stream_input =
-            new rgb_matrix::MemMapViewInput(fd);
-          if (stream_input->IsInitialized()) {
+            mmap_fd >= 0 ? new rgb_matrix::MemMapViewInput(mmap_fd) : NULL;
+          if (stream_input && stream_input->IsInitialized()) {
             file_info->content_stream = stream_input;
+            close(fd);
           } else {
             delete stream_input;
           }

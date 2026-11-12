@@ -65,7 +65,7 @@ public:
 
 private:
   std::string buffer_;  // super simplistic.
-  size_t pos_;
+  size_t pos_ = 0;
 };
 
 // Just a view around the memory, possibly a memory mapped file.
@@ -110,6 +110,10 @@ public:
   // Does not take ownership of StreamIO
   StreamReader(StreamIO *io);
   ~StreamReader();
+
+  // Owns its frame buffer; copying would free it twice.
+  StreamReader(const StreamReader &) = delete;
+  StreamReader &operator=(const StreamReader &) = delete;
 
   // Go back to the beginning.
   void Rewind();
