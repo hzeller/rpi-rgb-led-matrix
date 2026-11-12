@@ -61,6 +61,28 @@ PixelDesignatorMap::PixelDesignatorMap(int width, int height,
     buffer_(width * height) {
 }
 
+const std::vector<PixelDesignatorMap::BulkGroup> &
+PixelDesignatorMap::bulk_groups() const {
+  std::call_once(bulk_once_, [this] {
+    for (int i = 0; i < width_ * height_; ++i)
+      if (buffer_[i].gpio_word >= 0) bulk_order_.push_back(i);
+    std::stable_sort(bulk_order_.begin(), bulk_order_.end(),
+                     [this](int a, int b) {
+                       return buffer_[a].gpio_word < buffer_[b].gpio_word;
+                     });
+    for (size_t i = 0; i < bulk_order_.size();) {
+      const size_t begin = i;
+      const long word = buffer_[bulk_order_[i]].gpio_word;
+      gpio_bits_t mask = ~gpio_bits_t(0);
+      do { mask &= buffer_[bulk_order_[i++]].mask; }
+      while (i < bulk_order_.size() && buffer_[bulk_order_[i]].gpio_word == word);
+      BulkGroup group = { word, begin, i, mask };
+      bulk_groups_.push_back(group);
+    }
+  });
+  return bulk_groups_;
+}
+
 // Different panel types use different techniques to set the row address.
 // We abstract that away with different implementations of RowAddressSetter
 class RowAddressSetter {
@@ -335,6 +357,7 @@ Framebuffer::Framebuffer(int rows, int columns, int parallel,
     pwm_bits_(kBitPlanes), do_luminance_correct_(true), brightness_(100),
     double_rows_(rows / SUB_PANELS_),
     buffer_size_(double_rows_ * columns_ * kBitPlanes * sizeof(gpio_bits_t)),
+    bulk_brightness_(0), bulk_luminance_(false),
     shared_mapper_(mapper) {
   assert(hardware_mapping_ != NULL);   // Called InitHardwareMapping() ?
   assert(shared_mapper_ != NULL);  // Storage should be provided by RGBMatrix.
@@ -808,6 +831,10 @@ void Framebuffer::SetPixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
 }
 
 void Framebuffer::SetPixels(int x, int y, int width, int height, Color *colors) {
+  if (x == 0 && y == 0 && width == this->width() && height == this->height()) {
+    SetFullFrame(colors);
+    return;
+  }
   for (int iy = 0; iy < height; ++iy) {
     for (int ix = 0; ix < width; ++ix) {
       SetPixel(x + ix, y + iy, colors->r, colors->g, colors->b);
@@ -815,6 +842,49 @@ void Framebuffer::SetPixels(int x, int y, int width, int height, Color *colors) 
     }
   }
 }
+// Writing a whole frame pixel by pixel does a read-modify-write of every
+// bitplane word once per pixel, and with --led-parallel or multiplexing many
+// pixels share a word. Here, all pixels that land in the same GPIO word are
+// combined first, so each word is written once per bitplane. The result is
+// bit-identical to calling SetPixel() for each pixel in row-major order.
+void Framebuffer::SetFullFrame(const Color *colors) {
+  if (bulk_brightness_ != brightness_ || bulk_luminance_ != do_luminance_correct_) {
+    for (int i = 0; i < 256; ++i) {
+      uint16_t g, b;
+      MapColors(i, i, i, &bulk_colors_[i], &g, &b);
+    }
+    bulk_brightness_ = brightness_;
+    bulk_luminance_ = do_luminance_correct_;
+  }
+  const PixelDesignatorMap *map = *shared_mapper_;
+  const std::vector<PixelDesignatorMap::BulkGroup> &groups = map->bulk_groups();
+  const std::vector<int> &order = map->bulk_order();
+  const int first = kBitPlanes - pwm_bits_;
+  for (size_t g = 0; g < groups.size(); ++g) {
+    const PixelDesignatorMap::BulkGroup &group = groups[g];
+    gpio_bits_t planes[kBitPlanes] = {};
+    for (size_t i = group.begin; i < group.end; ++i) {
+      const int index = order[i];
+      const PixelDesignator &d = map->at_index(index);
+      const Color &c = colors[index];
+      const uint16_t red = bulk_colors_[c.r];
+      const uint16_t green = bulk_colors_[c.g];
+      const uint16_t blue = bulk_colors_[c.b];
+      for (int bit = first; bit < kBitPlanes; ++bit) {
+        const gpio_bits_t bits =
+          ((gpio_bits_t(0) - ((red >> bit) & 1)) & d.r_bit)
+          | ((gpio_bits_t(0) - ((green >> bit) & 1)) & d.g_bit)
+          | ((gpio_bits_t(0) - ((blue >> bit) & 1)) & d.b_bit);
+        // Keep SetPixel()'s last-writer-wins if a mapper aliases pixels.
+        planes[bit] = (planes[bit] & d.mask) | bits;
+      }
+    }
+    gpio_bits_t *out = bitplane_buffer_ + group.word + columns_ * first;
+    for (int bit = first; bit < kBitPlanes; ++bit, out += columns_)
+      *out = (*out & group.mask) | planes[bit];
+  }
+}
+
 // Strange LED-mappings such as RBG or so are handled here.
 gpio_bits_t Framebuffer::GetGpioFromLedSequence(char col,
                                                 const char *led_sequence,
