@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <mutex>
 #include <vector>
 
 #include "hardware-mapping.h"
@@ -54,7 +55,18 @@ public:
   // All bits that set red/green/blue pixels; used for Fill().
   const PixelDesignator &GetFillColorBits() { return fill_bits_; }
 
+  // For full-frame writes: mapped pixel indices sorted by the GPIO word they
+  // write to, grouped into runs that share one word. Computed lazily once;
+  // a map is never modified after it is handed to the frame buffers.
+  struct BulkGroup { long word; size_t begin, end; gpio_bits_t mask; };
+  const std::vector<BulkGroup> &bulk_groups() const;
+  const std::vector<int> &bulk_order() const { return bulk_order_; }
+  const PixelDesignator &at_index(int index) const { return buffer_[index]; }
+
 private:
+  mutable std::once_flag bulk_once_;
+  mutable std::vector<int> bulk_order_;
+  mutable std::vector<BulkGroup> bulk_groups_;
   const int width_;
   const int height_;
   const PixelDesignator fill_bits_;  // Precalculated for fill.
@@ -184,6 +196,13 @@ private:
   // but it allows easy access in the critical section.
   gpio_bits_t *bitplane_buffer_;
   inline gpio_bits_t *ValueAt(int double_row, int column, int bit);
+  void SetFullFrame(const Color *colors);
+
+  // Single-channel color map for SetFullFrame(), rebuilt when brightness or
+  // luminance correction change.
+  uint16_t bulk_colors_[256];
+  uint8_t bulk_brightness_;
+  bool bulk_luminance_;
 
   PixelDesignatorMap **shared_mapper_;  // Storage in RGBMatrix.
 };
