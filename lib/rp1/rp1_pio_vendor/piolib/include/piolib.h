@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * Copyright (c) 2023-24 Raspberry Pi Ltd.
  * All rights reserved.
