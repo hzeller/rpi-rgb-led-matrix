@@ -241,6 +241,10 @@ network protocols, such as the
  * [ZeroMQ-server](https://github.com/Knifa/led-matrix-zmq-server) to receive
    content.
  * Marc's [FastLED_RPIRGBPanel_GFX](http://marc.merlins.org/perso/arduino/post_2020-01-01_Running-FastLED_-Adafruit_GFX_-and-LEDMatrix-code-on-High-Resolution-RGBPanels-with-a-Raspberry-Pi.html) allows running arduino code on linux/rPi and display on bigger RGBPanel matrices than arduino chips, can.
+ * The [sshcrack/rpi-rgb-led-matrix](https://github.com/sshcrack/rpi-rgb-led-matrix)
+   fork adds an SDL2 emulator that implements the same matrix/`FrameCanvas` API, so
+   existing programs using this library can be developed and tested on a
+   desktop (or rendered headless) without a Pi, with minimal code changes.
 
 ### API
 
