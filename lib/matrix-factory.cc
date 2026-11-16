@@ -73,7 +73,6 @@ namespace rgb_matrix
         bool result = true;
         rgb_matrix::RuntimeOptions *rt_options = &options->runtime_options;
 
-        // Parse core RGB matrix options regardless of type
         result &= rgb_matrix::ParseOptionsFromFlags(argc, argv, &options->led_options, rt_options, remove_consumed_flags);
 #ifdef ENABLE_EMULATOR
         if (options->use_emulator)
@@ -81,14 +80,6 @@ namespace rgb_matrix
             // Parse emulator-specific options
             result &= rgb_matrix::ParseEmulatorOptionsFromFlags(argc, argv, &options->emulator_options, remove_consumed_flags);
         }
-        else
-        {
-            // Parse hardware-specific runtime options
-            // Use a temporary variable with the exact type to help the compiler pick the right overload
-            result &= rgb_matrix::ParseOptionsFromFlags(argc, argv, &options->led_options, rt_options, remove_consumed_flags);
-        }
-#else
-        result &= rgb_matrix::ParseOptionsFromFlags(argc, argv, &options->led_options, rt_options, remove_consumed_flags);
 #endif
 
         return result;

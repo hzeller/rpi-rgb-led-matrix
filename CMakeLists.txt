@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(rpi-rgb-led-matrix VERSION 0.1.13 LANGUAGES C CXX)
+project(rpi-rgb-led-matrix VERSION 0.1.14 LANGUAGES C CXX)
 
 include(GNUInstallDirs)
 

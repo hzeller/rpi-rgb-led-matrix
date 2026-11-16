@@ -254,7 +254,10 @@ static bool FlagInit(int &argc, char **&argv,
         continue;
       }
 
-      if (strncmp(*it, OPTION_PREFIX, OPTION_PREFIX_LEN) == 0) {
+      // Emulator flags are handled by the emulator's own parser.
+      if (strncmp(*it, OPTION_PREFIX "emulator", OPTION_PREFIX_LEN + 8) == 0) {
+        // Not an error: consumed elsewhere.
+      } else if (strncmp(*it, OPTION_PREFIX, OPTION_PREFIX_LEN) == 0) {
         fprintf(stderr, "Option %s starts with %s but it is unknown. Typo?\n",
                 *it, OPTION_PREFIX);
       }
