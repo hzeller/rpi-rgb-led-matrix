@@ -2,8 +2,8 @@ include ../config.mk
 
 CFLAGS=-Wall -O3 $(CPU_ARCH_FLAGS) $(LTO_FLAGS) -g -Wextra -Wno-unused-parameter
 CXXFLAGS=$(CFLAGS)
-OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o scrolling-text-example.o clock.o ledcat.o input-example.o pixel-mover.o
-BINARIES=demo minimal-example c-example text-example scrolling-text-example clock ledcat input-example pixel-mover
+OBJECTS=demo-main.o minimal-example.o c-example.o text-example.o textwrap-example.o scrolling-text-example.o clock.o ledcat.o input-example.o pixel-mover.o
+BINARIES=demo minimal-example c-example text-example textwrap-example scrolling-text-example clock ledcat input-example pixel-mover
 
 # Where our library resides. You mostly only need to change the
 # RGB_LIB_DISTRIBUTION, this is where the library is checked out.
@@ -29,6 +29,7 @@ demo : demo-main.o $(RGB_LIBRARY)
 minimal-example : minimal-example.o
 input-example : input-example.o
 text-example: text-example.o
+textwrap-example: textwrap-example.o
 scrolling-text-example : scrolling-text-example.o
 clock : clock.o
 ledcat : ledcat.o

@@ -414,6 +414,10 @@ int vertical_draw_text(struct LedCanvas *c, struct LedFont *font, int x, int y,
                        uint8_t r, uint8_t g, uint8_t b,
                        const char *utf8_text, int kerning_offset);
 
+int draw_text_wrapped(struct LedCanvas *c, struct LedFont *font, int x, int y,
+                      int line_width, uint8_t r, uint8_t g, uint8_t b,
+                      const char *utf8_text, int kerning_offset, int leading);
+
 void draw_circle(struct LedCanvas *c, int x, int y, int radius,
                  uint8_t r, uint8_t g, uint8_t b);
 

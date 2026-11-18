@@ -9,7 +9,8 @@ OBJECTS=gpio.o led-matrix.o options-initialize.o framebuffer.o \
 	thread.o bdf-font.o graphics.o led-matrix-c.o hardware-mapping.o \
 	pixel-mapper.o multiplex-mappers.o frame-sequence.o \
 	content-streamer.o content-streamer-c.o frame-sequence-c.o \
-	rp1/rp1_pio_backend.o rp1/rp1_pio_support.o rp1/rp1_rio_backend.o
+	rp1/rp1_pio_backend.o rp1/rp1_pio_support.o rp1/rp1_rio_backend.o \
+	textwrap.o typesetting.o
 
 TARGET=librgbmatrix
 
@@ -193,6 +194,7 @@ led-matrix.o: led-matrix.cc $(INCDIR)/led-matrix.h
 thread.o : thread.cc $(INCDIR)/thread.h
 framebuffer.o: framebuffer.cc framebuffer-internal.h
 graphics.o: graphics.cc utf8-internal.h
+textwrap.o: textwrap.h smawk.h
 
 %.o : %.cc compiler-flags
 	$(CXX) -I$(INCDIR) $(CXXFLAGS) -c -o $@ $<
